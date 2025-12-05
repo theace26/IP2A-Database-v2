@@ -1,0 +1,24 @@
+# --- Core DB + ORM ---
+sqlalchemy>=2.0
+alembic>=1.13
+psycopg2-binary>=2.9
+
+# --- Pydantic + Settings ---
+pydantic>=2.8
+pydantic-settings>=2.3
+python-dotenv>=1.0
+email-validator>=2.1.0   # REQUIRED for EmailStr
+
+# --- FastAPI stack ---
+fastapi>=0.110.0
+uvicorn[standard]>=0.30.0
+
+# --- Developer Tools ---
+pytest>=8.0
+pytest-asyncio>=0.23
+faker>=25.0
+
+# --- Linters & Type Checking ---
+ruff>=0.6
+mypy>=1.11
+types-psycopg2>=2.9

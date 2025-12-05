@@ -1,0 +1,43 @@
+{
+  "name": "IP2A-Database-v2 Dev Environment",
+
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+
+  "service": "api",
+  "workspaceFolder": "/workspace",
+
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {}
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
+        "charliermarsh.ruff",
+        "tamasfe.even-better-toml",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  },
+
+  "forwardPorts": [8000, 5433, 5050],
+  "containerEnv": {
+    "IP2A_ENV": "dev"
+  },
+
+  "postCreateCommand": "pip install --user -r requirements.txt",
+  "remoteUser": "vscode"
+}
