@@ -1,0 +1,24 @@
+# Python
+*.pyc
+__pycache__/
+
+# Environment files
+.env
+.env.*
+
+# VS Code
+.vscode/
+.devcontainer/data/
+
+# Docker volumes
+ip2a_db_data/
+ip2a_pgadmin_data/
+docker-volumes/
+
+# System files
+.DS_Store
+
+# Caches
+*.pytest_cache/
+.mypy_cache/
+ruff_cache/
