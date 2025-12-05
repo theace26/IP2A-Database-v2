@@ -26,7 +26,9 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
 
-    # Allow Dev Containers to control when db is ready
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 8000
+
     depends_on:
       db:
         condition: service_healthy
@@ -38,9 +40,9 @@ services:
     ports:
       - "8000:8000"
 
-    # Required for VS Code Dev Containers to bind your folder into the container
     volumes:
-      - .:/app
+      - ./app:/app/app          # <-- SAFE mount (only app source code)
+      - uploads_data:/app/uploads
 
   pgadmin:
     image: dpage/pgadmin4:8
@@ -59,3 +61,4 @@ services:
 volumes:
   ip2a_db_data:
   ip2a_pgadmin_data:
+  uploads_data:

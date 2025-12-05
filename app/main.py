@@ -10,6 +10,7 @@ from app.routers.instructor_hours import router as instructor_hours_router
 from app.routers.credentials import router as credentials_router
 from app.routers.tools import router as tools_router
 from app.routers.jatc_applications import router as jatc_router
+from app.routers.file_attachments import router as file_router
 
 
 # ------------------------------------------------------------
@@ -58,3 +59,4 @@ app.include_router(instructor_hours_router)
 app.include_router(credentials_router)
 app.include_router(tools_router)
 app.include_router(jatc_router)
+app.include_router(file_router)

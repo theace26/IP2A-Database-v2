@@ -1,47 +1,28 @@
 {
   "name": "IP2A DevContainer",
-  "dockerComposeFile": "../docker-compose.yml",
+
+  // Use ONLY the existing docker-compose.yml
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+
+  // Attach VS Code to the API container
   "service": "api",
-  "workspaceFolder": "/workspace",
-  
+
+  // This MUST match how your Dockerfile sets WORKDIR
+  "workspaceFolder": "/app",
+
+  // DO NOT override commands, or VS Code cannot attach
   "overrideCommand": false,
 
+  // ---- FEATURES (minimal + stable) ----
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "version": "latest"
-    },
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.12"
     }
   },
 
+  // ---- DO NOT INSTALL EXTENSIONS DURING BUILD ----
   "customizations": {
     "vscode": {
-      "settings": {
-        "python.defaultInterpreterPath": "/usr/local/bin/python",
-        "python.formatting.provider": "black",
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-          "source.organizeImports": "explicit"
-        },
-        "python.linting.enabled": true,
-        "python.linting.mypyEnabled": true
-      },
-      "extensions": [
-        "ms-python.python",
-        "ms-python.vscode-pylance",
-        "ms-python.black-formatter",
-        "ms-python.mypy-type-checker",
-        "ms-azuretools.vscode-docker",
-        "mhutchie.git-graph",
-        "eamodio.gitlens",
-        "tamasfe.even-better-toml",
-        "esbenp.prettier-vscode"
-      ]
-    }
-  },
-
-  "postCreateCommand": "pip install -r requirements.txt",
-
-  "remoteUser": "vscode"
-}
+      "extensions": []
