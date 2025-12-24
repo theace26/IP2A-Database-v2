@@ -5,58 +5,72 @@ services:
     image: postgres:16
     container_name: ip2a-db
     restart: unless-stopped
+
     environment:
       POSTGRES_DB: ip2a_db
       POSTGRES_USER: ip2a_user
       POSTGRES_PASSWORD: supersecret
+
     ports:
+      # Exposed ONLY for dev / pgadmin / local tools
       - "5433:5432"
+
     volumes:
       - ip2a_db_data:/var/lib/postgresql/data
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ip2a_user -d ip2a_db"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+
   api:
-    container_name: ip2a-api
     build:
       context: .
       dockerfile: Dockerfile
+
+    container_name: ip2a-api
     restart: unless-stopped
 
-    command: >
-      uvicorn app.main:app --host 0.0.0.0 --port 8000
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # IMPORTANT: Compose-only env file (db hostname = db)
+    env_file:
+      - .env.compose
+
+    environment:
+      IP2A_ENV: production
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      # Persist uploads, nothing else
+      - uploads_data:/app/uploads
+
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: ip2a-pgadmin
+    restart: unless-stopped
 
     depends_on:
       db:
         condition: service_healthy
 
     environment:
-      DATABASE_URL: postgresql+psycopg2://ip2a_user:supersecret@db:5432/ip2a_db
-      IP2A_ENV: prod
-
-    ports:
-      - "8000:8000"
-
-    volumes:
-      - ./app:/app/app          # <-- SAFE mount (only app source code)
-      - uploads_data:/app/uploads
-
-  pgadmin:
-    image: dpage/pgadmin4:8
-    container_name: ip2a-pgadmin
-    restart: unless-stopped
-    depends_on:
-      - db
-    environment:
       PGADMIN_DEFAULT_EMAIL: admin@example.com
       PGADMIN_DEFAULT_PASSWORD: Zynnya818
+
     ports:
       - "5050:80"
+
     volumes:
       - ip2a_pgadmin_data:/var/lib/pgadmin
+
 
 volumes:
   ip2a_db_data:

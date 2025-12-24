@@ -31,14 +31,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy installed Python packages from builder
+# Copy installed Python libs
 COPY --from=builder /usr/local /usr/local
 
-# Copy application code
-COPY app ./app
+# Copy application
+COPY src ./src
 COPY alembic.ini .
-COPY app/db/migrations ./app/db/migrations
 
-EXPOSE 8000
+# Create uploads directory
+RUN mkdir -p /app/uploads
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
