@@ -6,6 +6,7 @@ from typing import Optional
 class Settings(BaseSettings):
     DATABASE_URL: str
     TEST_DATABASE_URL: Optional[str] = None
+    IP2A_ENV: str = "dev"  # dev | test | prod
 
     class Config:
         env_file = ".env"
