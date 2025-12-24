@@ -7,6 +7,7 @@ from sqlalchemy import (
     Date,
     ForeignKey,
     Text,
+    Index,
 )
 from sqlalchemy.orm import (
     Mapped,
@@ -15,7 +16,6 @@ from sqlalchemy.orm import (
 )
 
 from src.db.base import Base
-
 
 class JATCApplication(Base):
     __tablename__ = "jatc_applications"
@@ -26,6 +26,12 @@ class JATCApplication(Base):
     application_date = Column(Date, nullable=False)
     interview_date = Column(Date, nullable=True)  # ✅ CORRECT
     status = Column(String(255), nullable=False)
+
+    __table_args__ = (
+        Index("ix_jatc_student_id", "student_id"),
+        Index("ix_jatc_status", "status"),
+        Index("ix_jatc_application_date", "application_date"),
+        Index("ix_jatc_interview_date", "interview_date"),
 
     notes = Column(Text, nullable=True)
     supporting_docs_path: Mapped[Optional[str]] = mapped_column(String, nullable=True)
