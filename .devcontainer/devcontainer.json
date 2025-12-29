@@ -1,28 +1,21 @@
 {
-  "name": "IP2A DevContainer",
-
-  // Use ONLY the existing docker-compose.yml
-  "dockerComposeFile": [
-    "../docker-compose.yml"
-  ],
-
-  // Attach VS Code to the API container
-  "service": "api",
-
-  // This MUST match how your Dockerfile sets WORKDIR
-  "workspaceFolder": "/app",
-
-  // DO NOT override commands, or VS Code cannot attach
-  "overrideCommand": false,
-
-  // ---- FEATURES (minimal + stable) ----
-  "features": {
-    "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.12"
-    }
-  },
-
-  // ---- DO NOT INSTALL EXTENSIONS DURING BUILD ----
-  "customizations": {
-    "vscode": {
-      "extensions": []
+    "name": "IP2A DevContainer",
+    "dockerComposeFile": [
+        "docker-compose.yml"
+    ],
+    "service": "api",
+    "workspaceFolder": "/workspace",
+    "postCreateCommand": "pip install -r requirements.txt",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.black-formatter",
+                "ms-toolsai.jupyter",
+                "ms-azuretools.vscode-docker"
+            ]
+        }
+    },
+    "remoteUser": "root"
+}

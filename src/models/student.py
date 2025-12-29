@@ -1,7 +1,5 @@
-from typing import Optional
-
 from sqlalchemy import Column, Integer, String, Date, ForeignKey
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.orm import relationship
 
 from src.db.base import Base
 
@@ -15,7 +13,7 @@ class Student(Base):
     last_name = Column(String(50), nullable=False)
     email = Column(String(255), nullable=False, unique=True)
 
-    # Increased from 20 → 50 to avoid truncation errors
+    # Increased from 20 to 50 to avoid truncation errors
     phone = Column(String(50), nullable=True)
 
     birthdate = Column(Date, nullable=True)
@@ -25,10 +23,16 @@ class Student(Base):
     cohort_id = Column(Integer, ForeignKey("cohorts.id"), nullable=True)
     cohort = relationship("Cohort", back_populates="students")
 
- # 🔥 Add this line for profile photos
-    profile_photo_path: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    # Profile photo
+    profile_photo_path = Column(String, nullable=True)
 
-    # 🔥 Added relationships for seeding
-    tools_issued = relationship("ToolsIssued", back_populates="student", cascade="all, delete-orphan")
-    credentials = relationship("Credential", back_populates="student", cascade="all, delete-orphan")
-    jatc_applications = relationship("JATCApplication", back_populates="student", cascade="all, delete-orphan")
+    # Added relationships for seeding
+    tools_issued = relationship(
+        "ToolsIssued", back_populates="student", cascade="all, delete-orphan"
+    )
+    credentials = relationship(
+        "Credential", back_populates="student", cascade="all, delete-orphan"
+    )
+    jatc_applications = relationship(
+        "JATCApplication", back_populates="student", cascade="all, delete-orphan"
+    )
