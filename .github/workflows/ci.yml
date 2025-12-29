@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  import-and-migration-drift:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ip2a_db
+          POSTGRES_USER: ip2a_user
+          POSTGRES_PASSWORD: supersecret
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd="pg_isready -U ip2a_user -d ip2a_db"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      # IMPORTANT: inside GitHub Actions runner, "localhost:5433" works because
+      # the postgres service is port-mapped to the runner host.
+      DATABASE_URL: postgresql+psycopg2://ip2a_user:supersecret@localhost:5433/ip2a_db
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Import graph validation
+        run: |
+          python -m src.scripts.validate_imports
+
+      - name: Alembic upgrade to head
+        run: |
+          alembic upgrade head
+
+      # ---- Drift detection ----
+      # This will FAIL if SQLAlchemy models differ from what Alembic migrations would produce.
+      - name: Detect model ↔ migration drift (autogenerate must be empty)
+        run: |
+          alembic revision --autogenerate -m "ci-drift-check" --rev-id ci_drift_check
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("src/db/migrations/versions")
+          matches = list(p.glob("*ci_drift_check*.py"))
+          if not matches:
+              raise SystemExit("Expected a generated ci_drift_check revision, but none was created.")
+          txt = matches[0].read_text(encoding="utf-8")
+          # Alembic autogenerate typically leaves these markers if no schema diffs were detected.
+          ok = ("pass" in txt) and ("def upgrade()" in txt) and ("def downgrade()" in txt)
+          if not ok:
+              print(txt)
+              raise SystemExit("❌ Drift detected: autogenerate produced real operations. Fix migrations/models.")
+          print("✅ No drift: autogenerate produced an empty revision.")
+          PY
+          rm -f src/db/migrations/versions/*ci_drift_check*.py
