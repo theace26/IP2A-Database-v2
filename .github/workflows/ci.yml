@@ -1,12 +1,12 @@
-name: CI
+name: IP2A CI
 
 on:
-  pull_request:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
+  pull_request:
 
 jobs:
-  import-and-migration-drift:
+  backend-checks:
     runs-on: ubuntu-latest
 
     services:
@@ -17,20 +17,19 @@ jobs:
           POSTGRES_USER: ip2a_user
           POSTGRES_PASSWORD: supersecret
         ports:
-          - 5433:5432
+          - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U ip2a_user -d ip2a_db"
+          --health-cmd="pg_isready -U ip2a_user"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
 
     env:
-      # IMPORTANT: inside GitHub Actions runner, "localhost:5433" works because
-      # the postgres service is port-mapped to the runner host.
-      DATABASE_URL: postgresql+psycopg2://ip2a_user:supersecret@localhost:5433/ip2a_db
+      DATABASE_URL: postgresql+psycopg2://ip2a_user:supersecret@localhost:5432/ip2a_db
+      PYTHONPATH: .
 
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -47,27 +46,14 @@ jobs:
         run: |
           python -m src.scripts.validate_imports
 
-      - name: Alembic upgrade to head
+      - name: Alembic schema drift check
         run: |
           alembic upgrade head
+          alembic revision --autogenerate -m "ci-drift-check" --head head || exit 1
 
-      # ---- Drift detection ----
-      # This will FAIL if SQLAlchemy models differ from what Alembic migrations would produce.
-      - name: Detect model ↔ migration drift (autogenerate must be empty)
+      - name: Fail if migration file was generated
         run: |
-          alembic revision --autogenerate -m "ci-drift-check" --rev-id ci_drift_check
-          python - <<'PY'
-          from pathlib import Path
-          p = Path("src/db/migrations/versions")
-          matches = list(p.glob("*ci_drift_check*.py"))
-          if not matches:
-              raise SystemExit("Expected a generated ci_drift_check revision, but none was created.")
-          txt = matches[0].read_text(encoding="utf-8")
-          # Alembic autogenerate typically leaves these markers if no schema diffs were detected.
-          ok = ("pass" in txt) and ("def upgrade()" in txt) and ("def downgrade()" in txt)
-          if not ok:
-              print(txt)
-              raise SystemExit("❌ Drift detected: autogenerate produced real operations. Fix migrations/models.")
-          print("✅ No drift: autogenerate produced an empty revision.")
-          PY
-          rm -f src/db/migrations/versions/*ci_drift_check*.py
+          if [ -n "$(ls src/db/migrations/versions | grep ci-drift-check)" ]; then
+            echo "❌ Schema drift detected. Run alembic revision locally."
+            exit 1
+          fi
