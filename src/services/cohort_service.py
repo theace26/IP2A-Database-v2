@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from src.models import Cohort, Instructor, Student, Location
+from src.models import Cohort, Instructor, Student
 from src.schemas.cohort import CohortCreate, CohortUpdate
 
 
@@ -13,7 +13,7 @@ def create_cohort(db: Session, data: CohortCreate) -> Cohort:
         name=data.name,
         start_date=data.start_date,
         end_date=data.end_date,
-        location_id=data.location_id
+        location_id=data.location_id,
     )
     db.add(cohort)
     db.commit()
@@ -21,15 +21,15 @@ def create_cohort(db: Session, data: CohortCreate) -> Cohort:
 
     # Attach instructors if provided
     if data.instructor_ids:
-        instructors = db.query(Instructor).filter(
-            Instructor.id.in_(data.instructor_ids)).all()
+        instructors = (
+            db.query(Instructor).filter(Instructor.id.in_(data.instructor_ids)).all()
+        )
         for instructor in instructors:
             cohort.instructors.append(instructor)
 
     # Attach students if provided
     if data.student_ids:
-        students = db.query(Student).filter(
-            Student.id.in_(data.student_ids)).all()
+        students = db.query(Student).filter(Student.id.in_(data.student_ids)).all()
         for student in students:
             student.cohort_id = cohort.id
 
@@ -61,12 +61,7 @@ def list_cohorts(db: Session, skip: int = 0, limit: int = 100) -> List[Cohort]:
 # ------------------------------------------------------------
 # UPDATE
 # ------------------------------------------------------------
-def update_cohort(
-    db: Session,
-    cohort_id: int,
-    data: CohortUpdate
-) -> Optional[Cohort]:
-
+def update_cohort(db: Session, cohort_id: int, data: CohortUpdate) -> Optional[Cohort]:
     cohort = get_cohort(db, cohort_id)
     if not cohort:
         return None
@@ -92,8 +87,9 @@ def update_cohort(
     # Update student assignments
     if "student_ids" in update_data:
         # Remove current cohort assignments
-        current_students = db.query(Student).filter(
-            Student.cohort_id == cohort.id).all()
+        current_students = (
+            db.query(Student).filter(Student.cohort_id == cohort.id).all()
+        )
         for student in current_students:
             student.cohort_id = None
 
@@ -137,14 +133,10 @@ def delete_cohort(db: Session, cohort_id: int) -> bool:
 # RELATIONSHIP HELPERS
 # ------------------------------------------------------------
 def add_instructor_to_cohort(
-    db: Session,
-    cohort_id: int,
-    instructor_id: int
+    db: Session, cohort_id: int, instructor_id: int
 ) -> Optional[Cohort]:
-
     cohort = get_cohort(db, cohort_id)
-    instructor = db.query(Instructor).filter(
-        Instructor.id == instructor_id).first()
+    instructor = db.query(Instructor).filter(Instructor.id == instructor_id).first()
 
     if not cohort or not instructor:
         return None
@@ -158,14 +150,10 @@ def add_instructor_to_cohort(
 
 
 def remove_instructor_from_cohort(
-    db: Session,
-    cohort_id: int,
-    instructor_id: int
+    db: Session, cohort_id: int, instructor_id: int
 ) -> Optional[Cohort]:
-
     cohort = get_cohort(db, cohort_id)
-    instructor = db.query(Instructor).filter(
-        Instructor.id == instructor_id).first()
+    instructor = db.query(Instructor).filter(Instructor.id == instructor_id).first()
 
     if not cohort or not instructor:
         return None
@@ -179,11 +167,8 @@ def remove_instructor_from_cohort(
 
 
 def add_student_to_cohort(
-    db: Session,
-    cohort_id: int,
-    student_id: int
+    db: Session, cohort_id: int, student_id: int
 ) -> Optional[Cohort]:
-
     cohort = get_cohort(db, cohort_id)
     student = db.query(Student).filter(Student.id == student_id).first()
 
@@ -198,11 +183,8 @@ def add_student_to_cohort(
 
 
 def remove_student_from_cohort(
-    db: Session,
-    cohort_id: int,
-    student_id: int
+    db: Session, cohort_id: int, student_id: int
 ) -> Optional[Cohort]:
-
     cohort = get_cohort(db, cohort_id)
     student = db.query(Student).filter(Student.id == student_id).first()
 

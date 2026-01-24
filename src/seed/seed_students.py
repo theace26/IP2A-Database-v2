@@ -6,6 +6,7 @@ from .base_seed import add_records
 
 fake = Faker()
 
+
 def seed_students(db: Session, count: int = 15):
     students = []
 

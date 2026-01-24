@@ -11,3 +11,19 @@ from .attendance import Attendance
 from .tools_issued import ToolsIssued
 from .credential import Credential
 from .jatc_application import JATCApplication
+
+__all__ = [
+    "User",
+    "Student",
+    "Cohort",
+    "Instructor",
+    "Location",
+    "Expense",
+    "InstructorHours",
+    "Grant",
+    "ClassSession",
+    "Attendance",
+    "ToolsIssued",
+    "Credential",
+    "JATCApplication",
+]

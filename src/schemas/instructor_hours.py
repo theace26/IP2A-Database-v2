@@ -7,7 +7,7 @@ from typing import Optional
 # Base Schema (shared fields)
 # ------------------------------------------------------------
 class InstructorHoursBase(BaseModel):
-    instructor_id: int              # FK → Instructor
+    instructor_id: int  # FK → Instructor
     cohort_id: Optional[int] = None  # FK → Cohort
     location_id: Optional[int] = None  # FK → Location
     date: date
@@ -20,6 +20,7 @@ class InstructorHoursBase(BaseModel):
 # ------------------------------------------------------------
 class InstructorHoursCreate(InstructorHoursBase):
     """Used when logging new instructor hours."""
+
     pass
 
 
@@ -28,6 +29,7 @@ class InstructorHoursCreate(InstructorHoursBase):
 # ------------------------------------------------------------
 class InstructorHoursUpdate(BaseModel):
     """Allows partial updates to instructor hour logs."""
+
     instructor_id: Optional[int] = None
     cohort_id: Optional[int] = None
     location_id: Optional[int] = None

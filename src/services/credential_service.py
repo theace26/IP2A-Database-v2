@@ -2,17 +2,21 @@ from sqlalchemy.orm import Session
 from src.models.credential import Credential
 from src.schemas.credential import CredentialCreate, CredentialUpdate
 
+
 # ------------------------------------------------------------
 # GET
 # ------------------------------------------------------------
 def get_credential(db: Session, credential_id: int) -> Credential | None:
     return db.query(Credential).filter(Credential.id == credential_id).first()
 
+
 def list_credentials(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Credential).offset(skip).limit(limit).all()
 
+
 def list_credentials_by_student(db: Session, student_id: int):
     return db.query(Credential).filter(Credential.student_id == student_id).all()
+
 
 # ------------------------------------------------------------
 # CREATE
@@ -23,6 +27,7 @@ def create_credential(db: Session, data: CredentialCreate) -> Credential:
     db.commit()
     db.refresh(obj)
     return obj
+
 
 # ------------------------------------------------------------
 # UPDATE
@@ -38,6 +43,7 @@ def update_credential(db: Session, credential_id: int, data: CredentialUpdate):
     db.commit()
     db.refresh(obj)
     return obj
+
 
 # ------------------------------------------------------------
 # DELETE

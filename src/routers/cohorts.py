@@ -17,9 +17,11 @@ from src.services.cohort_service import (
 
 router = APIRouter(prefix="/cohorts", tags=["Cohorts"])
 
+
 @router.post("/", response_model=CohortRead)
 def create(data: CohortCreate, db: Session = Depends(get_db)):
     return create_cohort(db, data)
+
 
 @router.get("/{cohort_id}", response_model=CohortRead)
 def read(cohort_id: int, db: Session = Depends(get_db)):
@@ -28,13 +30,16 @@ def read(cohort_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Cohort not found")
     return obj
 
+
 @router.get("/", response_model=list[CohortRead])
 def list_all(db: Session = Depends(get_db)):
     return list_cohorts(db)
 
+
 @router.put("/{cohort_id}", response_model=CohortRead)
 def update(cohort_id: int, data: CohortUpdate, db: Session = Depends(get_db)):
     return update_cohort(db, cohort_id, data)
+
 
 @router.delete("/{cohort_id}")
 def delete(cohort_id: int, db: Session = Depends(get_db)):

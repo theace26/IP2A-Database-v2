@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import date
 
+
 # ------------------------------------------------------------
 # Base Schema
 # ------------------------------------------------------------
@@ -15,11 +16,13 @@ class CredentialBase(BaseModel):
     student_id: int
     attachment_path: str | None = None
 
+
 # ------------------------------------------------------------
 # Create Schema
 # ------------------------------------------------------------
 class CredentialCreate(CredentialBase):
     pass
+
 
 # ------------------------------------------------------------
 # Update Schema
@@ -32,6 +35,7 @@ class CredentialUpdate(BaseModel):
     certificate_number: Optional[str] = None
     notes: Optional[str] = None
     student_id: Optional[int] = None
+
 
 # ------------------------------------------------------------
 # Read Schema

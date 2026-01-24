@@ -22,6 +22,7 @@ TOOL_LIST = [
     "Flashlight",
 ]
 
+
 def seed_tools_issued(db: Session, count_per_student: int = 3):
     students = db.query(Student).all()
 

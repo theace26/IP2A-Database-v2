@@ -6,8 +6,6 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from src.db.base import Base
 
 
-
-
 class ToolsIssued(Base):
     __tablename__ = "tools_issued"
 
@@ -26,4 +24,3 @@ class ToolsIssued(Base):
     student = relationship("Student", back_populates="tools_issued")
 
     receipt_path: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-

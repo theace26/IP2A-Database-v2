@@ -8,6 +8,7 @@ UPLOAD_DIR = "uploads_data"
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+
 @router.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
     timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
@@ -20,5 +21,5 @@ async def upload_file(file: UploadFile = File(...)):
     return {
         "file_name": file_name,
         "file_path": file_path,
-        "content_type": file.content_type
+        "content_type": file.content_type,
     }

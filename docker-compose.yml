@@ -12,7 +12,6 @@ services:
       POSTGRES_PASSWORD: supersecret
 
     ports:
-      # Exposed ONLY for dev / pgadmin / local tools
       - "5433:5432"
 
     volumes:
@@ -37,19 +36,21 @@ services:
       db:
         condition: service_healthy
 
-    # IMPORTANT: Compose-only env file (db hostname = db)
     env_file:
       - .env.compose
 
     environment:
-      IP2A_ENV: production
+      IP2A_ENV: dev
 
     ports:
       - "8000:8000"
 
     volumes:
-      # Persist uploads, nothing else
       - uploads_data:/app/uploads
+      - ./src:/app/src:cached
+      - ./alembic.ini:/app/alembic.ini:cached
+
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 
   pgadmin:

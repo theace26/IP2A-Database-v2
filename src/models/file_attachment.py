@@ -1,5 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, DateTime
 from datetime import datetime
 from src.database import Base
 
@@ -15,7 +14,7 @@ class FileAttachment(Base):
     record_id = Column(Integer, nullable=False)
 
     file_name = Column(String(255), nullable=False)
-    file_path = Column(String(500), nullable=False)   # path on disk
+    file_path = Column(String(500), nullable=False)  # path on disk
     file_type = Column(String(50), nullable=False)
     file_size = Column(Integer)
     description = Column(String(255))

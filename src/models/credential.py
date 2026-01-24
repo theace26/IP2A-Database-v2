@@ -6,7 +6,7 @@ from sqlalchemy import (
     String,
     Date,
     ForeignKey,
-    Text,             # <-- REQUIRED FIX
+    Text,  # <-- REQUIRED FIX
 )
 from sqlalchemy.orm import (
     relationship,
@@ -32,7 +32,7 @@ class Credential(Base):
 
     certificate_number = Column(String(255), nullable=True)
 
-    notes = Column(Text, nullable=True)   # <-- FIXED import required
+    notes = Column(Text, nullable=True)  # <-- FIXED import required
 
     attachment_path: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 

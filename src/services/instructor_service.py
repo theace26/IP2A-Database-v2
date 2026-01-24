@@ -5,7 +5,6 @@ from src.models import Instructor, Cohort
 from src.schemas.instructor import (
     InstructorCreate,
     InstructorUpdate,
-    InstructorRead,
 )
 
 
@@ -14,9 +13,7 @@ from src.schemas.instructor import (
 # ------------------------------------------------------------
 def create_instructor(db: Session, data: InstructorCreate) -> Instructor:
     instructor = Instructor(
-        first_name=data.first_name,
-        last_name=data.last_name,
-        email=data.email
+        first_name=data.first_name, last_name=data.last_name, email=data.email
     )
     db.add(instructor)
     db.commit()
@@ -48,11 +45,8 @@ def list_instructors(db: Session, skip: int = 0, limit: int = 100) -> List[Instr
 # UPDATE
 # ------------------------------------------------------------
 def update_instructor(
-    db: Session,
-    instructor_id: int,
-    data: InstructorUpdate
+    db: Session, instructor_id: int, data: InstructorUpdate
 ) -> Optional[Instructor]:
-
     instructor = get_instructor(db, instructor_id)
     if not instructor:
         return None
@@ -84,11 +78,8 @@ def delete_instructor(db: Session, instructor_id: int) -> bool:
 # RELATIONSHIP HELPERS (optional but powerful)
 # ------------------------------------------------------------
 def assign_instructor_to_cohort(
-    db: Session,
-    instructor_id: int,
-    cohort_id: int
+    db: Session, instructor_id: int, cohort_id: int
 ) -> Optional[Instructor]:
-
     instructor = get_instructor(db, instructor_id)
     cohort = db.query(Cohort).filter(Cohort.id == cohort_id).first()
 
@@ -104,11 +95,8 @@ def assign_instructor_to_cohort(
 
 
 def remove_instructor_from_cohort(
-    db: Session,
-    instructor_id: int,
-    cohort_id: int
+    db: Session, instructor_id: int, cohort_id: int
 ) -> Optional[Instructor]:
-
     instructor = get_instructor(db, instructor_id)
     cohort = db.query(Cohort).filter(Cohort.id == cohort_id).first()
 

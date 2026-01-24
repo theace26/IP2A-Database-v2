@@ -10,7 +10,9 @@ from src.schemas.jatc_application import (
 # GET
 # ------------------------------------------------------------
 def get_application(db: Session, application_id: int):
-    return db.query(JATCApplication).filter(JATCApplication.id == application_id).first()
+    return (
+        db.query(JATCApplication).filter(JATCApplication.id == application_id).first()
+    )
 
 
 def list_applications(db: Session, skip: int = 0, limit: int = 200):
@@ -19,9 +21,7 @@ def list_applications(db: Session, skip: int = 0, limit: int = 200):
 
 def list_applications_by_student(db: Session, student_id: int):
     return (
-        db.query(JATCApplication)
-        .filter(JATCApplication.student_id == student_id)
-        .all()
+        db.query(JATCApplication).filter(JATCApplication.student_id == student_id).all()
     )
 
 

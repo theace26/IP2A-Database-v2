@@ -1,11 +1,11 @@
 from sqlalchemy.orm import Session
 from faker import Faker
-import random
 
 from src.models import Instructor
 from .base_seed import add_records
 
 fake = Faker()
+
 
 def seed_instructors(db: Session, count: int = 5):
     instructors = []

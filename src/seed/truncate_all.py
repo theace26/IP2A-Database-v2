@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
+
 def truncate_all_tables(db: Session):
     """
     Truncate all tables in dependency-safe order.
@@ -19,6 +20,6 @@ def truncate_all_tables(db: Session):
     ]
 
     for table in tables:
-        db.execute(text(f'TRUNCATE TABLE {table} RESTART IDENTITY CASCADE;'))
+        db.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE;"))
 
     db.commit()

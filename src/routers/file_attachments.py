@@ -2,7 +2,10 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from src.database import get_db
 from src.schemas.file_attachment import FileAttachmentCreate, FileAttachmentResponse
-from src.services.file_attachment_service import create_file_attachment, list_files_for_record
+from src.services.file_attachment_service import (
+    create_file_attachment,
+    list_files_for_record,
+)
 
 router = APIRouter(prefix="/files", tags=["Files & Attachments"])
 

@@ -3,38 +3,36 @@ from typing import Optional
 
 
 # ------------------------------------------------------------
-# Base Schema (shared fields)
+# Base Schema
 # ------------------------------------------------------------
 class LocationBase(BaseModel):
     name: str
     address: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
-    zip_code: Optional[str] = None
+    capacity: Optional[int] = None
 
 
 # ------------------------------------------------------------
-# Create Schema (POST)
+# Create Schema
 # ------------------------------------------------------------
 class LocationCreate(LocationBase):
-    """Used when creating a new training or class location."""
     pass
 
 
 # ------------------------------------------------------------
-# Update Schema (PATCH)
+# Update Schema
 # ------------------------------------------------------------
 class LocationUpdate(BaseModel):
-    """Allows partial update of a location."""
     name: Optional[str] = None
     address: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
-    zip_code: Optional[str] = None
+    capacity: Optional[int] = None
 
 
 # ------------------------------------------------------------
-# Response Schema (GET)
+# Read Schema
 # ------------------------------------------------------------
 class LocationRead(LocationBase):
     id: int

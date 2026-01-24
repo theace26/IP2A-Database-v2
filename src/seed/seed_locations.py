@@ -6,6 +6,7 @@ from .base_seed import add_records
 
 fake = Faker()
 
+
 def seed_locations(db: Session, count: int = 4):
     locations = []
 
@@ -14,7 +15,7 @@ def seed_locations(db: Session, count: int = 4):
             Location(
                 name=f"{fake.city()} Training Center",
                 address=fake.address(),
-                capacity=fake.random_int(20, 60)
+                capacity=fake.random_int(20, 60),
             )
         )
 

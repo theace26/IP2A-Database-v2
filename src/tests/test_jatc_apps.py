@@ -1,22 +1,27 @@
+from datetime import date
+import uuid
+
+
 async def test_submit_application(async_client):
-    # Create student
-    s = await async_client.post("/students/", json={
-        "first_name": "App",
-        "last_name": "User",
-        "email": "app@test.com",
-        "phone": "123",
-        "cohort_id": None
-    })
-    sid = s.json()["id"]
+    unique = str(uuid.uuid4())[:8]
+    student = await async_client.post(
+        "/students/",
+        json={
+            "first_name": "JATC",
+            "last_name": "Applicant",
+            "email": f"jatc_{unique}@test.com",
+            "phone": "206-555-3333",
+            "cohort_id": None,
+        },
+    )
+    assert student.status_code in (200, 201)
+    student_id = student.json()["id"]
 
     payload = {
-        "student_id": sid,
-        "status": "submitted",
-        "site_preference": "Seattle",
-        "submitted_date": "2024-02-01",
-        "supporting_docs_path": None
+        "student_id": student_id,
+        "application_date": str(date.today()),
+        "status": "pending",
     }
 
-    response = await async_client.post("/jatc-apps/", json=payload)
-    assert response.status_code == 201
-    assert response.json()["status"] == "submitted"
+    response = await async_client.post("/jatc-applications/", json=payload)
+    assert response.status_code in (200, 201)

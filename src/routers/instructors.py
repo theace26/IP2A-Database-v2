@@ -17,9 +17,11 @@ from src.services.instructor_service import (
 
 router = APIRouter(prefix="/instructors", tags=["Instructors"])
 
+
 @router.post("/", response_model=InstructorRead)
 def create(data: InstructorCreate, db: Session = Depends(get_db)):
     return create_instructor(db, data)
+
 
 @router.get("/{instructor_id}", response_model=InstructorRead)
 def read(instructor_id: int, db: Session = Depends(get_db)):
@@ -28,13 +30,16 @@ def read(instructor_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Instructor not found")
     return obj
 
+
 @router.get("/", response_model=list[InstructorRead])
 def list_all(db: Session = Depends(get_db)):
     return list_instructors(db)
 
+
 @router.put("/{instructor_id}", response_model=InstructorRead)
 def update(instructor_id: int, data: InstructorUpdate, db: Session = Depends(get_db)):
     return update_instructor(db, instructor_id, data)
+
 
 @router.delete("/{instructor_id}")
 def delete(instructor_id: int, db: Session = Depends(get_db)):

@@ -35,7 +35,8 @@ def seed_credentials(db: Session, count_per_student: int = 2):
             issue_date = fake.date_between(start_date="-10m", end_date="-1m")
             expiration = (
                 issue_date + timedelta(days=random.randint(180, 720))
-                if random.random() < 0.7 else None
+                if random.random() < 0.7
+                else None
             )
 
             credentials.append(

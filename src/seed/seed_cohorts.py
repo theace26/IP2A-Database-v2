@@ -7,6 +7,7 @@ from .base_seed import add_records
 
 fake = Faker()
 
+
 def seed_cohorts(db: Session, count: int = 3):
     instructors = db.query(Instructor).all()
     locations = db.query(Location).all()

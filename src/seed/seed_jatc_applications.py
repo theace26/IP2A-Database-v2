@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from faker import Faker
 import random
-from datetime import timedelta
 
 from src.models import JATCApplication, Student
 from .base_seed import add_records
@@ -29,7 +28,6 @@ def seed_jatc_applications(db: Session, count_per_student: int = 1):
 
     for student in students:
         for _ in range(count_per_student):
-
             application_date = fake.date_between(start_date="-14m", end_date="-1m")
             status = random.choice(APPLICATION_STATUSES)
 

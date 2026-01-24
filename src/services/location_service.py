@@ -14,7 +14,7 @@ def create_location(db: Session, data: LocationCreate) -> Location:
         address=data.address,
         city=data.city,
         state=data.state,
-        zip_code=data.zip_code,
+        capacity=data.capacity,
     )
     db.add(location)
     db.commit()
@@ -34,11 +34,7 @@ def get_location(db: Session, location_id: int) -> Optional[Location]:
 # ------------------------------------------------------------
 def list_locations(db: Session, skip: int = 0, limit: int = 100) -> List[Location]:
     return (
-        db.query(Location)
-        .order_by(Location.name.asc())
-        .offset(skip)
-        .limit(limit)
-        .all()
+        db.query(Location).order_by(Location.name.asc()).offset(skip).limit(limit).all()
     )
 
 
@@ -46,11 +42,8 @@ def list_locations(db: Session, skip: int = 0, limit: int = 100) -> List[Locatio
 # UPDATE
 # ------------------------------------------------------------
 def update_location(
-    db: Session,
-    location_id: int,
-    data: LocationUpdate
+    db: Session, location_id: int, data: LocationUpdate
 ) -> Optional[Location]:
-
     location = get_location(db, location_id)
     if not location:
         return None

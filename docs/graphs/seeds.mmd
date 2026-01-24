@@ -1,0 +1,15 @@
+```mermaid
+graph TD
+  locations["seed_locations"]
+  cohorts["seed_cohorts"]
+  locations --> cohorts
+  instructors["seed_instructors"]
+  students["seed_students"]
+  cohorts --> students
+  tools_issued["seed_tools_issued"]
+  students --> tools_issued
+  credentials["seed_credentials"]
+  students --> credentials
+  jatc_applications["seed_jatc_applications"]
+  students --> jatc_applications
+```

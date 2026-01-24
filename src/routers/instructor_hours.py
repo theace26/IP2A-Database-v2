@@ -14,20 +14,14 @@ from src.schemas.instructor_hours import (
 from src.services import instructor_hours_service
 
 
-router = APIRouter(
-    prefix="/instructor-hours",
-    tags=["Instructor Hours"]
-)
+router = APIRouter(prefix="/instructor-hours", tags=["Instructor Hours"])
 
 
 # ------------------------------------------------------------
 # CREATE
 # ------------------------------------------------------------
 @router.post("/", response_model=InstructorHoursRead)
-def create_instructor_hours(
-    data: InstructorHoursCreate,
-    db: Session = Depends(get_db)
-):
+def create_instructor_hours(data: InstructorHoursCreate, db: Session = Depends(get_db)):
     return instructor_hours_service.create_instructor_hours(db, data)
 
 
@@ -36,9 +30,7 @@ def create_instructor_hours(
 # ------------------------------------------------------------
 @router.get("/", response_model=List[InstructorHoursRead])
 def list_instructor_hours(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db)
+    skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 ):
     return instructor_hours_service.list_instructor_hours(db, skip, limit)
 
@@ -47,10 +39,7 @@ def list_instructor_hours(
 # READ (Single)
 # ------------------------------------------------------------
 @router.get("/{hours_id}", response_model=InstructorHoursRead)
-def get_instructor_hours(
-    hours_id: int,
-    db: Session = Depends(get_db)
-):
+def get_instructor_hours(hours_id: int, db: Session = Depends(get_db)):
     entry = instructor_hours_service.get_instructor_hours(db, hours_id)
     if not entry:
         raise HTTPException(status_code=404, detail="Hours entry not found")
@@ -62,12 +51,9 @@ def get_instructor_hours(
 # ------------------------------------------------------------
 @router.patch("/{hours_id}", response_model=InstructorHoursRead)
 def update_instructor_hours(
-    hours_id: int,
-    data: InstructorHoursUpdate,
-    db: Session = Depends(get_db)
+    hours_id: int, data: InstructorHoursUpdate, db: Session = Depends(get_db)
 ):
-    entry = instructor_hours_service.update_instructor_hours(
-        db, hours_id, data)
+    entry = instructor_hours_service.update_instructor_hours(db, hours_id, data)
     if not entry:
         raise HTTPException(status_code=404, detail="Hours entry not found")
     return entry
@@ -77,10 +63,7 @@ def update_instructor_hours(
 # DELETE
 # ------------------------------------------------------------
 @router.delete("/{hours_id}")
-def delete_instructor_hours(
-    hours_id: int,
-    db: Session = Depends(get_db)
-):
+def delete_instructor_hours(hours_id: int, db: Session = Depends(get_db)):
     success = instructor_hours_service.delete_instructor_hours(db, hours_id)
     if not success:
         raise HTTPException(status_code=404, detail="Hours entry not found")
@@ -95,7 +78,7 @@ def get_hours_by_instructor(
     instructor_id: int,
     start: Optional[date] = None,
     end: Optional[date] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     return instructor_hours_service.list_hours_by_instructor(
         db, instructor_id, start, end
@@ -106,10 +89,7 @@ def get_hours_by_instructor(
 # FILTER: BY COHORT
 # ------------------------------------------------------------
 @router.get("/cohort/{cohort_id}", response_model=List[InstructorHoursRead])
-def get_hours_by_cohort(
-    cohort_id: int,
-    db: Session = Depends(get_db)
-):
+def get_hours_by_cohort(cohort_id: int, db: Session = Depends(get_db)):
     return instructor_hours_service.list_hours_by_cohort(db, cohort_id)
 
 
@@ -117,8 +97,5 @@ def get_hours_by_cohort(
 # FILTER: BY LOCATION
 # ------------------------------------------------------------
 @router.get("/location/{location_id}", response_model=List[InstructorHoursRead])
-def get_hours_by_location(
-    location_id: int,
-    db: Session = Depends(get_db)
-):
+def get_hours_by_location(location_id: int, db: Session = Depends(get_db)):
     return instructor_hours_service.list_hours_by_location(db, location_id)

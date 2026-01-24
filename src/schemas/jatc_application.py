@@ -4,45 +4,38 @@ from datetime import date
 
 
 # ------------------------------------------------------------
-# Base Schema (shared fields)
+# Base Schema
 # ------------------------------------------------------------
 class JATCApplicationBase(BaseModel):
-    application_date: Optional[date] = None
-    application_status: Optional[str] = None
+    student_id: int
+    application_date: date
     interview_date: Optional[date] = None
-    interview_score: Optional[int] = None
-    aptitude_test_score: Optional[int] = None
-    total_score: Optional[int] = None
+    status: str = "pending"
     notes: Optional[str] = None
-    student_id: int  # FK → Student
-    supporting_docs_path: str | None = None
+    supporting_docs_path: Optional[str] = None
 
 
 # ------------------------------------------------------------
-# Create Schema (POST)
+# Create Schema
 # ------------------------------------------------------------
 class JATCApplicationCreate(JATCApplicationBase):
-    """Used when creating a JATC application record."""
     pass
 
 
 # ------------------------------------------------------------
-# Update Schema (PATCH)
+# Update Schema
 # ------------------------------------------------------------
 class JATCApplicationUpdate(BaseModel):
-    """Allows partial update of JATC application fields."""
     application_date: Optional[date] = None
-    application_status: Optional[str] = None
     interview_date: Optional[date] = None
-    interview_score: Optional[int] = None
-    aptitude_test_score: Optional[int] = None
-    total_score: Optional[int] = None
+    status: Optional[str] = None
     notes: Optional[str] = None
     student_id: Optional[int] = None
+    supporting_docs_path: Optional[str] = None
 
 
 # ------------------------------------------------------------
-# Response Schema (GET)
+# Read Schema
 # ------------------------------------------------------------
 class JATCApplicationRead(JATCApplicationBase):
     id: int

@@ -17,9 +17,11 @@ from src.services.student_service import (
 
 router = APIRouter(prefix="/students", tags=["Students"])
 
+
 @router.post("/", response_model=StudentRead)
 def create(data: StudentCreate, db: Session = Depends(get_db)):
     return create_student(db, data)
+
 
 @router.get("/{student_id}", response_model=StudentRead)
 def read(student_id: int, db: Session = Depends(get_db)):
@@ -28,13 +30,16 @@ def read(student_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Student not found")
     return obj
 
+
 @router.get("/", response_model=list[StudentRead])
 def list_all(db: Session = Depends(get_db)):
     return list_students(db)
 
+
 @router.put("/{student_id}", response_model=StudentRead)
 def update(student_id: int, data: StudentUpdate, db: Session = Depends(get_db)):
     return update_student(db, student_id, data)
+
 
 @router.delete("/{student_id}")
 def delete(student_id: int, db: Session = Depends(get_db)):

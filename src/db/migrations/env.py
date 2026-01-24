@@ -1,6 +1,5 @@
 from logging.config import fileConfig
 from alembic import context
-from sqlalchemy import pool
 
 from src.db.base import Base
 from src.db.session import engine

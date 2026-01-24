@@ -26,6 +26,7 @@ class StudentBase(BaseModel):
 # ------------------------------------------------------------
 class StudentCreate(StudentBase):
     """Used when creating a new student."""
+
     pass
 
 
@@ -34,6 +35,7 @@ class StudentCreate(StudentBase):
 # ------------------------------------------------------------
 class StudentUpdate(BaseModel):
     """Fields allowed to change on update."""
+
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     email: Optional[EmailStr] = None

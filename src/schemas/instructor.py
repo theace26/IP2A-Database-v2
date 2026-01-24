@@ -16,6 +16,7 @@ class InstructorBase(BaseModel):
 # ---------------------
 class InstructorCreate(InstructorBase):
     """Fields required when creating a new instructor."""
+
     pass
 
 
@@ -24,6 +25,7 @@ class InstructorCreate(InstructorBase):
 # ---------------------
 class InstructorUpdate(BaseModel):
     """Fields allowed during partial update."""
+
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     email: Optional[EmailStr] = None

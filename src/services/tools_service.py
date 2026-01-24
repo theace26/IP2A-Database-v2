@@ -9,11 +9,14 @@ from src.schemas.tools import ToolIssuedCreate, ToolIssuedUpdate
 def get_tool(db: Session, tool_id: int) -> ToolsIssued | None:
     return db.query(ToolsIssued).filter(ToolsIssued.id == tool_id).first()
 
+
 def list_tools(db: Session):
     return db.query(ToolsIssued).all()
 
+
 def list_tools_by_student(db: Session, student_id: int):
     return db.query(ToolsIssued).filter(ToolsIssued.student_id == student_id).all()
+
 
 # ------------------------------------------------------------
 # CREATE
@@ -25,11 +28,11 @@ def create_tool(db: Session, data: ToolIssuedCreate) -> ToolsIssued:
     db.refresh(obj)
     return obj
 
+
 # ------------------------------------------------------------
 # UPDATE
 # ------------------------------------------------------------
 def update_tool(db: Session, tool_id: int, data: ToolIssuedUpdate):
-
     obj = get_tool(db, tool_id)
     if not obj:
         return None
@@ -40,6 +43,7 @@ def update_tool(db: Session, tool_id: int, data: ToolIssuedUpdate):
     db.commit()
     db.refresh(obj)
     return obj
+
 
 # ------------------------------------------------------------
 # DELETE

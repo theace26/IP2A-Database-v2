@@ -18,8 +18,9 @@ class CohortBase(BaseModel):
 # ------------------------------------------------------------
 class CohortCreate(CohortBase):
     """Used when creating a new cohort."""
-    instructor_ids: List[int] = []   # M2M
-    student_ids: List[int] = []      # optional list on creation
+
+    instructor_ids: List[int] = []  # M2M
+    student_ids: List[int] = []  # optional list on creation
 
 
 # ------------------------------------------------------------
@@ -27,6 +28,7 @@ class CohortCreate(CohortBase):
 # ------------------------------------------------------------
 class CohortUpdate(BaseModel):
     """Allows partial updates to a cohort."""
+
     name: Optional[str] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None

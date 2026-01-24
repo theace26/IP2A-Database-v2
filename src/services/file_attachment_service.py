@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 from src.models.file_attachment import FileAttachment
@@ -28,7 +27,7 @@ def create_file_attachment(db: Session, data, file: UploadFile):
         file_path=file_path,
         file_type=file.content_type,
         file_size=file.file._file.tell(),  # only works after reading
-        description=data.description
+        description=data.description,
     )
 
     db.add(new_file)
@@ -38,7 +37,11 @@ def create_file_attachment(db: Session, data, file: UploadFile):
 
 
 def list_files_for_record(db: Session, record_type: str, record_id: int):
-    return db.query(FileAttachment).filter_by(
-        record_type=record_type,
-        record_id=record_id,
-    ).all()
+    return (
+        db.query(FileAttachment)
+        .filter_by(
+            record_type=record_type,
+            record_id=record_id,
+        )
+        .all()
+    )

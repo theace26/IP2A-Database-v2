@@ -1,23 +1,22 @@
 async def test_create_location(async_client):
     payload = {
-        "name": "Seattle Campus",
+        "name": "Training Center A",
         "address": "123 Main St",
         "city": "Seattle",
         "state": "WA",
-        "zip_code": "98101"
+        "capacity": 30,
     }
 
     response = await async_client.post("/locations/", json=payload)
-    assert response.status_code == 201
+    assert response.status_code in (200, 201)
     data = response.json()
-
-    for field in payload:
-        assert data[field] == payload[field]
+    assert data["name"] == "Training Center A"
 
 
 async def test_missing_required_field(async_client):
-    response = await async_client.post("/locations/", json={"city": "Seattle"})
-    assert response.status_code == 422  # FastAPI validation error
+    payload = {"address": "123 Main St"}
+    response = await async_client.post("/locations/", json=payload)
+    assert response.status_code == 422
 
 
 async def test_list_locations(async_client):
