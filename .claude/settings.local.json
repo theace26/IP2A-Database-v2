@@ -36,7 +36,8 @@
       "Bash(if grep:*)",
       "Bash(/tmp/run_analytics.sh:*)",
       "Bash(alembic stamp:*)",
-      "Bash(alembic downgrade:*)"
+      "Bash(alembic downgrade:*)",
+      "Bash(git mv:*)"
     ]
   }
 }
