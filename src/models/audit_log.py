@@ -21,7 +21,7 @@ class AuditLog(Base):
     # What changed
     table_name = Column(String(100), nullable=False, index=True)
     record_id = Column(String(50), nullable=False, index=True)
-    action = Column(String(10), nullable=False)  # INSERT, UPDATE, DELETE
+    action = Column(String(10), nullable=False)  # READ, CREATE, UPDATE, DELETE, BULK_READ
 
     # Change details
     old_values = Column(JSONB, nullable=True)  # Previous state

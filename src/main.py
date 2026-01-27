@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# Middleware
+from src.middleware import AuditContextMiddleware
+
 # Routers
 from src.routers.instructors import router as instructors_router
 from src.routers.students import router as students_router
@@ -31,8 +34,13 @@ app = FastAPI(
 
 
 # ------------------------------------------------------------
-# CORS (allow frontend development)
+# Middleware
 # ------------------------------------------------------------
+
+# Audit context middleware (must be before CORS for proper request handling)
+app.add_middleware(AuditContextMiddleware)
+
+# CORS (allow frontend development)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # change to specific domains in production
