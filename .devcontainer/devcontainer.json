@@ -5,14 +5,19 @@
   "workspaceFolder": "/app",
   "shutdownAction": "none",
   "overrideCommand": false,
+  "mounts": [
+    "source=vscode_server_data,target=/root/.vscode-server,type=volume"
+  ],
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-python.python",
-        "ms-python.vscode-pylance"
+        "ms-python.vscode-pylance",
+        "anthropic.claude-code"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "/usr/local/bin/python"
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "claude.persistConversations": true
       }
     }
   }

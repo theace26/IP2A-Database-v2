@@ -7,8 +7,19 @@ __pycache__/
 .env.*
 
 # VS Code
-.vscode/
+# Keep workspace settings for team, but ignore user-specific files
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+.vscode/*.log
 .devcontainer/data/
+
+# Claude Code
+# Keep .claude directory but ignore sensitive local settings if any
+.claude/api_keys.json
+.claude/*.log
 
 # Docker volumes
 ip2a_db_data/

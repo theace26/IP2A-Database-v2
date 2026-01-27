@@ -1,12 +1,24 @@
+﻿# ============================
+# 1) BASE - Shared dependencies
 # ============================
-# 1) BUILDER
-# ============================
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.12-slim-bookworm AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-WORKDIR /build
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
+
+# ============================
+# 2) BUILDER - Install dependencies
+# ============================
+FROM base AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -18,27 +30,48 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 
 # ============================
-# 2) RUNTIME
+# 3) DEVELOPMENT - For local dev/devcontainer
 # ============================
-FROM python:3.12-slim-bookworm
+FROM base AS development
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
-WORKDIR /app
-
+# Install dev tools (curl, git, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 \
+    curl \
+    git \
+    vim \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy installed Python libs
+# Copy installed Python packages from builder
 COPY --from=builder /usr/local /usr/local
 
-# Copy application
+# Create directories
+RUN mkdir -p /app/uploads
+
+# Source code will be mounted via docker-compose volumes
+# No COPY of src here - it comes from the mount
+
+# Default command (can be overridden by docker-compose)
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+
+# ============================
+# 4) PRODUCTION - For deployment
+# ============================
+FROM base AS production
+
+# Copy installed Python packages from builder
+COPY --from=builder /usr/local /usr/local
+
+# Copy application code (baked into image for production)
 COPY src ./src
 COPY alembic.ini .
 
 # Create uploads directory
 RUN mkdir -p /app/uploads
+
+# Run as non-root user in production
+RUN useradd --create-home --shell /bin/bash appuser && \
+    chown -R appuser:appuser /app
+USER appuser
 
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

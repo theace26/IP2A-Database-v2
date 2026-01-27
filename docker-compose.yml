@@ -1,79 +1,63 @@
-version: "3.9"
+﻿version: "3.8"
 
 services:
   db:
     image: postgres:16
     container_name: ip2a-db
-    restart: unless-stopped
-
     environment:
-      POSTGRES_DB: ip2a_db
       POSTGRES_USER: ip2a_user
       POSTGRES_PASSWORD: supersecret
-
+      POSTGRES_DB: ip2a_db
     ports:
       - "5433:5432"
-
     volumes:
       - ip2a_db_data:/var/lib/postgresql/data
-
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ip2a_user -d ip2a_db"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-
   api:
     build:
       context: .
-      dockerfile: Dockerfile
-
+      target: development
     container_name: ip2a-api
-    restart: unless-stopped
-
+    env_file:
+      - .env.compose
+    ports:
+      - "8000:8000"
+    volumes:
+      # Full project mount - everything syncs
+      - .:/app:cached
+      # Exclude cache directories from sync
+      - /app/__pycache__
+      - /app/.pytest_cache
+      - /app/.ruff_cache
+      # Named volume for uploads (persists across rebuilds)
+      - uploads_data:/app/uploads
+      # VSCode server data for Claude Code conversations and extension storage
+      - vscode_server_data:/root/.vscode-server
     depends_on:
       db:
         condition: service_healthy
-
-    env_file:
-      - .env.compose
-
-    environment:
-      IP2A_ENV: dev
-
-    ports:
-      - "8000:8000"
-
-    volumes:
-      - uploads_data:/app/uploads
-      - ./src:/app/src:cached
-      - ./alembic.ini:/app/alembic.ini:cached
-
     command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-
 
   pgadmin:
     image: dpage/pgadmin4:8
     container_name: ip2a-pgadmin
-    restart: unless-stopped
-
-    depends_on:
-      db:
-        condition: service_healthy
-
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: Zynnya818
-
+      PGADMIN_DEFAULT_EMAIL: admin@ip2a.local
+      PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "5050:80"
-
     volumes:
       - ip2a_pgadmin_data:/var/lib/pgadmin
-
+    depends_on:
+      - db
 
 volumes:
   ip2a_db_data:
   ip2a_pgadmin_data:
   uploads_data:
+  vscode_server_data:

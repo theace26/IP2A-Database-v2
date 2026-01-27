@@ -76,6 +76,75 @@ git push origin main --tags
 
 ---
 
+## Claude Code Persistence
+
+### Overview
+Claude Code conversations and extension data persist across container rebuilds through a dedicated Docker volume.
+
+### What Persists
+| Component | Location | Volume | Persists? |
+|-----------|----------|--------|-----------|
+| Conversation history | `/root/.vscode-server` | `vscode_server_data` | ✅ Yes |
+| Extension storage | `/root/.vscode-server` | `vscode_server_data` | ✅ Yes |
+| Claude settings | `/app/.claude/` | Project mount | ✅ Yes |
+| Workspace settings | `/app/.vscode/` | Project mount | ✅ Yes (in git) |
+
+### How It Works
+1. **Named Volume:** `vscode_server_data` volume mounts to `/root/.vscode-server` in the container
+2. **Extension Auto-Install:** Claude Code extension (`anthropic.claude-code`) is specified in [.devcontainer/devcontainer.json](.devcontainer/devcontainer.json)
+3. **Workspace Settings:** Team-shared VSCode settings in [.vscode/](.vscode/) directory (committed to git)
+4. **Claude Settings:** Local Claude Code permissions in `.claude/settings.local.json` (committed to git)
+
+### After Container Rebuild
+When you rebuild the container:
+- **Conversations persist** - All chat history is preserved in the `vscode_server_data` volume
+- **Extension auto-installs** - Claude Code extension is automatically installed by VSCode
+- **Settings restored** - All workspace and Claude settings are restored from the project mount
+
+### Manual Reset (if needed)
+```bash
+# Remove conversation history (start fresh)
+docker volume rm ip2a-database-v2_vscode_server_data
+
+# Rebuild container
+docker-compose down
+docker-compose up -d --build
+
+# Reopen in container
+# VS Code: Ctrl/Cmd+Shift+P → "Dev Containers: Rebuild Container"
+```
+
+### Troubleshooting
+
+**Conversations not persisting:**
+```bash
+# Verify volume exists
+docker volume ls | grep vscode_server
+
+# Check volume mount
+docker inspect ip2a-api | grep vscode-server
+```
+
+**Extension not installing:**
+```bash
+# Check devcontainer.json has "anthropic.claude-code" in extensions
+cat .devcontainer/devcontainer.json | grep claude-code
+
+# Manually install (inside container)
+code --install-extension anthropic.claude-code
+```
+
+**Settings not loading:**
+```bash
+# Verify .claude directory exists
+ls -la /app/.claude/
+
+# Check .vscode directory is committed
+git ls-files .vscode/
+```
+
+---
+
 ## Architecture
 
 ### Tech Stack
@@ -475,6 +544,7 @@ When switching between Claude.ai and Claude Code:
 | 2026-01-26 09:00 UTC | Claude.ai | Added devcontainer fixes, updated Dockerfile and docker-compose.yml |
 | 2026-01-27 06:30 UTC | Claude.ai | Added cross-platform setup (Windows), .env.compose.example template |
 | 2026-01-27 07:00 UTC | Claude.ai | Added changelog requirement and audit trail instructions |
+| 2026-01-27 08:55 UTC | Claude Code | Added Claude Code persistence: vscode_server_data volume, .vscode workspace settings, updated .gitignore |
 
 ---
 
