@@ -17,7 +17,26 @@
       "Bash(git checkout:*)",
       "Bash(git restore:*)",
       "Bash(git tag:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(tee:*)",
+      "Bash(python3:*)",
+      "Bash(timeout 180 tail:*)",
+      "Bash(while read line)",
+      "Bash(do echo \"$line\")",
+      "Bash(done)",
+      "Bash(while true)",
+      "Bash(do)",
+      "Bash(if grep -q \"✅ STRESS TEST COMPLETE\" /tmp/claude/-app/tasks/b5f1351.output)",
+      "Bash(then)",
+      "Bash(break)",
+      "Bash(fi)",
+      "Bash(grep:*)",
+      "Bash(alembic current:*)",
+      "Bash(if grep -q \"✅ STRESS TEST\" /tmp/claude/-app/tasks/bae740e.output)",
+      "Bash(if grep:*)",
+      "Bash(/tmp/run_analytics.sh:*)",
+      "Bash(alembic stamp:*)",
+      "Bash(alembic downgrade:*)"
     ]
   }
 }

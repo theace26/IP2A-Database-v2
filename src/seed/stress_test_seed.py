@@ -82,9 +82,10 @@ def run_stress_test(force: bool = False, truncate: bool = True):
         employer_repeat_rate=0.20
     )
 
-    # Phase 7: File Attachments (10+ per member, photos, PDFs, documents)
-    print("\n📎 Phase 7: File Attachments (This will take a while too...)")
-    stress_test_file_attachments(db)
+    # Phase 7: File Attachments (DISABLED - table not in current schema)
+    print("\n📎 Phase 7: File Attachments (SKIPPED - table schema pending)")
+    print("   ⚠️  file_attachments table not in current migration - skipping for now")
+    # stress_test_file_attachments(db)
 
     print("\n" + "=" * 60)
     print("✅ STRESS TEST database seeding complete!")
@@ -95,8 +96,8 @@ def run_stress_test(force: bool = False, truncate: bool = True):
     print(f"   • ~2,250 organization contacts")
     print(f"   • 1,000 students")
     print(f"   • 10,000 members")
-    print(f"   • ~250,000+ employment records")
-    print(f"   • ~150,000+ file attachments (~30 GB)")
+    print(f"   • ~432,000+ employment records")
+    print(f"   • File attachments skipped (table pending migration)")
     print("=" * 60)
 
 

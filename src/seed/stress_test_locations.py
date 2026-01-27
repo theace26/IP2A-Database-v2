@@ -33,7 +33,7 @@ def stress_test_locations(db: Session, count: int = 250):
             address=fake.street_address(),
             city=fake.city(),
             state=fake.state_abbr(),
-            zip_code=fake.zipcode(),
+            postal_code=fake.zipcode(),
             capacity=fake.random_int(min=15, max=80),
         )
         locations.append(location)

@@ -3,6 +3,7 @@
 from sqlalchemy.orm import Session
 from faker import Faker
 from datetime import timedelta
+from collections import OrderedDict
 
 from src.models.member import Member
 from src.db.enums import MemberStatus, MemberClassification
@@ -21,33 +22,36 @@ def stress_test_members(db: Session, count: int = 10000):
     print(f"   Generating {count} members (this may take a minute)...")
 
     for i in range(count):
-        # Generate diverse member numbers
+        # Generate diverse member numbers (using i to ensure uniqueness)
         if i < 1000:
-            # Pure numeric
-            member_number = str(7000000 + fake.random_int(min=100000, max=999999))
+            # Pure numeric - use i + base to ensure uniqueness
+            member_number = str(7000000 + i)
         elif i < 2000:
             # Letter prefix
-            member_number = fake.random_letter().lower() + str(fake.random_int(min=1000000, max=9999999))
+            member_number = fake.random_letter().lower() + str(8000000 + (i - 1000))
         elif i < 3000:
             # Letter suffix
-            member_number = str(fake.random_int(min=1000000, max=9999999)) + fake.random_letter().lower()
+            member_number = str(9000000 + (i - 2000)) + fake.random_letter().lower()
         else:
-            # Mix
-            member_number = str(fake.random_int(min=1000000, max=9999999))
+            # 10 million range for remaining 7000 members
+            member_number = str(10000000 + (i - 3000))
 
         # Weight classification towards journeyman and apprentices
-        classification_weights = {
-            MemberClassification.APPRENTICE_1: 0.10,
-            MemberClassification.APPRENTICE_2: 0.10,
-            MemberClassification.APPRENTICE_3: 0.08,
-            MemberClassification.APPRENTICE_4: 0.07,
-            MemberClassification.APPRENTICE_5: 0.05,
-            MemberClassification.JOURNEYMAN: 0.40,  # Most common
-            MemberClassification.FOREMAN: 0.12,
-            MemberClassification.RETIREE: 0.05,
-            MemberClassification.HONORARY: 0.03,
-        }
-        classification = fake.random_element(elements=classification_weights)
+        classification_weights = OrderedDict([
+            (MemberClassification.APPRENTICE_1ST_YEAR, 0.10),
+            (MemberClassification.APPRENTICE_2ND_YEAR, 0.10),
+            (MemberClassification.APPRENTICE_3RD_YEAR, 0.08),
+            (MemberClassification.APPRENTICE_4TH_YEAR, 0.07),
+            (MemberClassification.APPRENTICE_5TH_YEAR, 0.05),
+            (MemberClassification.JOURNEYMAN, 0.40),
+            (MemberClassification.FOREMAN, 0.12),
+            (MemberClassification.RETIREE, 0.05),
+            (MemberClassification.HONORARY, 0.03),
+        ])
+        classification = fake.random_choices(
+            elements=classification_weights,
+            length=1
+        )[0]
 
         # Most members are active
         if fake.boolean(chance_of_getting_true=88):
