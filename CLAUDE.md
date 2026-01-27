@@ -549,10 +549,11 @@ When switching between Claude.ai and Claude Code:
 | 2026-01-27 07:00 UTC | Claude.ai | Added changelog requirement and audit trail instructions |
 | 2026-01-27 08:55 UTC | Claude Code | Added Claude Code persistence: vscode_server_data volume, .vscode workspace settings, updated .gitignore |
 | 2026-01-27 09:15 UTC | Claude Code | Updated CLAUDE.md: corrected working branch status, updated roadmap, clarified rebuild instructions |
+| 2026-01-27 09:30 UTC | Claude Code | Verified Claude Code persistence: Updated settings permissions, confirmed all persistence mechanisms active |
 
 ---
 
 *Working Branch: main*
-*Current Status: Claude Code persistence configured and committed*
-*Next Task: Rebuild container to activate persistence, then continue Phase 1 services*
+*Current Status: Claude Code persistence active and verified*
+*Next Task: Continue Phase 1 services layer (schemas, services, routers, tests)*
 *Phase 1 Branch: feature/phase1-services (to be created/resumed)*
