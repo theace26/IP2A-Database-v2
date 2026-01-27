@@ -23,19 +23,19 @@ This bidirectional sync keeps both Claudes aligned on project state.
 **Repository:** https://github.com/theace26/IP2A-Database-v2
 **Local Path:** `~/Projects/IP2A-Database-v2` (alias: `$IP2A`)
 **Owner:** Xerxes
-**Status:** v0.2.0 Released - Phase 1 Complete, Phase 2 Planned
+**Status:** v0.2.0 Released - Phase 1 Complete, Phase 2.1 Complete, Phase 2 Planned
 
 ---
 
 ## Git Workflow
 
-### Current State (January 27, 2026 - Updated)
+### Current State (January 27, 2026 - Evening Update)
 ```
-main (v0.2.0) ─── ✅ Phase 1 MERGED & TAGGED
+main (v0.2.0) ─── ✅ Phase 1 Complete
     │
-    └── feature/phase1-services ─── Merged to main
-
-Next: feature/phase2-operations ─── SALTing, Benevolence, Grievances
+    ├── Phase 2.1 ─── ✅ Enhanced Stress Test + Auto-Healing (committed to main)
+    │
+    └── Next: feature/phase2-operations ─── SALTing, Benevolence, Grievances
 ```
 
 ### Tags
@@ -87,6 +87,11 @@ IP2A-Database-v2/
 │   │   │   ├── base_enums.py        # Education/training enums
 │   │   │   └── organization_enums.py # Union operations enums
 │   │   ├── migrations/      # Alembic migrations
+│   │   ├── admin_notifications.py   # ⭐ NEW: Admin notification system
+│   │   ├── auto_heal.py            # ⭐ NEW: Auto-healing system
+│   │   ├── resilience_check.py     # ⭐ NEW: Long-term health checker
+│   │   ├── integrity_check.py      # Database integrity validation
+│   │   ├── integrity_repair.py     # Auto-repair for fixable issues
 │   │   ├── base.py
 │   │   ├── mixins.py        # TimestampMixin, SoftDeleteMixin
 │   │   └── session.py
@@ -95,14 +100,22 @@ IP2A-Database-v2/
 │   ├── services/            # Business logic (CRUD)
 │   ├── routers/             # FastAPI endpoints
 │   ├── seed/                # Seed data
+│   │   ├── stress_test_*.py # ⭐ UPDATED: 700 employers, 1-20 files/member
+│   │   └── ...
 │   └── tests/               # pytest tests
+├── logs/                    # ⭐ NEW: Auto-heal, notifications, metrics
+│   ├── auto_heal/
+│   ├── admin_notifications/
+│   └── resilience_metrics/
 ├── .devcontainer/
 │   └── devcontainer.json
 ├── docker-compose.yml
 ├── Dockerfile
 ├── requirements.txt
+├── ip2adb                   # ⭐ UPDATED: Added auto-heal, resilience commands
 ├── alembic.ini
-└── CLAUDE.md                # This file
+├── CLAUDE.md                # This file
+└── PHASE_2.1_SUMMARY.md     # ⭐ NEW: Phase 2.1 documentation
 ```
 
 ---
@@ -289,13 +302,24 @@ ruff check . --fix && ruff format .
 ```bash
 # Seed database
 ./ip2adb seed                      # Normal seed (500 students)
-./ip2adb seed --stress             # Stress test (10k members, 250k employments)
+./ip2adb seed --stress             # Stress test (10k members, 700 employers, ~150k files)
+                                   # ⚠️  Takes 15-25 minutes!
 ./ip2adb seed --quick              # Quick seed (minimal data)
 
 # Check database health
 ./ip2adb integrity                 # Check data quality
 ./ip2adb integrity --repair        # Auto-fix issues
 ./ip2adb integrity --no-files      # Fast check (skip file checks)
+
+# ⭐ NEW: Auto-healing system (Phase 2.1)
+./ip2adb auto-heal                 # Full auto-heal: check + repair + notify admin
+./ip2adb auto-heal --dry-run       # Preview repairs without making changes
+./ip2adb auto-heal --summary       # Show 7-day health trends
+./ip2adb auto-heal --no-files      # Skip file checks (faster)
+
+# ⭐ NEW: Long-term resilience check (Phase 2.1)
+./ip2adb resilience                # Check storage, backups, performance, growth
+./ip2adb resilience --export report.txt  # Export to file
 
 # Test performance
 ./ip2adb load                      # Load test (50 users)
@@ -398,6 +422,53 @@ pip install httpx pytest-cov
 - [x] Complete documentation (10+ guides, 5000+ lines)
 - [x] **Merged to main, tagged v0.2.0, pushed to remote**
 
+### Phase 2.1: Enhanced Stress Test & Auto-Healing - ✅ COMPLETE (January 27, 2026)
+**Commit:** 16f92f5 on main branch
+
+**Enhanced Stress Test (User Requirements Met):**
+- [x] 10,000 members with realistic data
+- [x] 700 employers (up from 150) - real union local scale
+- [x] 1-20 files per member (adjustable range, user requested)
+- [x] ~750 total organizations (700 employers + 50 unions/JATCs)
+- [x] ~2,250 organization contacts (3 per org)
+- [x] ~250,000 employment records (1-100 jobs per member)
+- [x] ~150,000 file attachments (~30 GB simulated storage)
+- [x] Realistic file sizes: 12MP photos (2.5-5.5 MB), PDFs, scanned docs
+- [x] Grievance documents included
+- [x] **Runtime: 15-25 minutes for full stress test**
+
+**Auto-Healing System:**
+- [x] Automated integrity checking
+- [x] Self-healing for basic issues (orphaned records, invalid enums, date errors)
+- [x] Admin notification system (LOG, EMAIL*, SLACK*, WEBHOOK* - *placeholders ready)
+- [x] Priority-based notifications (CRITICAL/HIGH/MEDIUM/LOW)
+- [x] Health summary tracking (7-day trends)
+- [x] JSONL logging for audit trail
+
+**Long-Term Resilience Checker:**
+- [x] File corruption detection
+- [x] Storage capacity monitoring (alerts at 80%/90% full)
+- [x] Orphaned file detection
+- [x] Database growth trending
+- [x] Data staleness detection
+- [x] Query performance benchmarks
+- [x] Index health checks
+- [x] Backup status verification
+
+**New CLI Commands:**
+- [x] `ip2adb auto-heal` - Full auto-heal cycle with admin notifications
+- [x] `ip2adb auto-heal --dry-run` - Preview repairs
+- [x] `ip2adb auto-heal --summary` - Show 7-day health trends
+- [x] `ip2adb resilience` - Long-term health assessment
+
+**New Modules:**
+- [x] `src/db/admin_notifications.py` (363 lines)
+- [x] `src/db/auto_heal.py` (378 lines)
+- [x] `src/db/resilience_check.py` (747 lines)
+
+**Documentation:**
+- [x] PHASE_2.1_SUMMARY.md - Complete implementation guide
+
 ### Phase 2: Union Operations - 📋 PLANNED (Next)
 **Target:** SALTing activities, Benevolence Fund, Grievance management
 **Plan Location:** `/root/.claude/plans/sharded-cuddling-cherny.md`
@@ -441,7 +512,7 @@ When switching between Claude.ai and Claude Code:
 
 ---
 
-## Session Summary (January 27, 2026)
+## Session Summary (January 27, 2026 - Evening)
 
 ### ✅ Completed Today
 1. **Claude Code Persistence** - Configured and verified
@@ -465,16 +536,28 @@ When switching between Claude.ai and Claude Code:
    - 27 endpoints, 28 tests planned
    - Ready to begin implementation
 
+5. **Phase 2.1 Implemented** ⭐ NEW
+   - Enhanced stress test: 700 employers, 1-20 files/member
+   - Auto-healing system with self-repair capabilities
+   - Admin notification system (multi-channel)
+   - Long-term resilience checker
+   - New CLI commands: `auto-heal`, `resilience`
+   - Commit: 16f92f5 on main branch
+   - **Runtime:** Stress test takes 15-25 minutes
+
 ### 📊 Current State
 - **Branch:** main
-- **Tag:** v0.2.0
+- **Latest Commit:** 16f92f5 (Phase 2.1)
+- **Tag:** v0.2.0 (Phase 1), Phase 2.1 on main (not tagged)
 - **Tests:** 51 passing
-- **Next:** Begin Phase 2 implementation
+- **New Features:** Auto-heal, resilience check, enhanced stress test
+- **Next:** Begin Phase 2 implementation (SALTing, Benevolence, Grievances)
 
 ---
 
-*Last Updated: January 27, 2026 (Evening)*
-*Working Branch: main (at v0.2.0)*
+*Last Updated: January 27, 2026 (Evening - Phase 2.1 Complete)*
+*Working Branch: main*
+*Latest Commit: 16f92f5 - Phase 2.1: Enhanced Stress Test & Auto-Healing*
 *Next Task: Create feature/phase2-operations branch and begin Phase 2 implementation*
 
 ---
@@ -514,3 +597,28 @@ git pull
 docker-compose up -d
 # VS Code: Ctrl/Cmd+Shift+P → "Dev Containers: Reopen in Container"
 ```
+
+---
+
+## Changelog
+
+> **INSTRUCTIONS FOR CLAUDE.AI AND CLAUDE CODE:**
+> Add a new row to this table every time you make changes to this file or the project.
+> Use UTC timezone. Format: `YYYY-MM-DD HH:MM UTC`
+
+| Timestamp | Source | Description |
+|-----------|--------|-------------|
+| 2026-01-26 06:00 UTC | Claude.ai | Initial CLAUDE.md created with project context |
+| 2026-01-26 08:30 UTC | Claude.ai | Fixed circular imports, consolidated enums to src/db/enums/ |
+| 2026-01-26 09:00 UTC | Claude.ai | Added devcontainer fixes, updated Dockerfile and docker-compose.yml |
+| 2026-01-27 06:30 UTC | Claude.ai | Added cross-platform setup (Windows), .env.compose.example template |
+| 2026-01-27 07:00 UTC | Claude.ai | Added changelog requirement and audit trail instructions |
+| 2026-01-27 08:55 UTC | Claude Code | Added Claude Code persistence: vscode_server_data volume, .vscode workspace settings |
+| 2026-01-27 09:15 UTC | Claude Code | Updated CLAUDE.md: corrected working branch status, updated roadmap |
+| 2026-01-27 20:00 UTC | Claude Code | Phase 2.1 Complete: Enhanced stress test (700 employers, 1-20 files/member), auto-healing system, admin notifications, resilience checker, new CLI commands |
+
+---
+
+*Working Branch: main*
+*Current Status: Phase 2.1 Complete - Auto-healing and enhanced stress test committed*
+*Next Task: Begin Phase 2 implementation (SALTing, Benevolence, Grievances)*
