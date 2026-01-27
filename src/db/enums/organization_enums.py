@@ -1,4 +1,4 @@
-"""Organization and Member related enums."""
+"""Organization and Member related enums for Phase 1 union operations."""
 
 import enum
 

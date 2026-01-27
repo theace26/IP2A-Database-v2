@@ -1,7 +1,13 @@
-"""Database enums - consolidated exports."""
+"""
+Database enums - consolidated exports.
 
-# Import from existing models/enums.py
-from src.models.enums import (
+All enums are defined in src/db/enums/ to avoid circular imports.
+Models should import from here:
+    from src.db.enums import CohortStatus, MemberStatus
+"""
+
+# Import from local enum files (no circular dependency)
+from src.db.enums.base_enums import (
     LocationType,
     EnrollmentStatus,
     AttendanceStatus,
@@ -12,7 +18,6 @@ from src.models.enums import (
     ApplicationStatus,
 )
 
-# Import new organization enums
 from src.db.enums.organization_enums import (
     OrganizationType,
     MemberStatus,
@@ -22,7 +27,7 @@ from src.db.enums.organization_enums import (
 )
 
 __all__ = [
-    # Existing enums
+    # Base enums (education/training)
     "LocationType",
     "EnrollmentStatus",
     "AttendanceStatus",
@@ -31,7 +36,7 @@ __all__ = [
     "PaymentMethod",
     "RateType",
     "ApplicationStatus",
-    # New organization enums
+    # Organization enums (union operations)
     "OrganizationType",
     "MemberStatus",
     "MemberClassification",

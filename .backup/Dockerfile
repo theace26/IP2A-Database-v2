@@ -34,15 +34,17 @@ RUN pip install --no-cache-dir -r requirements.txt
 # ============================
 FROM base AS development
 
-# Install dev tools (curl, git, etc.)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    git \
-    vim \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy installed Python packages from builder
 COPY --from=builder /usr/local /usr/local
+
+# Install dev dependencies (if you have a separate requirements-dev.txt)
+# COPY requirements-dev.txt .
+# RUN pip install --no-cache-dir -r requirements-dev.txt
+
+# Install useful dev tools
+RUN pip install --no-cache-dir \
+    ipython \
+    ipdb
 
 # Create directories
 RUN mkdir -p /app/uploads
