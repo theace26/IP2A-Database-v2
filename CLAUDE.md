@@ -426,9 +426,11 @@ git add -A && git commit -m "WIP: current state" && git push
 # On new machine
 git pull
 # Ensure .env.compose exists (copy from .env.compose.example if needed)
-docker-compose up -d
-# VS Code: Ctrl/Cmd+Shift+P → "Dev Containers: Reopen in Container"
+docker-compose up -d --build
+# VS Code: Ctrl/Cmd+Shift+P → "Dev Containers: Rebuild Container"
 ```
+
+**Note:** Use "Rebuild Container" (not "Reopen") to ensure the devcontainer.json changes are applied and Claude Code extension is installed.
 
 ### Windows-Specific Setup
 
@@ -496,6 +498,7 @@ Copy-Item .env.compose.example .env.compose
 - [x] Update requirements.txt (add httpx)
 - [x] Rebuild devcontainer
 - [x] Cross-platform setup (Mac + Windows)
+- [x] Claude Code persistence setup
 - [ ] Schemas for new models
 - [ ] Services for new models
 - [ ] Routers for new models
@@ -545,8 +548,11 @@ When switching between Claude.ai and Claude Code:
 | 2026-01-27 06:30 UTC | Claude.ai | Added cross-platform setup (Windows), .env.compose.example template |
 | 2026-01-27 07:00 UTC | Claude.ai | Added changelog requirement and audit trail instructions |
 | 2026-01-27 08:55 UTC | Claude Code | Added Claude Code persistence: vscode_server_data volume, .vscode workspace settings, updated .gitignore |
+| 2026-01-27 09:15 UTC | Claude Code | Updated CLAUDE.md: corrected working branch status, updated roadmap, clarified rebuild instructions |
 
 ---
 
-*Working Branch: feature/phase1-services*
-*Next Task: Build schemas, services, routers for Phase 1 models*
+*Working Branch: main*
+*Current Status: Claude Code persistence configured and committed*
+*Next Task: Rebuild container to activate persistence, then continue Phase 1 services*
+*Phase 1 Branch: feature/phase1-services (to be created/resumed)*
