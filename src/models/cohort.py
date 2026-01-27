@@ -1,47 +1,107 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
+"""
+Cohort model for grouping students in training programs.
+"""
+
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, Enum, Text, Index
 from sqlalchemy.orm import relationship
 
 from src.db.base import Base
-from src.models.associations import instructor_cohort
+from src.db.mixins import TimestampMixin, SoftDeleteMixin
+from src.db.enums import CohortStatus
 
 
-class Cohort(Base):
+class Cohort(TimestampMixin, SoftDeleteMixin, Base):
+    """
+    Represents a cohort/class of students in the IP2A program.
+
+    A cohort has a defined start/end date, location, and assigned instructors.
+    Uses Association Object pattern for instructor relationships to track
+    assignment history and primary instructor designation.
+    """
+
     __tablename__ = "cohorts"
 
     id = Column(Integer, primary_key=True, index=True)
 
+    # Identity
     name = Column(String(100), nullable=False)
-    description = Column(String(255), nullable=True)
+    code = Column(
+        String(50), nullable=True, unique=True, index=True
+    )  # e.g., "IP2A-2025-Q1"
+    description = Column(Text, nullable=True)
 
-    start_date = Column(Date, nullable=False)
+    # Status tracking
+    status = Column(
+        Enum(CohortStatus, name="cohort_status", create_constraint=True),
+        nullable=False,
+        default=CohortStatus.PLANNED,
+        index=True,
+    )
+
+    # Dates
+    start_date = Column(Date, nullable=False, index=True)
     end_date = Column(Date, nullable=True)
 
-    # Optional: primary / lead instructor for this cohort (for reporting/UI)
-    primary_instructor_id = Column(
-        Integer,
-        ForeignKey("instructors.id"),
-        nullable=True,
-    )
-
-    # Use foreign_keys to disambiguate from the many-to-many relationship
-    primary_instructor = relationship(
-        "Instructor",
-        foreign_keys=[primary_instructor_id],
-    )
-
-    # Many-to-many: all instructors who have taught / are teaching this cohort
-    instructors = relationship(
-        "Instructor",
-        secondary=instructor_cohort,
-        back_populates="cohorts",
-    )
+    # Capacity
+    max_students = Column(Integer, nullable=True)
 
     # Location assignment
-    location_id = Column(Integer, ForeignKey("locations.id"), nullable=True)
+    location_id = Column(
+        Integer,
+        ForeignKey("locations.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     location = relationship("Location", back_populates="cohorts")
 
+    # Instructor assignments via Association Object
+    # This replaces the simple many-to-many with full tracking
+    instructor_assignments = relationship(
+        "InstructorCohortAssignment",
+        back_populates="cohort",
+        cascade="all, delete-orphan",
+    )
+
     # Students in this cohort
-    students = relationship("Student", back_populates="cohort")
+    students = relationship(
+        "Student",
+        back_populates="cohort",
+        cascade="all, delete-orphan",
+    )
+
+    # Class sessions
+    class_sessions = relationship(
+        "ClassSession",
+        back_populates="cohort",
+        cascade="all, delete-orphan",
+    )
 
     # Instructor hours logged against this cohort
-    instructor_hours = relationship("InstructorHours", back_populates="cohort")
+    instructor_hours = relationship(
+        "InstructorHours",
+        back_populates="cohort",
+        cascade="all, delete-orphan",
+    )
+
+    __table_args__ = (Index("ix_cohort_dates", "start_date", "end_date"),)
+
+    # Convenience properties
+    @property
+    def instructors(self):
+        """Get all active (non-deleted) instructors for this cohort."""
+        return [
+            assignment.instructor
+            for assignment in self.instructor_assignments
+            if not assignment.is_deleted
+        ]
+
+    @property
+    def primary_instructor(self):
+        """Get the primary instructor for this cohort, if designated."""
+        for assignment in self.instructor_assignments:
+            if assignment.is_primary and not assignment.is_deleted:
+                return assignment.instructor
+        return None
+
+    def __repr__(self):
+        return f"<Cohort(id={self.id}, name='{self.name}', status={self.status})>"

@@ -1,19 +1,20 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
+
 from src.models import Student, Cohort, Credential, ToolsIssued, JATCApplication
 from src.schemas.student import StudentCreate, StudentUpdate
 
 
-# ------------------------------------------------------------
+# --------------------------------------------------------------------
 # CREATE
-# ------------------------------------------------------------
+# --------------------------------------------------------------------
 def create_student(db: Session, data: StudentCreate) -> Student:
     student = Student(
         first_name=data.first_name,
         last_name=data.last_name,
         email=data.email,
-        phone=data.phone_number,
-        birthdate=data.date_of_birth,
+        phone=data.phone,
+        birthdate=data.birthdate,
         address=data.address,
         cohort_id=data.cohort_id,
     )
@@ -23,16 +24,13 @@ def create_student(db: Session, data: StudentCreate) -> Student:
     return student
 
 
-# ------------------------------------------------------------
-# READ (Single)
-# ------------------------------------------------------------
+# --------------------------------------------------------------------
+# READ
+# --------------------------------------------------------------------
 def get_student(db: Session, student_id: int) -> Optional[Student]:
     return db.query(Student).filter(Student.id == student_id).first()
 
 
-# ------------------------------------------------------------
-# READ (List)
-# ------------------------------------------------------------
 def list_students(db: Session, skip: int = 0, limit: int = 100) -> List[Student]:
     return (
         db.query(Student)
@@ -43,9 +41,9 @@ def list_students(db: Session, skip: int = 0, limit: int = 100) -> List[Student]
     )
 
 
-# ------------------------------------------------------------
+# --------------------------------------------------------------------
 # UPDATE
-# ------------------------------------------------------------
+# --------------------------------------------------------------------
 def update_student(
     db: Session, student_id: int, data: StudentUpdate
 ) -> Optional[Student]:
@@ -62,9 +60,9 @@ def update_student(
     return student
 
 
-# ------------------------------------------------------------
+# --------------------------------------------------------------------
 # DELETE
-# ------------------------------------------------------------
+# --------------------------------------------------------------------
 def delete_student(db: Session, student_id: int) -> bool:
     student = get_student(db, student_id)
     if not student:
@@ -75,12 +73,9 @@ def delete_student(db: Session, student_id: int) -> bool:
     return True
 
 
-# ------------------------------------------------------------
-# RELATIONSHIP HELPERS
-# ------------------------------------------------------------
-
-
-# Move or assign a student to a cohort
+# --------------------------------------------------------------------
+# RELATIONSHIPS
+# --------------------------------------------------------------------
 def assign_student_to_cohort(
     db: Session, student_id: int, cohort_id: int
 ) -> Optional[Student]:
@@ -91,23 +86,20 @@ def assign_student_to_cohort(
         return None
 
     student.cohort_id = cohort_id
-
     db.commit()
     db.refresh(student)
     return student
 
 
-# Get all credentials for a student
 def list_student_credentials(db: Session, student_id: int) -> List[Credential]:
     return (
         db.query(Credential)
         .filter(Credential.student_id == student_id)
-        .order_by(Credential.date_earned.desc())
+        .order_by(Credential.issue_date.desc())
         .all()
     )
 
 
-# Get all tools issued to a student
 def list_student_tools(db: Session, student_id: int) -> List[ToolsIssued]:
     return (
         db.query(ToolsIssued)
@@ -117,7 +109,6 @@ def list_student_tools(db: Session, student_id: int) -> List[ToolsIssued]:
     )
 
 
-# Get all JATC applications for a student
 def list_student_jatc_applications(
     db: Session, student_id: int
 ) -> List[JATCApplication]:

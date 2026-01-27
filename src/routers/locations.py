@@ -19,7 +19,7 @@ router = APIRouter(prefix="/locations", tags=["Locations"])
 # ------------------------------------------------------------
 # CREATE
 # ------------------------------------------------------------
-@router.post("/", response_model=LocationRead)
+@router.post("/", response_model=LocationRead, status_code=201)
 def create_location(data: LocationCreate, db: Session = Depends(get_db)):
     return location_service.create_location(db, data)
 

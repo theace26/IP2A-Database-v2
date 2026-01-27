@@ -11,6 +11,7 @@ from .attendance import Attendance
 from .tools_issued import ToolsIssued
 from .credential import Credential
 from .jatc_application import JATCApplication
+from .associations import InstructorCohortAssignment
 
 __all__ = [
     "User",
@@ -26,4 +27,5 @@ __all__ = [
     "ToolsIssued",
     "Credential",
     "JATCApplication",
+    "InstructorCohortAssignment",
 ]
