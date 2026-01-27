@@ -51,7 +51,9 @@ services:
       - .:/app:cached
       # Overlay named volume for uploads (persistent, not in git)
       - uploads_data:/app/uploads
-      # Prevent node_modules/.venv from syncing (if used later)
+      # VSCode server data for Claude Code conversations and extension storage
+      - vscode_server_data:/root/.vscode-server
+      # Prevent cache directories from syncing
       - /app/__pycache__
       - /app/.pytest_cache
       - /app/.ruff_cache
@@ -83,3 +85,4 @@ volumes:
   ip2a_db_data:
   ip2a_pgadmin_data:
   uploads_data:
+  vscode_server_data:
