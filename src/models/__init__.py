@@ -12,6 +12,11 @@ from .tools_issued import ToolsIssued
 from .credential import Credential
 from .jatc_application import JATCApplication
 from .associations import InstructorCohortAssignment
+from src.models.organization import Organization
+from src.models.organization_contact import OrganizationContact
+from src.models.member import Member
+from src.models.member_employment import MemberEmployment
+from src.models.audit_log import AuditLog
 
 __all__ = [
     "User",
@@ -28,4 +33,9 @@ __all__ = [
     "Credential",
     "JATCApplication",
     "InstructorCohortAssignment",
+    "Organization",
+    "OrganizationContact",
+    "Member",
+    "MemberEmployment",
+    "AuditLog",
 ]
