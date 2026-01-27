@@ -17,6 +17,7 @@ from src.models.organization_contact import OrganizationContact
 from src.models.member import Member
 from src.models.member_employment import MemberEmployment
 from src.models.audit_log import AuditLog
+from src.models.file_attachment import FileAttachment
 
 __all__ = [
     "User",
@@ -38,4 +39,5 @@ __all__ = [
     "Member",
     "MemberEmployment",
     "AuditLog",
+    "FileAttachment",
 ]

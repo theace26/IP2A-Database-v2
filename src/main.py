@@ -13,6 +13,13 @@ from src.routers.jatc_applications import router as jatc_router
 from src.routers.file_attachments import router as file_router
 from src.routers.files import router as files_router
 
+# Phase 1 routers
+from src.routers.organizations import router as organizations_router
+from src.routers.organization_contacts import router as organization_contacts_router
+from src.routers.members import router as members_router
+from src.routers.member_employments import router as member_employments_router
+from src.routers.audit_logs import router as audit_logs_router
+
 # ------------------------------------------------------------
 # Initialize FastAPI
 # ------------------------------------------------------------
@@ -61,3 +68,10 @@ app.include_router(tools_router)
 app.include_router(jatc_router)
 app.include_router(file_router)
 app.include_router(files_router)
+
+# Phase 1 routers
+app.include_router(organizations_router)
+app.include_router(organization_contacts_router)
+app.include_router(members_router)
+app.include_router(member_employments_router)
+app.include_router(audit_logs_router)
