@@ -95,14 +95,26 @@ IP2A-Database-v2/
 │   │   ├── base.py
 │   │   ├── mixins.py        # TimestampMixin, SoftDeleteMixin
 │   │   └── session.py
+│   ├── middleware/          # ⭐ NEW: Request middleware
+│   │   ├── __init__.py
+│   │   └── audit_context.py # Captures user/IP/user-agent for audit logging
 │   ├── models/              # SQLAlchemy models
 │   ├── schemas/             # Pydantic schemas
 │   ├── services/            # Business logic (CRUD)
+│   │   ├── audit_service.py # ⭐ NEW: Comprehensive audit logging
+│   │   └── ...
 │   ├── routers/             # FastAPI endpoints
+│   │   ├── members_audited.py # ⭐ NEW: Example with full audit logging
+│   │   └── ...
 │   ├── seed/                # Seed data
 │   │   ├── stress_test_*.py # ⭐ UPDATED: 700 employers, 1-20 files/member
 │   │   └── ...
 │   └── tests/               # pytest tests
+├── scripts/                 # ⭐ NEW: Automation scripts
+│   └── audit_maintenance.py # Automated audit log archival & cleanup
+├── docs/                    # ⭐ NEW: Architecture documentation
+│   ├── AUDIT_LOGGING_STANDARDS.md       # Industry standards & compliance
+│   └── SCALABILITY_ARCHITECTURE.md      # 4,000+ concurrent user design
 ├── logs/                    # ⭐ NEW: Auto-heal, notifications, metrics
 │   ├── auto_heal/
 │   ├── admin_notifications/
@@ -536,7 +548,7 @@ When switching between Claude.ai and Claude Code:
    - 27 endpoints, 28 tests planned
    - Ready to begin implementation
 
-5. **Phase 2.1 Implemented** ⭐ NEW
+5. **Phase 2.1 Implemented** ⭐ COMPLETE
    - Enhanced stress test: 700 employers, 1-20 files/member
    - Auto-healing system with self-repair capabilities
    - Admin notification system (multi-channel)
@@ -545,20 +557,47 @@ When switching between Claude.ai and Claude Code:
    - Commit: 16f92f5 on main branch
    - **Runtime:** Stress test takes 15-25 minutes
 
+6. **Comprehensive Audit Logging** ⭐ NEW
+   - Full audit trail system: READ, BULK_READ, CREATE, UPDATE, DELETE
+   - Middleware for automatic context capture (user, IP, user-agent)
+   - Service layer with automatic change detection
+   - Example implementation in `members_audited.py` router
+   - Automated maintenance script for S3 archival
+   - Industry standards documentation (SOX, HIPAA, GDPR compliance)
+   - Test script validated all logging functions
+
+7. **Production Database Optimizations** ⭐ NEW
+   - Restored file_attachments table (migration d8a4e12155a3)
+   - Added 7 production indexes for performance (migration 0b9b93948cdb)
+   - Stress test analytics report with performance benchmarks
+   - Database size: 84 MB, 515K records in 10.5 minutes
+
+8. **Scalability Architecture** ⭐ NEW
+   - Comprehensive design for 4,000+ concurrent users
+   - 5-phase implementation plan:
+     1. Connection pooling (PgBouncer + SQLAlchemy)
+     2. Read/write splitting with PostgreSQL replicas
+     3. Redis caching layer (80-90% cache hit rate)
+     4. JWT authentication and RBAC
+     5. Rate limiting
+   - Performance benchmarks: 50 → 10,000+ concurrent users
+   - Cost estimates: $410-$1,360/month
+   - 7-week implementation timeline
+
 ### 📊 Current State
 - **Branch:** main
-- **Latest Commit:** 16f92f5 (Phase 2.1)
-- **Tag:** v0.2.0 (Phase 1), Phase 2.1 on main (not tagged)
+- **Latest Commit:** 9a336c1 (Scalability Architecture)
+- **Tag:** v0.2.0 (Phase 1), Phase 2.1+ on main (not tagged)
 - **Tests:** 51 passing
-- **New Features:** Auto-heal, resilience check, enhanced stress test
-- **Next:** Begin Phase 2 implementation (SALTing, Benevolence, Grievances)
+- **New Features:** Auto-heal, resilience check, audit logging, scalability design
+- **Next:** Begin scalability Phase 1 (Connection Pooling) OR Phase 2 (Union Operations)
 
 ---
 
-*Last Updated: January 27, 2026 (Evening - Phase 2.1 Complete)*
+*Last Updated: January 27, 2026 (Evening - Audit Logging & Scalability Complete)*
 *Working Branch: main*
-*Latest Commit: 16f92f5 - Phase 2.1: Enhanced Stress Test & Auto-Healing*
-*Next Task: Create feature/phase2-operations branch and begin Phase 2 implementation*
+*Latest Commit: 9a336c1 - Scalability Architecture Documentation*
+*Next Task: Implement connection pooling (scalability) OR create feature/phase2-operations branch*
 
 ---
 
@@ -616,6 +655,10 @@ docker-compose up -d
 | 2026-01-27 08:55 UTC | Claude Code | Added Claude Code persistence: vscode_server_data volume, .vscode workspace settings |
 | 2026-01-27 09:15 UTC | Claude Code | Updated CLAUDE.md: corrected working branch status, updated roadmap |
 | 2026-01-27 20:00 UTC | Claude Code | Phase 2.1 Complete: Enhanced stress test (700 employers, 1-20 files/member), auto-healing system, admin notifications, resilience checker, new CLI commands |
+| 2026-01-27 23:30 UTC | Claude Code | Stress test analytics: 515K records, 84 MB, 10.5 min runtime, 4,537 auto-fixed issues |
+| 2026-01-27 23:45 UTC | Claude Code | Production optimizations: Restored file_attachments table, added 7 performance indexes |
+| 2026-01-28 00:15 UTC | Claude Code | Comprehensive audit logging: READ/BULK_READ/CREATE/UPDATE/DELETE tracking, middleware, service layer, industry standards documentation |
+| 2026-01-28 01:00 UTC | Claude Code | Scalability architecture: 4,000+ user design, PgBouncer pooling, read replicas, Redis caching, JWT auth, rate limiting (7-week plan)
 
 ---
 
