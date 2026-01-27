@@ -1,0 +1,10 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\.devcontainer",
+    "\\src",
+    "\\src\\models"
+  ],
+  "SelectedNode": "\\src\\models\\jatc_application.py",
+  "PreviewInSolutionExplorer": false
+}

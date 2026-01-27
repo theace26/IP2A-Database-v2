@@ -1,0 +1,64 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov/
+.tox
+.eggs
+*.egg-info/
+*.egg
+
+# Virtual environments
+.venv
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Dev container
+.devcontainer/
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Test artifacts
+.coverage
+coverage.xml
+*.cover
+
+# Local env files (be careful - .env.compose IS needed)
+.env
+.env.local
+.env.*.local
+
+# Uploads (handled by named volume)
+uploads/
+uploads_data/
+
+# Mac
+.DS_Store
+
+# Build artifacts
+dist/
+build/
+
+# Logs
+*.log
+logs/

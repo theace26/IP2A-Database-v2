@@ -1,0 +1,574 @@
+#!/usr/bin/env python
+"""
+IP2A Database Management Tool (ip2adb)
+
+Unified CLI for all database operations: seeding, integrity checks, load testing.
+
+Usage:
+    ip2adb seed                                    # Normal seed
+    ip2adb seed --stress                           # Stress test seed
+    ip2adb seed --students 1000 --members 5000    # Custom volumes
+    ip2adb integrity                               # Integrity check only
+    ip2adb integrity --repair                      # With auto-repair
+    ip2adb load                                    # Load test
+    ip2adb load --users 100                        # Custom load test
+    ip2adb all                                     # Run everything (seed + integrity + load)
+    ip2adb all --stress                            # Stress test everything
+    ip2adb reset                                   # Truncate all data
+
+Examples:
+    # Quick development setup
+    ip2adb seed --quick
+
+    # Production-ready data
+    ip2adb seed --stress --members 10000 --students 1000
+
+    # Full system test
+    ip2adb all --stress
+
+    # Health check
+    ip2adb integrity --no-files
+
+    # Performance test
+    ip2adb load --users 50
+
+For detailed help on each command:
+    ip2adb seed --help
+    ip2adb integrity --help
+    ip2adb load --help
+"""
+
+import sys
+import argparse
+from datetime import datetime
+from typing import Optional
+
+from src.config.settings import settings
+
+
+class IP2ADB:
+    """IP2A Database Management Tool."""
+
+    def __init__(self):
+        self.env = settings.IP2A_ENV.lower()
+        self.verbose = False
+
+    def print_header(self, title: str):
+        """Print formatted header."""
+        print("\n" + "=" * 70)
+        print(f"  {title}")
+        print("=" * 70)
+        print(f"Environment: {self.env}")
+        print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print("=" * 70 + "\n")
+
+    def seed(self, args):
+        """Run seed operations."""
+        from src.db.session import get_db_session
+
+        self.print_header("DATABASE SEEDING")
+
+        if args.stress:
+            print("🚀 Stress Test Mode: Large-scale data generation")
+            print()
+
+            # Import and run stress test
+            from src.seed.stress_test_seed import run_stress_test
+
+            # Override counts if custom values provided
+            if any([args.members, args.students, args.instructors, args.locations, args.organizations]):
+                print("⚠️  Custom data volumes specified:")
+                if args.members:
+                    print(f"   Members: {args.members}")
+                if args.students:
+                    print(f"   Students: {args.students}")
+                if args.instructors:
+                    print(f"   Instructors: {args.instructors}")
+                if args.locations:
+                    print(f"   Locations: {args.locations}")
+                if args.organizations:
+                    print(f"   Organizations: {args.organizations}")
+                print()
+                print("⚠️  Note: Custom volumes with stress test not yet implemented")
+                print("   Using standard stress test volumes")
+                print()
+
+            run_stress_test(truncate=not args.no_truncate)
+
+        else:
+            # Normal seed
+            print("📦 Normal Seed: Standard development data")
+            print()
+
+            from src.seed.run_seed import main as run_normal_seed
+
+            if args.quick:
+                print("🏃 Quick mode: Minimal data for fast setup")
+                print()
+
+            run_normal_seed(truncate=not args.no_truncate)
+
+        print("\n✅ Seeding complete!")
+        return 0
+
+    def integrity(self, args):
+        """Run integrity check."""
+        from src.db.session import get_db_session
+        from src.db.integrity_check import IntegrityChecker
+        from src.db.integrity_repair import IntegrityRepairer
+
+        self.print_header("DATABASE INTEGRITY CHECK")
+
+        # Production safety
+        if self.env == "production" and not args.force:
+            print("🚨 ERROR: Blocked in production environment")
+            print("   Use --force flag if you really need to run this in production")
+            return 1
+
+        db = get_db_session()
+
+        try:
+            # Run checks
+            checker = IntegrityChecker(db)
+            check_files = not args.no_files
+
+            print(f"🔍 Running integrity checks {'(without files)' if args.no_files else ''}...")
+            print()
+
+            issues = checker.run_all_checks(check_files=check_files)
+
+            # Display report
+            report = checker.generate_report()
+            print(report)
+
+            # Export if requested
+            if args.export:
+                with open(args.export, "w") as f:
+                    f.write(report)
+                print(f"\n📄 Report exported to: {args.export}")
+
+            # Auto-repair if requested
+            if args.repair:
+                print("\n🔧 Starting auto-repair...")
+
+                if not args.dry_run:
+                    confirm = input("Execute repairs? (yes/no): ") if sys.stdin.isatty() else "yes"
+                    if confirm.lower() != "yes":
+                        print("Repair cancelled.")
+                        return 0
+
+                repairer = IntegrityRepairer(db, dry_run=args.dry_run)
+                actions = repairer.repair_all_auto_fixable(issues)
+
+                repair_report = repairer.generate_repair_report()
+                print(repair_report)
+
+            # Interactive repair if requested
+            if args.interactive:
+                print("\n🤝 Starting interactive repair...")
+                repairer = IntegrityRepairer(db, dry_run=args.dry_run)
+                repairer.interactive_repair_files(issues)
+
+            # Return code based on critical issues
+            critical = [i for i in issues if i.severity == "critical"]
+            if critical:
+                print(f"\n⚠️  {len(critical)} critical issues remain")
+                return 1
+
+            print("\n✅ Integrity check complete!")
+            return 0
+
+        finally:
+            db.close()
+
+    def load(self, args):
+        """Run load test."""
+        from src.tests.load_test import LoadTest
+
+        self.print_header("DATABASE LOAD TEST")
+
+        # Production safety
+        if self.env == "production" and not args.force:
+            print("🚨 ERROR: Blocked in production environment")
+            print("   Load testing can impact production users!")
+            print("   Use --force flag if you really need to run this")
+            return 1
+
+        # Preset configurations
+        if args.quick:
+            args.users = 10
+            args.ops = 20
+            print("🏃 Quick Test Mode: 10 users, 20 ops each")
+        elif args.stress:
+            args.users = 200
+            args.ops = 100
+            print("💪 Stress Test Mode: 200 users, 100 ops each")
+
+        print()
+        print(f"Configuration:")
+        print(f"   Concurrent Users: {args.users}")
+        print(f"   Operations per User: {args.ops}")
+        print(f"   Total Operations: {args.users * args.ops:,}")
+        print(f"   Think Time: {args.think_time}ms")
+        print(f"   Ramp-up: {args.ramp_up}s")
+        print()
+
+        # Confirm if not quick/stress mode
+        if not args.quick and not args.stress and sys.stdin.isatty():
+            confirm = input(f"Start load test with {args.users} users? (yes/no): ")
+            if confirm.lower() != "yes":
+                print("Aborted.")
+                return 0
+            print()
+
+        # Configure pattern distribution
+        if args.pattern != "distributed":
+            pattern_distribution = {args.pattern: 1.0}
+        else:
+            pattern_distribution = {
+                "read_heavy": 0.5,
+                "write_heavy": 0.2,
+                "mixed": 0.25,
+                "file_operations": 0.05
+            }
+
+        # Run load test
+        load_test = LoadTest(
+            num_users=args.users,
+            operations_per_user=args.ops,
+            think_time_ms=args.think_time,
+            ramp_up_seconds=args.ramp_up
+        )
+
+        try:
+            load_test.run(pattern_distribution=pattern_distribution)
+
+            # Generate report
+            report = load_test.generate_report()
+            print(report)
+
+            # Export if requested
+            if args.export:
+                with open(args.export, "w") as f:
+                    f.write(report)
+                print(f"\n📄 Report exported to: {args.export}")
+
+            # Check performance
+            all_operations = []
+            for user in load_test.users:
+                all_operations.extend(user.metrics.operations)
+
+            failed_ops = sum(1 for op in all_operations if not op.success)
+            total_ops = len(all_operations)
+            failure_rate = (failed_ops / total_ops) if total_ops > 0 else 0
+
+            if failure_rate > 0.05:
+                print("\n⚠️  High failure rate detected")
+                return 1
+
+            print("\n✅ Load test complete!")
+            return 0
+
+        except KeyboardInterrupt:
+            print("\n\n⚠️  Test interrupted by user")
+            return 130
+
+    def run_all(self, args):
+        """Run all operations in sequence."""
+        self.print_header("COMPLETE DATABASE TEST SUITE")
+
+        print("📋 This will run:")
+        print("   1. Database seeding")
+        print("   2. Integrity check")
+        print("   3. Load testing")
+        print()
+
+        if sys.stdin.isatty():
+            confirm = input("Continue with full test suite? (yes/no): ")
+            if confirm.lower() != "yes":
+                print("Aborted.")
+                return 0
+            print()
+
+        results = []
+
+        # Step 1: Seed
+        print("\n" + "▶" * 35)
+        print("STEP 1/3: Database Seeding")
+        print("▶" * 35)
+        seed_result = self.seed(args)
+        results.append(("Seed", seed_result))
+
+        if seed_result != 0:
+            print("\n❌ Seeding failed, stopping test suite")
+            return seed_result
+
+        # Step 2: Integrity Check
+        print("\n" + "▶" * 35)
+        print("STEP 2/3: Integrity Check")
+        print("▶" * 35)
+
+        # Create integrity args
+        integrity_args = argparse.Namespace(
+            repair=True,
+            interactive=False,
+            dry_run=False,
+            no_files=args.no_files,
+            export=None,
+            force=args.force
+        )
+        integrity_result = self.integrity(integrity_args)
+        results.append(("Integrity", integrity_result))
+
+        # Step 3: Load Test
+        print("\n" + "▶" * 35)
+        print("STEP 3/3: Load Testing")
+        print("▶" * 35)
+
+        # Create load test args
+        load_args = argparse.Namespace(
+            users=args.users,
+            ops=args.ops,
+            think_time=args.think_time,
+            ramp_up=args.ramp_up,
+            pattern=args.pattern,
+            quick=args.quick,
+            stress=args.stress,
+            export=None,
+            force=args.force
+        )
+        load_result = self.load(load_args)
+        results.append(("Load Test", load_result))
+
+        # Summary
+        print("\n" + "=" * 70)
+        print("COMPLETE TEST SUITE RESULTS")
+        print("=" * 70)
+        print()
+
+        all_passed = True
+        for test_name, result in results:
+            status = "✅ PASSED" if result == 0 else "❌ FAILED"
+            print(f"   {test_name}: {status}")
+            if result != 0:
+                all_passed = False
+
+        print()
+        if all_passed:
+            print("🎉 All tests passed! Database is production-ready.")
+            return 0
+        else:
+            print("⚠️  Some tests failed. Review results above.")
+            return 1
+
+    def reset(self, args):
+        """Truncate all data."""
+        from src.seed.truncate_all import truncate_all_tables
+        from src.db.session import get_db_session
+
+        self.print_header("DATABASE RESET")
+
+        # Production safety
+        if self.env == "production" and not args.force:
+            print("🚨 ERROR: Blocked in production environment")
+            print("   This will DELETE ALL DATA!")
+            print("   Use --force flag if you really need to do this")
+            return 1
+
+        print("⚠️  WARNING: This will DELETE ALL DATA in the database")
+        print()
+
+        if sys.stdin.isatty():
+            confirm = input("Type 'DELETE ALL DATA' to confirm: ")
+            if confirm != "DELETE ALL DATA":
+                print("Aborted.")
+                return 0
+        else:
+            print("Non-interactive mode - skipping confirmation")
+
+        print()
+        print("🗑️  Truncating all tables...")
+
+        db = get_db_session()
+        try:
+            truncate_all_tables(db)
+            print("\n✅ Database reset complete!")
+            return 0
+        except Exception as e:
+            print(f"\n❌ Error: {e}")
+            return 1
+        finally:
+            db.close()
+
+
+def main():
+    """Main entry point."""
+    parser = argparse.ArgumentParser(
+        prog="ip2adb",
+        description="IP2A Database Management Tool - Unified CLI for all database operations",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  ip2adb seed                           Normal seed with standard data
+  ip2adb seed --stress                  Stress test with large datasets
+  ip2adb seed --members 5000            Custom member count
+  ip2adb integrity                      Run integrity check
+  ip2adb integrity --repair             Check and auto-repair issues
+  ip2adb load --users 50                Load test with 50 users
+  ip2adb all --stress                   Full test suite with stress data
+  ip2adb reset                          Truncate all data (dangerous!)
+
+For command-specific help:
+  ip2adb seed --help
+  ip2adb integrity --help
+  ip2adb load --help
+        """
+    )
+
+    subparsers = parser.add_subparsers(dest="command", help="Command to run")
+
+    # === SEED COMMAND ===
+    seed_parser = subparsers.add_parser(
+        "seed",
+        help="Seed the database with data",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""
+Seed the database with test data.
+
+Modes:
+  Normal:  Standard development data (~500 students, 50 instructors)
+  Stress:  Large-scale data (10k members, 250k employments, 150k files)
+  Quick:   Minimal data for fast setup
+  Custom:  Specify exact counts for each entity
+        """
+    )
+    seed_parser.add_argument("--stress", action="store_true", help="Use stress test volumes")
+    seed_parser.add_argument("--quick", action="store_true", help="Quick mode with minimal data")
+    seed_parser.add_argument("--no-truncate", action="store_true", help="Don't truncate existing data")
+    seed_parser.add_argument("--members", type=int, help="Number of members (stress mode)")
+    seed_parser.add_argument("--students", type=int, help="Number of students")
+    seed_parser.add_argument("--instructors", type=int, help="Number of instructors")
+    seed_parser.add_argument("--locations", type=int, help="Number of locations")
+    seed_parser.add_argument("--organizations", type=int, help="Number of organizations")
+
+    # === INTEGRITY COMMAND ===
+    integrity_parser = subparsers.add_parser(
+        "integrity",
+        help="Check database integrity",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""
+Check database integrity and optionally repair issues.
+
+Checks:
+  - Foreign key integrity (orphaned records)
+  - Required fields validation
+  - Enum value validation
+  - Date logic consistency
+  - Duplicate detection
+  - File attachment integrity
+        """
+    )
+    integrity_parser.add_argument("--repair", action="store_true", help="Auto-repair fixable issues")
+    integrity_parser.add_argument("--interactive", action="store_true", help="Interactive repair for complex issues")
+    integrity_parser.add_argument("--dry-run", action="store_true", help="Preview repairs without committing")
+    integrity_parser.add_argument("--no-files", action="store_true", help="Skip file system checks (faster)")
+    integrity_parser.add_argument("--export", type=str, metavar="FILE", help="Export report to file")
+    integrity_parser.add_argument("--force", action="store_true", help="Force run in production")
+
+    # === LOAD COMMAND ===
+    load_parser = subparsers.add_parser(
+        "load",
+        help="Run load testing",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""
+Simulate concurrent users to test database performance.
+
+Patterns:
+  read_heavy:       90%% reads, 10%% writes (viewers, searchers)
+  write_heavy:      70%% writes, 30%% reads (data entry)
+  mixed:            60%% reads, 40%% writes (typical users)
+  file_operations:  File attachment operations
+  distributed:      Realistic mix of all patterns (default)
+        """
+    )
+    load_parser.add_argument("--users", type=int, default=50, help="Number of concurrent users")
+    load_parser.add_argument("--ops", type=int, default=50, help="Operations per user")
+    load_parser.add_argument("--think-time", type=int, default=100, help="Think time between ops (ms)")
+    load_parser.add_argument("--ramp-up", type=int, default=10, help="Ramp-up time (seconds)")
+    load_parser.add_argument("--pattern", choices=["read_heavy", "write_heavy", "mixed", "file_operations", "distributed"],
+                           default="distributed", help="User behavior pattern")
+    load_parser.add_argument("--quick", action="store_true", help="Quick test: 10 users, 20 ops")
+    load_parser.add_argument("--stress", action="store_true", help="Stress test: 200 users, 100 ops")
+    load_parser.add_argument("--export", type=str, metavar="FILE", help="Export report to file")
+    load_parser.add_argument("--force", action="store_true", help="Force run in production")
+
+    # === ALL COMMAND ===
+    all_parser = subparsers.add_parser(
+        "all",
+        help="Run complete test suite (seed + integrity + load)",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""
+Run the complete test suite in sequence:
+  1. Database seeding
+  2. Integrity check with auto-repair
+  3. Load testing
+
+Use this for comprehensive validation before deployment.
+        """
+    )
+    all_parser.add_argument("--stress", action="store_true", help="Use stress test volumes")
+    all_parser.add_argument("--quick", action="store_true", help="Quick mode for all tests")
+    all_parser.add_argument("--no-truncate", action="store_true", help="Don't truncate existing data")
+    all_parser.add_argument("--no-files", action="store_true", help="Skip file checks in integrity test")
+    all_parser.add_argument("--users", type=int, default=50, help="Load test users")
+    all_parser.add_argument("--ops", type=int, default=50, help="Load test operations per user")
+    all_parser.add_argument("--think-time", type=int, default=100, help="Load test think time (ms)")
+    all_parser.add_argument("--ramp-up", type=int, default=10, help="Load test ramp-up (seconds)")
+    all_parser.add_argument("--pattern", default="distributed", help="Load test pattern")
+    all_parser.add_argument("--force", action="store_true", help="Force run in production")
+
+    # === RESET COMMAND ===
+    reset_parser = subparsers.add_parser(
+        "reset",
+        help="Truncate all database data (DANGEROUS!)",
+        description="Remove all data from all tables. This operation cannot be undone!"
+    )
+    reset_parser.add_argument("--force", action="store_true", help="Force run in production")
+
+    # Parse arguments
+    args = parser.parse_args()
+
+    if not args.command:
+        parser.print_help()
+        return 1
+
+    # Create tool instance and run command
+    tool = IP2ADB()
+
+    try:
+        if args.command == "seed":
+            return tool.seed(args)
+        elif args.command == "integrity":
+            return tool.integrity(args)
+        elif args.command == "load":
+            return tool.load(args)
+        elif args.command == "all":
+            return tool.run_all(args)
+        elif args.command == "reset":
+            return tool.reset(args)
+        else:
+            parser.print_help()
+            return 1
+
+    except KeyboardInterrupt:
+        print("\n\n⚠️  Operation cancelled by user")
+        return 130
+    except Exception as e:
+        print(f"\n❌ ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

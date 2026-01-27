@@ -1,15 +1,13 @@
 """
-DEPRECATED: Enums have moved to src/db/enums/
+Database enums - consolidated exports.
 
-This file exists for backwards compatibility only.
-Please update imports to use:
-    from src.db.enums import EnumName
-
-This file will be removed in a future version.
+All enums are defined in src/db/enums/ to avoid circular imports.
+Models should import from here:
+    from src.db.enums import CohortStatus, MemberStatus
 """
 
-# Re-export everything from the new location (must be at top for E402)
-from src.db.enums import (
+# Import from local enum files (no circular dependency)
+from src.db.enums.base_enums import (
     LocationType,
     EnrollmentStatus,
     AttendanceStatus,
@@ -18,6 +16,9 @@ from src.db.enums import (
     PaymentMethod,
     RateType,
     ApplicationStatus,
+)
+
+from src.db.enums.organization_enums import (
     OrganizationType,
     MemberStatus,
     MemberClassification,
@@ -25,16 +26,8 @@ from src.db.enums import (
     AuditAction,
 )
 
-import warnings
-
-warnings.warn(
-    "Importing from src.models.enums is deprecated. "
-    "Use 'from src.db.enums import ...' instead.",
-    DeprecationWarning,
-    stacklevel=2,
-)
-
 __all__ = [
+    # Base enums (education/training)
     "LocationType",
     "EnrollmentStatus",
     "AttendanceStatus",
@@ -43,6 +36,7 @@ __all__ = [
     "PaymentMethod",
     "RateType",
     "ApplicationStatus",
+    # Organization enums (union operations)
     "OrganizationType",
     "MemberStatus",
     "MemberClassification",

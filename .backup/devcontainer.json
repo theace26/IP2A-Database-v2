@@ -7,10 +7,6 @@
   "shutdownAction": "none",
   // Don't override the command from docker-compose
   "overrideCommand": false,
-  // Mount for VSCode server data persistence
-  "mounts": [
-    "source=vscode_server_data,target=/root/.vscode-server,type=volume"
-  ],
   // Post-create commands (runs once after container is created)
   "postCreateCommand": "pip install -e . 2>/dev/null || true && echo '✅ Dev container ready!'",
   // Post-start commands (runs every time container starts)
@@ -33,9 +29,7 @@
         // Utilities
         "redhat.vscode-yaml",
         "tamasfe.even-better-toml",
-        "streetsidesoftware.code-spell-checker",
-        // Claude Code
-        "anthropic.claude-code"
+        "streetsidesoftware.code-spell-checker"
       ],
       "settings": {
         // Python
@@ -76,9 +70,7 @@
             "username": "ip2a_user",
             "password": "supersecret"
           }
-        ],
-        // Claude Code
-        "claude.persistConversations": true
+        ]
       }
     }
   },

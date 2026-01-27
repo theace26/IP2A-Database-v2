@@ -28,8 +28,25 @@ def clear_table(db: Session, table_name: str, cascade: bool = False):
     db.commit()
 
 
-def add_records(db: Session, records: list):
-    """Bulk add records with proper session handling."""
-    for record in records:
-        db.add(record)
-    db.commit()
+def add_records(db: Session, records: list, batch_size: int = None):
+    """
+    Bulk add records with proper session handling.
+
+    Args:
+        db: Database session
+        records: List of model instances to add
+        batch_size: If provided, commit in batches for better performance with large datasets
+    """
+    if batch_size is None or len(records) <= batch_size:
+        # Add all at once for small datasets
+        for record in records:
+            db.add(record)
+        db.commit()
+    else:
+        # Add in batches for large datasets
+        for i in range(0, len(records), batch_size):
+            batch = records[i:i + batch_size]
+            for record in batch:
+                db.add(record)
+            db.commit()
+            db.flush()  # Clear session between batches
