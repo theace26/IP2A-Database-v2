@@ -18,6 +18,10 @@ from src.models.member import Member
 from src.models.member_employment import MemberEmployment
 from src.models.audit_log import AuditLog
 from src.models.file_attachment import FileAttachment
+from src.models.salting_activity import SALTingActivity
+from src.models.benevolence_application import BenevolenceApplication
+from src.models.benevolence_review import BenevolenceReview
+from src.models.grievance import Grievance, GrievanceStepRecord
 
 __all__ = [
     "User",
@@ -40,4 +44,9 @@ __all__ = [
     "MemberEmployment",
     "AuditLog",
     "FileAttachment",
+    "SALTingActivity",
+    "BenevolenceApplication",
+    "BenevolenceReview",
+    "Grievance",
+    "GrievanceStepRecord",
 ]

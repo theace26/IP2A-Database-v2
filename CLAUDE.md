@@ -667,23 +667,29 @@ pip install httpx pytest-cov
 **Documentation:**
 - [x] PHASE_2.1_SUMMARY.md - Complete implementation guide
 
-### Phase 2: Union Operations - 📋 PLANNED (Next)
+### Phase 2: Union Operations - ✅ COMPLETE (January 27, 2026)
 **Target:** SALTing activities, Benevolence Fund, Grievance management
-**Plan Location:** `/root/.claude/plans/sharded-cuddling-cherny.md`
+**Migration:** `bc1f99c730dc` - Add Phase 2 union operations models
 
-**Models to Build:**
-- [ ] SALTingActivity - Track organizing efforts at non-union employers
-- [ ] BenevolenceApplication - Financial assistance requests
-- [ ] BenevolenceReview - Multi-level approval workflow (VP/Admin/Manager/President)
-- [ ] Grievance - Formal complaint tracking through arbitration
+**Models Built:**
+- [x] SALTingActivity - Track organizing efforts at non-union employers
+- [x] BenevolenceApplication - Financial assistance requests
+- [x] BenevolenceReview - Multi-level approval workflow (VP/Admin/Manager/President)
+- [x] Grievance + GrievanceStepRecord - Formal complaint tracking through arbitration
 
-**Scope:**
-- [ ] 4 new models with enums
-- [ ] 27+ API endpoints
-- [ ] 28+ tests
-- [ ] Seed data for all models
-- [ ] Migration: `alembic revision --autogenerate -m "Add Phase 2"`
+**Delivered:**
+- [x] 5 new database tables with 9 new enums
+- [x] 27 API endpoints across 4 routers
+- [x] 31 tests (all passing)
+- [x] Migration with indexes preserved
+- [ ] Seed data for Phase 2 models (next task)
 - [ ] Target: v0.3.0 release
+
+**New Endpoints:**
+- `/salting-activities/` - CRUD for organizing activities
+- `/benevolence-applications/` - CRUD for financial assistance
+- `/benevolence-reviews/` - CRUD + by-application lookup
+- `/grievances/` - CRUD + by-number lookup + nested step records
 
 ### Future Phases
 - Phase 3: Document management, S3 (file storage)
@@ -772,18 +778,18 @@ When switching between Claude.ai and Claude Code:
 
 ### 📊 Current State
 - **Branch:** main
-- **Latest Commit:** 9a336c1 (Scalability Architecture)
-- **Tag:** v0.2.0 (Phase 1), Phase 2.1+ on main (not tagged)
-- **Tests:** 51 passing
-- **New Features:** Auto-heal, resilience check, audit logging, scalability design
-- **Next:** Begin scalability Phase 1 (Connection Pooling) OR Phase 2 (Union Operations)
+- **Tag:** v0.2.0 (Phase 1)
+- **Tests:** 82 total (79 passing, 3 pre-existing audit_log schema issues)
+- **Phase 2 Tests:** 31/31 passing
+- **New Tables:** salting_activities, benevolence_applications, benevolence_reviews, grievances, grievance_step_records
+- **Decision Made:** Features first, scale when real users exist
+- **Next:** Seed data for Phase 2, then Phase 3 or authentication
 
 ---
 
-*Last Updated: January 27, 2026 (Evening - Audit Logging & Scalability Complete)*
+*Last Updated: January 27, 2026 (Phase 2 Union Operations Complete)*
 *Working Branch: main*
-*Latest Commit: 9a336c1 - Scalability Architecture Documentation*
-*Next Task: Implement connection pooling (scalability) OR create feature/phase2-operations branch*
+*Next Task: Phase 2 seed data, then authentication or Phase 3*
 
 ---
 
@@ -847,10 +853,10 @@ docker-compose up -d
 | 2026-01-28 01:00 UTC | Claude Code | Scalability architecture: 4,000+ user design, PgBouncer pooling, read replicas, Redis caching, JWT auth, rate limiting (7-week plan) |
 | 2026-01-28 01:45 UTC | Claude Code | Scaling readiness assessment: Honest evaluation - current capacity 50 users, need 80x increase for 4,000+ users, $24K-44K budget, 6-12 weeks timeline |
 | 2026-01-28 02:00 UTC | Claude Code | Documentation reorganization: Moved all docs to Documentation/ folder with Architecture/Standards/Guides/Reports structure, added Claude.ai sync schedule |
+| 2026-01-28 03:00 UTC | Claude Code | Phase 2 Complete: SALTingActivity, BenevolenceApplication, BenevolenceReview, Grievance + GrievanceStepRecord. 5 tables, 9 enums, 27 endpoints, 31 tests. Migration bc1f99c730dc. Decision: features first, scale later. |
 
 ---
 
 *Working Branch: main*
-*Current Status: Documentation reorganized, scaling assessment complete*
-*Next Task: DECISION NEEDED - Implement scalability Phase 1 (connection pooling) OR continue Phase 2 (Union Operations)*
-*Critical Read: Documentation/Reports/SCALING_READINESS_ASSESSMENT.md*
+*Current Status: Phase 2 Union Operations complete*
+*Next Task: Phase 2 seed data, then authentication or Phase 3*

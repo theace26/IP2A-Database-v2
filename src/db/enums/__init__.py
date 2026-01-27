@@ -24,6 +24,16 @@ from src.db.enums.organization_enums import (
     MemberClassification,
     SaltingScore,
     AuditAction,
+    # Phase 2
+    SALTingActivityType,
+    SALTingOutcome,
+    BenevolenceReason,
+    BenevolenceStatus,
+    BenevolenceReviewLevel,
+    BenevolenceReviewDecision,
+    GrievanceStep,
+    GrievanceStatus,
+    GrievanceStepOutcome,
 )
 
 __all__ = [
@@ -42,4 +52,14 @@ __all__ = [
     "MemberClassification",
     "SaltingScore",
     "AuditAction",
+    # Phase 2 enums
+    "SALTingActivityType",
+    "SALTingOutcome",
+    "BenevolenceReason",
+    "BenevolenceStatus",
+    "BenevolenceReviewLevel",
+    "BenevolenceReviewDecision",
+    "GrievanceStep",
+    "GrievanceStatus",
+    "GrievanceStepOutcome",
 ]
