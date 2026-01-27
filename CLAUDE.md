@@ -23,39 +23,44 @@ This bidirectional sync keeps both Claudes aligned on project state.
 **Repository:** https://github.com/theace26/IP2A-Database-v2
 **Local Path:** `~/Projects/IP2A-Database-v2` (alias: `$IP2A`)
 **Owner:** Xerxes
-**Status:** Phase 1 COMPLETE (Models, Services, Routers, Tests) + Database Management Suite
+**Status:** v0.2.0 Released - Phase 1 Complete, Phase 2 Planned
 
 ---
 
 ## Git Workflow
 
-### Current State (January 27, 2026)
+### Current State (January 27, 2026 - Updated)
 ```
-main (v0.1.1) ─── Stable baseline
+main (v0.2.0) ─── ✅ Phase 1 MERGED & TAGGED
     │
-    └── feature/phase1-services ─── ACTIVE BRANCH
-        └── Phase 1 COMPLETE: models + schemas + services + routers + tests
-        └── Database management tools: ip2adb, stress test, integrity check, load test
+    └── feature/phase1-services ─── Merged to main
+
+Next: feature/phase2-operations ─── SALTing, Benevolence, Grievances
 ```
 
 ### Tags
-| Tag | Description |
-|-----|-------------|
-| `v0.1.1` | Stabilized src layout and project structure |
-| `v0.1.0` | Backend stabilization complete |
+| Tag | Description | Status |
+|-----|-------------|--------|
+| `v0.2.0` | Phase 1 Complete: Services + DB Tools | ✅ Current |
+| `v0.1.1` | Stabilized src layout and project structure | Released |
+| `v0.1.0` | Backend stabilization complete | Released |
 
 ### Commands
 ```bash
 # Set project shortcut (add to ~/.zshrc)
 export IP2A=~/Projects/IP2A-Database-v2
 
-# Switch to working branch
-cd $IP2A && git checkout feature/phase1-services
+# Current branch (main at v0.2.0)
+cd $IP2A && git status
 
-# After completing phase, merge to main
+# Start Phase 2
+git checkout -b feature/phase2-operations
+git push -u origin feature/phase2-operations
+
+# After completing Phase 2, merge to main
 git checkout main
-git merge feature/phase1-services -m "Complete Phase 1 services layer"
-git tag -a v0.2.0 -m "v0.2.0 - Phase 1 complete"
+git merge feature/phase2-operations -m "Complete Phase 2: SALTing, Benevolence, Grievances"
+git tag -a v0.3.0 -m "v0.3.0 - Phase 2 complete"
 git push origin main --tags
 ```
 
@@ -116,7 +121,7 @@ IP2A-Database-v2/
 | Seed data | ✅ 510 students, 54 instructors |
 | Existing schemas | ✅ |
 
-### Phase 1 Services Layer - ✅ COMPLETE
+### Phase 1 Services Layer - ✅ COMPLETE (v0.2.0)
 
 | Component | Organization | OrgContact | Member | MemberEmployment | AuditLog |
 |-----------|:------------:|:----------:|:------:|:----------------:|:--------:|
@@ -124,10 +129,11 @@ IP2A-Database-v2/
 | Schema    | ✅           | ✅         | ✅     | ✅               | ✅       |
 | Service   | ✅           | ✅         | ✅     | ✅               | ✅*      |
 | Router    | ✅           | ✅         | ✅     | ✅               | ✅*      |
-| Tests     | ✅ (7 tests) | ✅ (7 tests)| ✅ (7 tests) | ✅ (7 tests) | ✅ (7 tests) |
+| Tests     | ✅ (7 tests) | ✅ (7 tests)| ✅ (9 tests) | ✅ (7 tests) | ✅ (5 tests) |
 
 *AuditLog is immutable - read-only endpoints, no update/delete.
-**Total: 51 tests passing** (35 Phase 1 + 16 existing)
+**Total: 51 tests passing** (35 Phase 1 + 16 Phase 0)
+**Released:** January 27, 2026 as v0.2.0
 
 ---
 
@@ -378,7 +384,7 @@ pip install httpx pytest-cov
 
 ## Roadmap
 
-### Phase 1: Services Layer - ✅ COMPLETE (feature/phase1-services)
+### Phase 1: Services Layer - ✅ COMPLETE (v0.2.0 - January 27, 2026)
 - [x] Fix circular import (enum consolidation)
 - [x] Update requirements.txt (add httpx)
 - [x] Schemas for Phase 1 models (5 models)
@@ -390,23 +396,31 @@ pip install httpx pytest-cov
 - [x] Integrity check system (validation + auto-repair)
 - [x] Load test system (concurrent user simulation)
 - [x] Complete documentation (10+ guides, 5000+ lines)
-- [ ] **READY TO MERGE:** Merge to main, tag v0.2.0
+- [x] **Merged to main, tagged v0.2.0, pushed to remote**
 
-### Current Focus: Optimization & Production Prep
-- [ ] Add database indexes for performance
-- [ ] Establish performance baselines
-- [ ] Configure monitoring and alerts
-- [ ] Set up automated integrity checks (cron)
-- [ ] Document scaling strategy for 4000 users
-- [ ] Pre-production validation
+### Phase 2: Union Operations - 📋 PLANNED (Next)
+**Target:** SALTing activities, Benevolence Fund, Grievance management
+**Plan Location:** `/root/.claude/plans/sharded-cuddling-cherny.md`
+
+**Models to Build:**
+- [ ] SALTingActivity - Track organizing efforts at non-union employers
+- [ ] BenevolenceApplication - Financial assistance requests
+- [ ] BenevolenceReview - Multi-level approval workflow (VP/Admin/Manager/President)
+- [ ] Grievance - Formal complaint tracking through arbitration
+
+**Scope:**
+- [ ] 4 new models with enums
+- [ ] 27+ API endpoints
+- [ ] 28+ tests
+- [ ] Seed data for all models
+- [ ] Migration: `alembic revision --autogenerate -m "Add Phase 2"`
+- [ ] Target: v0.3.0 release
 
 ### Future Phases
-- Phase 2: SALTing activities (workflow, tracking)
-- Phase 3: Benevolence, Grievances (case management)
-- Phase 4: Document management, S3 (file storage)
-- Phase 5: Dues tracking (financial)
-- Phase 6: TradeSchool integration (external system)
-- Phase 7: Web portal, deployment (production launch)
+- Phase 3: Document management, S3 (file storage)
+- Phase 4: Dues tracking (financial)
+- Phase 5: TradeSchool integration (external system)
+- Phase 6: Web portal, deployment (production launch)
 
 ---
 

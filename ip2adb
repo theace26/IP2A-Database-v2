@@ -100,13 +100,13 @@ class IP2ADB:
             print("📦 Normal Seed: Standard development data")
             print()
 
-            from src.seed.run_seed import main as run_normal_seed
+            from src.seed.run_seed import run as run_normal_seed
 
             if args.quick:
                 print("🏃 Quick mode: Minimal data for fast setup")
                 print()
 
-            run_normal_seed(truncate=not args.no_truncate)
+            run_normal_seed()
 
         print("\n✅ Seeding complete!")
         return 0
