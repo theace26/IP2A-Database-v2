@@ -10,10 +10,10 @@ from .base_seed import add_records
 fake = Faker()
 
 
-def stress_test_organizations(db: Session, employers: int = 150, others: int = 50):
+def stress_test_organizations(db: Session, employers: int = 700, others: int = 50):
     """
     Generate organizations:
-    - 150 employers (for employment records)
+    - 700 employers (for employment records) - realistic union local coverage
     - 50 others (unions, training partners, JATCs)
     """
     organizations = []

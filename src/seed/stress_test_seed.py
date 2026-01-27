@@ -23,7 +23,7 @@ def run_stress_test(force: bool = False, truncate: bool = True):
     - 1,000 students
     - 500 instructors
     - 250 locations
-    - 200 organizations
+    - 750 organizations (700 employers)
     - ~250,000 employment records
     - ~150,000 file attachments (12MP photos, PDFs, documents) - ~30 GB
     """
@@ -57,7 +57,7 @@ def run_stress_test(force: bool = False, truncate: bool = True):
 
     # Phase 2: Organizations
     print("\n🏢 Phase 2: Organizations")
-    employers = stress_test_organizations(db, employers=150, others=50)  # 200 total orgs
+    employers = stress_test_organizations(db, employers=700, others=50)  # 750 total orgs
 
     # Phase 3: Contacts for organizations
     print("\n👤 Phase 3: Organization Contacts")
@@ -91,8 +91,8 @@ def run_stress_test(force: bool = False, truncate: bool = True):
     print("\n📊 Summary:")
     print(f"   • 250 locations")
     print(f"   • 500 instructors")
-    print(f"   • 200 organizations (150 employers)")
-    print(f"   • ~600 organization contacts")
+    print(f"   • 750 organizations (700 employers)")
+    print(f"   • ~2,250 organization contacts")
     print(f"   • 1,000 students")
     print(f"   • 10,000 members")
     print(f"   • ~250,000+ employment records")

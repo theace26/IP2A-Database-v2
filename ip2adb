@@ -10,6 +10,8 @@ Usage:
     ip2adb seed --students 1000 --members 5000    # Custom volumes
     ip2adb integrity                               # Integrity check only
     ip2adb integrity --repair                      # With auto-repair
+    ip2adb auto-heal                               # Auto-heal: check + repair + notify
+    ip2adb resilience                              # Long-term health check
     ip2adb load                                    # Load test
     ip2adb load --users 100                        # Custom load test
     ip2adb all                                     # Run everything (seed + integrity + load)
@@ -361,6 +363,104 @@ class IP2ADB:
             print("⚠️  Some tests failed. Review results above.")
             return 1
 
+    def auto_heal(self, args):
+        """Run auto-healing system."""
+        from src.db.session import get_db_session
+        from src.db.auto_heal import AutoHealingSystem
+
+        self.print_header("AUTO-HEALING SYSTEM")
+
+        print("🔄 Auto-heal will:")
+        print("   1. Run comprehensive integrity checks")
+        print("   2. Automatically repair fixable issues")
+        print("   3. Notify admin about complex issues")
+        print()
+
+        db = get_db_session()
+
+        try:
+            healer = AutoHealingSystem(
+                db,
+                check_files=not args.no_files,
+                dry_run=args.dry_run
+            )
+
+            result = healer.run_auto_heal(notify_admin=True)
+
+            # Show health summary if requested
+            if args.summary:
+                print("\n" + "=" * 60)
+                print("📊 HEALTH SUMMARY (Last 7 Days)")
+                print("=" * 60)
+                summary = healer.get_health_summary(days=7)
+                print(f"\nOverall Status: {summary['status'].upper()}")
+                print(f"Message: {summary['message']}")
+                print(f"\nMetrics ({summary['days_analyzed']} days):")
+                print(f"   Total Runs: {summary['total_runs']}")
+                print(f"   Total Issues Found: {summary['total_issues_found']}")
+                print(f"   Total Issues Fixed: {summary['total_issues_fixed']}")
+                print(f"   Requiring Attention: {summary['total_requiring_attention']}")
+                print(f"   Auto-Fix Rate: {summary['auto_fix_rate']}")
+                print()
+
+            return 0 if result.success else 1
+
+        except Exception as e:
+            print(f"\n❌ Auto-heal failed: {e}")
+            import traceback
+            traceback.print_exc()
+            return 1
+        finally:
+            db.close()
+
+    def resilience(self, args):
+        """Run long-term resilience check."""
+        from src.db.session import get_db_session
+        from src.db.resilience_check import ResilienceChecker
+
+        self.print_header("RESILIENCE CHECK")
+
+        print("🛡️  Checking long-term database health:")
+        print("   • File system integrity")
+        print("   • Storage capacity trends")
+        print("   • Database growth patterns")
+        print("   • Performance degradation")
+        print("   • Backup status")
+        print()
+
+        db = get_db_session()
+
+        try:
+            checker = ResilienceChecker(db)
+            issues = checker.run_all_checks()
+
+            # Display report
+            report = checker.generate_report()
+            print(report)
+
+            # Export if requested
+            if args.export:
+                with open(args.export, "w") as f:
+                    f.write(report)
+                print(f"\n📄 Report exported to: {args.export}")
+
+            # Return code based on critical issues
+            critical = [i for i in issues if i.severity == "critical"]
+            if critical:
+                print(f"\n⚠️  {len(critical)} critical resilience issues found")
+                return 1
+
+            print("\n✅ Resilience check complete!")
+            return 0
+
+        except Exception as e:
+            print(f"\n❌ Resilience check failed: {e}")
+            import traceback
+            traceback.print_exc()
+            return 1
+        finally:
+            db.close()
+
     def reset(self, args):
         """Truncate all data."""
         from src.seed.truncate_all import truncate_all_tables
@@ -414,6 +514,9 @@ Examples:
   ip2adb seed --members 5000            Custom member count
   ip2adb integrity                      Run integrity check
   ip2adb integrity --repair             Check and auto-repair issues
+  ip2adb auto-heal                      Automated healing + admin alerts
+  ip2adb auto-heal --summary            Auto-heal with 7-day health summary
+  ip2adb resilience                     Long-term health assessment
   ip2adb load --users 50                Load test with 50 users
   ip2adb all --stress                   Full test suite with stress data
   ip2adb reset                          Truncate all data (dangerous!)
@@ -421,6 +524,8 @@ Examples:
 For command-specific help:
   ip2adb seed --help
   ip2adb integrity --help
+  ip2adb auto-heal --help
+  ip2adb resilience --help
   ip2adb load --help
         """
     )
@@ -527,6 +632,44 @@ Use this for comprehensive validation before deployment.
     all_parser.add_argument("--pattern", default="distributed", help="Load test pattern")
     all_parser.add_argument("--force", action="store_true", help="Force run in production")
 
+    # === AUTO-HEAL COMMAND ===
+    autoheal_parser = subparsers.add_parser(
+        "auto-heal",
+        help="Auto-healing: check + repair + notify admins",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""
+Run comprehensive auto-healing cycle:
+  1. Check database integrity
+  2. Auto-repair fixable issues
+  3. Notify admins about complex issues
+  4. Log results for trending
+
+Use this for automated maintenance and monitoring.
+        """
+    )
+    autoheal_parser.add_argument("--dry-run", action="store_true", help="Preview without making changes")
+    autoheal_parser.add_argument("--no-files", action="store_true", help="Skip file system checks (faster)")
+    autoheal_parser.add_argument("--summary", action="store_true", help="Show health summary (last 7 days)")
+
+    # === RESILIENCE COMMAND ===
+    resilience_parser = subparsers.add_parser(
+        "resilience",
+        help="Long-term database health check",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""
+Check long-term database resilience:
+  - File corruption detection
+  - Storage capacity monitoring
+  - Database growth trends
+  - Data staleness detection
+  - Performance degradation
+  - Backup verification
+
+Use this for periodic health assessments.
+        """
+    )
+    resilience_parser.add_argument("--export", type=str, metavar="FILE", help="Export report to file")
+
     # === RESET COMMAND ===
     reset_parser = subparsers.add_parser(
         "reset",
@@ -550,6 +693,10 @@ Use this for comprehensive validation before deployment.
             return tool.seed(args)
         elif args.command == "integrity":
             return tool.integrity(args)
+        elif args.command == "auto-heal":
+            return tool.auto_heal(args)
+        elif args.command == "resilience":
+            return tool.resilience(args)
         elif args.command == "load":
             return tool.load(args)
         elif args.command == "all":

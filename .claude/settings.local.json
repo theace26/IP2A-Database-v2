@@ -15,7 +15,9 @@
       "Bash(docker-compose down:*)",
       "Bash(docker volume:*)",
       "Bash(git checkout:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(git tag:*)",
+      "Bash(git push:*)"
     ]
   }
 }

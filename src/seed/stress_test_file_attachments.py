@@ -194,7 +194,7 @@ def stress_test_file_attachments(db: Session):
     """
     Generate file attachments for all entities.
 
-    - Members: at least 10 documents each (certifications, IDs, forms, photos)
+    - Members: 1-20 documents each (certifications, IDs, forms, photos) - per user requirement
     - Students: 5-15 documents each (applications, photos, forms)
     - Organizations: 2-10 documents each (contracts, licenses)
     - Grievances: 1-50 files each (statements, evidence, correspondence)
@@ -211,51 +211,53 @@ def stress_test_file_attachments(db: Session):
 
     attachments = []
     total_size_bytes = 0
+    member_file_count = 0
+    student_file_count = 0
+    org_file_count = 0
 
     print(f"   Generating file attachments for entities...")
     print(f"   This will take several minutes...")
 
-    # === MEMBERS: At least 10 documents each ===
+    # === MEMBERS: 1-20 documents each ===
     if members:
-        print(f"   Processing {len(members)} members (10+ files each)...")
+        print(f"   Processing {len(members)} members (1-20 files each)...")
 
         for idx, member in enumerate(members):
-            # Minimum 10 files, maximum 25 per member
-            num_files = random.randint(10, 25)
+            # Minimum 1 file, maximum 20 per member (user requirement)
+            num_files = random.randint(1, 20)
 
             member_files = []
 
-            # Required files for every member (first 6)
-            required_types = [
+            # Common file types for members (weighted selection)
+            common_types = [
                 "photo_id",        # ID photo
                 "pdf_scan",        # Scanned license
                 "pdf_form",        # Membership form
-                "pdf_scan",        # Another scanned doc
                 "pdf_report",      # Training certificate
                 "doc_word",        # Resume or application
             ]
 
-            for file_type in required_types:
-                attachment = generate_file_attachment("member", member.id, file_type)
-                member_files.append(attachment)
-                total_size_bytes += attachment.file_size
-
-            # Additional random files to reach minimum 10
-            remaining = num_files - len(required_types)
-            for _ in range(remaining):
-                # Random file type from any category
-                file_type = random.choice(list(FILE_TYPES.keys()))
+            # For members with fewer files, prioritize common types
+            # For members with more files, add variety
+            for file_idx in range(num_files):
+                if file_idx < len(common_types) and file_idx < 5:
+                    # First few files are common required types
+                    file_type = common_types[file_idx]
+                else:
+                    # Additional files are random
+                    file_type = random.choice(list(FILE_TYPES.keys()))
                 attachment = generate_file_attachment("member", member.id, file_type)
                 member_files.append(attachment)
                 total_size_bytes += attachment.file_size
 
             attachments.extend(member_files)
+            member_file_count += len(member_files)
 
             # Progress indicator
             if (idx + 1) % 1000 == 0:
                 print(f"      {idx + 1}/{len(members)} members processed...")
 
-        print(f"   ✅ Generated {len(members) * 10}+ files for members")
+        print(f"   ✅ Generated {member_file_count:,} files for members (avg {member_file_count / len(members):.1f} per member)")
 
     # === STUDENTS: 5-15 documents each ===
     if students:
@@ -272,9 +274,10 @@ def stress_test_file_attachments(db: Session):
                 ])
                 attachment = generate_file_attachment("student", student.id, file_type)
                 attachments.append(attachment)
+                student_file_count += 1
                 total_size_bytes += attachment.file_size
 
-        print(f"   ✅ Generated ~{len(students) * 10} files for students")
+        print(f"   ✅ Generated {student_file_count:,} files for students (avg {student_file_count / len(students):.1f} per student)")
 
     # === ORGANIZATIONS: 2-10 documents each ===
     if organizations:
@@ -291,9 +294,10 @@ def stress_test_file_attachments(db: Session):
                 ])
                 attachment = generate_file_attachment("organization", org.id, file_type)
                 attachments.append(attachment)
+                org_file_count += 1
                 total_size_bytes += attachment.file_size
 
-        print(f"   ✅ Generated ~{len(organizations) * 5} files for organizations")
+        print(f"   ✅ Generated {org_file_count:,} files for organizations (avg {org_file_count / len(organizations):.1f} per org)")
 
     # === GRIEVANCES: 1-50 files each (simulate some grievances) ===
     # Note: We'll create grievance files even without a grievance table yet
@@ -324,10 +328,10 @@ def stress_test_file_attachments(db: Session):
 
     print(f"   ✅ Seeded {len(attachments):,} file attachments")
     print(f"   📊 Storage breakdown:")
-    print(f"      • Members: {len(members) * 12:,} files (~{len(members) * 12 * 2.5 / 1024:.1f} GB)")
-    print(f"      • Students: {len(students) * 10:,} files (~{len(students) * 10 * 1.5 / 1024:.1f} GB)")
-    print(f"      • Organizations: {len(organizations) * 5:,} files")
-    print(f"      • Grievances: ~{num_grievances * 10:,} files")
+    print(f"      • Members: {member_file_count:,} files (1-20 per member)")
+    print(f"      • Students: {student_file_count:,} files")
+    print(f"      • Organizations: {org_file_count:,} files")
+    print(f"      • Grievances: varies (1-50 per grievance)")
     print(f"      • Total size: {total_size_bytes / (1024**3):.2f} GB")
 
     return attachments
