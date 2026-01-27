@@ -14,6 +14,16 @@
 
 This bidirectional sync keeps both Claudes aligned on project state.
 
+### 📝 CHANGELOG REQUIREMENT
+
+**IMPORTANT:** Both Claude.ai and Claude Code MUST add a timestamped entry to the Changelog section at the bottom of this file whenever making updates. Format:
+
+```
+| YYYY-MM-DD HH:MM | [Claude.ai/Claude Code] | Brief description of changes |
+```
+
+This creates an audit trail of all project decisions and changes.
+
 ---
 
 ## Project Overview
@@ -439,17 +449,34 @@ When switching between Claude.ai and Claude Code:
 
 **From Claude.ai → Claude Code:**
 - [ ] CLAUDE.md updated with decisions
+- [ ] Changelog entry added
 - [ ] Git branch correct
 - [ ] Any blockers documented
 
 **From Claude Code → Claude.ai:**
 - [ ] Summary of changes made
+- [ ] Changelog entry added
 - [ ] Tests passing? (yes/no)
 - [ ] Any issues encountered
 - [ ] Next steps identified
 
 ---
 
-*Last Updated: January 26, 2026*
+## Changelog
+
+> **INSTRUCTIONS FOR CLAUDE.AI AND CLAUDE CODE:**
+> Add a new row to this table every time you make changes to this file or the project.
+> Use UTC timezone. Format: `YYYY-MM-DD HH:MM UTC`
+
+| Timestamp | Source | Description |
+|-----------|--------|-------------|
+| 2026-01-26 06:00 UTC | Claude.ai | Initial CLAUDE.md created with project context |
+| 2026-01-26 08:30 UTC | Claude.ai | Fixed circular imports, consolidated enums to src/db/enums/ |
+| 2026-01-26 09:00 UTC | Claude.ai | Added devcontainer fixes, updated Dockerfile and docker-compose.yml |
+| 2026-01-27 06:30 UTC | Claude.ai | Added cross-platform setup (Windows), .env.compose.example template |
+| 2026-01-27 07:00 UTC | Claude.ai | Added changelog requirement and audit trail instructions |
+
+---
+
 *Working Branch: feature/phase1-services*
 *Next Task: Build schemas, services, routers for Phase 1 models*
