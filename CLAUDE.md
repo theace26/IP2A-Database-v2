@@ -16,6 +16,179 @@ This bidirectional sync keeps both Claudes aligned on project state.
 
 ---
 
+## 🔄 Claude.ai Sync Schedule
+
+### When to Update Claude.ai
+
+**Update Claude.ai immediately when:**
+- ✅ **Major phase complete** - Share accomplishments and outcomes
+- ✅ **Critical decisions needed** - Budget approvals, architecture choices, priorities
+- ✅ **Blockers encountered** - Need strategic direction or clarification
+- ✅ **Production incidents** - Seek advice on resolution strategies
+- ⚠️ **Daily summary** - End of coding session (5-10 minute recap)
+
+**Update Claude.ai weekly for:**
+- 📊 **Progress report** - What was completed, what's next
+- 🎯 **Planning sessions** - Discuss next phase, feature prioritization
+- 📈 **Metrics review** - Performance, costs, technical debt
+
+### What to Share with Claude.ai
+
+**Essential Documents (Share on first sync):**
+1. **[Documentation/Reports/SCALING_READINESS_ASSESSMENT.md](Documentation/Reports/SCALING_READINESS_ASSESSMENT.md)** ⭐ CRITICAL
+   - Current capacity: 50 users
+   - Target capacity: 4,000+ users
+   - Gap: 80x increase needed
+   - Investment: $24,000-44,000, 6-12 weeks
+   - Three launch options with pros/cons
+
+2. **[Documentation/Architecture/SCALABILITY_ARCHITECTURE.md](Documentation/Architecture/SCALABILITY_ARCHITECTURE.md)**
+   - 5-phase implementation plan
+   - Technical specifications
+   - Cost breakdown
+   - Timeline (7 weeks)
+
+3. **[CLAUDE.md](CLAUDE.md)** (this file)
+   - Current project state
+   - Recent commits
+   - Pending decisions
+
+**For Daily/Weekly Syncs:**
+- Link to latest session summary (e.g., `Documentation/Reports/SESSION_SUMMARY_2026-01-27.md`)
+- List of completed tasks (bullets)
+- Outstanding questions/decisions needed
+- Blockers or risks identified
+
+### How to Sync
+
+**Quick Daily Update (5 minutes):**
+```
+Hi Claude.ai! Quick update from Claude Code:
+
+✅ Completed today:
+- [Bullet list of 3-5 accomplishments]
+
+⚠️ Decisions needed:
+- [Question 1 - with context]
+- [Question 2 - with context]
+
+📋 Next up:
+- [Next task or phase]
+
+📎 Reference: Documentation/Reports/SESSION_SUMMARY_YYYY-MM-DD.md
+```
+
+**Weekly Planning Session (30 minutes):**
+1. Share comprehensive session summary document
+2. Review metrics (database size, performance, test results)
+3. Discuss trade-offs for upcoming work
+4. Prioritize next phase/tasks
+5. Get buy-in on architecture decisions
+
+**Major Phase Completion (1 hour):**
+1. Share phase completion report
+2. Demo key features (screenshots, API examples)
+3. Review metrics and cost analysis
+4. Plan next phase with timeline
+5. Get approval for budget/resources
+
+### Sync Triggers - Be Proactive!
+
+| Trigger | Action | Priority |
+|---------|--------|----------|
+| **Production incident** | Immediate sync | 🔴 CRITICAL |
+| **Budget decision needed** | Same day sync | 🔴 CRITICAL |
+| **Architecture choice** | Same day sync | 🟡 HIGH |
+| **Phase complete** | Same day sync | 🟡 HIGH |
+| **End of coding session** | Daily summary | 🟢 NORMAL |
+| **Friday afternoon** | Weekly review | 🟢 NORMAL |
+
+### Sample Sync Messages
+
+**Example 1: Critical Decision**
+```
+🚨 CRITICAL DECISION NEEDED
+
+I've completed a scaling readiness assessment (Documentation/Reports/SCALING_READINESS_ASSESSMENT.md).
+
+TL;DR:
+- Current system: 50 concurrent users max
+- Target: 4,000+ concurrent users
+- Gap: 80x capacity increase needed
+- Will crash if we launch to 4,000 users today
+
+Three options:
+1. Soft Launch: $24K, 6-8 weeks, 100 beta users → gradual increase
+2. Aggressive: $8K, 2-3 weeks, 500 users max (risk of emergency scaling)
+3. Full Production: $35K, 7-8 weeks, ready for 10,000+ users (safest)
+
+Which approach should we take? Need decision by [date] to meet timeline.
+
+Full analysis: Documentation/Reports/SCALING_READINESS_ASSESSMENT.md
+```
+
+**Example 2: Phase Complete**
+```
+✅ Phase 2.1 Complete - Audit Logging & Scalability
+
+Accomplishments:
+- ✅ Comprehensive audit logging (READ/CREATE/UPDATE/DELETE tracking)
+- ✅ 7 production database indexes (84% of data optimized)
+- ✅ Scalability architecture documented (4,000+ user plan)
+- ✅ 110 KB of production-ready documentation
+
+Key outcomes:
+- Audit logging: SOX/HIPAA/GDPR compliant
+- Performance: 515K records in 10.5 min (818 records/sec)
+- Cost estimates: $275-370/month for full stack
+
+Next steps:
+- Decision needed: Implement scalability Phase 1 or continue Phase 2 (Union Operations)?
+- Budget approval: $24K-44K for 6-12 week implementation
+
+Full details: Documentation/Reports/SESSION_SUMMARY_2026-01-27.md
+```
+
+**Example 3: Daily Summary**
+```
+Daily summary - January 28, 2026
+
+✅ Today:
+- Created scaling readiness assessment (16 KB, comprehensive analysis)
+- Reorganized all documentation into Documentation/ folder
+- Updated CLAUDE.md with sync schedule and current state
+
+⚠️ Blockers:
+- None currently
+
+📋 Tomorrow:
+- [Awaiting your decision: Scalability Phase 1 vs Phase 2 Union Operations]
+
+📊 Metrics:
+- Total documentation: 110 KB
+- Tests passing: 51/51
+- Database: 84 MB, 515K records
+```
+
+### Documentation References for Claude.ai
+
+Always include links to relevant docs in your sync messages:
+
+**Critical Reading (First Sync):**
+- [SCALING_READINESS_ASSESSMENT.md](Documentation/Reports/SCALING_READINESS_ASSESSMENT.md) - Production readiness ⭐
+- [SCALABILITY_ARCHITECTURE.md](Documentation/Architecture/SCALABILITY_ARCHITECTURE.md) - Technical plan
+- [CLAUDE.md](CLAUDE.md) - Current state
+
+**For Budget Discussions:**
+- [SCALABILITY_ARCHITECTURE.md](Documentation/Architecture/SCALABILITY_ARCHITECTURE.md) - Cost breakdown ($275-370/month)
+- [AUDIT_LOGGING_STANDARDS.md](Documentation/Standards/AUDIT_LOGGING_STANDARDS.md) - Archival costs (~$35/year)
+
+**For Technical Discussions:**
+- [STRESS_TEST_ANALYTICS_REPORT.md](Documentation/Reports/STRESS_TEST_ANALYTICS_REPORT.md) - Performance benchmarks
+- [AUDIT_LOGGING_GUIDE.md](Documentation/Guides/AUDIT_LOGGING_GUIDE.md) - Implementation patterns
+
+---
+
 ## Project Overview
 
 **IP2A-Database-v2** is a production-grade data platform for managing pre-apprenticeship program data, expanding into workplace organization member management.
@@ -112,9 +285,22 @@ IP2A-Database-v2/
 │   └── tests/               # pytest tests
 ├── scripts/                 # ⭐ NEW: Automation scripts
 │   └── audit_maintenance.py # Automated audit log archival & cleanup
-├── docs/                    # ⭐ NEW: Architecture documentation
-│   ├── AUDIT_LOGGING_STANDARDS.md       # Industry standards & compliance
-│   └── SCALABILITY_ARCHITECTURE.md      # 4,000+ concurrent user design
+├── Documentation/           # ⭐ REORGANIZED: All documentation centralized
+│   ├── README.md            # Documentation index and quick start
+│   ├── Architecture/        # System design and technical architecture
+│   │   └── SCALABILITY_ARCHITECTURE.md # 4,000+ user design, 5-phase plan
+│   ├── Standards/           # Industry standards and compliance
+│   │   └── AUDIT_LOGGING_STANDARDS.md # SOX, HIPAA, GDPR requirements
+│   ├── Guides/              # Implementation guides and how-tos
+│   │   └── AUDIT_LOGGING_GUIDE.md # Audit logging implementation
+│   └── Reports/             # Performance reports and assessments
+│       ├── SCALING_READINESS_ASSESSMENT.md # ⭐ CRITICAL: Production readiness analysis
+│       ├── STRESS_TEST_ANALYTICS_REPORT.md # Phase 2.1 performance results
+│       ├── PHASE_2.1_SUMMARY.md # Phase 2.1 implementation summary
+│       └── SESSION_SUMMARY_2026-01-27.md # Evening session handoff
+├── docs/                    # Legacy architecture docs (to be migrated)
+│   ├── ARCHITECTURE.md      # Original architecture documentation
+│   └── ROADMAP.md           # Product roadmap
 ├── logs/                    # ⭐ NEW: Auto-heal, notifications, metrics
 │   ├── auto_heal/
 │   ├── admin_notifications/
@@ -658,10 +844,13 @@ docker-compose up -d
 | 2026-01-27 23:30 UTC | Claude Code | Stress test analytics: 515K records, 84 MB, 10.5 min runtime, 4,537 auto-fixed issues |
 | 2026-01-27 23:45 UTC | Claude Code | Production optimizations: Restored file_attachments table, added 7 performance indexes |
 | 2026-01-28 00:15 UTC | Claude Code | Comprehensive audit logging: READ/BULK_READ/CREATE/UPDATE/DELETE tracking, middleware, service layer, industry standards documentation |
-| 2026-01-28 01:00 UTC | Claude Code | Scalability architecture: 4,000+ user design, PgBouncer pooling, read replicas, Redis caching, JWT auth, rate limiting (7-week plan)
+| 2026-01-28 01:00 UTC | Claude Code | Scalability architecture: 4,000+ user design, PgBouncer pooling, read replicas, Redis caching, JWT auth, rate limiting (7-week plan) |
+| 2026-01-28 01:45 UTC | Claude Code | Scaling readiness assessment: Honest evaluation - current capacity 50 users, need 80x increase for 4,000+ users, $24K-44K budget, 6-12 weeks timeline |
+| 2026-01-28 02:00 UTC | Claude Code | Documentation reorganization: Moved all docs to Documentation/ folder with Architecture/Standards/Guides/Reports structure, added Claude.ai sync schedule |
 
 ---
 
 *Working Branch: main*
-*Current Status: Phase 2.1 Complete - Auto-healing and enhanced stress test committed*
-*Next Task: Begin Phase 2 implementation (SALTing, Benevolence, Grievances)*
+*Current Status: Documentation reorganized, scaling assessment complete*
+*Next Task: DECISION NEEDED - Implement scalability Phase 1 (connection pooling) OR continue Phase 2 (Union Operations)*
+*Critical Read: Documentation/Reports/SCALING_READINESS_ASSESSMENT.md*
