@@ -8,24 +8,46 @@
 
 ---
 
-## Quick Start
+## Quick Reference
+
+### One Command For Everything
 
 ```bash
-# Normal development setup
-./ip2adb seed
+./ip2adb <command> [options]
+```
 
-# Health check
-./ip2adb integrity
+### Commands at a Glance
 
-# Performance test
-./ip2adb load --quick
+| Command | What It Does | Common Usage |
+|---------|--------------|--------------|
+| `seed` | Populate database | `./ip2adb seed` |
+| `integrity` | Check data quality | `./ip2adb integrity --repair` |
+| `load` | Test performance | `./ip2adb load --users 50` |
+| `all` | Run everything | `./ip2adb all --stress` |
+| `reset` | Delete all data | `./ip2adb reset` |
 
-# Complete test suite
-./ip2adb all
+### Most Common Commands
 
-# Get help
-./ip2adb --help
-./ip2adb seed --help
+```bash
+# Daily Development
+./ip2adb seed                          # Setup dev data
+./ip2adb integrity --no-files          # Quick health check
+
+# Weekly Testing
+./ip2adb all --quick                   # Fast validation
+./ip2adb integrity --repair            # Fix issues
+
+# Pre-Deployment
+./ip2adb all --stress                  # Full test suite
+./ip2adb load --stress                 # Performance test
+
+# Performance Testing
+./ip2adb seed --stress                 # Large dataset
+./ip2adb load --users 100              # 100 concurrent users
+
+# Emergency
+./ip2adb reset                         # Delete all data
+./ip2adb seed --quick                  # Fast recovery
 ```
 
 ---
@@ -96,16 +118,6 @@ python /app/ip2adb seed
 | **Quick** | 10 | 100 | 10 | 5 | 5 | ~30 | - |
 | **Stress** | 10,000 | 1,000 | 500 | 250 | 200 | 250,000+ | 150,000+ |
 
-### Custom Volumes (Planned)
-
-```bash
-# Custom member count (future feature)
-./ip2adb seed --members 5000 --students 1000
-
-# Custom organization count (future feature)
-./ip2adb seed --organizations 500
-```
-
 ### Options
 
 | Option | Description | Example |
@@ -113,27 +125,6 @@ python /app/ip2adb seed
 | `--stress` | Use stress test volumes | `ip2adb seed --stress` |
 | `--quick` | Minimal data for fast setup | `ip2adb seed --quick` |
 | `--no-truncate` | Append data (don't delete existing) | `ip2adb seed --no-truncate` |
-| `--members N` | Number of members (planned) | `ip2adb seed --members 5000` |
-| `--students N` | Number of students (planned) | `ip2adb seed --students 2000` |
-| `--instructors N` | Number of instructors (planned) | `ip2adb seed --instructors 100` |
-| `--locations N` | Number of locations (planned) | `ip2adb seed --locations 50` |
-| `--organizations N` | Number of organizations (planned) | `ip2adb seed --organizations 100` |
-
-### Examples
-
-```bash
-# Development setup
-./ip2adb seed
-
-# Production-like data
-./ip2adb seed --stress
-
-# Quick test
-./ip2adb seed --quick
-
-# Add more data without deleting existing
-./ip2adb seed --no-truncate --students 500
-```
 
 ### Time Estimates
 
@@ -190,25 +181,6 @@ python /app/ip2adb seed
 | `--no-files` | Skip file system checks (faster) | `ip2adb integrity --no-files` |
 | `--export FILE` | Export report to file | `ip2adb integrity --export report.txt` |
 | `--force` | Force run in production | `ip2adb integrity --force` |
-
-### Examples
-
-```bash
-# Daily health check (fast)
-./ip2adb integrity --no-files
-
-# Weekly maintenance
-./ip2adb integrity --repair
-
-# Deep check with files
-./ip2adb integrity --repair --interactive
-
-# Test repairs safely
-./ip2adb integrity --repair --dry-run
-
-# Production check (requires --force)
-./ip2adb integrity --force --export production_check.txt
-```
 
 ### Exit Codes
 
@@ -270,31 +242,6 @@ python /app/ip2adb seed
 | `--export FILE` | - | Export report to file | `--export report.txt` |
 | `--force` | - | Force run in production | `--force` |
 
-### Examples
-
-```bash
-# Baseline test
-./ip2adb load --quick
-
-# Standard test
-./ip2adb load --users 50 --ops 50
-
-# Peak load test
-./ip2adb load --users 100 --ops 75
-
-# Stress test
-./ip2adb load --stress
-
-# Read-only workload
-./ip2adb load --users 100 --pattern read_heavy
-
-# Write-heavy workload
-./ip2adb load --users 30 --pattern write_heavy
-
-# Sustained load
-./ip2adb load --users 50 --ops 500 --think-time 500
-```
-
 ### Time Estimates
 
 | Configuration | Duration | Use Case |
@@ -343,37 +290,6 @@ The `all` command runs three operations in sequence:
 
 If any step fails, the suite stops and reports the failure.
 
-### Options
-
-| Option | Description | Example |
-|--------|-------------|---------|
-| `--stress` | Use stress test volumes for all | `ip2adb all --stress` |
-| `--quick` | Quick mode for all tests | `ip2adb all --quick` |
-| `--no-truncate` | Don't truncate in seed step | `ip2adb all --no-truncate` |
-| `--no-files` | Skip file checks in integrity | `ip2adb all --no-files` |
-| `--users N` | Load test users | `ip2adb all --users 100` |
-| `--ops N` | Load test operations | `ip2adb all --ops 75` |
-| `--think-time MS` | Load test think time | `ip2adb all --think-time 200` |
-| `--ramp-up SEC` | Load test ramp-up | `ip2adb all --ramp-up 15` |
-| `--pattern TYPE` | Load test pattern | `ip2adb all --pattern mixed` |
-| `--force` | Force run in production | `ip2adb all --force` |
-
-### Examples
-
-```bash
-# Pre-deployment validation
-./ip2adb all --stress
-
-# Quick validation
-./ip2adb all --quick
-
-# Custom suite
-./ip2adb all --stress --users 150 --no-files
-
-# Development workflow
-./ip2adb all --quick --no-truncate
-```
-
 ### Time Estimates
 
 | Mode | Duration | Use Case |
@@ -421,24 +337,6 @@ If any step fails, the suite stops and reports the failure.
 - ✅ Requires explicit confirmation
 - ✅ User must type "DELETE ALL DATA" to confirm
 - ✅ Non-interactive mode skips confirmation (CI/CD)
-
-### When to Use
-
-- Starting fresh after failed migrations
-- Cleaning up after testing
-- Preparing for new seed data
-- Resetting development environment
-
-### Examples
-
-```bash
-# Reset and re-seed
-./ip2adb reset
-./ip2adb seed --stress
-
-# Clean slate for testing
-./ip2adb reset && ./ip2adb all --quick
-```
 
 ---
 
@@ -492,77 +390,6 @@ If any step fails, the suite stops and reports the failure.
 ./ip2adb load --users 200
 ```
 
-### After Data Import
-
-```bash
-# Validate imported data
-./ip2adb integrity --repair
-
-# Test performance
-./ip2adb load --users 50
-
-# Full validation if needed
-./ip2adb all --no-truncate --no-files
-```
-
----
-
-## Advanced Usage
-
-### Chaining Commands
-
-```bash
-# Reset, seed, and test
-./ip2adb reset && ./ip2adb seed --stress && ./ip2adb load --stress
-
-# Quick iteration
-./ip2adb seed --quick && ./ip2adb integrity --no-files
-```
-
-### Scripting
-
-```bash
-#!/bin/bash
-# weekly_maintenance.sh
-
-DATE=$(date +%Y%m%d)
-LOGDIR="/var/log/ip2adb"
-mkdir -p $LOGDIR
-
-# Integrity check
-./ip2adb integrity --repair --export $LOGDIR/integrity_$DATE.txt
-
-# Performance test
-./ip2adb load --users 50 --export $LOGDIR/load_$DATE.txt
-
-# Alert if issues
-if [ $? -ne 0 ]; then
-    echo "Database issues detected!" | mail -s "DB Alert" admin@example.com
-fi
-```
-
-### CI/CD Integration
-
-```yaml
-# .github/workflows/database-test.yml
-- name: Database Test Suite
-  run: |
-    ./ip2adb all --quick
-```
-
-### Cron Jobs
-
-```bash
-# Daily integrity check at 2 AM
-0 2 * * * cd /app && ./ip2adb integrity --no-files
-
-# Weekly stress test on Sunday at 3 AM
-0 3 * * 0 cd /app && ./ip2adb all --stress
-
-# Monthly performance report on 1st at 4 AM
-0 4 1 * * cd /app && ./ip2adb load --stress --export /var/log/perf_$(date +\%Y\%m\%d).txt
-```
-
 ---
 
 ## Troubleshooting
@@ -612,61 +439,6 @@ cd /app
 IP2A_ENV=staging ./ip2adb seed --stress
 ```
 
-### Out of memory
-
-**Problem:**
-```bash
-# During stress test
-MemoryError: Unable to allocate...
-```
-
-**Solution:**
-```bash
-# Use smaller batches or reduce counts
-# Or increase available RAM
-
-# For now, use normal seed instead
-./ip2adb seed
-```
-
-### Connection timeout
-
-**Problem:**
-```bash
-# During load test
-sqlalchemy.exc.TimeoutError: QueuePool limit...
-```
-
-**Solution:**
-```bash
-# Reduce concurrent users
-./ip2adb load --users 25
-
-# Or increase connection pool (src/db/session.py)
-SQLALCHEMY_POOL_SIZE = 100
-```
-
----
-
-## Environment Variables
-
-### Supported Variables
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `IP2A_ENV` | Environment (dev/staging/production) | `IP2A_ENV=staging` |
-| `DATABASE_URL` | Database connection string | `DATABASE_URL=postgresql://...` |
-
-### Examples
-
-```bash
-# Run in staging environment
-IP2A_ENV=staging ./ip2adb seed --stress
-
-# Use different database
-DATABASE_URL=postgresql://user:pass@host:5432/db ./ip2adb integrity
-```
-
 ---
 
 ## Exit Codes
@@ -694,38 +466,6 @@ fi
 
 ---
 
-## Configuration Files
-
-### Current Configuration
-
-All configuration is done through:
-- Command-line arguments
-- Environment variables
-- `src/config/settings.py`
-
-### Planned: Config File (Future)
-
-```yaml
-# ip2adb.yml (planned feature)
-seed:
-  default:
-    members: 50
-    students: 500
-  stress:
-    members: 10000
-    students: 1000
-
-load:
-  default:
-    users: 50
-    ops: 50
-  stress:
-    users: 200
-    ops: 100
-```
-
----
-
 ## Getting Help
 
 ### Command Help
@@ -743,16 +483,9 @@ load:
 
 ### Documentation
 
-- **This file:** [IP2ADB.md](IP2ADB.md) - Complete reference
-- **Stress Test:** [STRESS_TEST.md](STRESS_TEST.md) - Large data volumes
-- **Integrity Check:** [INTEGRITY_CHECK.md](INTEGRITY_CHECK.md) - Data quality
-- **Load Testing:** [LOAD_TEST.md](LOAD_TEST.md) - Performance testing
-- **Testing Strategy:** [TESTING_STRATEGY.md](TESTING_STRATEGY.md) - Overall approach
-
-### Quick Reference
-
-- **[INTEGRITY_QUICK_REF.md](INTEGRITY_QUICK_REF.md)** - Integrity check commands
-- **[LOAD_TEST_QUICK_REF.md](LOAD_TEST_QUICK_REF.md)** - Load test commands
+- [Integrity Check Reference](integrity-check.md)
+- [Load Testing Reference](load-testing.md)
+- [Stress Testing Reference](stress-testing.md)
 
 ### Report Issues
 
@@ -794,31 +527,6 @@ python run_load_test.py --users 50
 
 ---
 
-## Version History
-
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2026-01-27 | Initial release |
-
----
-
-## Future Enhancements
-
-Planned features:
-
-- [ ] Custom data volumes for all entities
-- [ ] Configuration file support (YAML)
-- [ ] Progress bars for long operations
-- [ ] JSON output for parsing
-- [ ] Parallel execution for faster tests
-- [ ] Docker-compose integration
-- [ ] Web interface for results
-- [ ] Historical trend tracking
-- [ ] Slack/email notifications
-- [ ] Cost estimation for cloud databases
-
----
-
-*Last Updated: January 27, 2026*
+*Last Updated: January 28, 2026*
 *Version: 1.0*
 *Status: Production Ready*
