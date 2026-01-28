@@ -17,6 +17,7 @@ An ADR captures an important architectural decision along with its context and c
 | [ADR-005](ADR-005-css-framework.md) | CSS Framework (Tailwind) | Accepted | 2026-01 |
 | [ADR-006](ADR-006-background-jobs.md) | Background Jobs (TaskService Abstraction) | Accepted | 2026-01 |
 | [ADR-007](ADR-007-observability.md) | Observability Stack (Grafana + Loki) | Accepted | 2026-01 |
+| [ADR-008](ADR-008-dues-tracking-system.md) | Dues Tracking System Design | Accepted | 2026-01-28 |
 
 ## ADR Template
 

@@ -1609,13 +1609,15 @@ Week 5:  Cutover decision
 
 Items explicitly deferred to maintain focus:
 
+**Completed (Originally Backlogged):**
+- [x] Dues tracking module - ✅ Phase 4 Complete (January 2026)
+- [x] Grievance tracking - ✅ Phase 2 Complete (January 2026)
+- [x] Benevolence fund - ✅ Phase 2 Complete (January 2026)
+- [x] SALTing activities module - ✅ Phase 2 Complete (January 2026)
+
 **Phase 6+ Candidates:**
 - [ ] Member self-service portal (web + mobile)
-- [ ] Dues tracking module
 - [ ] Referral/dispatch module
-- [ ] Grievance tracking
-- [ ] Benevolence fund
-- [ ] SALTing activities module
 - [ ] Multi-local support (other IBEW locals)
 - [ ] LaborPower data import (for unified reporting)
 - [ ] LaborPower replacement (long-term)
@@ -1657,8 +1659,9 @@ Update this document after each session:
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-01-27 | Initial roadmap created |
+| 1.1 | 2026-01-28 | Updated backlog - marked Phase 2 and Phase 4 items as complete |
 
 ---
 
 *Document created: January 27, 2026*
-*Last updated: January 27, 2026*
+*Last updated: January 28, 2026*

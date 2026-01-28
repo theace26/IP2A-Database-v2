@@ -9,6 +9,7 @@ Welcome to the IP2A Database documentation. This index helps you find what you n
 | Understand the system | [System Overview](architecture/SYSTEM_OVERVIEW.md) |
 | Set up development | [Getting Started](guides/getting-started.md) |
 | Use the CLI tools | [ip2adb Reference](reference/ip2adb-cli.md) |
+| Track member dues | [Dues Tracking Guide](guides/dues-tracking.md) |
 | Understand a decision | [Architecture Decisions](decisions/README.md) |
 | See what changed | [CHANGELOG](../CHANGELOG.md) |
 | Contribute | [Contributing Guide](../CONTRIBUTING.md) |
@@ -30,12 +31,14 @@ Architecture Decision Records (ADRs) explaining WHY we made specific choices.
 ### `/guides`
 How-to guides for common tasks and workflows.
 - [Audit Logging Guide](guides/audit-logging.md) - Implement audit trails
+- [Dues Tracking Guide](guides/dues-tracking.md) - Member dues management (Phase 4)
 - [Project Strategy](guides/project-strategy.md) - Overall project approach
 - [Testing Strategy](guides/testing-strategy.md) - Testing philosophy
 
 ### `/reference`
 Quick reference for CLI tools and commands.
 - [ip2adb CLI](reference/ip2adb-cli.md) - Database management tool
+- [Dues API Reference](reference/dues-api.md) - Dues tracking endpoints (Phase 4)
 - [Phase 2 Quick Reference](reference/phase2-quick-reference.md) - Union operations models and endpoints
 - [Integrity Check](reference/integrity-check.md) - Data quality checks
 - [Load Testing](reference/load-testing.md) - Performance testing

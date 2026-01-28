@@ -104,6 +104,43 @@ as the schema and business rules scale.
 
 ---
 
+## Domain Components
+
+### Phase 1: Core Member Management
+- **Organizations** - Employers, unions, JATCs
+- **Members** - Union members with classifications
+- **Member Employments** - Employment history
+- **Audit Logs** - Comprehensive change tracking
+
+### Phase 2: Union Operations
+- **SALTing Activities** - Organizing campaigns
+- **Benevolence Applications** - Financial assistance
+- **Grievances** - Formal complaint tracking
+
+### Phase 2 (Roadmap): Pre-Apprenticeship Training
+- **Students** - Training program participants
+- **Courses** - Training course definitions
+- **Class Sessions** - Scheduled sessions
+- **Enrollments** - Student-course links
+- **Attendances** - Session attendance records
+- **Grades** - Assessment results
+- **Certifications** - Earned certifications
+
+### Phase 3: Document Management
+- **Documents** - S3/MinIO file storage
+- Presigned URLs for secure access
+- File validation and soft delete
+
+### Phase 4: Dues Tracking
+- **Dues Rates** - Classification-based pricing
+- **Dues Periods** - Monthly billing cycles
+- **Dues Payments** - Payment records
+- **Dues Adjustments** - Waivers, credits with approval workflow
+
+See [ADR-008: Dues Tracking System](../decisions/ADR-008-dues-tracking-system.md) for design details.
+
+---
+
 # 2️⃣ Mermaid Architecture Diagram
 
 📁 **Location:** `docs/architecture.mmd` (or inline in README)
