@@ -36,6 +36,7 @@ How-to guides for common tasks and workflows.
 ### `/reference`
 Quick reference for CLI tools and commands.
 - [ip2adb CLI](reference/ip2adb-cli.md) - Database management tool
+- [Phase 2 Quick Reference](reference/phase2-quick-reference.md) - Union operations models and endpoints
 - [Integrity Check](reference/integrity-check.md) - Data quality checks
 - [Load Testing](reference/load-testing.md) - Performance testing
 - [Stress Testing](reference/stress-testing.md) - Large-scale testing
