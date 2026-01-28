@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Phase 2 seed data for union operations
+  * Realistic test data for SALTing activities (30 records)
+  * Benevolence applications with multi-level review workflow (25 applications, 47 reviews)
+  * Grievances with step-by-step progression tracking (20 grievances, 31 step records)
+  * Integrated with run_seed.py for complete database setup
+  * Standalone execution: `python -m src.seed.phase2_seed`
 - Documentation reorganization
 - Architecture Decision Records (ADRs)
 - Consolidated reference documentation
