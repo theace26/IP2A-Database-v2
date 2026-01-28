@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Phase 3: Document Management System** ⭐⭐
+  * S3-compatible object storage integration (MinIO for development, AWS S3/Backblaze B2 for production)
+  * Complete document lifecycle management (upload, download, delete)
+  * Presigned URLs for large file uploads (client → S3 direct)
+  * File validation: extension whitelist (pdf, doc, docx, jpg, png, etc.), max size 50MB
+  * Soft delete support with optional hard delete (S3 removal)
+  * Organized storage paths: `uploads/{type}s/{name}_{id}/{category}/{year}/{month}/`
+  * 8 REST API endpoints: upload, presigned-upload, confirm-upload, get, download-url, download, delete, list
+  * Environment-based configuration: S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET_NAME
+  * 11 new tests (144 total passing) with mock S3 service
+  * Core modules: src/config/s3_config.py, src/services/s3_service.py, src/services/document_service.py
+  * Infrastructure: MinIO service added to docker-compose.yml
+  * ADR-004 implemented: Object Storage strategy
 - **Phase 1.1: Authentication Database Schema**
   * User model with email/password authentication, optional Member link, soft delete
   * Role model for RBAC with system role protection
