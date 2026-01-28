@@ -57,6 +57,42 @@ class UserRegistrationRequest(BaseModel):
     last_name: str = Field(..., min_length=1, max_length=100)
 
 
+class UserRegistrationResponse(BaseModel):
+    """Schema for registration response."""
+
+    id: int
+    email: str
+    first_name: str
+    last_name: str
+    message: str = (
+        "Registration successful. Please check your email to verify your account."
+    )
+
+
+class EmailVerificationRequest(BaseModel):
+    """Schema for email verification."""
+
+    token: str
+
+
+class ResendVerificationRequest(BaseModel):
+    """Schema for resending verification email."""
+
+    email: EmailStr
+
+
+class AdminUserCreateRequest(BaseModel):
+    """Schema for admin creating a user."""
+
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=128)
+    first_name: str = Field(..., min_length=1, max_length=100)
+    last_name: str = Field(..., min_length=1, max_length=100)
+    roles: list[str] = Field(default=["member"])
+    is_verified: bool = True
+    member_id: Optional[int] = None
+
+
 class CurrentUserResponse(BaseModel):
     """Schema for current user info (from /me endpoint)."""
 

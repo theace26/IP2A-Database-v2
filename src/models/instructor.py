@@ -64,11 +64,12 @@ class Instructor(TimestampMixin, SoftDeleteMixin, Base):
         cascade="all, delete-orphan",
     )
 
-    # Class sessions taught
-    class_sessions = relationship(
-        "ClassSession",
-        back_populates="instructor",
-    )
+    # NOTE: Commented out due to conflict with Phase 2 Training System
+    # The new training system ClassSession model doesn't relate to Instructor.
+    # class_sessions = relationship(
+    #     "ClassSession",
+    #     back_populates="instructor",
+    # )
 
     __table_args__ = (
         Index("ix_instructor_name", "last_name", "first_name"),

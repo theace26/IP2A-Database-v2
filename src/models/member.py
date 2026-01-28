@@ -10,7 +10,7 @@ from src.db.mixins import TimestampMixin, SoftDeleteMixin
 from src.db.enums import MemberStatus, MemberClassification
 
 if TYPE_CHECKING:
-    pass
+    from src.models.student import Student
 
 
 class Member(Base, TimestampMixin, SoftDeleteMixin):
@@ -44,14 +44,11 @@ class Member(Base, TimestampMixin, SoftDeleteMixin):
     status = Column(SAEnum(MemberStatus), default=MemberStatus.ACTIVE, nullable=False)
     classification = Column(SAEnum(MemberClassification), nullable=False)
 
-    # Link to Student (if they came through IP2A program)
-    student_id = Column(Integer, ForeignKey("students.id"), nullable=True)
-
     # Notes
     notes = Column(Text)
 
     # Relationships
-    student = relationship("Student", backref="member_record")
+    student = relationship("Student", back_populates="member", uselist=False)
     employments = relationship("MemberEmployment", back_populates="member")
     user = relationship("User", back_populates="member", uselist=False)
 

@@ -1,123 +1,120 @@
-"""
-Student model - core entity for program participants.
-"""
+"""Student model for pre-apprenticeship program."""
 
-from sqlalchemy import Column, Integer, String, Date, ForeignKey, JSON, Index
-from sqlalchemy.orm import relationship
+from datetime import date, datetime
+from typing import TYPE_CHECKING, Optional
+
+from sqlalchemy import Integer, String, Date, Text, ForeignKey, Enum as SQLEnum
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db.base import Base
 from src.db.mixins import TimestampMixin, SoftDeleteMixin
+from src.db.enums import StudentStatus
+
+if TYPE_CHECKING:
+    from src.models.member import Member
+    from src.models.enrollment import Enrollment
+    from src.models.grade import Grade
+    from src.models.certification import Certification
+    from src.models.attendance import Attendance
 
 
-class Student(TimestampMixin, SoftDeleteMixin, Base):
+class Student(Base, TimestampMixin, SoftDeleteMixin):
     """
-    Represents a student in the IP2A program.
+    Student in the pre-apprenticeship program.
 
-    Core entity that links to credentials, tools, applications, attendance, etc.
-    Uses JSON 'extra' field for flexible extension without schema changes.
+    A Student is linked to a Member record. Not all Members are Students,
+    but all Students should have a Member record.
     """
 
     __tablename__ = "students"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
-    # Core identity
-    first_name = Column(String(50), nullable=False)
-    last_name = Column(String(50), nullable=False)
-    middle_name = Column(String(50), nullable=True)
-    email = Column(String(255), nullable=False, unique=True, index=True)
-    phone = Column(String(50), nullable=True)
-    birthdate = Column(Date, nullable=True)
+    # Link to Member (required)
+    member_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("members.id", ondelete="RESTRICT"),
+        nullable=False,
+        unique=True,  # One student record per member
+        index=True
+    )
 
-    # Full address structure
-    address_line1 = Column(String(200), nullable=True)
-    address_line2 = Column(String(200), nullable=True)
-    city = Column(String(100), nullable=True)
-    state = Column(String(50), nullable=True)
-    postal_code = Column(String(20), nullable=True)
+    # Student-specific fields
+    student_number: Mapped[str] = mapped_column(
+        String(20),
+        unique=True,
+        nullable=False,
+        index=True
+    )
 
-    # Legacy single address field (for backward compatibility)
-    address = Column(String(255), nullable=True)
+    status: Mapped[StudentStatus] = mapped_column(
+        SQLEnum(StudentStatus, name="student_status_enum"),
+        default=StudentStatus.APPLICANT,
+        nullable=False,
+        index=True
+    )
 
-    # Program-specific fields
-    shoe_size = Column(String(16), nullable=True)
-    shirt_size = Column(String(16), nullable=True)
-    profile_photo_path = Column(String(500), nullable=True)
+    # Program dates
+    application_date: Mapped[date] = mapped_column(Date, nullable=False)
+    enrollment_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    expected_completion_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    actual_completion_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+
+    # Program info
+    cohort: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # e.g., "2026-Spring"
 
     # Emergency contact
-    emergency_contact_name = Column(String(100), nullable=True)
-    emergency_contact_phone = Column(String(50), nullable=True)
-    emergency_contact_relation = Column(String(50), nullable=True)
+    emergency_contact_name: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    emergency_contact_phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    emergency_contact_relationship: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
-    # Flexible extension field for custom data
-    # Example: {"veteran": true, "referred_by": "John Smith", "languages": ["English", "Spanish"]}
-    extra = Column(JSON, nullable=True)
+    # Notes
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    # Cohort assignment
-    cohort_id = Column(
-        Integer,
-        ForeignKey("cohorts.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
+    # Relationships
+    member: Mapped["Member"] = relationship(
+        "Member",
+        back_populates="student",
+        lazy="joined"
     )
-    cohort = relationship("Cohort", back_populates="students")
 
-    # Related records
-    credentials = relationship(
-        "Credential",
+    enrollments: Mapped[list["Enrollment"]] = relationship(
+        "Enrollment",
         back_populates="student",
-        cascade="all, delete-orphan",
+        lazy="selectin",
+        cascade="all, delete-orphan"
     )
-    tools_issued = relationship(
-        "ToolsIssued",
+
+    grades: Mapped[list["Grade"]] = relationship(
+        "Grade",
         back_populates="student",
-        cascade="all, delete-orphan",
+        lazy="selectin",
+        cascade="all, delete-orphan"
     )
-    jatc_applications = relationship(
-        "JATCApplication",
+
+    certifications: Mapped[list["Certification"]] = relationship(
+        "Certification",
         back_populates="student",
-        cascade="all, delete-orphan",
+        lazy="selectin",
+        cascade="all, delete-orphan"
     )
-    attendance_records = relationship(
+
+    attendances: Mapped[list["Attendance"]] = relationship(
         "Attendance",
         back_populates="student",
-        cascade="all, delete-orphan",
-    )
-    expenses = relationship(
-        "Expense",
-        back_populates="student",
-    )
-
-    __table_args__ = (
-        Index("ix_student_name", "last_name", "first_name"),
-        Index("ix_student_city_state", "city", "state"),
+        lazy="selectin",
+        cascade="all, delete-orphan"
     )
 
     @property
     def full_name(self) -> str:
-        """Return student's full name."""
-        if self.middle_name:
-            return f"{self.first_name} {self.middle_name} {self.last_name}"
-        return f"{self.first_name} {self.last_name}"
+        """Get student's full name from member."""
+        return f"{self.member.first_name} {self.member.last_name}"
 
     @property
-    def full_address(self) -> str:
-        """Return formatted full address."""
-        parts = []
-        if self.address_line1:
-            parts.append(self.address_line1)
-        if self.address_line2:
-            parts.append(self.address_line2)
-        city_state_zip = []
-        if self.city:
-            city_state_zip.append(self.city)
-        if self.state:
-            city_state_zip.append(self.state)
-        if self.postal_code:
-            city_state_zip.append(self.postal_code)
-        if city_state_zip:
-            parts.append(", ".join(city_state_zip))
-        return "\n".join(parts) if parts else ""
+    def is_active(self) -> bool:
+        """Check if student is currently active in program."""
+        return self.status in [StudentStatus.ENROLLED, StudentStatus.ON_LEAVE]
 
-    def __repr__(self):
-        return f"<Student(id={self.id}, name='{self.full_name}', email='{self.email}')>"
+    def __repr__(self) -> str:
+        return f"<Student(id={self.id}, number='{self.student_number}', status={self.status})>"

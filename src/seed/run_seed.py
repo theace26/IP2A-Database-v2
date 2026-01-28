@@ -18,6 +18,7 @@ from .seed_member_employments import seed_member_employments
 from .phase2_seed import seed_phase2
 from .auth_seed import run_auth_seed
 from .base_seed import init_seed
+from .training_seed import run_training_seed
 
 
 def run(force: bool = False):
@@ -62,6 +63,9 @@ def run(force: bool = False):
 
     # Phase 2 seeds - Union Operations
     seed_phase2(db, verbose=True)
+
+    # Phase 2 seeds - Training System
+    run_training_seed(db, num_students=20)
 
     print("✅ Database seeding complete.")
 

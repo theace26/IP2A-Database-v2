@@ -62,19 +62,22 @@ class Cohort(TimestampMixin, SoftDeleteMixin, Base):
         cascade="all, delete-orphan",
     )
 
-    # Students in this cohort
-    students = relationship(
-        "Student",
-        back_populates="cohort",
-        cascade="all, delete-orphan",
-    )
+    # NOTE: Commented out due to conflict with Phase 2 Training System
+    # The new training system Student model uses cohort as a string field,
+    # not a relationship to this Cohort model.
+    # students = relationship(
+    #     "Student",
+    #     back_populates="cohort",
+    #     cascade="all, delete-orphan",
+    # )
 
-    # Class sessions
-    class_sessions = relationship(
-        "ClassSession",
-        back_populates="cohort",
-        cascade="all, delete-orphan",
-    )
+    # NOTE: Commented out due to conflict with Phase 2 Training System
+    # The new training system ClassSession model doesn't relate to Cohort.
+    # class_sessions = relationship(
+    #     "ClassSession",
+    #     back_populates="cohort",
+    #     cascade="all, delete-orphan",
+    # )
 
     # Instructor hours logged against this cohort
     instructor_hours = relationship(

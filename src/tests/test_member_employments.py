@@ -1,7 +1,6 @@
 """Tests for MemberEmployments endpoints."""
 
 import uuid
-from datetime import date
 
 
 async def test_create_member_employment(async_client):

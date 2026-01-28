@@ -62,10 +62,12 @@ class Location(TimestampMixin, SoftDeleteMixin, Base):
         back_populates="location",
         cascade="all, delete-orphan",
     )
-    class_sessions = relationship(
-        "ClassSession",
-        back_populates="location",
-    )
+    # NOTE: Commented out due to conflict with Phase 2 Training System
+    # The new training system ClassSession model doesn't relate to Location.
+    # class_sessions = relationship(
+    #     "ClassSession",
+    #     back_populates="location",
+    # )
     expenses = relationship(
         "Expense",
         back_populates="location",

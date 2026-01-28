@@ -2,7 +2,12 @@ from .user import User
 from .role import Role
 from .user_role import UserRole
 from .refresh_token import RefreshToken
+from .email_token import EmailToken
 from .student import Student
+from .course import Course
+from .enrollment import Enrollment
+from .grade import Grade
+from .certification import Certification
 from .cohort import Cohort
 from .instructor import Instructor
 from .location import Location
@@ -31,7 +36,12 @@ __all__ = [
     "Role",
     "UserRole",
     "RefreshToken",
+    "EmailToken",
     "Student",
+    "Course",
+    "Enrollment",
+    "Grade",
+    "Certification",
     "Cohort",
     "Instructor",
     "Location",

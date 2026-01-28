@@ -1,13 +1,10 @@
 """Database integrity repair - fixes issues found by integrity checker."""
 
 from sqlalchemy.orm import Session
-from sqlalchemy import text
-from typing import List, Dict, Optional
+from typing import List, Optional
 from datetime import datetime
 
-from src.models import (
-    Member, MemberEmployment, Organization, OrganizationContact, FileAttachment
-)
+from src.models import Member, MemberEmployment, OrganizationContact, FileAttachment
 from src.db.enums import MemberStatus
 from .integrity_check import IntegrityIssue
 
@@ -20,7 +17,7 @@ class RepairAction:
         issue: IntegrityIssue,
         action_taken: str,
         success: bool,
-        details: Optional[str] = None
+        details: Optional[str] = None,
     ):
         self.issue = issue
         self.action_taken = action_taken
@@ -37,7 +34,9 @@ class IntegrityRepairer:
         self.dry_run = dry_run
         self.actions: List[RepairAction] = []
 
-    def repair_all_auto_fixable(self, issues: List[IntegrityIssue]) -> List[RepairAction]:
+    def repair_all_auto_fixable(
+        self, issues: List[IntegrityIssue]
+    ) -> List[RepairAction]:
         """Repair all auto-fixable issues."""
         print("\n🔧 Starting Auto-Repair Process")
         print("=" * 60)
@@ -64,7 +63,9 @@ class IntegrityRepairer:
 
         # Repair each category
         for category, category_issues in sorted(by_category.items()):
-            print(f"📋 Repairing {category.replace('_', ' ').title()}: {len(category_issues)} issues")
+            print(
+                f"📋 Repairing {category.replace('_', ' ').title()}: {len(category_issues)} issues"
+            )
 
             for issue in category_issues:
                 action = self._repair_issue(issue)
@@ -104,14 +105,11 @@ class IntegrityRepairer:
                     issue=issue,
                     action_taken="skip",
                     success=False,
-                    details=f"No repair handler for category: {issue.category}"
+                    details=f"No repair handler for category: {issue.category}",
                 )
         except Exception as e:
             return RepairAction(
-                issue=issue,
-                action_taken="error",
-                success=False,
-                details=str(e)
+                issue=issue, action_taken="error", success=False, details=str(e)
             )
 
     def _repair_foreign_key(self, issue: IntegrityIssue) -> RepairAction:
@@ -121,28 +119,34 @@ class IntegrityRepairer:
                 issue=issue,
                 action_taken="skip",
                 success=False,
-                details="Unexpected fix_action"
+                details="Unexpected fix_action",
             )
 
         if not self.dry_run:
             if issue.table == "member_employments":
-                emp = self.db.query(MemberEmployment).filter(
-                    MemberEmployment.id == issue.record_id
-                ).first()
+                emp = (
+                    self.db.query(MemberEmployment)
+                    .filter(MemberEmployment.id == issue.record_id)
+                    .first()
+                )
                 if emp:
                     self.db.delete(emp)
 
             elif issue.table == "organization_contacts":
-                contact = self.db.query(OrganizationContact).filter(
-                    OrganizationContact.id == issue.record_id
-                ).first()
+                contact = (
+                    self.db.query(OrganizationContact)
+                    .filter(OrganizationContact.id == issue.record_id)
+                    .first()
+                )
                 if contact:
                     self.db.delete(contact)
 
             elif issue.table == "file_attachments":
-                attachment = self.db.query(FileAttachment).filter(
-                    FileAttachment.id == issue.record_id
-                ).first()
+                attachment = (
+                    self.db.query(FileAttachment)
+                    .filter(FileAttachment.id == issue.record_id)
+                    .first()
+                )
                 if attachment:
                     self.db.delete(attachment)
 
@@ -150,39 +154,50 @@ class IntegrityRepairer:
             issue=issue,
             action_taken="delete",
             success=True,
-            details=f"Deleted orphaned {issue.table} record {issue.record_id}"
+            details=f"Deleted orphaned {issue.table} record {issue.record_id}",
         )
 
     def _repair_enum_value(self, issue: IntegrityIssue) -> RepairAction:
         """Repair invalid enum values."""
         if not self.dry_run:
             if issue.table == "members" and "status" in issue.description:
-                member = self.db.query(Member).filter(Member.id == issue.record_id).first()
+                member = (
+                    self.db.query(Member).filter(Member.id == issue.record_id).first()
+                )
                 if member:
                     member.status = MemberStatus.ACTIVE
                     return RepairAction(
                         issue=issue,
                         action_taken="update",
                         success=True,
-                        details=f"Set member status to ACTIVE"
+                        details="Set member status to ACTIVE",
                     )
 
         return RepairAction(
             issue=issue,
             action_taken="skip" if self.dry_run else "update",
             success=True,
-            details="Would set to default value" if self.dry_run else "Set to default value"
+            details="Would set to default value"
+            if self.dry_run
+            else "Set to default value",
         )
 
     def _repair_date_logic(self, issue: IntegrityIssue) -> RepairAction:
         """Repair date logic issues."""
         if not self.dry_run:
-            emp = self.db.query(MemberEmployment).filter(
-                MemberEmployment.id == issue.record_id
-            ).first()
+            emp = (
+                self.db.query(MemberEmployment)
+                .filter(MemberEmployment.id == issue.record_id)
+                .first()
+            )
 
             if not emp:
-                return RepairAction(issue=issue, action_taken="skip", success=False, details="Record not found")
+                return RepairAction(
+                    issue=issue,
+                    action_taken="skip",
+                    success=False,
+                    details="Record not found",
+                )
 
             if "end_date before start_date" in issue.description:
                 # Set end_date to NULL (safer than swapping)
@@ -191,7 +206,7 @@ class IntegrityRepairer:
                     issue=issue,
                     action_taken="update",
                     success=True,
-                    details="Set end_date to NULL"
+                    details="Set end_date to NULL",
                 )
 
             elif "marked current but has end_date" in issue.description:
@@ -201,14 +216,14 @@ class IntegrityRepairer:
                     issue=issue,
                     action_taken="update",
                     success=True,
-                    details="Set is_current to False"
+                    details="Set is_current to False",
                 )
 
         return RepairAction(
             issue=issue,
             action_taken="skip" if self.dry_run else "update",
             success=True,
-            details="Would fix date logic" if self.dry_run else "Fixed date logic"
+            details="Would fix date logic" if self.dry_run else "Fixed date logic",
         )
 
     def _repair_contact_logic(self, issue: IntegrityIssue) -> RepairAction:
@@ -219,10 +234,15 @@ class IntegrityRepairer:
 
             if not self.dry_run:
                 # Get all primary contacts for this org, ordered by created_at desc
-                contacts = self.db.query(OrganizationContact).filter(
-                    OrganizationContact.organization_id == org_id,
-                    OrganizationContact.is_primary == True
-                ).order_by(OrganizationContact.created_at.desc()).all()
+                contacts = (
+                    self.db.query(OrganizationContact)
+                    .filter(
+                        OrganizationContact.organization_id == org_id,
+                        OrganizationContact.is_primary == True,
+                    )
+                    .order_by(OrganizationContact.created_at.desc())
+                    .all()
+                )
 
                 # Keep first (most recent) as primary, set rest to non-primary
                 for i, contact in enumerate(contacts):
@@ -233,23 +253,27 @@ class IntegrityRepairer:
                     issue=issue,
                     action_taken="update",
                     success=True,
-                    details=f"Set {len(contacts)-1} contacts to non-primary, kept most recent as primary"
+                    details=f"Set {len(contacts)-1} contacts to non-primary, kept most recent as primary",
                 )
 
         return RepairAction(
             issue=issue,
             action_taken="skip" if self.dry_run else "update",
             success=True,
-            details="Would fix primary contact" if self.dry_run else "Fixed primary contact"
+            details="Would fix primary contact"
+            if self.dry_run
+            else "Fixed primary contact",
         )
 
     def _repair_file_system(self, issue: IntegrityIssue) -> RepairAction:
         """Repair file system issues (delete records with no file_path)."""
         if "has no file_path" in issue.description:
             if not self.dry_run:
-                attachment = self.db.query(FileAttachment).filter(
-                    FileAttachment.id == issue.record_id
-                ).first()
+                attachment = (
+                    self.db.query(FileAttachment)
+                    .filter(FileAttachment.id == issue.record_id)
+                    .first()
+                )
                 if attachment:
                     self.db.delete(attachment)
 
@@ -257,32 +281,42 @@ class IntegrityRepairer:
                 issue=issue,
                 action_taken="delete",
                 success=True,
-                details="Deleted attachment with no file_path"
+                details="Deleted attachment with no file_path",
             )
 
         return RepairAction(
             issue=issue,
             action_taken="skip",
             success=False,
-            details="Requires manual intervention (file not found)"
+            details="Requires manual intervention (file not found)",
         )
 
-    def interactive_repair_files(self, issues: List[IntegrityIssue]) -> List[RepairAction]:
+    def interactive_repair_files(
+        self, issues: List[IntegrityIssue]
+    ) -> List[RepairAction]:
         """Interactively repair file attachment issues."""
-        file_issues = [i for i in issues if i.category == "file_system" and "file not found" in i.description]
+        file_issues = [
+            i
+            for i in issues
+            if i.category == "file_system" and "file not found" in i.description
+        ]
 
         if not file_issues:
             return []
 
         print("\n📎 Interactive File Repair")
         print("=" * 60)
-        print(f"Found {len(file_issues)} file attachment issues requiring manual review")
+        print(
+            f"Found {len(file_issues)} file attachment issues requiring manual review"
+        )
         print()
 
         for issue in file_issues:
-            attachment = self.db.query(FileAttachment).filter(
-                FileAttachment.id == issue.record_id
-            ).first()
+            attachment = (
+                self.db.query(FileAttachment)
+                .filter(FileAttachment.id == issue.record_id)
+                .first()
+            )
 
             if not attachment:
                 continue
@@ -308,21 +342,25 @@ class IntegrityRepairer:
             if choice == "1":
                 if not self.dry_run:
                     self.db.delete(attachment)
-                self.actions.append(RepairAction(
-                    issue=issue,
-                    action_taken="delete",
-                    success=True,
-                    details="User chose to delete"
-                ))
+                self.actions.append(
+                    RepairAction(
+                        issue=issue,
+                        action_taken="delete",
+                        success=True,
+                        details="User chose to delete",
+                    )
+                )
                 print("   ✅ Deleted")
 
             elif choice == "2":
-                self.actions.append(RepairAction(
-                    issue=issue,
-                    action_taken="keep",
-                    success=True,
-                    details="User chose to keep record"
-                ))
+                self.actions.append(
+                    RepairAction(
+                        issue=issue,
+                        action_taken="keep",
+                        success=True,
+                        details="User chose to keep record",
+                    )
+                )
                 print("   ℹ️  Kept record")
 
             elif choice == "3":
@@ -331,32 +369,38 @@ class IntegrityRepairer:
 
             elif choice == "4":
                 # Delete all remaining
-                remaining = file_issues[file_issues.index(issue):]
+                remaining = file_issues[file_issues.index(issue) :]
                 for rem_issue in remaining:
-                    rem_attachment = self.db.query(FileAttachment).filter(
-                        FileAttachment.id == rem_issue.record_id
-                    ).first()
+                    rem_attachment = (
+                        self.db.query(FileAttachment)
+                        .filter(FileAttachment.id == rem_issue.record_id)
+                        .first()
+                    )
                     if rem_attachment and not self.dry_run:
                         self.db.delete(rem_attachment)
-                    self.actions.append(RepairAction(
-                        issue=rem_issue,
-                        action_taken="delete",
-                        success=True,
-                        details="User chose to delete all remaining"
-                    ))
+                    self.actions.append(
+                        RepairAction(
+                            issue=rem_issue,
+                            action_taken="delete",
+                            success=True,
+                            details="User chose to delete all remaining",
+                        )
+                    )
                 print(f"   ✅ Deleted {len(remaining)} file attachment records")
                 break
 
             elif choice == "5":
                 # Keep all remaining
-                remaining = file_issues[file_issues.index(issue):]
+                remaining = file_issues[file_issues.index(issue) :]
                 for rem_issue in remaining:
-                    self.actions.append(RepairAction(
-                        issue=rem_issue,
-                        action_taken="keep",
-                        success=True,
-                        details="User chose to keep all remaining"
-                    ))
+                    self.actions.append(
+                        RepairAction(
+                            issue=rem_issue,
+                            action_taken="keep",
+                            success=True,
+                            details="User chose to keep all remaining",
+                        )
+                    )
                 print(f"   ℹ️  Kept {len(remaining)} file attachment records")
                 break
 

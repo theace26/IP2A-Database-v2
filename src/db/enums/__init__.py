@@ -41,6 +41,16 @@ from src.db.enums.auth_enums import (
     TokenType,
 )
 
+from src.db.enums.training_enums import (
+    StudentStatus,
+    CourseEnrollmentStatus,
+    SessionAttendanceStatus,
+    GradeType,
+    CertificationType,
+    CertificationStatus,
+    CourseType,
+)
+
 __all__ = [
     # Base enums (education/training)
     "LocationType",
@@ -70,4 +80,12 @@ __all__ = [
     # Auth enums
     "RoleType",
     "TokenType",
+    # Training enums
+    "StudentStatus",
+    "CourseEnrollmentStatus",
+    "SessionAttendanceStatus",
+    "GradeType",
+    "CertificationType",
+    "CertificationStatus",
+    "CourseType",
 ]

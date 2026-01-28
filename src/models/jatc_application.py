@@ -56,11 +56,12 @@ class JATCApplication(TimestampMixin, SoftDeleteMixin, Base):
         nullable=True,
     )
 
-    # Relationship
-    student = relationship(
-        "Student",
-        back_populates="jatc_applications",
-    )
+    # NOTE: Commented out due to conflict with Phase 2 Training System
+    # The new training system Student model doesn't have jatc_applications relationship.
+    # student = relationship(
+    #     "Student",
+    #     back_populates="jatc_applications",
+    # )
 
     __table_args__ = (
         Index("ix_jatc_student_status", "student_id", "status"),

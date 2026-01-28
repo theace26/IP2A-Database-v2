@@ -56,7 +56,7 @@ class ToolsIssued(TimestampMixin, SoftDeleteMixin, Base):
     receipt_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     # Relationship
-    student = relationship("Student", back_populates="tools_issued")
+    # OLD SYSTEM - student = relationship("Student", back_populates="tools_issued")
 
     __table_args__ = (
         Index("ix_tools_student_date", "student_id", "date_issued"),

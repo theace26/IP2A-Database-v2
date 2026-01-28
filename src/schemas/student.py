@@ -1,66 +1,70 @@
-"""
-Student Pydantic schemas - aligned with src/models/student.py
+"""Student schemas for API requests/responses."""
 
-Model fields:
-- id, first_name, last_name, email, phone, birthdate, address
-- cohort_id, profile_photo_path
-- relationships: cohort, tools_issued, credentials, jatc_applications
-"""
+from pydantic import BaseModel, Field
+from typing import Optional
+from datetime import datetime, date
 
-from pydantic import BaseModel, EmailStr
-from typing import List, Optional
-from datetime import date
+from src.db.enums import StudentStatus
 
 
-# ------------------------------------------------------------
-# Base Schema (shared fields - matches model exactly)
-# ------------------------------------------------------------
 class StudentBase(BaseModel):
-    first_name: str
-    last_name: str
-    email: EmailStr
-    phone: Optional[str] = None  # Model uses 'phone', not 'phone_number'
-    birthdate: Optional[date] = None  # Model uses 'birthdate', not 'date_of_birth'
-    address: Optional[str] = None
-    cohort_id: Optional[int] = None
-    profile_photo_path: Optional[str] = None
+    """Base student fields."""
+
+    member_id: int
+    student_number: str = Field(..., max_length=20)
+    status: StudentStatus = StudentStatus.APPLICANT
+    application_date: date
+    enrollment_date: Optional[date] = None
+    expected_completion_date: Optional[date] = None
+    actual_completion_date: Optional[date] = None
+    cohort: Optional[str] = Field(None, max_length=50)
+    emergency_contact_name: Optional[str] = Field(None, max_length=200)
+    emergency_contact_phone: Optional[str] = Field(None, max_length=20)
+    emergency_contact_relationship: Optional[str] = Field(None, max_length=50)
+    notes: Optional[str] = None
 
 
-# ------------------------------------------------------------
-# Create Schema (POST)
-# ------------------------------------------------------------
 class StudentCreate(StudentBase):
-    """Used when creating a new student."""
+    """Schema for creating a new student."""
 
     pass
 
 
-# ------------------------------------------------------------
-# Update Schema (PATCH) - all fields optional
-# ------------------------------------------------------------
 class StudentUpdate(BaseModel):
-    """Fields allowed to change on update."""
+    """Schema for updating a student."""
 
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
-    birthdate: Optional[date] = None
-    address: Optional[str] = None
-    cohort_id: Optional[int] = None
-    profile_photo_path: Optional[str] = None
+    member_id: Optional[int] = None
+    student_number: Optional[str] = Field(None, max_length=20)
+    status: Optional[StudentStatus] = None
+    application_date: Optional[date] = None
+    enrollment_date: Optional[date] = None
+    expected_completion_date: Optional[date] = None
+    actual_completion_date: Optional[date] = None
+    cohort: Optional[str] = Field(None, max_length=50)
+    emergency_contact_name: Optional[str] = Field(None, max_length=200)
+    emergency_contact_phone: Optional[str] = Field(None, max_length=20)
+    emergency_contact_relationship: Optional[str] = Field(None, max_length=50)
+    notes: Optional[str] = None
 
 
-# ------------------------------------------------------------
-# Response Schema (GET)
-# ------------------------------------------------------------
 class StudentRead(StudentBase):
-    id: int
+    """Schema for reading a student."""
 
-    # Relationship IDs for reference (can be replaced with nested objects later)
-    credential_ids: List[int] = []
-    tools_issued_ids: List[int] = []
-    jatc_application_ids: List[int] = []
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class StudentReadWithDetails(StudentRead):
+    """Schema for reading a student with computed details."""
+
+    enrollment_count: int = 0
+    certification_count: int = 0
+    attendance_rate: float = 0.0
 
     class Config:
         from_attributes = True

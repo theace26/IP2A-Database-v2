@@ -14,8 +14,8 @@ import time
 import random
 import threading
 import statistics
-from datetime import datetime, timedelta
-from typing import List, Dict, Callable, Any
+from datetime import datetime
+from typing import List, Dict, Callable
 from dataclasses import dataclass, field
 from collections import defaultdict
 from faker import Faker
@@ -25,13 +25,14 @@ from sqlalchemy import func
 
 from src.db.session import get_db_session
 from src.models import (
-    Member, MemberEmployment, Student, Organization,
-    OrganizationContact, FileAttachment, Location, Instructor
+    Member,
+    MemberEmployment,
+    Student,
+    Organization,
+    OrganizationContact,
+    FileAttachment,
 )
-from src.db.enums import (
-    MemberStatus, MemberClassification, OrganizationType,
-    SaltingScore, EnrollmentStatus
-)
+from src.db.enums import MemberStatus, MemberClassification
 
 
 fake = Faker()
@@ -40,6 +41,7 @@ fake = Faker()
 @dataclass
 class OperationResult:
     """Result of a single database operation."""
+
     operation: str
     duration_ms: float
     success: bool
@@ -50,6 +52,7 @@ class OperationResult:
 @dataclass
 class UserMetrics:
     """Metrics for a single simulated user."""
+
     user_id: int
     operations: List[OperationResult] = field(default_factory=list)
     total_operations: int = 0
@@ -69,7 +72,11 @@ class UserMetrics:
 
     def avg_response_time_ms(self) -> float:
         """Average response time in milliseconds."""
-        return self.total_duration_ms / self.total_operations if self.total_operations > 0 else 0
+        return (
+            self.total_duration_ms / self.total_operations
+            if self.total_operations > 0
+            else 0
+        )
 
 
 class LoadTestUser:
@@ -80,7 +87,7 @@ class LoadTestUser:
         user_id: int,
         pattern: str = "mixed",
         operations_count: int = 50,
-        think_time_ms: int = 100
+        think_time_ms: int = 100,
     ):
         self.user_id = user_id
         self.pattern = pattern
@@ -103,19 +110,23 @@ class LoadTestUser:
                 try:
                     operation()
                     duration_ms = (time.time() - start_time) * 1000
-                    self.metrics.add_result(OperationResult(
-                        operation=operation.__name__,
-                        duration_ms=duration_ms,
-                        success=True
-                    ))
+                    self.metrics.add_result(
+                        OperationResult(
+                            operation=operation.__name__,
+                            duration_ms=duration_ms,
+                            success=True,
+                        )
+                    )
                 except Exception as e:
                     duration_ms = (time.time() - start_time) * 1000
-                    self.metrics.add_result(OperationResult(
-                        operation=operation.__name__,
-                        duration_ms=duration_ms,
-                        success=False,
-                        error=str(e)
-                    ))
+                    self.metrics.add_result(
+                        OperationResult(
+                            operation=operation.__name__,
+                            duration_ms=duration_ms,
+                            success=False,
+                            error=str(e),
+                        )
+                    )
 
                 # Think time (simulate user pause)
                 time.sleep(self.think_time_ms / 1000)
@@ -127,41 +138,49 @@ class LoadTestUser:
     def _select_operation(self) -> Callable:
         """Select operation based on user pattern."""
         if self.pattern == "read_heavy":
-            return random.choice([
-                self.read_member_list,
-                self.read_member_detail,
-                self.search_members,
-                self.read_organization_list,
-                self.read_student_list,
-            ])
+            return random.choice(
+                [
+                    self.read_member_list,
+                    self.read_member_detail,
+                    self.search_members,
+                    self.read_organization_list,
+                    self.read_student_list,
+                ]
+            )
 
         elif self.pattern == "write_heavy":
-            return random.choice([
-                self.create_member,
-                self.update_member,
-                self.create_employment,
-                self.update_employment,
-                self.create_organization_contact,
-            ])
+            return random.choice(
+                [
+                    self.create_member,
+                    self.update_member,
+                    self.create_employment,
+                    self.update_employment,
+                    self.create_organization_contact,
+                ]
+            )
 
         elif self.pattern == "file_operations":
-            return random.choice([
-                self.list_file_attachments,
-                self.create_file_attachment,
-                self.read_file_attachment,
-            ])
+            return random.choice(
+                [
+                    self.list_file_attachments,
+                    self.create_file_attachment,
+                    self.read_file_attachment,
+                ]
+            )
 
         else:  # mixed pattern
-            return random.choice([
-                self.read_member_list,
-                self.read_member_detail,
-                self.search_members,
-                self.update_member,
-                self.create_employment,
-                self.read_organization_list,
-                self.create_organization_contact,
-                self.list_file_attachments,
-            ])
+            return random.choice(
+                [
+                    self.read_member_list,
+                    self.read_member_detail,
+                    self.search_members,
+                    self.update_member,
+                    self.create_employment,
+                    self.read_organization_list,
+                    self.create_organization_contact,
+                    self.list_file_attachments,
+                ]
+            )
 
     # === READ OPERATIONS ===
 
@@ -197,11 +216,15 @@ class LoadTestUser:
 
         elif search_type == "classification":
             classification = random.choice(list(MemberClassification))
-            self.db.query(Member).filter(Member.classification == classification).limit(50).all()
+            self.db.query(Member).filter(Member.classification == classification).limit(
+                50
+            ).all()
 
         else:  # name search
             letter = random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-            self.db.query(Member).filter(Member.last_name.like(f"{letter}%")).limit(50).all()
+            self.db.query(Member).filter(Member.last_name.like(f"{letter}%")).limit(
+                50
+            ).all()
 
     def read_organization_list(self):
         """List organizations with pagination."""
@@ -243,9 +266,9 @@ class LoadTestUser:
         if member:
             # Update a random field
             updates = [
-                lambda: setattr(member, 'phone', fake.phone_number()[:50]),
-                lambda: setattr(member, 'email', fake.email()),
-                lambda: setattr(member, 'notes', fake.sentence()),
+                lambda: setattr(member, "phone", fake.phone_number()[:50]),
+                lambda: setattr(member, "email", fake.email()),
+                lambda: setattr(member, "notes", fake.sentence()),
             ]
             random.choice(updates)()
             self.db.commit()
@@ -257,14 +280,18 @@ class LoadTestUser:
         if member_count == 0:
             return
 
-        member = self.db.query(Member).offset(random.randint(0, member_count - 1)).first()
+        member = (
+            self.db.query(Member).offset(random.randint(0, member_count - 1)).first()
+        )
 
         # Get random organization
         org_count = self.db.query(func.count(Organization.id)).scalar()
         if org_count == 0:
             return
 
-        org = self.db.query(Organization).offset(random.randint(0, org_count - 1)).first()
+        org = (
+            self.db.query(Organization).offset(random.randint(0, org_count - 1)).first()
+        )
 
         if member and org:
             employment = MemberEmployment(
@@ -273,7 +300,7 @@ class LoadTestUser:
                 start_date=fake.date_between(start_date="-2y", end_date="today"),
                 job_title=random.choice(["Electrician", "Journeyman", "Apprentice"]),
                 hourly_rate=random.randint(25, 65),
-                is_current=random.random() > 0.7
+                is_current=random.random() > 0.7,
             )
             self.db.add(employment)
             self.db.commit()
@@ -284,7 +311,9 @@ class LoadTestUser:
         if count == 0:
             return
 
-        employment = self.db.query(MemberEmployment).offset(random.randint(0, count - 1)).first()
+        employment = (
+            self.db.query(MemberEmployment).offset(random.randint(0, count - 1)).first()
+        )
 
         if employment and employment.is_current:
             # End the current employment
@@ -298,7 +327,9 @@ class LoadTestUser:
         if org_count == 0:
             return
 
-        org = self.db.query(Organization).offset(random.randint(0, org_count - 1)).first()
+        org = (
+            self.db.query(Organization).offset(random.randint(0, org_count - 1)).first()
+        )
 
         if org:
             contact = OrganizationContact(
@@ -307,7 +338,7 @@ class LoadTestUser:
                 last_name=fake.last_name(),
                 email=fake.email() if random.random() > 0.2 else None,
                 phone=fake.phone_number()[:50] if random.random() > 0.2 else None,
-                is_primary=False  # Avoid creating multiple primary contacts
+                is_primary=False,  # Avoid creating multiple primary contacts
             )
             self.db.add(contact)
             self.db.commit()
@@ -329,7 +360,9 @@ class LoadTestUser:
         if member_count == 0:
             return
 
-        member = self.db.query(Member).offset(random.randint(0, member_count - 1)).first()
+        member = (
+            self.db.query(Member).offset(random.randint(0, member_count - 1)).first()
+        )
 
         if member:
             attachment = FileAttachment(
@@ -340,7 +373,7 @@ class LoadTestUser:
                 file_path=f"uploads/member/load_test/{fake.uuid4()}.pdf",
                 file_type="application/pdf",
                 file_size=random.randint(100000, 5000000),
-                description="Load test file attachment"
+                description="Load test file attachment",
             )
             self.db.add(attachment)
             self.db.commit()
@@ -362,7 +395,7 @@ class LoadTest:
         num_users: int = 50,
         operations_per_user: int = 50,
         think_time_ms: int = 100,
-        ramp_up_seconds: int = 10
+        ramp_up_seconds: int = 10,
     ):
         self.num_users = num_users
         self.operations_per_user = operations_per_user
@@ -383,13 +416,13 @@ class LoadTest:
         """
         if pattern_distribution is None:
             pattern_distribution = {
-                "read_heavy": 0.5,      # 50% read-heavy users
-                "write_heavy": 0.2,     # 20% write-heavy users
-                "mixed": 0.25,          # 25% mixed users
-                "file_operations": 0.05 # 5% file operations
+                "read_heavy": 0.5,  # 50% read-heavy users
+                "write_heavy": 0.2,  # 20% write-heavy users
+                "mixed": 0.25,  # 25% mixed users
+                "file_operations": 0.05,  # 5% file operations
             }
 
-        print(f"🚀 Starting Load Test")
+        print("🚀 Starting Load Test")
         print(f"   Users: {self.num_users}")
         print(f"   Operations per user: {self.operations_per_user}")
         print(f"   Total operations: {self.num_users * self.operations_per_user:,}")
@@ -407,13 +440,15 @@ class LoadTest:
                 user_id=i + 1,
                 pattern=pattern,
                 operations_count=self.operations_per_user,
-                think_time_ms=self.think_time_ms
+                think_time_ms=self.think_time_ms,
             )
             self.users.append(user)
 
         # Start users with ramp-up
         self.start_time = datetime.now()
-        ramp_up_delay = self.ramp_up_seconds / self.num_users if self.num_users > 0 else 0
+        ramp_up_delay = (
+            self.ramp_up_seconds / self.num_users if self.num_users > 0 else 0
+        )
 
         print(f"⏱️  Ramping up {self.num_users} users over {self.ramp_up_seconds}s...")
 
@@ -431,7 +466,7 @@ class LoadTest:
                 print(f"   Started {i + 1}/{self.num_users} users...")
 
         print(f"✅ All {self.num_users} users started")
-        print(f"⏳ Running load test (this will take a few minutes)...")
+        print("⏳ Running load test (this will take a few minutes)...")
         print()
 
         # Wait for all threads to complete
@@ -440,7 +475,7 @@ class LoadTest:
 
         self.end_time = datetime.now()
 
-        print(f"✅ Load test complete!")
+        print("✅ Load test complete!")
         print()
 
     def generate_report(self) -> str:
@@ -466,7 +501,9 @@ class LoadTest:
         avg_response = statistics.mean(response_times)
         median_response = statistics.median(response_times)
         p95_response = statistics.quantiles(response_times, n=20)[18]  # 95th percentile
-        p99_response = statistics.quantiles(response_times, n=100)[98]  # 99th percentile
+        p99_response = statistics.quantiles(response_times, n=100)[
+            98
+        ]  # 99th percentile
         min_response = min(response_times)
         max_response = max(response_times)
 
@@ -513,7 +550,9 @@ class LoadTest:
         # Overall Results
         report.append("📈 Overall Results:")
         report.append(f"   Total Operations: {total_ops:,}")
-        report.append(f"   Successful: {successful_ops:,} ({(successful_ops/total_ops)*100:.2f}%)")
+        report.append(
+            f"   Successful: {successful_ops:,} ({(successful_ops/total_ops)*100:.2f}%)"
+        )
         report.append(f"   Failed: {failed_ops:,} ({(failed_ops/total_ops)*100:.2f}%)")
         report.append(f"   Throughput: {throughput_ops_per_sec:.2f} ops/sec")
         report.append("")
@@ -530,7 +569,9 @@ class LoadTest:
 
         # Operation Breakdown
         report.append("🔍 Operation Breakdown:")
-        for op_name, count in sorted(op_counts.items(), key=lambda x: x[1], reverse=True):
+        for op_name, count in sorted(
+            op_counts.items(), key=lambda x: x[1], reverse=True
+        ):
             if op_name in op_times and op_times[op_name]:
                 avg_time = statistics.mean(op_times[op_name])
                 report.append(f"   {op_name}: {count} ops, avg {avg_time:.2f}ms")
@@ -555,9 +596,13 @@ class LoadTest:
             report.append(f"   ❌ High failure rate: {(failed_ops/total_ops)*100:.2f}%")
 
         if throughput_ops_per_sec > 100:
-            report.append(f"   ✅ High throughput: {throughput_ops_per_sec:.2f} ops/sec")
+            report.append(
+                f"   ✅ High throughput: {throughput_ops_per_sec:.2f} ops/sec"
+            )
         elif throughput_ops_per_sec > 50:
-            report.append(f"   ✅ Good throughput: {throughput_ops_per_sec:.2f} ops/sec")
+            report.append(
+                f"   ✅ Good throughput: {throughput_ops_per_sec:.2f} ops/sec"
+            )
         else:
             report.append(f"   ⚠️  Low throughput: {throughput_ops_per_sec:.2f} ops/sec")
 
@@ -566,19 +611,31 @@ class LoadTest:
         # Scaling Recommendations
         report.append("📊 Scaling to 4000 Users:")
         concurrent_capacity = self.num_users * (100 / max(avg_response, 1))
-        estimated_4000_response = (4000 / concurrent_capacity) * avg_response if concurrent_capacity > 0 else float('inf')
+        estimated_4000_response = (
+            (4000 / concurrent_capacity) * avg_response
+            if concurrent_capacity > 0
+            else float("inf")
+        )
 
-        report.append(f"   Current capacity: ~{int(concurrent_capacity)} concurrent users")
-        report.append(f"   Estimated response time at 4000 users: {estimated_4000_response:.0f}ms")
+        report.append(
+            f"   Current capacity: ~{int(concurrent_capacity)} concurrent users"
+        )
+        report.append(
+            f"   Estimated response time at 4000 users: {estimated_4000_response:.0f}ms"
+        )
 
         if estimated_4000_response < 500:
             report.append("   ✅ System should handle 4000 users well")
         elif estimated_4000_response < 2000:
-            report.append("   ⚠️  System may handle 4000 users with degraded performance")
+            report.append(
+                "   ⚠️  System may handle 4000 users with degraded performance"
+            )
             report.append("   💡 Recommendation: Add read replicas, optimize queries")
         else:
             report.append("   ❌ System will struggle with 4000 users")
-            report.append("   💡 Recommendation: Horizontal scaling, caching, connection pooling")
+            report.append(
+                "   💡 Recommendation: Horizontal scaling, caching, connection pooling"
+            )
 
         report.append("")
         report.append("=" * 70)

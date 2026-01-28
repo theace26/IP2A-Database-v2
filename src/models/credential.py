@@ -54,7 +54,7 @@ class Credential(TimestampMixin, SoftDeleteMixin, Base):
     attachment_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     # Relationship
-    student = relationship("Student", back_populates="credentials")
+    # OLD SYSTEM - student = relationship("Student", back_populates="credentials")
 
     __table_args__ = (
         Index("ix_credential_student_name", "student_id", "credential_name"),

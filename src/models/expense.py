@@ -81,7 +81,7 @@ class Expense(TimestampMixin, SoftDeleteMixin, Base):
     notes = Column(Text, nullable=True)
 
     # Relationships
-    student = relationship("Student", back_populates="expenses")
+    # OLD SYSTEM - student = relationship("Student", back_populates="expenses")
     location = relationship("Location", back_populates="expenses")
     grant = relationship("Grant", back_populates="expenses")
 

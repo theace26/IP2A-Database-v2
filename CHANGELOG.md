@@ -39,6 +39,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * Environment configuration: AUTH_JWT_SECRET_KEY, AUTH_ACCESS_TOKEN_EXPIRE_MINUTES, etc.
   * Security features: Rainbow table protection, brute force protection, timing attack resistance
   * Client fixture added to conftest.py for synchronous HTTP testing
+- **Phase 1.3: User Registration & Email Verification** ⭐
+  * Complete user lifecycle management with email verification
+  * EmailToken model for secure token storage (SHA-256 hashing)
+  * Email service abstraction with console (dev) and SMTP (production) implementations
+  * Registration service: register_user, verify_email, resend_verification, request_password_reset, reset_password, create_user_by_admin
+  * 7 new API endpoints: register, verify-email (POST & GET), resend-verification, forgot-password, reset-password, admin/create-user
+  * Rate limiting: 10/min auth, 5/min registration, 3/min password reset (in-memory, Redis-ready architecture)
+  * Security features: 24-hour verification tokens, 1-hour reset tokens, single-use tokens, email enumeration protection
+  * Custom exceptions: EmailAlreadyExistsError, InvalidTokenError, TokenExpiredError
+  * 10 new tests (150 total passing): registration, verification, password reset, admin creation
+  * Database migration: 381da02dc6f0 - Add email_tokens table
+  * Rate limiting middleware: src/middleware/rate_limit.py
+  * Production-ready with full test coverage
+- **Phase 2 (Roadmap): Pre-Apprenticeship Training System** ⭐⭐
+  * Core IP2A functionality - training program management
+  * 7 new models: Student, Course, ClassSession, Enrollment, Attendance, Grade, Certification
+  * 7 training enums: StudentStatus, CourseEnrollmentStatus, SessionAttendanceStatus, GradeType, CertificationType, CertificationStatus, CourseType
+  * Student model linked to Member (one student per member)
+  * Complete CRUD operations with Staff+ authentication
+  * 7 Pydantic schemas (Base/Create/Update/Read variants)
+  * 7 service modules with helpers: generate_student_number, get_student_attendance_rate
+  * 7 FastAPI routers (~35 endpoints): /training/students, courses, class-sessions, enrollments, attendances, grades, certifications
+  * Training seed data: 5 courses (ELEC-101, MATH-100, SAFE-101, TOOL-101, READ-101), 20 students
+  * Key features: student number auto-generation (YYYY-NNNN), attendance tracking, grade calculation, certification expiration tracking
+  * 33 new tests (183 total passing): comprehensive CRUD and integration tests
+  * Database migration: 9b75a876ef60 - Add pre-apprenticeship training models
+  * Production-ready training management system
 - Phase 2 seed data for union operations
   * Realistic test data for SALTing activities (30 records)
   * Benevolence applications with multi-level review workflow (25 applications, 47 reviews)

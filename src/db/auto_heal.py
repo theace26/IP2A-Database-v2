@@ -6,9 +6,9 @@ from datetime import datetime, timedelta
 import os
 import json
 
-from .integrity_check import IntegrityChecker, IntegrityIssue
-from .integrity_repair import IntegrityRepairer, RepairAction
-from .admin_notifications import NotificationManager, NotificationPriority
+from .integrity_check import IntegrityChecker
+from .integrity_repair import IntegrityRepairer
+from .admin_notifications import NotificationManager
 
 
 class AutoHealResult:
@@ -23,7 +23,7 @@ class AutoHealResult:
         issues_requiring_attention: int,
         notifications_sent: int,
         success: bool,
-        error_message: Optional[str] = None
+        error_message: Optional[str] = None,
     ):
         self.run_id = run_id
         self.timestamp = timestamp
@@ -44,7 +44,7 @@ class AutoHealResult:
             "issues_requiring_attention": self.issues_requiring_attention,
             "notifications_sent": self.notifications_sent,
             "success": self.success,
-            "error_message": self.error_message
+            "error_message": self.error_message,
         }
 
 
@@ -115,7 +115,7 @@ class AutoHealingSystem:
                     issues_fixed=0,
                     issues_requiring_attention=0,
                     notifications_sent=0,
-                    success=True
+                    success=True,
                 )
                 self._log_result(result)
                 return result
@@ -142,9 +142,13 @@ class AutoHealingSystem:
             unfixable_issues = [i for i in issues if not i.auto_fixable]
 
             if notify_admin and unfixable_issues:
-                print(f"\n📧 STEP 3: Notifying Admin About {len(unfixable_issues)} Unfixable Issues")
+                print(
+                    f"\n📧 STEP 3: Notifying Admin About {len(unfixable_issues)} Unfixable Issues"
+                )
                 notification_manager = NotificationManager()
-                notifications = notification_manager.analyze_and_notify(unfixable_issues)
+                notifications = notification_manager.analyze_and_notify(
+                    unfixable_issues
+                )
                 notifications_sent = len(notifications)
                 print(f"   ✅ Sent {notifications_sent} admin notifications")
             elif notify_admin:
@@ -158,7 +162,7 @@ class AutoHealingSystem:
                 issues_fixed=len(successful_repairs),
                 issues_requiring_attention=len(unfixable_issues),
                 notifications_sent=notifications_sent,
-                success=True
+                success=True,
             )
 
             # Log result
@@ -188,7 +192,7 @@ class AutoHealingSystem:
                 issues_requiring_attention=0,
                 notifications_sent=0,
                 success=False,
-                error_message=error_msg
+                error_message=error_msg,
             )
 
             self._log_result(result)
@@ -197,11 +201,10 @@ class AutoHealingSystem:
     def _log_result(self, result: AutoHealResult):
         """Log auto-heal result to file."""
         log_file = os.path.join(
-            self.log_dir,
-            f"{result.timestamp.strftime('%Y-%m-%d')}_auto_heal.jsonl"
+            self.log_dir, f"{result.timestamp.strftime('%Y-%m-%d')}_auto_heal.jsonl"
         )
 
-        with open(log_file, 'a') as f:
+        with open(log_file, "a") as f:
             f.write(json.dumps(result.to_dict()) + "\n")
 
         print(f"\n📝 Result logged to: {log_file}")
@@ -220,16 +223,16 @@ class AutoHealingSystem:
         today = datetime.now()
 
         for day_offset in range(days):
-            date = (today - timedelta(days=day_offset)).strftime('%Y-%m-%d')
+            date = (today - timedelta(days=day_offset)).strftime("%Y-%m-%d")
             log_file = os.path.join(self.log_dir, f"{date}_auto_heal.jsonl")
 
             if os.path.exists(log_file):
-                with open(log_file, 'r') as f:
+                with open(log_file, "r") as f:
                     for line in f:
                         if line.strip():
                             results.append(json.loads(line))
 
-        return sorted(results, key=lambda x: x['timestamp'], reverse=True)
+        return sorted(results, key=lambda x: x["timestamp"], reverse=True)
 
     def get_health_summary(self, days: int = 7) -> dict:
         """
@@ -247,19 +250,21 @@ class AutoHealingSystem:
             return {
                 "status": "unknown",
                 "message": "No auto-heal runs in the specified period",
-                "days_analyzed": days
+                "days_analyzed": days,
             }
 
         total_runs = len(runs)
-        successful_runs = len([r for r in runs if r['success']])
-        total_issues_found = sum(r['issues_found'] for r in runs)
-        total_issues_fixed = sum(r['issues_fixed'] for r in runs)
-        total_requiring_attention = sum(r['issues_requiring_attention'] for r in runs)
+        successful_runs = len([r for r in runs if r["success"]])
+        total_issues_found = sum(r["issues_found"] for r in runs)
+        total_issues_fixed = sum(r["issues_fixed"] for r in runs)
+        total_requiring_attention = sum(r["issues_requiring_attention"] for r in runs)
 
         # Determine health status
         if total_requiring_attention > 50:
             status = "critical"
-            message = f"{total_requiring_attention} issues require immediate admin attention"
+            message = (
+                f"{total_requiring_attention} issues require immediate admin attention"
+            )
         elif total_requiring_attention > 10:
             status = "warning"
             message = f"{total_requiring_attention} issues need review"
@@ -280,7 +285,7 @@ class AutoHealingSystem:
             "total_issues_fixed": total_issues_fixed,
             "total_requiring_attention": total_requiring_attention,
             "auto_fix_rate": f"{(total_issues_fixed / total_issues_found * 100) if total_issues_found > 0 else 0:.1f}%",
-            "most_recent_run": runs[0] if runs else None
+            "most_recent_run": runs[0] if runs else None,
         }
 
 
@@ -317,7 +322,7 @@ class ScheduledAutoHeal:
         if not os.path.exists(self.last_run_file):
             return True
 
-        with open(self.last_run_file, 'r') as f:
+        with open(self.last_run_file, "r") as f:
             last_run_str = f.read().strip()
             last_run = datetime.fromisoformat(last_run_str)
 
@@ -335,10 +340,10 @@ class ScheduledAutoHeal:
             AutoHealResult if ran, None if skipped
         """
         if not self.should_run(interval_hours):
-            print(f"⏭️  Skipping auto-heal (not due yet)")
+            print("⏭️  Skipping auto-heal (not due yet)")
             return None
 
-        print(f"⏰ Auto-heal is due - running now")
+        print("⏰ Auto-heal is due - running now")
 
         db = self.db_session_factory()
         try:
@@ -346,7 +351,7 @@ class ScheduledAutoHeal:
             result = healer.run_auto_heal(notify_admin=True)
 
             # Update last run timestamp
-            with open(self.last_run_file, 'w') as f:
+            with open(self.last_run_file, "w") as f:
                 f.write(datetime.now().isoformat())
 
             return result

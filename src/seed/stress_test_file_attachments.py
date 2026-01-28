@@ -25,7 +25,7 @@ FILE_TYPES = {
             "Profile picture",
             "Identification document",
             "Headshot",
-        ]
+        ],
     },
     "photo_worksite": {
         "extensions": [".jpg", ".jpeg", ".png"],
@@ -37,7 +37,7 @@ FILE_TYPES = {
             "Project photo",
             "Work in progress",
             "Completed work",
-        ]
+        ],
     },
     # PDFs - Reports (0.5-5 MB)
     "pdf_report": {
@@ -50,7 +50,7 @@ FILE_TYPES = {
             "Course completion report",
             "Inspection report",
             "Project report",
-        ]
+        ],
     },
     # PDFs - Scanned documents (0.2-2 MB)
     "pdf_scan": {
@@ -65,7 +65,7 @@ FILE_TYPES = {
             "Membership form",
             "W-4 form",
             "Direct deposit form",
-        ]
+        ],
     },
     # PDFs - Forms (50-500 KB)
     "pdf_form": {
@@ -78,7 +78,7 @@ FILE_TYPES = {
             "Tax form",
             "Emergency contact form",
             "Direct deposit authorization",
-        ]
+        ],
     },
     # Office documents (100 KB - 2 MB)
     "doc_word": {
@@ -91,7 +91,7 @@ FILE_TYPES = {
             "Work history",
             "Reference letter",
             "Performance review",
-        ]
+        ],
     },
     # Spreadsheets (50 KB - 1 MB)
     "doc_excel": {
@@ -103,7 +103,7 @@ FILE_TYPES = {
             "Expense report",
             "Equipment inventory",
             "Time sheet",
-        ]
+        ],
     },
     # Small images (100 KB - 1 MB)
     "image_small": {
@@ -115,7 +115,7 @@ FILE_TYPES = {
             "Badge photo",
             "Document snippet",
             "Logo",
-        ]
+        ],
     },
 }
 
@@ -130,7 +130,7 @@ GRIEVANCE_FILE_TYPES = {
             "Witness statement",
             "Written complaint",
             "Union response",
-        ]
+        ],
     },
     "grievance_evidence": {
         "extensions": [".jpg", ".pdf", ".png"],
@@ -141,7 +141,7 @@ GRIEVANCE_FILE_TYPES = {
             "Email correspondence",
             "Time card copy",
             "Contract excerpt",
-        ]
+        ],
     },
     "grievance_doc": {
         "extensions": [".docx", ".pdf"],
@@ -152,17 +152,21 @@ GRIEVANCE_FILE_TYPES = {
             "Resolution document",
             "Management response",
             "Union filing",
-        ]
+        ],
     },
 }
 
 
-def generate_file_attachment(record_type: str, record_id: int, file_category: str = None):
+def generate_file_attachment(
+    record_type: str, record_id: int, file_category: str = None
+):
     """Generate a single realistic file attachment."""
 
     # Choose file type category
     if file_category:
-        file_config = FILE_TYPES.get(file_category) or GRIEVANCE_FILE_TYPES.get(file_category)
+        file_config = FILE_TYPES.get(file_category) or GRIEVANCE_FILE_TYPES.get(
+            file_category
+        )
     else:
         file_config = random.choice(list(FILE_TYPES.values()))
 
@@ -215,8 +219,8 @@ def stress_test_file_attachments(db: Session):
     student_file_count = 0
     org_file_count = 0
 
-    print(f"   Generating file attachments for entities...")
-    print(f"   This will take several minutes...")
+    print("   Generating file attachments for entities...")
+    print("   This will take several minutes...")
 
     # === MEMBERS: 1-20 documents each ===
     if members:
@@ -230,11 +234,11 @@ def stress_test_file_attachments(db: Session):
 
             # Common file types for members (weighted selection)
             common_types = [
-                "photo_id",        # ID photo
-                "pdf_scan",        # Scanned license
-                "pdf_form",        # Membership form
-                "pdf_report",      # Training certificate
-                "doc_word",        # Resume or application
+                "photo_id",  # ID photo
+                "pdf_scan",  # Scanned license
+                "pdf_form",  # Membership form
+                "pdf_report",  # Training certificate
+                "doc_word",  # Resume or application
             ]
 
             # For members with fewer files, prioritize common types
@@ -257,7 +261,9 @@ def stress_test_file_attachments(db: Session):
             if (idx + 1) % 1000 == 0:
                 print(f"      {idx + 1}/{len(members)} members processed...")
 
-        print(f"   ✅ Generated {member_file_count:,} files for members (avg {member_file_count / len(members):.1f} per member)")
+        print(
+            f"   ✅ Generated {member_file_count:,} files for members (avg {member_file_count / len(members):.1f} per member)"
+        )
 
     # === STUDENTS: 5-15 documents each ===
     if students:
@@ -268,16 +274,24 @@ def stress_test_file_attachments(db: Session):
 
             for _ in range(num_files):
                 # Students get mostly forms, photos, and reports
-                file_type = random.choice([
-                    "photo_id", "pdf_form", "pdf_scan",
-                    "pdf_report", "doc_word", "image_small"
-                ])
+                file_type = random.choice(
+                    [
+                        "photo_id",
+                        "pdf_form",
+                        "pdf_scan",
+                        "pdf_report",
+                        "doc_word",
+                        "image_small",
+                    ]
+                )
                 attachment = generate_file_attachment("student", student.id, file_type)
                 attachments.append(attachment)
                 student_file_count += 1
                 total_size_bytes += attachment.file_size
 
-        print(f"   ✅ Generated {student_file_count:,} files for students (avg {student_file_count / len(students):.1f} per student)")
+        print(
+            f"   ✅ Generated {student_file_count:,} files for students (avg {student_file_count / len(students):.1f} per student)"
+        )
 
     # === ORGANIZATIONS: 2-10 documents each ===
     if organizations:
@@ -288,16 +302,17 @@ def stress_test_file_attachments(db: Session):
 
             for _ in range(num_files):
                 # Organizations get contracts, licenses, reports
-                file_type = random.choice([
-                    "pdf_scan", "pdf_report", "doc_word",
-                    "doc_excel", "image_small"
-                ])
+                file_type = random.choice(
+                    ["pdf_scan", "pdf_report", "doc_word", "doc_excel", "image_small"]
+                )
                 attachment = generate_file_attachment("organization", org.id, file_type)
                 attachments.append(attachment)
                 org_file_count += 1
                 total_size_bytes += attachment.file_size
 
-        print(f"   ✅ Generated {org_file_count:,} files for organizations (avg {org_file_count / len(organizations):.1f} per org)")
+        print(
+            f"   ✅ Generated {org_file_count:,} files for organizations (avg {org_file_count / len(organizations):.1f} per org)"
+        )
 
     # === GRIEVANCES: 1-50 files each (simulate some grievances) ===
     # Note: We'll create grievance files even without a grievance table yet
@@ -318,7 +333,7 @@ def stress_test_file_attachments(db: Session):
             attachments.append(attachment)
             total_size_bytes += attachment.file_size
 
-    print(f"   ✅ Generated grievance files")
+    print("   ✅ Generated grievance files")
 
     # Add all attachments to database
     print(f"   Adding {len(attachments):,} file attachments to database...")
@@ -327,11 +342,11 @@ def stress_test_file_attachments(db: Session):
     add_records(db, attachments, batch_size=1000)
 
     print(f"   ✅ Seeded {len(attachments):,} file attachments")
-    print(f"   📊 Storage breakdown:")
+    print("   📊 Storage breakdown:")
     print(f"      • Members: {member_file_count:,} files (1-20 per member)")
     print(f"      • Students: {student_file_count:,} files")
     print(f"      • Organizations: {org_file_count:,} files")
-    print(f"      • Grievances: varies (1-50 per grievance)")
+    print("      • Grievances: varies (1-50 per grievance)")
     print(f"      • Total size: {total_size_bytes / (1024**3):.2f} GB")
 
     return attachments

@@ -2,18 +2,12 @@
 
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from typing import Dict, List, Tuple, Optional
+from typing import List, Optional
 from datetime import datetime
 import os
 
-from src.models import (
-    Member, MemberEmployment, Student, Instructor, Location,
-    Organization, OrganizationContact, FileAttachment, AuditLog
-)
-from src.db.enums import (
-    MemberStatus, MemberClassification, OrganizationType,
-    SaltingScore, CohortStatus
-)
+from src.models import Member, MemberEmployment, Organization, FileAttachment
+from src.db.enums import MemberStatus, MemberClassification, OrganizationType
 
 
 class IntegrityIssue:
@@ -27,7 +21,7 @@ class IntegrityIssue:
         record_id: Optional[int],
         description: str,
         auto_fixable: bool = False,
-        fix_action: Optional[str] = None
+        fix_action: Optional[str] = None,
     ):
         self.category = category
         self.severity = severity
@@ -82,122 +76,147 @@ class IntegrityChecker:
         print("   Checking foreign key integrity...")
 
         # Member employments -> Members
-        orphaned = self.db.execute(text("""
+        orphaned = self.db.execute(
+            text("""
             SELECT me.id FROM member_employments me
             LEFT JOIN members m ON me.member_id = m.id
             WHERE m.id IS NULL
-        """)).fetchall()
+        """)
+        ).fetchall()
 
         for row in orphaned:
-            self.issues.append(IntegrityIssue(
-                category="foreign_key",
-                severity="critical",
-                table="member_employments",
-                record_id=row[0],
-                description=f"Employment record {row[0]} references non-existent member",
-                auto_fixable=True,
-                fix_action="delete"
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="foreign_key",
+                    severity="critical",
+                    table="member_employments",
+                    record_id=row[0],
+                    description=f"Employment record {row[0]} references non-existent member",
+                    auto_fixable=True,
+                    fix_action="delete",
+                )
+            )
 
         # Member employments -> Organizations
-        orphaned = self.db.execute(text("""
+        orphaned = self.db.execute(
+            text("""
             SELECT me.id FROM member_employments me
             LEFT JOIN organizations o ON me.organization_id = o.id
             WHERE o.id IS NULL
-        """)).fetchall()
+        """)
+        ).fetchall()
 
         for row in orphaned:
-            self.issues.append(IntegrityIssue(
-                category="foreign_key",
-                severity="critical",
-                table="member_employments",
-                record_id=row[0],
-                description=f"Employment record {row[0]} references non-existent organization",
-                auto_fixable=True,
-                fix_action="delete"
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="foreign_key",
+                    severity="critical",
+                    table="member_employments",
+                    record_id=row[0],
+                    description=f"Employment record {row[0]} references non-existent organization",
+                    auto_fixable=True,
+                    fix_action="delete",
+                )
+            )
 
         # Organization contacts -> Organizations
-        orphaned = self.db.execute(text("""
+        orphaned = self.db.execute(
+            text("""
             SELECT oc.id FROM organization_contacts oc
             LEFT JOIN organizations o ON oc.organization_id = o.id
             WHERE o.id IS NULL
-        """)).fetchall()
+        """)
+        ).fetchall()
 
         for row in orphaned:
-            self.issues.append(IntegrityIssue(
-                category="foreign_key",
-                severity="critical",
-                table="organization_contacts",
-                record_id=row[0],
-                description=f"Contact record {row[0]} references non-existent organization",
-                auto_fixable=True,
-                fix_action="delete"
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="foreign_key",
+                    severity="critical",
+                    table="organization_contacts",
+                    record_id=row[0],
+                    description=f"Contact record {row[0]} references non-existent organization",
+                    auto_fixable=True,
+                    fix_action="delete",
+                )
+            )
 
         # File attachments -> Parent records (skip if table doesn't exist)
         try:
-            orphaned = self.db.execute(text("""
+            orphaned = self.db.execute(
+                text("""
                 SELECT fa.id, fa.record_type, fa.record_id
                 FROM file_attachments fa
                 WHERE fa.record_type = 'member'
                 AND NOT EXISTS (SELECT 1 FROM members m WHERE m.id = fa.record_id)
-            """)).fetchall()
+            """)
+            ).fetchall()
 
             for row in orphaned:
-                self.issues.append(IntegrityIssue(
-                    category="foreign_key",
-                    severity="warning",
-                    table="file_attachments",
-                    record_id=row[0],
-                    description=f"File attachment {row[0]} references non-existent {row[1]} record {row[2]}",
-                    auto_fixable=True,
-                    fix_action="delete"
-                ))
+                self.issues.append(
+                    IntegrityIssue(
+                        category="foreign_key",
+                        severity="warning",
+                        table="file_attachments",
+                        record_id=row[0],
+                        description=f"File attachment {row[0]} references non-existent {row[1]} record {row[2]}",
+                        auto_fixable=True,
+                        fix_action="delete",
+                    )
+                )
         except Exception:
             # Table doesn't exist yet - rollback and continue
             self.db.rollback()
 
-        print(f"      ✓ Foreign key check complete")
+        print("      ✓ Foreign key check complete")
 
     def check_required_fields(self):
         """Check for missing required fields."""
         print("   Checking required fields...")
 
         # Members: member_number, first_name, last_name required
-        missing = self.db.query(Member).filter(
-            (Member.member_number == None) |
-            (Member.first_name == None) |
-            (Member.last_name == None)
-        ).all()
+        missing = (
+            self.db.query(Member)
+            .filter(
+                (Member.member_number == None)
+                | (Member.first_name == None)
+                | (Member.last_name == None)
+            )
+            .all()
+        )
 
         for member in missing:
-            self.issues.append(IntegrityIssue(
-                category="required_field",
-                severity="critical",
-                table="members",
-                record_id=member.id,
-                description=f"Member {member.id} missing required field(s)",
-                auto_fixable=False
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="required_field",
+                    severity="critical",
+                    table="members",
+                    record_id=member.id,
+                    description=f"Member {member.id} missing required field(s)",
+                    auto_fixable=False,
+                )
+            )
 
         # Organizations: name, org_type required
-        missing = self.db.query(Organization).filter(
-            (Organization.name == None) |
-            (Organization.org_type == None)
-        ).all()
+        missing = (
+            self.db.query(Organization)
+            .filter((Organization.name == None) | (Organization.org_type == None))
+            .all()
+        )
 
         for org in missing:
-            self.issues.append(IntegrityIssue(
-                category="required_field",
-                severity="critical",
-                table="organizations",
-                record_id=org.id,
-                description=f"Organization {org.id} missing required field(s)",
-                auto_fixable=False
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="required_field",
+                    severity="critical",
+                    table="organizations",
+                    record_id=org.id,
+                    description=f"Organization {org.id} missing required field(s)",
+                    auto_fixable=False,
+                )
+            )
 
-        print(f"      ✓ Required field check complete")
+        print("      ✓ Required field check complete")
 
     def check_enum_values(self):
         """Check for invalid enum values."""
@@ -205,54 +224,62 @@ class IntegrityChecker:
 
         # Member status enums
         valid_statuses = [s.value for s in MemberStatus]
-        invalid = self.db.query(Member).filter(
-            ~Member.status.in_(valid_statuses)
-        ).all()
+        invalid = self.db.query(Member).filter(~Member.status.in_(valid_statuses)).all()
 
         for member in invalid:
-            self.issues.append(IntegrityIssue(
-                category="enum_value",
-                severity="critical",
-                table="members",
-                record_id=member.id,
-                description=f"Member {member.id} has invalid status: {member.status}",
-                auto_fixable=True,
-                fix_action=f"set to '{MemberStatus.ACTIVE.value}'"
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="enum_value",
+                    severity="critical",
+                    table="members",
+                    record_id=member.id,
+                    description=f"Member {member.id} has invalid status: {member.status}",
+                    auto_fixable=True,
+                    fix_action=f"set to '{MemberStatus.ACTIVE.value}'",
+                )
+            )
 
         # Member classification enums
         valid_classifications = [c.value for c in MemberClassification]
-        invalid = self.db.query(Member).filter(
-            ~Member.classification.in_(valid_classifications)
-        ).all()
+        invalid = (
+            self.db.query(Member)
+            .filter(~Member.classification.in_(valid_classifications))
+            .all()
+        )
 
         for member in invalid:
-            self.issues.append(IntegrityIssue(
-                category="enum_value",
-                severity="critical",
-                table="members",
-                record_id=member.id,
-                description=f"Member {member.id} has invalid classification: {member.classification}",
-                auto_fixable=False
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="enum_value",
+                    severity="critical",
+                    table="members",
+                    record_id=member.id,
+                    description=f"Member {member.id} has invalid classification: {member.classification}",
+                    auto_fixable=False,
+                )
+            )
 
         # Organization type enums
         valid_org_types = [t.value for t in OrganizationType]
-        invalid = self.db.query(Organization).filter(
-            ~Organization.org_type.in_(valid_org_types)
-        ).all()
+        invalid = (
+            self.db.query(Organization)
+            .filter(~Organization.org_type.in_(valid_org_types))
+            .all()
+        )
 
         for org in invalid:
-            self.issues.append(IntegrityIssue(
-                category="enum_value",
-                severity="critical",
-                table="organizations",
-                record_id=org.id,
-                description=f"Organization {org.id} has invalid org_type: {org.org_type}",
-                auto_fixable=False
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="enum_value",
+                    severity="critical",
+                    table="organizations",
+                    record_id=org.id,
+                    description=f"Organization {org.id} has invalid org_type: {org.org_type}",
+                    auto_fixable=False,
+                )
+            )
 
-        print(f"      ✓ Enum value check complete")
+        print("      ✓ Enum value check complete")
 
     # === CATEGORY 2: LOGICAL CONSISTENCY ===
 
@@ -261,143 +288,175 @@ class IntegrityChecker:
         print("   Checking date logic...")
 
         # Employment: end_date must be >= start_date
-        invalid = self.db.query(MemberEmployment).filter(
-            MemberEmployment.end_date != None,
-            MemberEmployment.end_date < MemberEmployment.start_date
-        ).all()
+        invalid = (
+            self.db.query(MemberEmployment)
+            .filter(
+                MemberEmployment.end_date != None,
+                MemberEmployment.end_date < MemberEmployment.start_date,
+            )
+            .all()
+        )
 
         for emp in invalid:
-            self.issues.append(IntegrityIssue(
-                category="date_logic",
-                severity="critical",
-                table="member_employments",
-                record_id=emp.id,
-                description=f"Employment {emp.id} has end_date before start_date",
-                auto_fixable=True,
-                fix_action="swap dates or set end_date to NULL"
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="date_logic",
+                    severity="critical",
+                    table="member_employments",
+                    record_id=emp.id,
+                    description=f"Employment {emp.id} has end_date before start_date",
+                    auto_fixable=True,
+                    fix_action="swap dates or set end_date to NULL",
+                )
+            )
 
         # Employment: is_current=True must have end_date=NULL
-        invalid = self.db.query(MemberEmployment).filter(
-            MemberEmployment.is_current == True,
-            MemberEmployment.end_date != None
-        ).all()
+        invalid = (
+            self.db.query(MemberEmployment)
+            .filter(
+                MemberEmployment.is_current == True, MemberEmployment.end_date != None
+            )
+            .all()
+        )
 
         for emp in invalid:
-            self.issues.append(IntegrityIssue(
-                category="date_logic",
-                severity="warning",
-                table="member_employments",
-                record_id=emp.id,
-                description=f"Employment {emp.id} marked current but has end_date",
-                auto_fixable=True,
-                fix_action="set is_current=False or end_date=NULL"
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="date_logic",
+                    severity="warning",
+                    table="member_employments",
+                    record_id=emp.id,
+                    description=f"Employment {emp.id} marked current but has end_date",
+                    auto_fixable=True,
+                    fix_action="set is_current=False or end_date=NULL",
+                )
+            )
 
         # Members: hire_date should not be in future
         from datetime import date
-        future_hires = self.db.query(Member).filter(
-            Member.hire_date > date.today()
-        ).all()
+
+        future_hires = (
+            self.db.query(Member).filter(Member.hire_date > date.today()).all()
+        )
 
         for member in future_hires:
-            self.issues.append(IntegrityIssue(
-                category="date_logic",
-                severity="warning",
-                table="members",
-                record_id=member.id,
-                description=f"Member {member.id} has future hire_date: {member.hire_date}",
-                auto_fixable=False
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="date_logic",
+                    severity="warning",
+                    table="members",
+                    record_id=member.id,
+                    description=f"Member {member.id} has future hire_date: {member.hire_date}",
+                    auto_fixable=False,
+                )
+            )
 
-        print(f"      ✓ Date logic check complete")
+        print("      ✓ Date logic check complete")
 
     def check_employment_logic(self):
         """Check employment-specific business logic."""
         print("   Checking employment logic...")
 
         # Members with multiple "current" jobs
-        duplicates = self.db.execute(text("""
+        duplicates = self.db.execute(
+            text("""
             SELECT member_id, COUNT(*) as current_count
             FROM member_employments
             WHERE is_current = true
             GROUP BY member_id
             HAVING COUNT(*) > 1
-        """)).fetchall()
+        """)
+        ).fetchall()
 
         for row in duplicates:
-            self.issues.append(IntegrityIssue(
-                category="employment_logic",
-                severity="warning",
-                table="member_employments",
-                record_id=None,
-                description=f"Member {row[0]} has {row[1]} current employments (should be 0 or 1)",
-                auto_fixable=False
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="employment_logic",
+                    severity="warning",
+                    table="member_employments",
+                    record_id=None,
+                    description=f"Member {row[0]} has {row[1]} current employments (should be 0 or 1)",
+                    auto_fixable=False,
+                )
+            )
 
         # Hourly rate sanity check ($10-$150 range)
-        invalid = self.db.query(MemberEmployment).filter(
-            (MemberEmployment.hourly_rate < 10) |
-            (MemberEmployment.hourly_rate > 150)
-        ).all()
+        invalid = (
+            self.db.query(MemberEmployment)
+            .filter(
+                (MemberEmployment.hourly_rate < 10)
+                | (MemberEmployment.hourly_rate > 150)
+            )
+            .all()
+        )
 
         for emp in invalid:
-            self.issues.append(IntegrityIssue(
-                category="employment_logic",
-                severity="info",
-                table="member_employments",
-                record_id=emp.id,
-                description=f"Employment {emp.id} has unusual hourly_rate: ${emp.hourly_rate}",
-                auto_fixable=False
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="employment_logic",
+                    severity="info",
+                    table="member_employments",
+                    record_id=emp.id,
+                    description=f"Employment {emp.id} has unusual hourly_rate: ${emp.hourly_rate}",
+                    auto_fixable=False,
+                )
+            )
 
-        print(f"      ✓ Employment logic check complete")
+        print("      ✓ Employment logic check complete")
 
     def check_contact_logic(self):
         """Check organization contact logic."""
         print("   Checking contact logic...")
 
         # Organizations with multiple primary contacts
-        duplicates = self.db.execute(text("""
+        duplicates = self.db.execute(
+            text("""
             SELECT organization_id, COUNT(*) as primary_count
             FROM organization_contacts
             WHERE is_primary = true
             GROUP BY organization_id
             HAVING COUNT(*) > 1
-        """)).fetchall()
+        """)
+        ).fetchall()
 
         for row in duplicates:
-            self.issues.append(IntegrityIssue(
-                category="contact_logic",
-                severity="warning",
-                table="organization_contacts",
-                record_id=None,
-                description=f"Organization {row[0]} has {row[1]} primary contacts (should be 0 or 1)",
-                auto_fixable=True,
-                fix_action="keep most recent as primary"
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="contact_logic",
+                    severity="warning",
+                    table="organization_contacts",
+                    record_id=None,
+                    description=f"Organization {row[0]} has {row[1]} primary contacts (should be 0 or 1)",
+                    auto_fixable=True,
+                    fix_action="keep most recent as primary",
+                )
+            )
 
         # Organizations with no contacts
-        no_contacts = self.db.execute(text("""
+        no_contacts = self.db.execute(
+            text("""
             SELECT o.id, o.name
             FROM organizations o
             WHERE NOT EXISTS (
                 SELECT 1 FROM organization_contacts oc
                 WHERE oc.organization_id = o.id
             )
-        """)).fetchall()
+        """)
+        ).fetchall()
 
         for row in no_contacts:
-            self.issues.append(IntegrityIssue(
-                category="contact_logic",
-                severity="info",
-                table="organizations",
-                record_id=row[0],
-                description=f"Organization {row[0]} ({row[1]}) has no contacts",
-                auto_fixable=False
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="contact_logic",
+                    severity="info",
+                    table="organizations",
+                    record_id=row[0],
+                    description=f"Organization {row[0]} ({row[1]}) has no contacts",
+                    auto_fixable=False,
+                )
+            )
 
-        print(f"      ✓ Contact logic check complete")
+        print("      ✓ Contact logic check complete")
 
     # === CATEGORY 3: DATA QUALITY ===
 
@@ -406,43 +465,51 @@ class IntegrityChecker:
         print("   Checking for duplicates...")
 
         # Duplicate member numbers
-        duplicates = self.db.execute(text("""
+        duplicates = self.db.execute(
+            text("""
             SELECT member_number, COUNT(*) as count
             FROM members
             GROUP BY member_number
             HAVING COUNT(*) > 1
-        """)).fetchall()
+        """)
+        ).fetchall()
 
         for row in duplicates:
-            self.issues.append(IntegrityIssue(
-                category="duplicate",
-                severity="critical",
-                table="members",
-                record_id=None,
-                description=f"Duplicate member_number: {row[0]} ({row[1]} records)",
-                auto_fixable=False
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="duplicate",
+                    severity="critical",
+                    table="members",
+                    record_id=None,
+                    description=f"Duplicate member_number: {row[0]} ({row[1]} records)",
+                    auto_fixable=False,
+                )
+            )
 
         # Duplicate student emails
-        duplicates = self.db.execute(text("""
+        duplicates = self.db.execute(
+            text("""
             SELECT email, COUNT(*) as count
             FROM students
             WHERE email IS NOT NULL
             GROUP BY email
             HAVING COUNT(*) > 1
-        """)).fetchall()
+        """)
+        ).fetchall()
 
         for row in duplicates:
-            self.issues.append(IntegrityIssue(
-                category="duplicate",
-                severity="warning",
-                table="students",
-                record_id=None,
-                description=f"Duplicate student email: {row[0]} ({row[1]} records)",
-                auto_fixable=False
-            ))
+            self.issues.append(
+                IntegrityIssue(
+                    category="duplicate",
+                    severity="warning",
+                    table="students",
+                    record_id=None,
+                    description=f"Duplicate student email: {row[0]} ({row[1]} records)",
+                    auto_fixable=False,
+                )
+            )
 
-        print(f"      ✓ Duplicate check complete")
+        print("      ✓ Duplicate check complete")
 
     def check_data_anomalies(self):
         """Check for data anomalies and outliers."""
@@ -450,7 +517,8 @@ class IntegrityChecker:
 
         # Members with no employments (may be new or inactive)
         try:
-            no_jobs = self.db.execute(text(f"""
+            no_jobs = self.db.execute(
+                text(f"""
                 SELECT m.id, m.member_number, m.status
                 FROM members m
                 WHERE m.status = '{MemberStatus.ACTIVE.value}'
@@ -458,22 +526,25 @@ class IntegrityChecker:
                     SELECT 1 FROM member_employments me
                     WHERE me.member_id = m.id
                 )
-            """)).fetchall()
+            """)
+            ).fetchall()
 
             if len(no_jobs) > 0:
-                self.issues.append(IntegrityIssue(
-                    category="data_anomaly",
-                    severity="info",
-                    table="members",
-                    record_id=None,
-                    description=f"{len(no_jobs)} active members have no employment history",
-                    auto_fixable=False
-                ))
+                self.issues.append(
+                    IntegrityIssue(
+                        category="data_anomaly",
+                        severity="info",
+                        table="members",
+                        record_id=None,
+                        description=f"{len(no_jobs)} active members have no employment history",
+                        auto_fixable=False,
+                    )
+                )
         except Exception:
             # Skip if members table doesn't exist or enum mismatch
             self.db.rollback()
 
-        print(f"      ✓ Data anomaly check complete")
+        print("      ✓ Data anomaly check complete")
 
     # === CATEGORY 4: FILE SYSTEM INTEGRITY ===
 
@@ -493,40 +564,50 @@ class IntegrityChecker:
         for attachment in attachments:
             # Check if file path is valid
             if not attachment.file_path:
-                self.issues.append(IntegrityIssue(
-                    category="file_system",
-                    severity="critical",
-                    table="file_attachments",
-                    record_id=attachment.id,
-                    description=f"Attachment {attachment.id} has no file_path",
-                    auto_fixable=True,
-                    fix_action="delete record"
-                ))
+                self.issues.append(
+                    IntegrityIssue(
+                        category="file_system",
+                        severity="critical",
+                        table="file_attachments",
+                        record_id=attachment.id,
+                        description=f"Attachment {attachment.id} has no file_path",
+                        auto_fixable=True,
+                        fix_action="delete record",
+                    )
+                )
                 continue
 
             # Check if file exists (if storage is local)
             # Note: Skip this check if using S3 or remote storage
             full_path = os.path.join("/app", attachment.file_path)
-            if not attachment.file_path.startswith("http") and not os.path.exists(full_path):
-                self.issues.append(IntegrityIssue(
-                    category="file_system",
-                    severity="warning",
-                    table="file_attachments",
-                    record_id=attachment.id,
-                    description=f"Attachment {attachment.id} file not found: {attachment.file_path}",
-                    auto_fixable=False  # Requires user decision
-                ))
+            if not attachment.file_path.startswith("http") and not os.path.exists(
+                full_path
+            ):
+                self.issues.append(
+                    IntegrityIssue(
+                        category="file_system",
+                        severity="warning",
+                        table="file_attachments",
+                        record_id=attachment.id,
+                        description=f"Attachment {attachment.id} file not found: {attachment.file_path}",
+                        auto_fixable=False,  # Requires user decision
+                    )
+                )
 
             # Check file size is reasonable
-            if attachment.file_size and (attachment.file_size < 0 or attachment.file_size > 100_000_000):
-                self.issues.append(IntegrityIssue(
-                    category="file_system",
-                    severity="info",
-                    table="file_attachments",
-                    record_id=attachment.id,
-                    description=f"Attachment {attachment.id} has unusual file_size: {attachment.file_size} bytes",
-                    auto_fixable=False
-                ))
+            if attachment.file_size and (
+                attachment.file_size < 0 or attachment.file_size > 100_000_000
+            ):
+                self.issues.append(
+                    IntegrityIssue(
+                        category="file_system",
+                        severity="info",
+                        table="file_attachments",
+                        record_id=attachment.id,
+                        description=f"Attachment {attachment.id} has unusual file_size: {attachment.file_size} bytes",
+                        auto_fixable=False,
+                    )
+                )
 
             checked += 1
             if checked % 1000 == 0:
@@ -569,11 +650,15 @@ class IntegrityChecker:
             categories[issue.category].append(issue)
 
         for category, issues in sorted(categories.items()):
-            report.append(f"\n{category.upper().replace('_', ' ')}: {len(issues)} issues")
+            report.append(
+                f"\n{category.upper().replace('_', ' ')}: {len(issues)} issues"
+            )
 
             # Show first 5 of each category
             for issue in issues[:5]:
-                severity_icon = {"critical": "🔴", "warning": "🟡", "info": "🔵"}[issue.severity]
+                severity_icon = {"critical": "🔴", "warning": "🟡", "info": "🔵"}[
+                    issue.severity
+                ]
                 report.append(f"  {severity_icon} {issue.description}")
                 if issue.auto_fixable:
                     report.append(f"     → Auto-fix: {issue.fix_action}")

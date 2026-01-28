@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from src.models.role import Role
     from src.models.user_role import UserRole
     from src.models.refresh_token import RefreshToken
+    from src.models.email_token import EmailToken
 
 
 class User(Base, TimestampMixin, SoftDeleteMixin):
@@ -72,6 +73,13 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
 
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
         "RefreshToken",
+        back_populates="user",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+    )
+
+    email_tokens: Mapped[list["EmailToken"]] = relationship(
+        "EmailToken",
         back_populates="user",
         lazy="selectin",
         cascade="all, delete-orphan",

@@ -18,7 +18,7 @@ def stress_test_member_employments(
     employers: list,
     min_jobs: int = 1,
     max_jobs: int = 100,
-    employer_repeat_rate: float = 0.20
+    employer_repeat_rate: float = 0.20,
 ):
     """
     Generate employment records for members.
@@ -50,25 +50,35 @@ def stress_test_member_employments(
     ]
 
     total_members = len(members)
-    estimated_records = sum([random.randint(min_jobs, max_jobs) for _ in range(100)]) * total_members // 100
+    estimated_records = (
+        sum([random.randint(min_jobs, max_jobs) for _ in range(100)])
+        * total_members
+        // 100
+    )
 
     print(f"   Generating employment records for {total_members} members...")
     print(f"   Estimated ~{estimated_records:,} employment records...")
-    print(f"   This will take several minutes. Progress updates every 1000 members...")
+    print("   This will take several minutes. Progress updates every 1000 members...")
 
     records_generated = 0
 
     for member_idx, member in enumerate(members):
         # Each member gets 1-100 jobs (weighted towards fewer jobs)
         # Use triangular distribution weighted towards lower numbers
-        num_jobs = int(random.triangular(min_jobs, max_jobs, min_jobs + (max_jobs - min_jobs) * 0.3))
+        num_jobs = int(
+            random.triangular(
+                min_jobs, max_jobs, min_jobs + (max_jobs - min_jobs) * 0.3
+            )
+        )
 
         member_employers = []  # Track employers for this member for repeat rate
         member_job_history = []
 
         for job_idx in range(num_jobs):
             # 20% chance to work for a previous employer again (if they have history)
-            if member_employers and fake.boolean(chance_of_getting_true=int(employer_repeat_rate * 100)):
+            if member_employers and fake.boolean(
+                chance_of_getting_true=int(employer_repeat_rate * 100)
+            ):
                 employer = random.choice(member_employers)
             else:
                 employer = random.choice(employers)
@@ -76,7 +86,9 @@ def stress_test_member_employments(
                     member_employers.append(employer)
 
             # Most recent job is current for active members
-            is_current = (job_idx == num_jobs - 1) and fake.boolean(chance_of_getting_true=65)
+            is_current = (job_idx == num_jobs - 1) and fake.boolean(
+                chance_of_getting_true=65
+            )
 
             # Start date - spread over last 20 years
             start_date = fake.date_between(start_date="-20y", end_date="-1d")
@@ -100,7 +112,9 @@ def stress_test_member_employments(
                 organization_id=employer.id,
                 start_date=start_date,
                 end_date=end_date,
-                job_title=fake.random_element(job_titles) if fake.boolean(chance_of_getting_true=90) else None,
+                job_title=fake.random_element(job_titles)
+                if fake.boolean(chance_of_getting_true=90)
+                else None,
                 hourly_rate=hourly_rate,
                 is_current=is_current,
             )
@@ -111,10 +125,12 @@ def stress_test_member_employments(
 
         # Progress indicator every 1000 members
         if (member_idx + 1) % 1000 == 0:
-            print(f"      {member_idx + 1}/{total_members} members processed ({records_generated:,} records generated)...")
+            print(
+                f"      {member_idx + 1}/{total_members} members processed ({records_generated:,} records generated)..."
+            )
 
     print(f"   Adding {len(employments):,} employment records to database...")
-    print(f"   This will take several minutes. Please wait...")
+    print("   This will take several minutes. Please wait...")
 
     # Add in large batches for performance
     add_records(db, employments, batch_size=1000)

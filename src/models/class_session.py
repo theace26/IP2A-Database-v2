@@ -1,67 +1,80 @@
-"""
-Class session model for tracking individual training sessions.
-"""
+"""Class session model - specific instances of courses."""
 
-from sqlalchemy import Column, Integer, Date, Time, ForeignKey, String, Text, Index
-from sqlalchemy.orm import relationship
+from datetime import date, time
+from typing import TYPE_CHECKING, Optional
+
+from sqlalchemy import Integer, String, Date, Time, Text, ForeignKey, Boolean
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db.base import Base
-from src.db.mixins import TimestampMixin, SoftDeleteMixin
+from src.db.mixins import TimestampMixin
+
+if TYPE_CHECKING:
+    from src.models.course import Course
+    from src.models.attendance import Attendance
 
 
-class ClassSession(TimestampMixin, SoftDeleteMixin, Base):
+class ClassSession(Base, TimestampMixin):
     """
-    Represents a single class/training session.
+    A specific class session - one meeting of a course.
 
-    Links cohort, instructor, and location for a specific date/time.
-    Attendance records are tracked separately per student.
+    Multiple ClassSessions make up a course offering.
+    Attendance is tracked per ClassSession.
     """
 
     __tablename__ = "class_sessions"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
-    cohort_id = Column(
+    # Link to course
+    course_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("cohorts.id", ondelete="CASCADE"),
+        ForeignKey("courses.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
-    )
-    instructor_id = Column(
-        Integer,
-        ForeignKey("instructors.id", ondelete="SET NULL"),
-        nullable=True,  # Allow null if instructor removed
-        index=True,
-    )
-    location_id = Column(
-        Integer,
-        ForeignKey("locations.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
+        index=True
     )
 
-    # Session timing
-    date = Column(Date, nullable=False, index=True)
-    start_time = Column(Time, nullable=True)
-    end_time = Column(Time, nullable=True)
+    # Session details
+    session_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    start_time: Mapped[time] = mapped_column(Time, nullable=False)
+    end_time: Mapped[time] = mapped_column(Time, nullable=False)
 
-    # Session content
-    topic = Column(String(255), nullable=True)
-    notes = Column(Text, nullable=True)
+    # Location
+    location: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    room: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+
+    # Instructor
+    instructor_name: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+
+    # Session info
+    topic: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Status
+    is_cancelled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    cancellation_reason: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
 
     # Relationships
-    cohort = relationship("Cohort", back_populates="class_sessions")
-    instructor = relationship("Instructor", back_populates="class_sessions")
-    location = relationship("Location", back_populates="class_sessions")
-    attendance_records = relationship(
-        "Attendance",
-        back_populates="class_session",
-        cascade="all, delete-orphan",
+    course: Mapped["Course"] = relationship(
+        "Course",
+        back_populates="class_sessions",
+        lazy="joined"
     )
 
-    __table_args__ = (Index("ix_class_session_date_cohort", "date", "cohort_id"),)
+    attendances: Mapped[list["Attendance"]] = relationship(
+        "Attendance",
+        back_populates="class_session",
+        lazy="selectin",
+        cascade="all, delete-orphan"
+    )
 
-    def __repr__(self):
-        return (
-            f"<ClassSession(id={self.id}, date={self.date}, cohort={self.cohort_id})>"
-        )
+    @property
+    def duration_hours(self) -> float:
+        """Calculate session duration in hours."""
+        from datetime import datetime
+        start = datetime.combine(self.session_date, self.start_time)
+        end = datetime.combine(self.session_date, self.end_time)
+        return (end - start).seconds / 3600
+
+    def __repr__(self) -> str:
+        return f"<ClassSession(id={self.id}, course_id={self.course_id}, date={self.session_date})>"

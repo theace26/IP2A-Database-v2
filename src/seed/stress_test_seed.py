@@ -12,7 +12,6 @@ from .stress_test_members import stress_test_members
 from .stress_test_organizations import stress_test_organizations
 from .stress_test_organization_contacts import stress_test_organization_contacts
 from .stress_test_member_employments import stress_test_member_employments
-from .stress_test_file_attachments import stress_test_file_attachments
 from .base_seed import init_seed
 
 
@@ -57,7 +56,9 @@ def run_stress_test(force: bool = False, truncate: bool = True):
 
     # Phase 2: Organizations
     print("\n🏢 Phase 2: Organizations")
-    employers = stress_test_organizations(db, employers=700, others=50)  # 750 total orgs
+    employers = stress_test_organizations(
+        db, employers=700, others=50
+    )  # 750 total orgs
 
     # Phase 3: Contacts for organizations
     print("\n👤 Phase 3: Organization Contacts")
@@ -79,7 +80,7 @@ def run_stress_test(force: bool = False, truncate: bool = True):
         employers=employers,
         min_jobs=1,
         max_jobs=100,
-        employer_repeat_rate=0.20
+        employer_repeat_rate=0.20,
     )
 
     # Phase 7: File Attachments (DISABLED - table not in current schema)
@@ -90,18 +91,19 @@ def run_stress_test(force: bool = False, truncate: bool = True):
     print("\n" + "=" * 60)
     print("✅ STRESS TEST database seeding complete!")
     print("\n📊 Summary:")
-    print(f"   • 250 locations")
-    print(f"   • 500 instructors")
-    print(f"   • 750 organizations (700 employers)")
-    print(f"   • ~2,250 organization contacts")
-    print(f"   • 1,000 students")
-    print(f"   • 10,000 members")
-    print(f"   • ~432,000+ employment records")
-    print(f"   • File attachments skipped (table pending migration)")
+    print("   • 250 locations")
+    print("   • 500 instructors")
+    print("   • 750 organizations (700 employers)")
+    print("   • ~2,250 organization contacts")
+    print("   • 1,000 students")
+    print("   • 10,000 members")
+    print("   • ~432,000+ employment records")
+    print("   • File attachments skipped (table pending migration)")
     print("=" * 60)
 
 
 if __name__ == "__main__":
     import sys
+
     truncate = "--no-truncate" not in sys.argv
     run_stress_test(truncate=truncate)

@@ -34,6 +34,14 @@ from src.routers.grievances import router as grievances_router
 # Authentication router
 from src.routers.auth import router as auth_router
 
+# Phase 2 Training System routers
+from src.routers.courses import router as courses_router
+from src.routers.class_sessions import router as class_sessions_router
+from src.routers.enrollments import router as enrollments_router
+from src.routers.attendances import router as attendances_router
+from src.routers.grades import router as grades_router
+from src.routers.certifications import router as certifications_router
+
 # ------------------------------------------------------------
 # Initialize FastAPI
 # ------------------------------------------------------------
@@ -103,3 +111,11 @@ app.include_router(grievances_router)
 
 # Authentication router
 app.include_router(auth_router)
+
+# Phase 2 Training System routers
+app.include_router(courses_router)
+app.include_router(class_sessions_router)
+app.include_router(enrollments_router)
+app.include_router(attendances_router)
+app.include_router(grades_router)
+app.include_router(certifications_router)

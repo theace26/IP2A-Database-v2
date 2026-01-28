@@ -2,13 +2,12 @@
 
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from typing import List, Dict, Optional, Tuple
+from typing import List, Optional
 from datetime import datetime, timedelta
 import os
-import hashlib
 import json
 
-from src.models import FileAttachment, Member, Organization, MemberEmployment
+from src.models import FileAttachment, Member, MemberEmployment
 
 
 class ResilienceIssue:
@@ -20,7 +19,7 @@ class ResilienceIssue:
         severity: str,  # 'critical', 'warning', 'info'
         description: str,
         details: Optional[dict] = None,
-        recommended_action: Optional[str] = None
+        recommended_action: Optional[str] = None,
     ):
         self.category = category
         self.severity = severity
@@ -118,7 +117,7 @@ class ResilienceChecker:
 
                 # Basic corruption check: try to read file
                 try:
-                    with open(full_path, 'rb') as f:
+                    with open(full_path, "rb") as f:
                         # Read first and last 1KB to detect truncation
                         f.read(1024)
                         f.seek(-min(1024, os.path.getsize(full_path)), 2)
@@ -128,19 +127,23 @@ class ResilienceChecker:
                     corrupted_count += 1
 
             if corrupted_count > 0:
-                self.issues.append(ResilienceIssue(
-                    category="file_corruption",
-                    severity="critical",
-                    description=f"Found {corrupted_count} potentially corrupted files",
-                    details={
-                        "corrupted": corrupted_count,
-                        "checked": checked_count,
-                        "missing": missing_count
-                    },
-                    recommended_action="Restore corrupted files from backup or request re-upload"
-                ))
+                self.issues.append(
+                    ResilienceIssue(
+                        category="file_corruption",
+                        severity="critical",
+                        description=f"Found {corrupted_count} potentially corrupted files",
+                        details={
+                            "corrupted": corrupted_count,
+                            "checked": checked_count,
+                            "missing": missing_count,
+                        },
+                        recommended_action="Restore corrupted files from backup or request re-upload",
+                    )
+                )
 
-            print(f"      ✓ Checked {checked_count} files, {corrupted_count} corrupted, {missing_count} missing")
+            print(
+                f"      ✓ Checked {checked_count} files, {corrupted_count} corrupted, {missing_count} missing"
+            )
 
         except Exception as e:
             print(f"      ⚠️  File corruption check skipped: {e}")
@@ -180,21 +183,25 @@ class ResilienceChecker:
 
             # Warning if >80% full
             if used_percent > 80:
-                self.issues.append(ResilienceIssue(
-                    category="storage_capacity",
-                    severity="warning" if used_percent < 90 else "critical",
-                    description=f"Storage is {used_percent:.1f}% full",
-                    details={
-                        "total_disk_gb": f"{total_disk_gb:.2f}",
-                        "available_gb": f"{available_gb:.2f}",
-                        "used_percent": f"{used_percent:.1f}",
-                        "uploads_size_gb": f"{total_gb:.2f}",
-                        "file_count": file_count
-                    },
-                    recommended_action="Free up disk space, archive old files, or expand storage"
-                ))
+                self.issues.append(
+                    ResilienceIssue(
+                        category="storage_capacity",
+                        severity="warning" if used_percent < 90 else "critical",
+                        description=f"Storage is {used_percent:.1f}% full",
+                        details={
+                            "total_disk_gb": f"{total_disk_gb:.2f}",
+                            "available_gb": f"{available_gb:.2f}",
+                            "used_percent": f"{used_percent:.1f}",
+                            "uploads_size_gb": f"{total_gb:.2f}",
+                            "file_count": file_count,
+                        },
+                        recommended_action="Free up disk space, archive old files, or expand storage",
+                    )
+                )
 
-            print(f"      ✓ Storage: {total_gb:.2f} GB in {file_count:,} files ({used_percent:.1f}% disk used)")
+            print(
+                f"      ✓ Storage: {total_gb:.2f} GB in {file_count:,} files ({used_percent:.1f}% disk used)"
+            )
 
         except Exception as e:
             print(f"      ⚠️  Storage check skipped: {e}")
@@ -230,20 +237,24 @@ class ResilienceChecker:
                 total_orphaned_size = 0
                 for file_path in orphaned:
                     try:
-                        total_orphaned_size += os.path.getsize(os.path.join("/app", file_path))
+                        total_orphaned_size += os.path.getsize(
+                            os.path.join("/app", file_path)
+                        )
                     except:
                         pass
 
-                self.issues.append(ResilienceIssue(
-                    category="orphaned_files",
-                    severity="info",
-                    description=f"Found {len(orphaned)} orphaned files in uploads directory",
-                    details={
-                        "orphaned_count": len(orphaned),
-                        "orphaned_size_gb": f"{total_orphaned_size / (1024**3):.2f}"
-                    },
-                    recommended_action="Review and delete orphaned files to free up storage"
-                ))
+                self.issues.append(
+                    ResilienceIssue(
+                        category="orphaned_files",
+                        severity="info",
+                        description=f"Found {len(orphaned)} orphaned files in uploads directory",
+                        details={
+                            "orphaned_count": len(orphaned),
+                            "orphaned_size_gb": f"{total_orphaned_size / (1024**3):.2f}",
+                        },
+                        recommended_action="Review and delete orphaned files to free up storage",
+                    )
+                )
 
             print(f"      ✓ Found {len(orphaned)} orphaned files")
 
@@ -259,40 +270,50 @@ class ResilienceChecker:
         try:
             # Get table sizes
             tables = [
-                'members', 'member_employments', 'organizations',
-                'organization_contacts', 'students', 'file_attachments'
+                "members",
+                "member_employments",
+                "organizations",
+                "organization_contacts",
+                "students",
+                "file_attachments",
             ]
 
             growth_data = {}
             for table in tables:
                 try:
-                    result = self.db.execute(text(f"SELECT COUNT(*) FROM {table}")).fetchone()
+                    result = self.db.execute(
+                        text(f"SELECT COUNT(*) FROM {table}")
+                    ).fetchone()
                     growth_data[table] = result[0]
                 except:
                     pass
 
             # Save growth metrics for trending
             metrics_file = os.path.join(
-                self.metrics_dir,
-                f"{datetime.now().strftime('%Y-%m-%d')}_growth.json"
+                self.metrics_dir, f"{datetime.now().strftime('%Y-%m-%d')}_growth.json"
             )
 
-            with open(metrics_file, 'w') as f:
-                json.dump({
-                    "timestamp": datetime.now().isoformat(),
-                    "table_counts": growth_data
-                }, f)
+            with open(metrics_file, "w") as f:
+                json.dump(
+                    {
+                        "timestamp": datetime.now().isoformat(),
+                        "table_counts": growth_data,
+                    },
+                    f,
+                )
 
             # Check for unusual growth (basic heuristic)
             total_records = sum(growth_data.values())
             if total_records > 1_000_000:
-                self.issues.append(ResilienceIssue(
-                    category="database_growth",
-                    severity="info",
-                    description=f"Database has grown to {total_records:,} total records",
-                    details=growth_data,
-                    recommended_action="Consider archiving old data or implementing data retention policies"
-                ))
+                self.issues.append(
+                    ResilienceIssue(
+                        category="database_growth",
+                        severity="info",
+                        description=f"Database has grown to {total_records:,} total records",
+                        details=growth_data,
+                        recommended_action="Consider archiving old data or implementing data retention policies",
+                    )
+                )
 
             print(f"      ✓ Total records: {total_records:,}")
 
@@ -306,29 +327,35 @@ class ResilienceChecker:
         try:
             # Find members not updated in >1 year
             one_year_ago = datetime.now() - timedelta(days=365)
-            stale_members = self.db.query(Member).filter(
-                Member.updated_at < one_year_ago
-            ).count()
+            stale_members = (
+                self.db.query(Member).filter(Member.updated_at < one_year_ago).count()
+            )
 
             # Find employments with very old end dates (>10 years)
             ten_years_ago = datetime.now().date() - timedelta(days=3650)
-            old_employments = self.db.query(MemberEmployment).filter(
-                MemberEmployment.end_date < ten_years_ago
-            ).count()
+            old_employments = (
+                self.db.query(MemberEmployment)
+                .filter(MemberEmployment.end_date < ten_years_ago)
+                .count()
+            )
 
             if stale_members > 1000:
-                self.issues.append(ResilienceIssue(
-                    category="data_staleness",
-                    severity="info",
-                    description=f"{stale_members:,} member records not updated in >1 year",
-                    details={
-                        "stale_members": stale_members,
-                        "old_employments": old_employments
-                    },
-                    recommended_action="Consider archiving or reviewing inactive member records"
-                ))
+                self.issues.append(
+                    ResilienceIssue(
+                        category="data_staleness",
+                        severity="info",
+                        description=f"{stale_members:,} member records not updated in >1 year",
+                        details={
+                            "stale_members": stale_members,
+                            "old_employments": old_employments,
+                        },
+                        recommended_action="Consider archiving or reviewing inactive member records",
+                    )
+                )
 
-            print(f"      ✓ Stale members: {stale_members:,}, Old employments: {old_employments:,}")
+            print(
+                f"      ✓ Stale members: {stale_members:,}, Old employments: {old_employments:,}"
+            )
 
         except Exception as e:
             print(f"      ⚠️  Staleness check skipped: {e}")
@@ -339,7 +366,8 @@ class ResilienceChecker:
 
         try:
             # Check for members with unusual employment counts
-            result = self.db.execute(text("""
+            result = self.db.execute(
+                text("""
                 SELECT
                     MIN(job_count) as min_jobs,
                     MAX(job_count) as max_jobs,
@@ -349,26 +377,31 @@ class ResilienceChecker:
                     FROM member_employments
                     GROUP BY member_id
                 ) as counts
-            """)).fetchone()
+            """)
+            ).fetchone()
 
             if result:
                 min_jobs, max_jobs, avg_jobs = result
 
                 # Check for extreme outliers
                 if max_jobs and max_jobs > 200:
-                    self.issues.append(ResilienceIssue(
-                        category="data_distribution",
-                        severity="info",
-                        description=f"Some members have unusually high employment counts (max: {max_jobs})",
-                        details={
-                            "min_jobs": min_jobs,
-                            "max_jobs": max_jobs,
-                            "avg_jobs": f"{avg_jobs:.1f}" if avg_jobs else None
-                        },
-                        recommended_action="Review members with >200 employments for data quality"
-                    ))
+                    self.issues.append(
+                        ResilienceIssue(
+                            category="data_distribution",
+                            severity="info",
+                            description=f"Some members have unusually high employment counts (max: {max_jobs})",
+                            details={
+                                "min_jobs": min_jobs,
+                                "max_jobs": max_jobs,
+                                "avg_jobs": f"{avg_jobs:.1f}" if avg_jobs else None,
+                            },
+                            recommended_action="Review members with >200 employments for data quality",
+                        )
+                    )
 
-                print(f"      ✓ Employment distribution: min={min_jobs}, max={max_jobs}, avg={avg_jobs:.1f}")
+                print(
+                    f"      ✓ Employment distribution: min={min_jobs}, max={max_jobs}, avg={avg_jobs:.1f}"
+                )
 
         except Exception as e:
             print(f"      ⚠️  Distribution check skipped: {e}")
@@ -384,7 +417,10 @@ class ResilienceChecker:
             queries = [
                 ("members", "SELECT COUNT(*) FROM members"),
                 ("employments", "SELECT COUNT(*) FROM member_employments"),
-                ("join query", "SELECT COUNT(*) FROM members m JOIN member_employments me ON m.id = me.member_id")
+                (
+                    "join query",
+                    "SELECT COUNT(*) FROM members m JOIN member_employments me ON m.id = me.member_id",
+                ),
             ]
 
             slow_queries = []
@@ -398,15 +434,20 @@ class ResilienceChecker:
                     slow_queries.append((name, duration))
 
             if slow_queries:
-                self.issues.append(ResilienceIssue(
-                    category="query_performance",
-                    severity="warning",
-                    description=f"{len(slow_queries)} queries are running slow",
-                    details={
-                        "slow_queries": [{"query": name, "seconds": f"{dur:.2f}"} for name, dur in slow_queries]
-                    },
-                    recommended_action="Review slow queries, check indexes, consider query optimization"
-                ))
+                self.issues.append(
+                    ResilienceIssue(
+                        category="query_performance",
+                        severity="warning",
+                        description=f"{len(slow_queries)} queries are running slow",
+                        details={
+                            "slow_queries": [
+                                {"query": name, "seconds": f"{dur:.2f}"}
+                                for name, dur in slow_queries
+                            ]
+                        },
+                        recommended_action="Review slow queries, check indexes, consider query optimization",
+                    )
+                )
 
             print(f"      ✓ Tested {len(queries)} queries, {len(slow_queries)} slow")
 
@@ -419,7 +460,8 @@ class ResilienceChecker:
 
         try:
             # For PostgreSQL, check index usage
-            result = self.db.execute(text("""
+            result = self.db.execute(
+                text("""
                 SELECT
                     schemaname,
                     tablename,
@@ -428,17 +470,20 @@ class ResilienceChecker:
                 FROM pg_stat_user_indexes
                 WHERE idx_scan = 0
                 LIMIT 10
-            """)).fetchall()
+            """)
+            ).fetchall()
 
             unused_indexes = len(result)
 
             if unused_indexes > 0:
-                self.issues.append(ResilienceIssue(
-                    category="index_health",
-                    severity="info",
-                    description=f"Found {unused_indexes} unused indexes",
-                    recommended_action="Review unused indexes, consider removing if not needed"
-                ))
+                self.issues.append(
+                    ResilienceIssue(
+                        category="index_health",
+                        severity="info",
+                        description=f"Found {unused_indexes} unused indexes",
+                        recommended_action="Review unused indexes, consider removing if not needed",
+                    )
+                )
 
             print(f"      ✓ Found {unused_indexes} unused indexes")
 
@@ -456,12 +501,14 @@ class ResilienceChecker:
         backup_dir = "/app/backups"
 
         if not os.path.exists(backup_dir):
-            self.issues.append(ResilienceIssue(
-                category="backup_status",
-                severity="critical",
-                description="No backup directory found",
-                recommended_action="Configure automated database backups immediately"
-            ))
+            self.issues.append(
+                ResilienceIssue(
+                    category="backup_status",
+                    severity="critical",
+                    description="No backup directory found",
+                    recommended_action="Configure automated database backups immediately",
+                )
+            )
             print("      ⚠️  No backup directory found")
             return
 
@@ -469,18 +516,20 @@ class ResilienceChecker:
         try:
             backups = []
             for filename in os.listdir(backup_dir):
-                if filename.endswith(('.sql', '.dump', '.backup')):
+                if filename.endswith((".sql", ".dump", ".backup")):
                     filepath = os.path.join(backup_dir, filename)
                     mtime = os.path.getmtime(filepath)
                     backups.append((filename, datetime.fromtimestamp(mtime)))
 
             if not backups:
-                self.issues.append(ResilienceIssue(
-                    category="backup_status",
-                    severity="critical",
-                    description="No database backups found",
-                    recommended_action="Create database backup immediately"
-                ))
+                self.issues.append(
+                    ResilienceIssue(
+                        category="backup_status",
+                        severity="critical",
+                        description="No database backups found",
+                        recommended_action="Create database backup immediately",
+                    )
+                )
                 print("      ⚠️  No backups found")
                 return
 
@@ -489,19 +538,25 @@ class ResilienceChecker:
             backup_age_hours = (datetime.now() - most_recent[1]).total_seconds() / 3600
 
             if backup_age_hours > 48:  # >48 hours old
-                self.issues.append(ResilienceIssue(
-                    category="backup_status",
-                    severity="warning" if backup_age_hours < 168 else "critical",  # 1 week
-                    description=f"Most recent backup is {backup_age_hours:.1f} hours old",
-                    details={
-                        "most_recent_backup": most_recent[0],
-                        "backup_age_hours": f"{backup_age_hours:.1f}",
-                        "total_backups": len(backups)
-                    },
-                    recommended_action="Run database backup soon, review backup schedule"
-                ))
+                self.issues.append(
+                    ResilienceIssue(
+                        category="backup_status",
+                        severity="warning"
+                        if backup_age_hours < 168
+                        else "critical",  # 1 week
+                        description=f"Most recent backup is {backup_age_hours:.1f} hours old",
+                        details={
+                            "most_recent_backup": most_recent[0],
+                            "backup_age_hours": f"{backup_age_hours:.1f}",
+                            "total_backups": len(backups),
+                        },
+                        recommended_action="Run database backup soon, review backup schedule",
+                    )
+                )
 
-            print(f"      ✓ Most recent backup: {backup_age_hours:.1f} hours ago ({len(backups)} total backups)")
+            print(
+                f"      ✓ Most recent backup: {backup_age_hours:.1f} hours ago ({len(backups)} total backups)"
+            )
 
         except Exception as e:
             print(f"      ⚠️  Backup check failed: {e}")
@@ -539,7 +594,9 @@ class ResilienceChecker:
             report.append(f"\n{category.upper().replace('_', ' ')}: {len(issues)}")
 
             for issue in issues:
-                severity_icon = {"critical": "🔴", "warning": "🟡", "info": "🔵"}[issue.severity]
+                severity_icon = {"critical": "🔴", "warning": "🟡", "info": "🔵"}[
+                    issue.severity
+                ]
                 report.append(f"  {severity_icon} {issue.description}")
                 if issue.recommended_action:
                     report.append(f"     → {issue.recommended_action}")

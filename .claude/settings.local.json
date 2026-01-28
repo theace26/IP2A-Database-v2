@@ -44,7 +44,12 @@
       "Bash(alembic revision:*)",
       "Bash(ruff format:*)",
       "Bash(pip install:*)",
-      "Bash(pre-commit install:*)"
+      "Bash(pre-commit install:*)",
+      "Bash(git reset:*)",
+      "Bash(ls:*)",
+      "Bash(pip show:*)",
+      "Bash(pip uninstall:*)",
+      "Bash(find:*)"
     ]
   }
 }

@@ -19,7 +19,8 @@ Configuration via environment variables:
 
 import sys
 import os
-sys.path.insert(0, '/app')
+
+sys.path.insert(0, "/app")
 
 from datetime import datetime, timedelta
 from sqlalchemy import text
@@ -30,17 +31,18 @@ import json
 # Optional: AWS S3 (install with: pip install boto3)
 try:
     import boto3
+
     HAS_S3 = True
 except ImportError:
     HAS_S3 = False
     print("Warning: boto3 not installed. S3 archiving disabled.")
 
 # Configuration
-ARCHIVE_DAYS = int(os.getenv('ARCHIVE_DAYS', 1095))  # 3 years
-DELETE_DAYS = int(os.getenv('DELETE_DAYS', 2555))    # 7 years
-S3_BUCKET = os.getenv('S3_BUCKET', 'ip2a-audit-archive')
-S3_PREFIX = os.getenv('S3_PREFIX', 'audit_logs/')
-DRY_RUN = os.getenv('DRY_RUN', 'false').lower() == 'true'
+ARCHIVE_DAYS = int(os.getenv("ARCHIVE_DAYS", 1095))  # 3 years
+DELETE_DAYS = int(os.getenv("DELETE_DAYS", 2555))  # 7 years
+S3_BUCKET = os.getenv("S3_BUCKET", "ip2a-audit-archive")
+S3_PREFIX = os.getenv("S3_PREFIX", "audit_logs/")
+DRY_RUN = os.getenv("DRY_RUN", "false").lower() == "true"
 
 
 def archive_old_logs(db, days_old=ARCHIVE_DAYS):
@@ -65,10 +67,13 @@ def archive_old_logs(db, days_old=ARCHIVE_DAYS):
         return 0
 
     # Count logs to archive
-    result = db.execute(text("""
+    result = db.execute(
+        text("""
         SELECT COUNT(*) FROM audit_logs
         WHERE changed_at < :cutoff
-    """), {"cutoff": cutoff})
+    """),
+        {"cutoff": cutoff},
+    )
 
     count = result.scalar()
 
@@ -88,7 +93,8 @@ def archive_old_logs(db, days_old=ARCHIVE_DAYS):
     total_archived = 0
 
     while True:
-        result = db.execute(text("""
+        result = db.execute(
+            text("""
             SELECT
                 id, table_name, record_id, action,
                 old_values, new_values, changed_fields,
@@ -97,7 +103,9 @@ def archive_old_logs(db, days_old=ARCHIVE_DAYS):
             WHERE changed_at < :cutoff
             ORDER BY changed_at
             LIMIT :limit OFFSET :offset
-        """), {"cutoff": cutoff, "limit": batch_size, "offset": offset})
+        """),
+            {"cutoff": cutoff, "limit": batch_size, "offset": offset},
+        )
 
         logs = result.fetchall()
 
@@ -107,28 +115,32 @@ def archive_old_logs(db, days_old=ARCHIVE_DAYS):
         # Convert to dicts
         data = []
         for log in logs:
-            data.append({
-                "id": log[0],
-                "table_name": log[1],
-                "record_id": log[2],
-                "action": log[3],
-                "old_values": log[4],
-                "new_values": log[5],
-                "changed_fields": log[6],
-                "changed_by": log[7],
-                "changed_at": log[8].isoformat() if log[8] else None,
-                "ip_address": log[9],
-                "user_agent": log[10],
-                "notes": log[11],
-            })
+            data.append(
+                {
+                    "id": log[0],
+                    "table_name": log[1],
+                    "record_id": log[2],
+                    "action": log[3],
+                    "old_values": log[4],
+                    "new_values": log[5],
+                    "changed_fields": log[6],
+                    "changed_by": log[7],
+                    "changed_at": log[8].isoformat() if log[8] else None,
+                    "ip_address": log[9],
+                    "user_agent": log[10],
+                    "notes": log[11],
+                }
+            )
 
         # Compress
         json_data = json.dumps(data, default=str, indent=2)
         compressed = gzip.compress(json_data.encode())
 
         # Upload to S3
-        s3 = boto3.client('s3')
-        filename = f"audit_logs_{cutoff.strftime('%Y%m')}_batch_{offset//batch_size}.json.gz"
+        s3 = boto3.client("s3")
+        filename = (
+            f"audit_logs_{cutoff.strftime('%Y%m')}_batch_{offset//batch_size}.json.gz"
+        )
         key = f"{S3_PREFIX}{filename}"
 
         try:
@@ -136,22 +148,27 @@ def archive_old_logs(db, days_old=ARCHIVE_DAYS):
                 Bucket=S3_BUCKET,
                 Key=key,
                 Body=compressed,
-                StorageClass='GLACIER_IR',
+                StorageClass="GLACIER_IR",
                 Metadata={
-                    'record_count': str(len(logs)),
-                    'cutoff_date': cutoff.isoformat(),
-                    'archived_at': datetime.now().isoformat(),
-                }
+                    "record_count": str(len(logs)),
+                    "cutoff_date": cutoff.isoformat(),
+                    "archived_at": datetime.now().isoformat(),
+                },
             )
 
-            print(f"   ✅ Uploaded {filename} ({len(logs):,} logs, {len(compressed):,} bytes)")
+            print(
+                f"   ✅ Uploaded {filename} ({len(logs):,} logs, {len(compressed):,} bytes)"
+            )
 
             # Delete archived logs from PostgreSQL
             ids = [log[0] for log in logs]
-            db.execute(text("""
+            db.execute(
+                text("""
                 DELETE FROM audit_logs
                 WHERE id = ANY(:ids)
-            """), {"ids": ids})
+            """),
+                {"ids": ids},
+            )
             db.commit()
 
             total_archived += len(logs)
@@ -185,10 +202,13 @@ def delete_expired_logs(db, days_old=DELETE_DAYS):
     print(f"{'='*70}")
 
     # Count logs to delete
-    result = db.execute(text("""
+    result = db.execute(
+        text("""
         SELECT COUNT(*) FROM audit_logs
         WHERE changed_at < :cutoff
-    """), {"cutoff": cutoff})
+    """),
+        {"cutoff": cutoff},
+    )
 
     count = result.scalar()
 
@@ -207,7 +227,8 @@ def delete_expired_logs(db, days_old=DELETE_DAYS):
     total_deleted = 0
 
     while True:
-        result = db.execute(text("""
+        result = db.execute(
+            text("""
             DELETE FROM audit_logs
             WHERE id IN (
                 SELECT id FROM audit_logs
@@ -215,7 +236,9 @@ def delete_expired_logs(db, days_old=DELETE_DAYS):
                 LIMIT :limit
             )
             RETURNING id
-        """), {"cutoff": cutoff, "limit": batch_size})
+        """),
+            {"cutoff": cutoff, "limit": batch_size},
+        )
 
         deleted = result.rowcount
         db.commit()
@@ -245,9 +268,11 @@ def vacuum_and_analyze(db):
 
     try:
         # Get table size before
-        result = db.execute(text("""
+        result = db.execute(
+            text("""
             SELECT pg_size_pretty(pg_total_relation_size('audit_logs')) as size
-        """))
+        """)
+        )
         size_before = result.scalar()
 
         print(f"Table size before: {size_before}")
@@ -257,9 +282,11 @@ def vacuum_and_analyze(db):
         db.commit()
 
         # Get table size after
-        result = db.execute(text("""
+        result = db.execute(
+            text("""
             SELECT pg_size_pretty(pg_total_relation_size('audit_logs')) as size
-        """))
+        """)
+        )
         size_after = result.scalar()
 
         print(f"Table size after:  {size_after}")
@@ -280,43 +307,51 @@ def get_table_stats(db):
     total = result.scalar()
 
     # Table size
-    result = db.execute(text("""
+    result = db.execute(
+        text("""
         SELECT pg_size_pretty(pg_total_relation_size('audit_logs')) as size,
                pg_total_relation_size('audit_logs') as size_bytes
-    """))
+    """)
+    )
     size_pretty, size_bytes = result.fetchone()
 
     # By action
-    result = db.execute(text("""
+    result = db.execute(
+        text("""
         SELECT action, COUNT(*) as count
         FROM audit_logs
         GROUP BY action
         ORDER BY count DESC
-    """))
+    """)
+    )
     by_action = result.fetchall()
 
     # Age distribution
-    result = db.execute(text("""
+    result = db.execute(
+        text("""
         SELECT
             COUNT(*) FILTER (WHERE changed_at > NOW() - INTERVAL '30 days') as last_30_days,
             COUNT(*) FILTER (WHERE changed_at > NOW() - INTERVAL '90 days') as last_90_days,
             COUNT(*) FILTER (WHERE changed_at > NOW() - INTERVAL '1 year') as last_year,
             COUNT(*) as total
         FROM audit_logs
-    """))
+    """)
+    )
     age_dist = result.fetchone()
 
     print(f"Total logs:     {total:>15,}")
     print(f"Table size:     {size_pretty:>15s} ({size_bytes:,} bytes)")
-    print(f"\nBy action:")
+    print("\nBy action:")
     for action, count in by_action:
         print(f"  {action:12s}: {count:>10,} ({count/total*100:>5.1f}%)")
 
-    print(f"\nAge distribution:")
+    print("\nAge distribution:")
     print(f"  Last 30 days:   {age_dist[0]:>10,} ({age_dist[0]/total*100:>5.1f}%)")
     print(f"  Last 90 days:   {age_dist[1]:>10,} ({age_dist[1]/total*100:>5.1f}%)")
     print(f"  Last year:      {age_dist[2]:>10,} ({age_dist[2]/total*100:>5.1f}%)")
-    print(f"  Older than 1yr: {total - age_dist[2]:>10,} ({(total-age_dist[2])/total*100:>5.1f}%)")
+    print(
+        f"  Older than 1yr: {total - age_dist[2]:>10,} ({(total-age_dist[2])/total*100:>5.1f}%)"
+    )
 
 
 def main():
@@ -324,7 +359,7 @@ def main():
     db = next(get_db())
 
     print(f"\n{'='*70}")
-    print(f"AUDIT LOG MAINTENANCE")
+    print("AUDIT LOG MAINTENANCE")
     print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"{'='*70}")
     print(f"Archive threshold: {ARCHIVE_DAYS} days")
@@ -366,5 +401,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
