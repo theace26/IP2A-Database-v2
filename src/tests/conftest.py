@@ -1,6 +1,7 @@
 # src/tests/conftest.py
 import pytest
 import pytest_asyncio
+from fastapi.testclient import TestClient
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -31,6 +32,14 @@ def db_session():
     finally:
         session.rollback()
         session.close()
+
+
+@pytest.fixture(scope="function")
+def client():
+    """
+    Synchronous HTTP client for testing FastAPI endpoints.
+    """
+    return TestClient(app)
 
 
 @pytest_asyncio.fixture

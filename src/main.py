@@ -25,9 +25,14 @@ from src.routers.audit_logs import router as audit_logs_router
 
 # Phase 2 routers
 from src.routers.salting_activities import router as salting_activities_router
-from src.routers.benevolence_applications import router as benevolence_applications_router
+from src.routers.benevolence_applications import (
+    router as benevolence_applications_router,
+)
 from src.routers.benevolence_reviews import router as benevolence_reviews_router
 from src.routers.grievances import router as grievances_router
+
+# Authentication router
+from src.routers.auth import router as auth_router
 
 # ------------------------------------------------------------
 # Initialize FastAPI
@@ -95,3 +100,6 @@ app.include_router(salting_activities_router)
 app.include_router(benevolence_applications_router)
 app.include_router(benevolence_reviews_router)
 app.include_router(grievances_router)
+
+# Authentication router
+app.include_router(auth_router)

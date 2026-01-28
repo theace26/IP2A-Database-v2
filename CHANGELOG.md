@@ -23,6 +23,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * Test fixture (db_session) added to conftest.py for direct model testing
   * Enhanced SoftDeleteMixin with soft_delete() method
   * Timezone-aware datetime handling in RefreshToken model
+- **Phase 1.2: JWT Authentication** ⭐
+  * Complete JWT-based authentication system with production-ready security
+  * Password hashing with bcrypt (12 rounds, version 2b) - OWASP/NIST/PCI DSS compliant
+  * JWT access tokens (30 min expiry) and refresh tokens (7 days, with rotation)
+  * 6 API endpoints: login, logout, logout-all, refresh, me, change-password
+  * Auth service with login, logout, refresh, password change, token management
+  * FastAPI dependencies: get_current_user, require_roles, require_verified_email
+  * Account security: lockout after 5 failed attempts (30 min), token rotation, device tracking
+  * Comprehensive security testing: 16 cryptographic verification tests
+  * Security documentation: Complete analysis in docs/standards/password-security.md
+  * Authentication dependencies: passlib[bcrypt]==1.7.4, bcrypt==4.1.3, python-jose[cryptography]==3.3.0
+  * 42 new tests (140 total passing): 26 auth tests + 16 security robustness tests
+  * Core modules: src/core/security.py, src/core/jwt.py, src/config/auth_config.py
+  * Environment configuration: AUTH_JWT_SECRET_KEY, AUTH_ACCESS_TOKEN_EXPIRE_MINUTES, etc.
+  * Security features: Rainbow table protection, brute force protection, timing attack resistance
+  * Client fixture added to conftest.py for synchronous HTTP testing
 - Phase 2 seed data for union operations
   * Realistic test data for SALTing activities (30 records)
   * Benevolence applications with multi-level review workflow (25 applications, 47 reviews)

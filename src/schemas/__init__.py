@@ -61,6 +61,16 @@ from src.schemas.user import (
 from src.schemas.role import RoleBase, RoleCreate, RoleUpdate, RoleRead
 from src.schemas.user_role import UserRoleBase, UserRoleCreate, UserRoleRead
 from src.schemas.refresh_token import RefreshTokenCreate, RefreshTokenRead
+from src.schemas.auth import (
+    LoginRequest,
+    TokenResponse,
+    RefreshTokenRequest,
+    PasswordChangeRequest,
+    PasswordResetRequest,
+    PasswordResetConfirm,
+    UserRegistrationRequest,
+    CurrentUserResponse,
+)
 
 __all__ = [
     "StudentBase",
@@ -102,4 +112,13 @@ __all__ = [
     "UserRoleRead",
     "RefreshTokenCreate",
     "RefreshTokenRead",
+    # Auth operations
+    "LoginRequest",
+    "TokenResponse",
+    "RefreshTokenRequest",
+    "PasswordChangeRequest",
+    "PasswordResetRequest",
+    "PasswordResetConfirm",
+    "UserRegistrationRequest",
+    "CurrentUserResponse",
 ]

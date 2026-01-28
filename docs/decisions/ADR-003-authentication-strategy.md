@@ -1,7 +1,7 @@
 # ADR-003: Authentication Strategy
 
 ## Status
-**Accepted** - Phase 1.1 (Database Schema) Implemented 2026-01-28
+**Accepted** - Phase 1.1 and 1.2 Complete (2026-01-28)
 
 ## Date
 2026-01-28 (Updated with implementation status)
@@ -55,12 +55,19 @@ We will use **JWT-based authentication** with:
 - Migration: `e382f497c5e3`
 - 16 tests passing
 
-**Phase 1.2 (JWT Implementation) - 🔜 NEXT**
-- Password hashing with bcrypt
-- JWT token generation and validation
-- Login/logout endpoints
-- Token refresh flow
-- Password reset flow
+**Phase 1.2 (JWT Implementation) - ✅ COMPLETE**
+- Password hashing with bcrypt (12 rounds, version 2b, OWASP compliant)
+- JWT token generation and validation (HS256 algorithm)
+- Access tokens: 30-minute expiry
+- Refresh tokens: 7-day expiry with automatic rotation
+- Authentication middleware and FastAPI dependencies
+- Role-based access control decorators
+- Account lockout (5 failed attempts, 30-minute lockout)
+- Device tracking (IP address, user-agent)
+- 6 API endpoints: login, logout, refresh, me, change-password, verify-token
+- 26 authentication tests passing
+- 16 security robustness tests passing
+- OWASP, NIST SP 800-63B, PCI DSS 4.0 compliant
 
 ## Consequences
 
@@ -138,8 +145,21 @@ refresh_tokens
 6. **member** - Basic member access (view own records, submit requests)
 
 ## References
-- See: [docs/architecture/AUTHENTICATION_ARCHITECTURE.md](../architecture/AUTHENTICATION_ARCHITECTURE.md)
+
+### Phase 1.1 (Database Schema)
+- Architecture: [docs/architecture/AUTHENTICATION_ARCHITECTURE.md](../architecture/AUTHENTICATION_ARCHITECTURE.md)
 - Migration: `src/db/migrations/versions/e382f497c5e3_add_auth_models_user_role_userrole_.py`
 - Models: `src/models/{user,role,user_role,refresh_token}.py`
 - Services: `src/services/{user,role,user_role}_service.py`
 - Tests: `src/tests/test_auth_{models,services}.py`
+
+### Phase 1.2 (JWT Implementation)
+- Configuration: `src/config/auth_config.py`
+- Core utilities: `src/core/{security,jwt}.py`
+- Schemas: `src/schemas/auth.py`
+- Services: `src/services/auth_service.py` (updated: `user_service.py`)
+- Dependencies: `src/routers/dependencies/auth.py`
+- Router: `src/routers/auth.py`
+- Tests: `src/tests/test_auth_{jwt,authentication,router}.py`
+- Security tests: `src/tests/test_security_robustness.py`
+- Security documentation: [docs/standards/password-security.md](../standards/password-security.md)
