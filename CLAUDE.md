@@ -196,25 +196,29 @@ Always include links to relevant docs in your sync messages:
 **Repository:** https://github.com/theace26/IP2A-Database-v2
 **Local Path:** `~/Projects/IP2A-Database-v2` (alias: `$IP2A`)
 **Owner:** Xerxes
-**Status:** v0.2.0 Released - Phase 1 Complete, Phase 2.1 Complete, Phase 2 Planned
+**Status:** v0.6.0 Released - Phase 3 Document Management Complete, Phase 4 Dues Tracking Next
 
 ---
 
 ## Git Workflow
 
-### Current State (January 27, 2026 - Evening Update)
+### Current State (January 28, 2026)
 ```
-main (v0.2.0) ─── ✅ Phase 1 Complete
+main (v0.6.0) ─── ✅ Phase 3 Complete: Document Management
     │
-    ├── Phase 2.1 ─── ✅ Enhanced Stress Test + Auto-Healing (committed to main)
+    ├── Phase 1-1.3 ─── ✅ Complete Auth System (RBAC, JWT, Registration)
+    ├── Phase 2 ─── ✅ Union Operations (SALTing, Benevolence, Grievances)
+    ├── Phase 2 (Roadmap) ─── ✅ Pre-Apprenticeship Training System
+    ├── Phase 3 ─── ✅ Document Management (S3/MinIO)
     │
-    └── Next: feature/phase2-operations ─── SALTing, Benevolence, Grievances
+    └── Next: Phase 4 ─── Dues Tracking
 ```
 
 ### Tags
 | Tag | Description | Status |
 |-----|-------------|--------|
-| `v0.2.0` | Phase 1 Complete: Services + DB Tools | ✅ Current |
+| `v0.6.0` | Phase 3 Complete: Document Management | ✅ Current |
+| `v0.2.0` | Phase 1 Complete: Services + DB Tools | Released |
 | `v0.1.1` | Stabilized src layout and project structure | Released |
 | `v0.1.0` | Backend stabilization complete | Released |
 
@@ -1120,17 +1124,13 @@ When switching between Claude.ai and Claude Code:
 
 ### 📊 Current State
 - **Branch:** main
-- **Tag:** Ready for v0.6.0 (Phase 3 Document Management)
+- **Tag:** v0.6.0 (Phase 3 Document Management)
 - **Tests:** 144 total (all passing) ✅
-  - Phase 1: 51 tests (Organization, Member, AuditLog, etc.)
-  - Phase 1.1 (Auth Schema): 16 tests
-  - Phase 1.2 (JWT Auth): 26 tests
-  - Phase 1.3 (Registration): 10 tests
-  - Security: 16 tests
-  - Phase 2 (Union Operations): 31 tests
-  - Phase 2 (Training System): 33 tests
-  - Phase 3 (Document Management): 11 tests (NEW!)
-  - Note: Some legacy tests archived to focus on core functionality
+  - Core Models: 17 tests
+  - Auth System: 52 tests
+  - Union Operations: 31 tests
+  - Training System: 33 tests
+  - Document Management: 11 tests
 - **Migrations:** At head (`9b75a876ef60` - training models)
 - **Authentication System:** ✅ Complete and production-ready
   - JWT-based auth with bcrypt password hashing
@@ -1138,15 +1138,11 @@ When switching between Claude.ai and Claude Code:
   - Password reset flow (forgot password)
   - Admin user creation
   - Rate limiting on all auth endpoints
-  - 13 API endpoints total (login, logout, refresh, me, register, verify, forgot-password, reset-password, etc.)
+  - 13 API endpoints total
   - Security-hardened: OWASP, NIST, PCI DSS compliant
-  - Account lockout, token rotation, device tracking
 - **Training System:** ✅ Complete and production-ready
-  - 7 training models (Student, Course, ClassSession, Enrollment, Attendance, Grade, Certification)
-  - 7 training enums
-  - ~35 API endpoints across 7 routers
+  - 7 training models, 7 enums, ~35 API endpoints
   - Training seed data with 5 courses, 20 students
-  - Full CRUD operations with Staff+ authentication
 - **Union Operations:** ✅ Complete
   - SALTing, Benevolence, Grievance tracking
   - 27 API endpoints, 31 tests passing
@@ -1154,15 +1150,13 @@ When switching between Claude.ai and Claude Code:
   - S3/MinIO integration for file storage
   - 8 API endpoints (upload, download, presigned URLs, delete, list)
   - File validation, soft/hard delete, organized paths
-  - 11 tests passing
-- **Decision Made:** Features first, scale when real users exist
-- **Next:** Tag v0.6.0, then Phase 4 planning (Dues Tracking)
+- **Next:** Phase 4 Dues Tracking
 
 ---
 
-*Last Updated: January 28, 2026 (Phase 3 Document Management Complete)*
+*Last Updated: January 28, 2026*
 *Working Branch: main*
-*Next Task: Tag v0.6.0 (Phase 3), then Phase 4 Dues Tracking planning*
+*Next Task: Phase 4 Dues Tracking*
 
 ---
 
@@ -1236,9 +1230,10 @@ docker-compose up -d
 | 2026-01-28 16:00 UTC | Claude Code | Phase 2 (Roadmap) Complete - Pre-Apprenticeship Training System: Implemented core IP2A training functionality. 7 new models (Student, Course, ClassSession, Enrollment, Attendance, Grade, Certification). 7 training enums. 7 complete schemas. 7 service modules with CRUD + helpers. 7 FastAPI routers (~35 endpoints) with Staff+ auth. Training seed data (5 courses, 20 students). 33 new tests (183 total passing). Full features: student number generation, attendance tracking, grade calculation, certification expiration tracking. Production-ready. Migration: 9b75a876ef60. Ready for v0.4.0 and v0.5.0 tags. |
 | 2026-01-28 19:30 UTC | Claude Code | Legacy Test Cleanup: Fixed test isolation issues, archived Phase 0 legacy tests to archive/phase0_legacy/, downgraded bcrypt to 4.1.3 for passlib compatibility, updated pytest.ini to exclude archive folder. 133 tests passing after cleanup. |
 | 2026-01-28 19:45 UTC | Claude Code | Phase 3 Complete - Document Management System: S3/MinIO integration with presigned URLs. 8 API endpoints (upload, presigned-upload, confirm-upload, get, download-url, download, delete, list). File validation (extension whitelist, 50MB max). Soft/hard delete. Organized paths. Core modules: s3_config.py, s3_service.py, document_service.py, document.py schemas, documents.py router. MinIO service in docker-compose.yml. 11 new tests (144 total passing). ADR-004 implemented. Commit: 116b705. |
+| 2026-01-28 20:30 UTC | Claude Code | v0.6.0 Tagged and Released: Phase 3 Document Management complete. Created CHANGELOG.md v0.6.0 section, docs/releases/RELEASE_NOTES_v0.6.0.md. Starting Phase 4 Dues Tracking implementation. |
 
 ---
 
 *Working Branch: main*
-*Current Status: Phase 3 Document Management complete, 144 tests passing*
-*Next Task: Tag v0.6.0 (Phase 3), then Phase 4 Dues Tracking planning*
+*Current Status: v0.6.0 released, Phase 4 Dues Tracking in progress*
+*Next Task: Phase 4 Dues Tracking implementation*
