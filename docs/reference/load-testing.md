@@ -915,7 +915,7 @@ python run_load_test.py --stress --export stress_$(date +%Y%m%d).txt
 
 - Help text: `python run_load_test.py --help`
 - Report issues: GitHub Issues
-- Scaling architecture: [docs/Architecture/SCALABILITY_ARCHITECTURE.md](../Architecture/SCALABILITY_ARCHITECTURE.md)
+- Scaling architecture: [SCALABILITY_ARCHITECTURE.md](../architecture/SCALABILITY_ARCHITECTURE.md)
 
 ---
 
