@@ -14,6 +14,9 @@ An ADR captures an important architectural decision along with its context and c
 | [ADR-002](ADR-002-frontend-framework.md) | Frontend Framework (HTMX + Alpine.js) | Accepted | 2026-01-27 |
 | [ADR-003](ADR-003-authentication-strategy.md) | Authentication Strategy (JWT) | Accepted | 2025-XX-XX |
 | [ADR-004](ADR-004-file-storage-strategy.md) | File Storage (Object Storage) | Accepted | 2025-XX-XX |
+| [ADR-005](ADR-005-css-framework.md) | CSS Framework (Tailwind) | Accepted | 2026-01 |
+| [ADR-006](ADR-006-background-jobs.md) | Background Jobs (TaskService Abstraction) | Accepted | 2026-01 |
+| [ADR-007](ADR-007-observability.md) | Observability Stack (Grafana + Loki) | Accepted | 2026-01 |
 
 ## ADR Template
 
