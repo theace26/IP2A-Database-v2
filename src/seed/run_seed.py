@@ -15,6 +15,7 @@ from .seed_organizations import seed_organizations
 from .seed_organization_contacts import seed_organization_contacts
 from .seed_members import seed_members
 from .seed_member_employments import seed_member_employments
+from .phase2_seed import seed_phase2
 from .base_seed import init_seed
 
 
@@ -53,6 +54,9 @@ def run(force: bool = False):
     seed_organization_contacts(db, contacts_per_org=2)
     seed_members(db, count=50)
     seed_member_employments(db)
+
+    # Phase 2 seeds - Union Operations
+    seed_phase2(db, verbose=True)
 
     print("✅ Database seeding complete.")
 
