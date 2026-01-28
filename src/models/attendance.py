@@ -3,7 +3,14 @@
 from datetime import time
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Integer, Time, Text, ForeignKey, Enum as SQLEnum, UniqueConstraint
+from sqlalchemy import (
+    Integer,
+    Time,
+    Text,
+    ForeignKey,
+    Enum as SQLEnum,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db.base import Base
@@ -33,21 +40,21 @@ class Attendance(Base, TimestampMixin):
         Integer,
         ForeignKey("students.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     class_session_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("class_sessions.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Attendance status
     status: Mapped[SessionAttendanceStatus] = mapped_column(
         SQLEnum(SessionAttendanceStatus, name="session_attendance_status_enum"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Time tracking (for late arrivals / early departures)
@@ -59,15 +66,11 @@ class Attendance(Base, TimestampMixin):
 
     # Relationships
     student: Mapped["Student"] = relationship(
-        "Student",
-        back_populates="attendances",
-        lazy="joined"
+        "Student", back_populates="attendances", lazy="joined"
     )
 
     class_session: Mapped["ClassSession"] = relationship(
-        "ClassSession",
-        back_populates="attendances",
-        lazy="joined"
+        "ClassSession", back_populates="attendances", lazy="joined"
     )
 
     def __repr__(self) -> str:

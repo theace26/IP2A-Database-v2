@@ -5,7 +5,7 @@ Credential model for tracking student certifications and qualifications.
 from typing import Optional
 
 from sqlalchemy import Column, Integer, String, Date, ForeignKey, Text, Enum, Index
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db.base import Base
 from src.db.mixins import TimestampMixin, SoftDeleteMixin

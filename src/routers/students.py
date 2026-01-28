@@ -5,7 +5,12 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from src.db.session import get_db
-from src.schemas.student import StudentCreate, StudentUpdate, StudentRead, StudentReadWithDetails
+from src.schemas.student import (
+    StudentCreate,
+    StudentUpdate,
+    StudentRead,
+    StudentReadWithDetails,
+)
 from src.services.student_service import (
     create_student,
     get_student,

@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Column, Integer, String, Date, Text, ForeignKey, Enum as SAEnum
+from sqlalchemy import Column, Integer, String, Date, Text, Enum as SAEnum
 from sqlalchemy.orm import relationship
 
 from src.db.base import Base
@@ -10,7 +10,7 @@ from src.db.mixins import TimestampMixin, SoftDeleteMixin
 from src.db.enums import MemberStatus, MemberClassification
 
 if TYPE_CHECKING:
-    from src.models.student import Student
+    pass
 
 
 class Member(Base, TimestampMixin, SoftDeleteMixin):

@@ -5,7 +5,7 @@ JATC Application model for tracking apprenticeship applications.
 from typing import Optional
 
 from sqlalchemy import Column, Integer, String, Date, ForeignKey, Text, Index, Numeric
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db.base import Base
 from src.db.mixins import TimestampMixin, SoftDeleteMixin

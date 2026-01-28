@@ -1,13 +1,9 @@
 """Student service for business logic."""
 
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from typing import List, Optional
-from datetime import date
 
 from src.models.student import Student
-from src.models.enrollment import Enrollment
-from src.models.certification import Certification
 from src.models.attendance import Attendance
 from src.schemas.student import StudentCreate, StudentUpdate
 from src.db.enums import SessionAttendanceStatus
@@ -33,21 +29,27 @@ def generate_student_number(db: Session) -> str:
 
 def get_student_attendance_rate(db: Session, student_id: int) -> float:
     """Calculate attendance rate for a student."""
-    total_attendances = db.query(Attendance).filter(
-        Attendance.student_id == student_id
-    ).count()
+    total_attendances = (
+        db.query(Attendance).filter(Attendance.student_id == student_id).count()
+    )
 
     if total_attendances == 0:
         return 0.0
 
-    present_count = db.query(Attendance).filter(
-        Attendance.student_id == student_id,
-        Attendance.status.in_([
-            SessionAttendanceStatus.PRESENT,
-            SessionAttendanceStatus.LATE,
-            SessionAttendanceStatus.LEFT_EARLY
-        ])
-    ).count()
+    present_count = (
+        db.query(Attendance)
+        .filter(
+            Attendance.student_id == student_id,
+            Attendance.status.in_(
+                [
+                    SessionAttendanceStatus.PRESENT,
+                    SessionAttendanceStatus.LATE,
+                    SessionAttendanceStatus.LEFT_EARLY,
+                ]
+            ),
+        )
+        .count()
+    )
 
     return (present_count / total_attendances) * 100
 
@@ -81,7 +83,7 @@ def list_students(
     skip: int = 0,
     limit: int = 100,
     status: Optional[str] = None,
-    cohort: Optional[str] = None
+    cohort: Optional[str] = None,
 ) -> List[Student]:
     """List students with pagination and optional filters."""
     query = db.query(Student)

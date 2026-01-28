@@ -1,6 +1,6 @@
 """Student model for pre-apprenticeship program."""
 
-from datetime import date, datetime
+from datetime import date
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import Integer, String, Date, Text, ForeignKey, Enum as SQLEnum
@@ -36,74 +36,76 @@ class Student(Base, TimestampMixin, SoftDeleteMixin):
         ForeignKey("members.id", ondelete="RESTRICT"),
         nullable=False,
         unique=True,  # One student record per member
-        index=True
+        index=True,
     )
 
     # Student-specific fields
     student_number: Mapped[str] = mapped_column(
-        String(20),
-        unique=True,
-        nullable=False,
-        index=True
+        String(20), unique=True, nullable=False, index=True
     )
 
     status: Mapped[StudentStatus] = mapped_column(
         SQLEnum(StudentStatus, name="student_status_enum"),
         default=StudentStatus.APPLICANT,
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Program dates
     application_date: Mapped[date] = mapped_column(Date, nullable=False)
     enrollment_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
-    expected_completion_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    expected_completion_date: Mapped[Optional[date]] = mapped_column(
+        Date, nullable=True
+    )
     actual_completion_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 
     # Program info
-    cohort: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # e.g., "2026-Spring"
+    cohort: Mapped[Optional[str]] = mapped_column(
+        String(50), nullable=True
+    )  # e.g., "2026-Spring"
 
     # Emergency contact
-    emergency_contact_name: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
-    emergency_contact_phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
-    emergency_contact_relationship: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    emergency_contact_name: Mapped[Optional[str]] = mapped_column(
+        String(200), nullable=True
+    )
+    emergency_contact_phone: Mapped[Optional[str]] = mapped_column(
+        String(20), nullable=True
+    )
+    emergency_contact_relationship: Mapped[Optional[str]] = mapped_column(
+        String(50), nullable=True
+    )
 
     # Notes
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Relationships
     member: Mapped["Member"] = relationship(
-        "Member",
-        back_populates="student",
-        lazy="joined"
+        "Member", back_populates="student", lazy="joined"
     )
 
     enrollments: Mapped[list["Enrollment"]] = relationship(
         "Enrollment",
         back_populates="student",
         lazy="selectin",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
     grades: Mapped[list["Grade"]] = relationship(
-        "Grade",
-        back_populates="student",
-        lazy="selectin",
-        cascade="all, delete-orphan"
+        "Grade", back_populates="student", lazy="selectin", cascade="all, delete-orphan"
     )
 
     certifications: Mapped[list["Certification"]] = relationship(
         "Certification",
         back_populates="student",
         lazy="selectin",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
     attendances: Mapped[list["Attendance"]] = relationship(
         "Attendance",
         back_populates="student",
         lazy="selectin",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
     @property

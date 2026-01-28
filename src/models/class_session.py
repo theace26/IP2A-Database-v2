@@ -31,7 +31,7 @@ class ClassSession(Base, TimestampMixin):
         Integer,
         ForeignKey("courses.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Session details
@@ -52,26 +52,27 @@ class ClassSession(Base, TimestampMixin):
 
     # Status
     is_cancelled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    cancellation_reason: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    cancellation_reason: Mapped[Optional[str]] = mapped_column(
+        String(200), nullable=True
+    )
 
     # Relationships
     course: Mapped["Course"] = relationship(
-        "Course",
-        back_populates="class_sessions",
-        lazy="joined"
+        "Course", back_populates="class_sessions", lazy="joined"
     )
 
     attendances: Mapped[list["Attendance"]] = relationship(
         "Attendance",
         back_populates="class_session",
         lazy="selectin",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
     @property
     def duration_hours(self) -> float:
         """Calculate session duration in hours."""
         from datetime import datetime
+
         start = datetime.combine(self.session_date, self.start_time)
         end = datetime.combine(self.session_date, self.end_time)
         return (end - start).seconds / 3600

@@ -5,7 +5,7 @@ Tools issued model for tracking equipment provided to students.
 from typing import Optional
 
 from sqlalchemy import Column, Integer, String, Date, ForeignKey, Text, Boolean, Index
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db.base import Base
 from src.db.mixins import TimestampMixin, SoftDeleteMixin
