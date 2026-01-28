@@ -144,12 +144,45 @@ ruff check . --fix && ruff format .
 
 **Instruction Documents:** `docs/instructions/1-preflight-and-setup.md` through `6-testing-and-commit.md`
 
+### Session A Complete ✅ (January 28, 2026)
+
+**Documents Completed:** 1, 2, 3 of 6
+
+| Task | Status |
+|------|--------|
+| Pre-flight checks (Docker, tests, API, git) | ✅ |
+| Tag v0.7.0 (backend milestone) | ✅ |
+| Update CLAUDE.md for frontend phase | ✅ |
+| Create directory structure (templates, static) | ✅ |
+| Create base.html (sidebar layout) | ✅ |
+| Create base_auth.html (centered layout) | ✅ |
+| Create _navbar.html component | ✅ |
+| Create _sidebar.html component | ✅ |
+| Create _flash.html component | ✅ |
+| Create _modal.html component | ✅ |
+| Create custom.css (2.3 KB) | ✅ |
+| Create app.js (4.7 KB) | ✅ |
+| Archive old instruction files to docs/archive/ | ✅ |
+| All 165 tests passing | ✅ |
+
+**Commit:** `009fa3b feat(frontend): Phase 6 Week 1 Session A - Frontend foundation`
+
+### Session B Pending
+
+**Documents Remaining:** 4, 5, 6 of 6
+
+| Document | Focus |
+|----------|-------|
+| 4-pages-and-static.md | Login page, dashboard, error pages |
+| 5-router-and-integration.md | Frontend router, main.py integration |
+| 6-testing-and-commit.md | Tests, verification, final commit |
+
 ### Acceptance Criteria
 
 - [ ] `/login` renders styled login form
 - [ ] Form submits via HTMX to `/api/auth/login`
 - [ ] `/dashboard` renders with sidebar and stats cards
-- [ ] Static files served correctly
+- [x] Static files created (CSS/JS) ✅
 - [ ] All tests pass (165 existing + new frontend tests)
 
 ---
@@ -229,6 +262,33 @@ async def page(request: Request):
 - List of completed tasks
 - Outstanding questions/decisions needed
 - Blockers or risks identified
+
+---
+
+## 📂 Session A Files Created
+
+```
+src/templates/
+├── base.html              # Main layout with sidebar
+├── base_auth.html         # Centered layout for auth pages
+└── components/
+    ├── _navbar.html       # Top navigation bar
+    ├── _sidebar.html      # Left sidebar menu
+    ├── _flash.html        # Alert messages with auto-dismiss
+    └── _modal.html        # HTMX modal container
+
+src/static/
+├── css/custom.css         # Custom styles (transitions, cards, tables)
+├── js/app.js              # HTMX handlers, toast notifications, utilities
+└── images/favicon.ico     # Placeholder
+
+docs/
+├── instructions/          # Phase 6 Week 1 instruction documents (6 files)
+├── archive/               # Archived old instruction files (5 files)
+└── reports/
+    ├── session-logs/2026-01-28-phase6-session-a.md
+    └── CLAUDE_AI_SYNC_2026-01-28.md
+```
 
 ---
 
