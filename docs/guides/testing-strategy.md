@@ -4,8 +4,8 @@
 
 Your database has two complementary testing systems:
 
-1. **Stress Test** ([STRESS_TEST.md](STRESS_TEST.md)) - Tests database with LARGE DATA VOLUMES
-2. **Load Test** ([LOAD_TEST.md](LOAD_TEST.md)) - Tests database with CONCURRENT USERS
+1. **Stress Test** ([stress-testing.md](../reference/stress-testing.md)) - Tests database with LARGE DATA VOLUMES
+2. **Load Test** ([load-testing.md](../reference/load-testing.md)) - Tests database with CONCURRENT USERS
 
 Both are essential for production readiness.
 

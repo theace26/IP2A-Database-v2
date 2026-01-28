@@ -1,12 +1,167 @@
-# Database Integrity Check & Repair System
+# Database Integrity Check & Repair - Reference Guide
 
-## Overview
+---
+
+## Quick Reference
+
+### Common Commands
+
+#### Daily Operations
+
+```bash
+# Quick health check (2-5 minutes)
+python run_integrity_check.py --no-files
+
+# Full check with files (10-30 minutes)
+python run_integrity_check.py
+
+# Export report
+python run_integrity_check.py --export report_$(date +%Y%m%d).txt
+```
+
+#### Repair Operations
+
+```bash
+# Preview repairs (safe)
+python run_integrity_check.py --repair --dry-run
+
+# Auto-repair (commits changes)
+python run_integrity_check.py --repair
+
+# Interactive repair for complex issues
+python run_integrity_check.py --interactive
+
+# Combined: auto + interactive
+python run_integrity_check.py --repair --interactive
+```
+
+#### Production
+
+```bash
+# Force run in production (use with caution)
+python run_integrity_check.py --force
+
+# Dry run in production (safe)
+python run_integrity_check.py --force --repair --dry-run
+```
+
+### What Gets Checked
+
+| Category | Check | Severity | Auto-Fix |
+|----------|-------|----------|----------|
+| **Structural** | Orphaned records | 🔴 Critical | ✅ Yes |
+| **Structural** | Missing required fields | 🔴 Critical | ❌ No |
+| **Structural** | Invalid enum values | 🔴 Critical | ✅ Yes |
+| **Logical** | Date logic errors | 🔴 Critical | ✅ Yes |
+| **Logical** | Multiple current jobs | 🟡 Warning | ❌ No |
+| **Logical** | Multiple primary contacts | 🟡 Warning | ✅ Yes |
+| **Quality** | Duplicate records | 🔴 Critical | ❌ No |
+| **Quality** | Data anomalies | 🔵 Info | ❌ No |
+| **Files** | Missing file path | 🔴 Critical | ✅ Yes |
+| **Files** | File not found | 🟡 Warning | ⚠️ Interactive |
+
+### Quick Fixes
+
+#### Fix All Auto-Fixable Issues
+```bash
+python run_integrity_check.py --repair
+```
+
+#### Fix Orphaned Records Only
+```bash
+# Check first
+python run_integrity_check.py | grep "orphaned"
+
+# Auto-fix
+python run_integrity_check.py --repair
+```
+
+#### Handle Missing Files
+```bash
+# Interactive mode lets you decide per file
+python run_integrity_check.py --interactive
+```
+
+#### Fix Duplicate Primary Contacts
+```bash
+python run_integrity_check.py --repair
+# Keeps most recent contact as primary
+```
+
+### Typical Workflows
+
+#### Weekly Maintenance
+```bash
+# 1. Check current state
+python run_integrity_check.py --no-files
+
+# 2. Preview repairs
+python run_integrity_check.py --repair --dry-run
+
+# 3. Execute repairs
+python run_integrity_check.py --repair
+
+# 4. Verify
+python run_integrity_check.py --no-files
+```
+
+#### After Data Import
+```bash
+# 1. Full check with files
+python run_integrity_check.py
+
+# 2. Auto-fix common issues
+python run_integrity_check.py --repair
+
+# 3. Handle duplicates manually
+# Review report for duplicates, deduplicate manually
+
+# 4. Final check
+python run_integrity_check.py
+```
+
+#### Emergency Fix
+```bash
+# Production database has issues
+# 1. Check severity
+python run_integrity_check.py --force --no-files
+
+# 2. Test fix
+python run_integrity_check.py --force --repair --dry-run
+
+# 3. Execute if safe
+python run_integrity_check.py --force --repair
+```
+
+### Time Estimates
+
+| Operation | With Files | Without Files |
+|-----------|------------|---------------|
+| **Check only** | 10-30 min | 2-5 min |
+| **Auto-repair** | 10-35 min | 3-7 min |
+| **Interactive** | 15-60 min | N/A |
+
+*Times based on 10k members, 250k employments, 150k file attachments*
+
+### Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success - no critical issues |
+| 1 | Critical issues remain |
+| 130 | Interrupted by user (Ctrl+C) |
+
+---
+
+## Detailed Documentation
+
+### Overview
 
 The integrity check system validates database consistency, detects issues, and provides automated or interactive repair capabilities. Designed for multi-user production environments where data integrity is critical.
 
-## Key Features
+### Key Features
 
-### 🔍 Comprehensive Checks
+#### 🔍 Comprehensive Checks
 
 1. **Structural Integrity**
    - Foreign key validation (orphaned records)
@@ -29,7 +184,7 @@ The integrity check system validates database consistency, detects issues, and p
    - File size validation
    - Missing file detection
 
-### 🔧 Repair Capabilities
+#### 🔧 Repair Capabilities
 
 | Issue Type | Auto-Repair | Interactive | Manual |
 |------------|-------------|-------------|--------|
@@ -41,7 +196,7 @@ The integrity check system validates database consistency, detects issues, and p
 | Duplicates | - | - | ✅ |
 | Missing required fields | - | - | ✅ |
 
-### 🛡️ Safety Features
+#### 🛡️ Safety Features
 
 - ✅ **Dry run mode** - Preview changes before committing
 - ✅ **Production protection** - Requires --force flag in production
@@ -51,7 +206,7 @@ The integrity check system validates database consistency, detects issues, and p
 
 ---
 
-## Usage
+## Usage Examples
 
 ### Basic Integrity Check (Read-Only)
 
@@ -430,7 +585,7 @@ During repairs:
 
 ---
 
-## Examples
+## Automation Examples
 
 ### Example 1: Daily Health Check
 
@@ -539,6 +694,18 @@ Manual deduplication required:
 3. Merge or delete duplicates manually
 4. Re-run integrity check
 
+### Issue: "Database is locked"
+- Schedule during maintenance window
+- Check for long-running queries: `SELECT * FROM pg_stat_activity;`
+
+### Issue: "Permission denied"
+- Make script executable: `chmod +x run_integrity_check.py`
+- Check database permissions
+
+### Issue: "Blocked in production"
+- Add `--force` flag (use with caution)
+- Consider running on staging first
+
 ---
 
 ## API Integration
@@ -611,10 +778,10 @@ Before running repairs in production:
 | `run_integrity_check.py` | CLI runner (root level) |
 | `src/db/integrity_check.py` | Checker implementation |
 | `src/db/integrity_repair.py` | Repair implementation |
-| `INTEGRITY_CHECK.md` | This documentation |
+| `docs/reference/integrity-check.md` | This documentation |
 
 ---
 
-*Last Updated: January 27, 2026*
-*Version: 1.0*
+*Last Updated: January 28, 2026*
+*Version: 2.0*
 *Status: Production Ready*

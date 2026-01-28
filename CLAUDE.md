@@ -35,14 +35,14 @@ This bidirectional sync keeps both Claudes aligned on project state.
 ### What to Share with Claude.ai
 
 **Essential Documents (Share on first sync):**
-1. **[docs/Reports/SCALING_READINESS_ASSESSMENT.md](docs/Reports/SCALING_READINESS_ASSESSMENT.md)** ⭐ CRITICAL
+1. **[docs/reports/scaling-readiness.md](docs/reports/scaling-readiness.md)** ⭐ CRITICAL
    - Current capacity: 50 users
    - Target capacity: 4,000+ users
    - Gap: 80x increase needed
    - Investment: $24,000-44,000, 6-12 weeks
    - Three launch options with pros/cons
 
-2. **[docs/Architecture/SCALABILITY_ARCHITECTURE.md](docs/Architecture/SCALABILITY_ARCHITECTURE.md)**
+2. **[docs/architecture/SCALABILITY_ARCHITECTURE.md](docs/architecture/SCALABILITY_ARCHITECTURE.md)**
    - 5-phase implementation plan
    - Technical specifications
    - Cost breakdown
@@ -54,7 +54,7 @@ This bidirectional sync keeps both Claudes aligned on project state.
    - Pending decisions
 
 **For Daily/Weekly Syncs:**
-- Link to latest session summary (e.g., `docs/Reports/SESSION_SUMMARY_2026-01-27.md`)
+- Link to latest session summary (e.g., `docs/reports/session-logs/2026-01-27.md`)
 - List of completed tasks (bullets)
 - Outstanding questions/decisions needed
 - Blockers or risks identified
@@ -175,17 +175,17 @@ Daily summary - January 28, 2026
 Always include links to relevant docs in your sync messages:
 
 **Critical Reading (First Sync):**
-- [SCALING_READINESS_ASSESSMENT.md](docs/Reports/SCALING_READINESS_ASSESSMENT.md) - Production readiness ⭐
-- [SCALABILITY_ARCHITECTURE.md](docs/Architecture/SCALABILITY_ARCHITECTURE.md) - Technical plan
+- [scaling-readiness.md](docs/reports/scaling-readiness.md) - Production readiness ⭐
+- [SCALABILITY_ARCHITECTURE.md](docs/architecture/SCALABILITY_ARCHITECTURE.md) - Technical plan
 - [CLAUDE.md](CLAUDE.md) - Current state
 
 **For Budget Discussions:**
-- [SCALABILITY_ARCHITECTURE.md](docs/Architecture/SCALABILITY_ARCHITECTURE.md) - Cost breakdown ($275-370/month)
-- [AUDIT_LOGGING_STANDARDS.md](docs/Standards/AUDIT_LOGGING_STANDARDS.md) - Archival costs (~$35/year)
+- [SCALABILITY_ARCHITECTURE.md](docs/architecture/SCALABILITY_ARCHITECTURE.md) - Cost breakdown ($275-370/month)
+- [audit-logging.md](docs/standards/audit-logging.md) - Archival costs (~$35/year)
 
 **For Technical Discussions:**
-- [STRESS_TEST_ANALYTICS_REPORT.md](docs/Reports/STRESS_TEST_ANALYTICS_REPORT.md) - Performance benchmarks
-- [AUDIT_LOGGING_GUIDE.md](docs/Guides/AUDIT_LOGGING_GUIDE.md) - Implementation patterns
+- [stress-test-analytics.md](docs/reports/stress-test-analytics.md) - Performance benchmarks
+- [audit-logging.md](docs/guides/audit-logging.md) - Implementation patterns
 
 ---
 
@@ -288,33 +288,43 @@ IP2A-Database-v2/
 │   └── audit_maintenance.py # Automated audit log archival & cleanup
 ├── docs/                    # All documentation centralized
 │   ├── README.md            # Documentation index and quick start
-│   ├── ARCHITECTURE.md      # Original architecture documentation
-│   ├── ROADMAP.md           # Product roadmap
-│   ├── EXECUTIVE_SUMMARY.md # Executive summary with scaling decision
-│   ├── IP2A_PROJECT_STRATEGY.md # Project strategy document
-│   ├── INTEGRITY_CHECK.md   # Integrity check documentation
-│   ├── IP2ADB.md            # CLI tool documentation
-│   ├── LOAD_TEST.md         # Load testing guide
-│   ├── STRESS_TEST.md       # Stress testing guide
-│   ├── TESTING_STRATEGY.md  # Testing strategy overview
-│   ├── Architecture/        # System design and technical architecture
+│   ├── architecture/        # System design and technical architecture
+│   │   ├── SYSTEM_OVERVIEW.md
 │   │   ├── SCALABILITY_ARCHITECTURE.md
 │   │   ├── AUTHENTICATION_ARCHITECTURE.md
-│   │   └── FILE_STORAGE_ARCHITECTURE.md
-│   ├── Standards/           # Industry standards and compliance
-│   │   └── AUDIT_LOGGING_STANDARDS.md
-│   ├── Guides/              # Implementation guides and how-tos
-│   │   ├── AUDIT_LOGGING_GUIDE.md
-│   │   └── IP2A_PROJECT_STRATEGY.md
-│   ├── Reports/             # Performance reports and assessments
-│   │   ├── SCALING_READINESS_ASSESSMENT.md
-│   │   ├── STRESS_TEST_ANALYTICS_REPORT.md
-│   │   ├── PHASE_2.1_SUMMARY.md
-│   │   └── SESSION_SUMMARY_2026-01-27.md
-│   └── graphs/              # Mermaid diagrams
-│       ├── migrations.mmd
-│       ├── models_fk.mmd
-│       └── seeds.mmd
+│   │   ├── FILE_STORAGE_ARCHITECTURE.md
+│   │   └── diagrams/        # Mermaid diagrams
+│   │       ├── migrations.mmd
+│   │       ├── models_fk.mmd
+│   │       └── seeds.mmd
+│   ├── decisions/           # Architecture Decision Records (ADRs)
+│   │   ├── README.md
+│   │   ├── ADR-001-database-choice.md
+│   │   ├── ADR-002-frontend-framework.md
+│   │   ├── ADR-003-authentication-strategy.md
+│   │   └── ADR-004-file-storage-strategy.md
+│   ├── guides/              # Implementation guides and how-tos
+│   │   ├── audit-logging.md
+│   │   ├── project-strategy.md
+│   │   └── testing-strategy.md
+│   ├── reference/           # CLI and API quick reference
+│   │   ├── ip2adb-cli.md
+│   │   ├── integrity-check.md
+│   │   ├── load-testing.md
+│   │   └── stress-testing.md
+│   ├── reports/             # Performance reports and assessments
+│   │   ├── phase-2.1-summary.md
+│   │   ├── scaling-readiness.md
+│   │   ├── stress-test-analytics.md
+│   │   └── session-logs/
+│   │       └── 2026-01-27.md
+│   ├── runbooks/            # Operational procedures
+│   │   ├── README.md
+│   │   ├── deployment.md
+│   │   ├── backup-restore.md
+│   │   └── disaster-recovery.md
+│   └── standards/           # Coding standards and conventions
+│       └── audit-logging.md
 ├── logs/                    # ⭐ NEW: Auto-heal, notifications, metrics
 │   ├── auto_heal/
 │   ├── admin_notifications/
@@ -327,8 +337,39 @@ IP2A-Database-v2/
 ├── ip2adb                   # ⭐ UPDATED: Added auto-heal, resilience commands
 ├── alembic.ini
 ├── CLAUDE.md                # This file
-└── PHASE_2.1_SUMMARY.md     # ⭐ NEW: Phase 2.1 documentation
+├── EXECUTIVE_SUMMARY.md     # Executive summary with scaling decision
+├── ROADMAP.md               # Product roadmap
+├── CHANGELOG.md             # Version history
+└── CONTRIBUTING.md          # Contribution guidelines
 ```
+
+---
+
+## Documentation Structure
+
+```
+docs/
+├── architecture/     # System design documents
+├── decisions/        # Architecture Decision Records (ADRs)
+├── guides/           # How-to guides
+├── reference/        # CLI and API reference
+├── reports/          # Test reports, assessments
+├── runbooks/         # Operational procedures
+└── standards/        # Coding standards
+```
+
+### Documentation Principles
+- Architecture docs describe HOW the system works
+- ADRs explain WHY decisions were made
+- Guides explain HOW TO do things
+- Reference docs are for quick lookup
+- Runbooks are step-by-step procedures
+
+### When to Update Documentation
+- New feature → Update relevant guide or create new one
+- Major decision → Create ADR
+- API change → Update reference
+- Bug fix with lessons learned → Consider ADR or guide update
 
 ---
 
