@@ -1,5 +1,11 @@
 """
 Generic file attachment model for storing files linked to any record.
+
+File storage follows an organized path structure:
+    uploads/{entity_type}s/{Owner_Name_ID}/{category}/{year}/{MM-Month}/{filename}
+
+Example:
+    uploads/members/Smith_John_M7464416/grievances/2026/01-January/safety_report.pdf
 """
 
 from sqlalchemy import Column, Integer, String, Index
@@ -26,9 +32,13 @@ class FileAttachment(TimestampMixin, SoftDeleteMixin, Base):
     id = Column(Integer, primary_key=True, index=True)
 
     # Polymorphic reference - links to any table
-    # Examples: 'student', 'credential', 'jatc_application', 'expense'
+    # Examples: 'member', 'student', 'organization', 'grievance'
     record_type = Column(String(50), nullable=False, index=True)
     record_id = Column(Integer, nullable=False, index=True)
+
+    # Business category for organized folder structure
+    # Examples: 'grievances', 'benevolence', 'certifications', 'general'
+    file_category = Column(String(50), nullable=False, server_default="general", index=True)
 
     # File metadata
     file_name = Column(String(255), nullable=False)
@@ -48,4 +58,4 @@ class FileAttachment(TimestampMixin, SoftDeleteMixin, Base):
     )
 
     def __repr__(self):
-        return f"<FileAttachment(id={self.id}, type='{self.record_type}', record={self.record_id}, file='{self.file_name}')>"
+        return f"<FileAttachment(id={self.id}, type='{self.record_type}', record={self.record_id}, category='{self.file_category}', file='{self.file_name}')>"

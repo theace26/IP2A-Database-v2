@@ -35,14 +35,14 @@ This bidirectional sync keeps both Claudes aligned on project state.
 ### What to Share with Claude.ai
 
 **Essential Documents (Share on first sync):**
-1. **[Documentation/Reports/SCALING_READINESS_ASSESSMENT.md](Documentation/Reports/SCALING_READINESS_ASSESSMENT.md)** ⭐ CRITICAL
+1. **[docs/Reports/SCALING_READINESS_ASSESSMENT.md](docs/Reports/SCALING_READINESS_ASSESSMENT.md)** ⭐ CRITICAL
    - Current capacity: 50 users
    - Target capacity: 4,000+ users
    - Gap: 80x increase needed
    - Investment: $24,000-44,000, 6-12 weeks
    - Three launch options with pros/cons
 
-2. **[Documentation/Architecture/SCALABILITY_ARCHITECTURE.md](Documentation/Architecture/SCALABILITY_ARCHITECTURE.md)**
+2. **[docs/Architecture/SCALABILITY_ARCHITECTURE.md](docs/Architecture/SCALABILITY_ARCHITECTURE.md)**
    - 5-phase implementation plan
    - Technical specifications
    - Cost breakdown
@@ -54,7 +54,7 @@ This bidirectional sync keeps both Claudes aligned on project state.
    - Pending decisions
 
 **For Daily/Weekly Syncs:**
-- Link to latest session summary (e.g., `Documentation/Reports/SESSION_SUMMARY_2026-01-27.md`)
+- Link to latest session summary (e.g., `docs/Reports/SESSION_SUMMARY_2026-01-27.md`)
 - List of completed tasks (bullets)
 - Outstanding questions/decisions needed
 - Blockers or risks identified
@@ -75,7 +75,7 @@ Hi Claude.ai! Quick update from Claude Code:
 📋 Next up:
 - [Next task or phase]
 
-📎 Reference: Documentation/Reports/SESSION_SUMMARY_YYYY-MM-DD.md
+📎 Reference: docs/Reports/SESSION_SUMMARY_YYYY-MM-DD.md
 ```
 
 **Weekly Planning Session (30 minutes):**
@@ -109,7 +109,7 @@ Hi Claude.ai! Quick update from Claude Code:
 ```
 🚨 CRITICAL DECISION NEEDED
 
-I've completed a scaling readiness assessment (Documentation/Reports/SCALING_READINESS_ASSESSMENT.md).
+I've completed a scaling readiness assessment (docs/Reports/SCALING_READINESS_ASSESSMENT.md).
 
 TL;DR:
 - Current system: 50 concurrent users max
@@ -124,7 +124,7 @@ Three options:
 
 Which approach should we take? Need decision by [date] to meet timeline.
 
-Full analysis: Documentation/Reports/SCALING_READINESS_ASSESSMENT.md
+Full analysis: docs/Reports/SCALING_READINESS_ASSESSMENT.md
 ```
 
 **Example 2: Phase Complete**
@@ -146,7 +146,7 @@ Next steps:
 - Decision needed: Implement scalability Phase 1 or continue Phase 2 (Union Operations)?
 - Budget approval: $24K-44K for 6-12 week implementation
 
-Full details: Documentation/Reports/SESSION_SUMMARY_2026-01-27.md
+Full details: docs/Reports/SESSION_SUMMARY_2026-01-27.md
 ```
 
 **Example 3: Daily Summary**
@@ -155,7 +155,7 @@ Daily summary - January 28, 2026
 
 ✅ Today:
 - Created scaling readiness assessment (16 KB, comprehensive analysis)
-- Reorganized all documentation into Documentation/ folder
+- Reorganized all documentation into docs/ folder
 - Updated CLAUDE.md with sync schedule and current state
 
 ⚠️ Blockers:
@@ -175,17 +175,17 @@ Daily summary - January 28, 2026
 Always include links to relevant docs in your sync messages:
 
 **Critical Reading (First Sync):**
-- [SCALING_READINESS_ASSESSMENT.md](Documentation/Reports/SCALING_READINESS_ASSESSMENT.md) - Production readiness ⭐
-- [SCALABILITY_ARCHITECTURE.md](Documentation/Architecture/SCALABILITY_ARCHITECTURE.md) - Technical plan
+- [SCALING_READINESS_ASSESSMENT.md](docs/Reports/SCALING_READINESS_ASSESSMENT.md) - Production readiness ⭐
+- [SCALABILITY_ARCHITECTURE.md](docs/Architecture/SCALABILITY_ARCHITECTURE.md) - Technical plan
 - [CLAUDE.md](CLAUDE.md) - Current state
 
 **For Budget Discussions:**
-- [SCALABILITY_ARCHITECTURE.md](Documentation/Architecture/SCALABILITY_ARCHITECTURE.md) - Cost breakdown ($275-370/month)
-- [AUDIT_LOGGING_STANDARDS.md](Documentation/Standards/AUDIT_LOGGING_STANDARDS.md) - Archival costs (~$35/year)
+- [SCALABILITY_ARCHITECTURE.md](docs/Architecture/SCALABILITY_ARCHITECTURE.md) - Cost breakdown ($275-370/month)
+- [AUDIT_LOGGING_STANDARDS.md](docs/Standards/AUDIT_LOGGING_STANDARDS.md) - Archival costs (~$35/year)
 
 **For Technical Discussions:**
-- [STRESS_TEST_ANALYTICS_REPORT.md](Documentation/Reports/STRESS_TEST_ANALYTICS_REPORT.md) - Performance benchmarks
-- [AUDIT_LOGGING_GUIDE.md](Documentation/Guides/AUDIT_LOGGING_GUIDE.md) - Implementation patterns
+- [STRESS_TEST_ANALYTICS_REPORT.md](docs/Reports/STRESS_TEST_ANALYTICS_REPORT.md) - Performance benchmarks
+- [AUDIT_LOGGING_GUIDE.md](docs/Guides/AUDIT_LOGGING_GUIDE.md) - Implementation patterns
 
 ---
 
@@ -275,6 +275,7 @@ IP2A-Database-v2/
 │   ├── schemas/             # Pydantic schemas
 │   ├── services/            # Business logic (CRUD)
 │   │   ├── audit_service.py # ⭐ NEW: Comprehensive audit logging
+│   │   ├── file_path_builder.py # ⭐ NEW: Organized file storage paths
 │   │   └── ...
 │   ├── routers/             # FastAPI endpoints
 │   │   ├── members_audited.py # ⭐ NEW: Example with full audit logging
@@ -285,22 +286,35 @@ IP2A-Database-v2/
 │   └── tests/               # pytest tests
 ├── scripts/                 # ⭐ NEW: Automation scripts
 │   └── audit_maintenance.py # Automated audit log archival & cleanup
-├── Documentation/           # ⭐ REORGANIZED: All documentation centralized
+├── docs/                    # All documentation centralized
 │   ├── README.md            # Documentation index and quick start
-│   ├── Architecture/        # System design and technical architecture
-│   │   └── SCALABILITY_ARCHITECTURE.md # 4,000+ user design, 5-phase plan
-│   ├── Standards/           # Industry standards and compliance
-│   │   └── AUDIT_LOGGING_STANDARDS.md # SOX, HIPAA, GDPR requirements
-│   ├── Guides/              # Implementation guides and how-tos
-│   │   └── AUDIT_LOGGING_GUIDE.md # Audit logging implementation
-│   └── Reports/             # Performance reports and assessments
-│       ├── SCALING_READINESS_ASSESSMENT.md # ⭐ CRITICAL: Production readiness analysis
-│       ├── STRESS_TEST_ANALYTICS_REPORT.md # Phase 2.1 performance results
-│       ├── PHASE_2.1_SUMMARY.md # Phase 2.1 implementation summary
-│       └── SESSION_SUMMARY_2026-01-27.md # Evening session handoff
-├── docs/                    # Legacy architecture docs (to be migrated)
 │   ├── ARCHITECTURE.md      # Original architecture documentation
-│   └── ROADMAP.md           # Product roadmap
+│   ├── ROADMAP.md           # Product roadmap
+│   ├── EXECUTIVE_SUMMARY.md # Executive summary with scaling decision
+│   ├── IP2A_PROJECT_STRATEGY.md # Project strategy document
+│   ├── INTEGRITY_CHECK.md   # Integrity check documentation
+│   ├── IP2ADB.md            # CLI tool documentation
+│   ├── LOAD_TEST.md         # Load testing guide
+│   ├── STRESS_TEST.md       # Stress testing guide
+│   ├── TESTING_STRATEGY.md  # Testing strategy overview
+│   ├── Architecture/        # System design and technical architecture
+│   │   ├── SCALABILITY_ARCHITECTURE.md
+│   │   ├── AUTHENTICATION_ARCHITECTURE.md
+│   │   └── FILE_STORAGE_ARCHITECTURE.md
+│   ├── Standards/           # Industry standards and compliance
+│   │   └── AUDIT_LOGGING_STANDARDS.md
+│   ├── Guides/              # Implementation guides and how-tos
+│   │   ├── AUDIT_LOGGING_GUIDE.md
+│   │   └── IP2A_PROJECT_STRATEGY.md
+│   ├── Reports/             # Performance reports and assessments
+│   │   ├── SCALING_READINESS_ASSESSMENT.md
+│   │   ├── STRESS_TEST_ANALYTICS_REPORT.md
+│   │   ├── PHASE_2.1_SUMMARY.md
+│   │   └── SESSION_SUMMARY_2026-01-27.md
+│   └── graphs/              # Mermaid diagrams
+│       ├── migrations.mmd
+│       ├── models_fk.mmd
+│       └── seeds.mmd
 ├── logs/                    # ⭐ NEW: Auto-heal, notifications, metrics
 │   ├── auto_heal/
 │   ├── admin_notifications/
@@ -691,6 +705,29 @@ pip install httpx pytest-cov
 - `/benevolence-reviews/` - CRUD + by-application lookup
 - `/grievances/` - CRUD + by-number lookup + nested step records
 
+### Phase 2.2: File Attachment Reorganization - ✅ COMPLETE (January 28, 2026)
+**Purpose:** Organize file storage with human-readable, structured paths
+**Migration:** `6f77d764d2c3` - Add file_category to file_attachments
+
+**Storage Path Pattern:**
+```
+uploads/{entity_type}s/{LastName_FirstName_ID}/{category}/{year}/{MM-Month}/{filename}
+```
+**Example:** `uploads/members/Smith_John_M7464416/grievances/2026/01-January/safety_report.pdf`
+
+**Delivered:**
+- [x] `file_path_builder.py` - Path construction with Unicode-safe name sanitization
+- [x] `file_category` column added to `file_attachments` table (indexed, default: "general")
+- [x] Entity name lookup in router (Member, Student, Organization)
+- [x] Category validation per entity type (member, student, organization, grievance, benevolence)
+- [x] New endpoints: `/files/categories/{record_type}`, `/files/{record_type}/{record_id}/{category}`
+- [x] Migration preserves existing production indexes
+
+**Design Decisions:**
+- Name format: `LastName_FirstName_ID` (e.g., `Smith_John_M7464416`)
+- Month format: `01-January` (sortable + readable)
+- Categories match business domains (grievances, benevolence, certifications, dues, salting, etc.)
+
 ### Future Phases
 - Phase 3: Document management, S3 (file storage)
 - Phase 4: Dues tracking (financial)
@@ -776,20 +813,28 @@ When switching between Claude.ai and Claude Code:
    - Cost estimates: $410-$1,360/month
    - 7-week implementation timeline
 
+9. **File Attachment Reorganization** ⭐ NEW
+   - Organized file storage: `uploads/{type}s/{Name_ID}/{category}/{year}/{MM-Month}/`
+   - New `file_path_builder.py` utility with Unicode-safe name sanitization
+   - Added `file_category` column to `file_attachments` (migration `6f77d764d2c3`)
+   - Entity name lookup for human-readable folder names
+   - New endpoints: categories listing and category-filtered file queries
+
 ### 📊 Current State
 - **Branch:** main
 - **Tag:** v0.2.0 (Phase 1)
 - **Tests:** 82 total (79 passing, 3 pre-existing audit_log schema issues)
 - **Phase 2 Tests:** 31/31 passing
+- **Migrations:** `bc1f99c730dc` (Phase 2 tables) + `6f77d764d2c3` (file_category)
 - **New Tables:** salting_activities, benevolence_applications, benevolence_reviews, grievances, grievance_step_records
 - **Decision Made:** Features first, scale when real users exist
-- **Next:** Seed data for Phase 2, then Phase 3 or authentication
+- **Next:** Seed data for Phase 2, commit file attachment changes, then Phase 3 or authentication
 
 ---
 
-*Last Updated: January 27, 2026 (Phase 2 Union Operations Complete)*
+*Last Updated: January 28, 2026 (File Attachment Reorganization Complete)*
 *Working Branch: main*
-*Next Task: Phase 2 seed data, then authentication or Phase 3*
+*Next Task: Commit changes, Phase 2 seed data, then authentication or Phase 3*
 
 ---
 
@@ -852,11 +897,13 @@ docker-compose up -d
 | 2026-01-28 00:15 UTC | Claude Code | Comprehensive audit logging: READ/BULK_READ/CREATE/UPDATE/DELETE tracking, middleware, service layer, industry standards documentation |
 | 2026-01-28 01:00 UTC | Claude Code | Scalability architecture: 4,000+ user design, PgBouncer pooling, read replicas, Redis caching, JWT auth, rate limiting (7-week plan) |
 | 2026-01-28 01:45 UTC | Claude Code | Scaling readiness assessment: Honest evaluation - current capacity 50 users, need 80x increase for 4,000+ users, $24K-44K budget, 6-12 weeks timeline |
-| 2026-01-28 02:00 UTC | Claude Code | Documentation reorganization: Moved all docs to Documentation/ folder with Architecture/Standards/Guides/Reports structure, added Claude.ai sync schedule |
+| 2026-01-28 02:00 UTC | Claude Code | Documentation reorganization: Moved all docs to docs/ folder with Architecture/Standards/Guides/Reports structure, added Claude.ai sync schedule |
 | 2026-01-28 03:00 UTC | Claude Code | Phase 2 Complete: SALTingActivity, BenevolenceApplication, BenevolenceReview, Grievance + GrievanceStepRecord. 5 tables, 9 enums, 27 endpoints, 31 tests. Migration bc1f99c730dc. Decision: features first, scale later. |
+| 2026-01-28 04:00 UTC | Claude Code | File Attachment Reorganization: Organized storage paths (uploads/{type}s/{Name_ID}/{category}/{year}/{MM-Month}/), file_path_builder.py utility, file_category column (migration 6f77d764d2c3), entity name lookup, category endpoints |
+| 2026-01-28 05:00 UTC | Claude Code | Updated CLAUDE.md: All Documentation/ references → docs/, updated project structure tree to match actual docs/ layout, consolidated docs directory listing |
 
 ---
 
 *Working Branch: main*
-*Current Status: Phase 2 Union Operations complete*
-*Next Task: Phase 2 seed data, then authentication or Phase 3*
+*Current Status: File attachment reorganization complete, Phase 2 Union Operations complete*
+*Next Task: Commit changes, Phase 2 seed data, then authentication or Phase 3*

@@ -5,6 +5,7 @@ from datetime import datetime
 class FileAttachmentBase(BaseModel):
     record_type: str
     record_id: int
+    file_category: str = "general"
     description: str | None = None
 
 
@@ -15,10 +16,11 @@ class FileAttachmentCreate(FileAttachmentBase):
 class FileAttachmentResponse(FileAttachmentBase):
     id: int
     file_name: str
+    original_name: str | None = None
     file_path: str
     file_type: str
     file_size: int | None
-    uploaded_at: datetime
+    created_at: datetime
 
     class Config:
         from_attributes = True
