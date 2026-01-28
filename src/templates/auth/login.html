@@ -1,0 +1,107 @@
+{% extends "base_auth.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+        <!-- Logo and title -->
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-primary rounded-xl mx-auto flex items-center justify-center mb-4">
+                <span class="text-primary-content font-bold text-2xl">46</span>
+            </div>
+            <h1 class="text-2xl font-bold">IBEW Local 46</h1>
+            <p class="text-base-content/60">IP2A Database</p>
+        </div>
+
+        <!-- Error message display -->
+        <div id="login-error" class="hidden">
+            <div class="alert alert-error mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span id="login-error-message">Invalid credentials</span>
+            </div>
+        </div>
+
+        <!-- Login form -->
+        <form id="login-form"
+              hx-post="/api/auth/login"
+              hx-target="#login-error"
+              hx-swap="none"
+              x-data="{ loading: false }"
+              @htmx:before-request="loading = true"
+              @htmx:after-request="loading = false">
+
+            <!-- Email field -->
+            <div class="form-control mb-4">
+                <label class="label" for="email">
+                    <span class="label-text">Email</span>
+                </label>
+                <input type="email"
+                       id="email"
+                       name="email"
+                       placeholder="you@local46.org"
+                       class="input input-bordered w-full"
+                       required
+                       autofocus>
+            </div>
+
+            <!-- Password field -->
+            <div class="form-control mb-6">
+                <label class="label" for="password">
+                    <span class="label-text">Password</span>
+                </label>
+                <input type="password"
+                       id="password"
+                       name="password"
+                       placeholder="••••••••"
+                       class="input input-bordered w-full"
+                       required>
+                <label class="label">
+                    <a href="/forgot-password" class="label-text-alt link link-hover">Forgot password?</a>
+                </label>
+            </div>
+
+            <!-- Submit button -->
+            <button type="submit"
+                    class="btn btn-primary w-full"
+                    :class="{ 'loading': loading }"
+                    :disabled="loading">
+                <span x-show="!loading">Log In</span>
+                <span x-show="loading">Logging in...</span>
+            </button>
+        </form>
+
+        <!-- Footer -->
+        <div class="divider mt-6">Need help?</div>
+        <p class="text-center text-sm text-base-content/60">
+            Contact your administrator or call the union hall.
+        </p>
+    </div>
+</div>
+
+<script>
+// Handle login response
+document.body.addEventListener('htmx:afterRequest', function(evt) {
+    if (evt.detail.pathInfo.requestPath === '/api/auth/login') {
+        if (evt.detail.successful) {
+            // Redirect to dashboard on success
+            window.location.href = '/dashboard';
+        } else {
+            // Show error message
+            const errorDiv = document.getElementById('login-error');
+            const errorMsg = document.getElementById('login-error-message');
+            errorDiv.classList.remove('hidden');
+
+            try {
+                const response = JSON.parse(evt.detail.xhr.responseText);
+                errorMsg.textContent = response.detail || 'Invalid email or password';
+            } catch {
+                errorMsg.textContent = 'Invalid email or password';
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

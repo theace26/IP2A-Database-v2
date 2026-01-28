@@ -12,9 +12,9 @@
 | 1 | [1-preflight-and-setup.md](1-preflight-and-setup.md) | 30-45 min | Pre-checks, tag v0.7.0, directories | ✅ Complete |
 | 2 | [2-base-templates.md](2-base-templates.md) | 20-30 min | base.html, base_auth.html | ✅ Complete |
 | 3 | [3-components.md](3-components.md) | 30-40 min | Navbar, sidebar, flash, modal | ✅ Complete |
-| 4 | [4-pages-and-static.md](4-pages-and-static.md) | 45-60 min | Login, dashboard, errors, CSS, JS | Pending |
-| 5 | [5-router-and-integration.md](5-router-and-integration.md) | 30-40 min | Frontend router, main.py | Pending |
-| 6 | [6-testing-and-commit.md](6-testing-and-commit.md) | 30-45 min | Tests, verify, commit | Pending |
+| 4 | [4-pages-and-static.md](4-pages-and-static.md) | 45-60 min | Login, dashboard, errors, CSS, JS | ✅ Complete |
+| 5 | [5-router-and-integration.md](5-router-and-integration.md) | 30-40 min | Frontend router, main.py | ✅ Complete |
+| 6 | [6-testing-and-commit.md](6-testing-and-commit.md) | 30-45 min | Tests, verify, commit | ✅ Complete |
 
 ---
 
@@ -58,12 +58,12 @@ git push origin main
 After all 6 documents:
 
 - [x] v0.7.0 tagged ✅ (Session A)
-- [ ] `/login` renders styled login form
-- [ ] `/dashboard` renders with sidebar and stats
+- [x] `/login` renders styled login form ✅ (Session B)
+- [x] `/dashboard` renders with sidebar and stats ✅ (Session B)
 - [x] Static files serve correctly (CSS/JS created) ✅ (Session A)
-- [ ] 404/500 error pages work
-- [x] 165 tests pass ✅ (Session A)
-- [ ] All changes committed
+- [x] 404/500 error pages work ✅ (Session B)
+- [x] 177 tests pass ✅ (Session B - 165 original + 12 frontend)
+- [x] All changes committed ✅ (Session B)
 
 ### Session A Progress (Jan 28, 2026)
 - ✅ Pre-flight checks passed
@@ -74,6 +74,16 @@ After all 6 documents:
 - ✅ Components created (_navbar, _sidebar, _flash, _modal)
 - ✅ Custom CSS and JS created
 - ✅ All 165 tests passing
+
+### Session B Progress (Jan 28, 2026)
+- ✅ Auth pages created (login.html, forgot_password.html)
+- ✅ Dashboard page created with stats cards
+- ✅ Error pages created (404.html, 500.html)
+- ✅ Frontend router created (src/routers/frontend.py)
+- ✅ main.py updated (static files, frontend router, exception handlers)
+- ✅ 12 frontend tests created and passing
+- ✅ jinja2 added to requirements.txt
+- ✅ Documentation updated
 
 ---
 

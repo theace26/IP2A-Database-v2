@@ -1,5 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import JSONResponse
 
 # Middleware
 from src.middleware import AuditContextMiddleware
@@ -51,6 +54,9 @@ from src.routers.dues_periods import router as dues_periods_router
 from src.routers.dues_payments import router as dues_payments_router
 from src.routers.dues_adjustments import router as dues_adjustments_router
 
+# Phase 6 Frontend router
+from src.routers import frontend
+
 # ------------------------------------------------------------
 # Initialize FastAPI
 # ------------------------------------------------------------
@@ -79,13 +85,14 @@ app.add_middleware(
 
 
 # ------------------------------------------------------------
-# Root + health check
+# Static Files
 # ------------------------------------------------------------
-@app.get("/")
-def root():
-    return {"message": "IP2A API is running"}
+app.mount("/static", StaticFiles(directory="src/static"), name="static")
 
 
+# ------------------------------------------------------------
+# Health check (root handled by frontend router)
+# ------------------------------------------------------------
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -137,3 +144,43 @@ app.include_router(dues_rates_router)
 app.include_router(dues_periods_router)
 app.include_router(dues_payments_router)
 app.include_router(dues_adjustments_router)
+
+# Frontend routes (HTML pages) - include LAST to not interfere with API routes
+app.include_router(frontend.router)
+
+
+# ============================================================================
+# Custom Exception Handlers (HTML for browser, JSON for API)
+# ============================================================================
+
+_templates = Jinja2Templates(directory="src/templates")
+
+
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc):
+    """Custom 404 handler - returns JSON for API, HTML for browser."""
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            status_code=404,
+            content={"detail": "Not found"}
+        )
+    return _templates.TemplateResponse(
+        "errors/404.html",
+        {"request": request},
+        status_code=404
+    )
+
+
+@app.exception_handler(500)
+async def server_error_handler(request: Request, exc):
+    """Custom 500 handler - returns JSON for API, HTML for browser."""
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error"}
+        )
+    return _templates.TemplateResponse(
+        "errors/500.html",
+        {"request": request},
+        status_code=500
+    )

@@ -8,19 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Phase 6 Week 1: Frontend Foundation** (In Progress)
+- **Phase 6 Week 1: Frontend Foundation** (Complete)
   * Base templates with DaisyUI + Tailwind CSS + HTMX + Alpine.js (CDN)
   * Login page with HTMX form submission
-  * Dashboard placeholder with stats cards
+  * Forgot password page
+  * Dashboard placeholder with stats cards and quick actions
   * Responsive sidebar navigation with drawer component
   * Component templates (navbar, sidebar, flash messages, modal)
-  * Custom CSS and JavaScript
-  * Error pages (404, 500)
+  * Custom CSS and JavaScript (toast notifications, HTMX handlers)
+  * Error pages (404, 500) with hybrid HTML/JSON responses
   * Frontend router for HTML page serving
+  * Placeholder routes for future pages (members, dues, training, etc.)
+  * 12 frontend tests (177 total)
+  * jinja2 added to requirements.txt
 
 ### Changed
 - Updated CLAUDE.md with frontend phase context
 - Created docs/instructions/ for Claude Code instruction documents
+- Updated main.py with static file mounting and exception handlers
 
 ## [0.7.0] - 2026-01-28
 
