@@ -38,7 +38,8 @@
       "Bash(alembic stamp:*)",
       "Bash(alembic downgrade:*)",
       "Bash(git mv:*)",
-      "Bash(ruff check:*)"
+      "Bash(ruff check:*)",
+      "Bash(wc:*)"
     ]
   }
 }
