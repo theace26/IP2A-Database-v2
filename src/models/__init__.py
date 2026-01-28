@@ -30,6 +30,10 @@ from src.models.salting_activity import SALTingActivity
 from src.models.benevolence_application import BenevolenceApplication
 from src.models.benevolence_review import BenevolenceReview
 from src.models.grievance import Grievance, GrievanceStepRecord
+from src.models.dues_rate import DuesRate
+from src.models.dues_period import DuesPeriod
+from src.models.dues_payment import DuesPayment
+from src.models.dues_adjustment import DuesAdjustment
 
 __all__ = [
     "User",
@@ -65,4 +69,8 @@ __all__ = [
     "BenevolenceReview",
     "Grievance",
     "GrievanceStepRecord",
+    "DuesRate",
+    "DuesPeriod",
+    "DuesPayment",
+    "DuesAdjustment",
 ]

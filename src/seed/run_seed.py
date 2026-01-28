@@ -19,6 +19,7 @@ from .phase2_seed import seed_phase2
 from .auth_seed import run_auth_seed
 from .base_seed import init_seed
 from .training_seed import run_training_seed
+from .dues_seed import run_dues_seed
 
 
 def run(force: bool = False):
@@ -66,6 +67,9 @@ def run(force: bool = False):
 
     # Phase 2 seeds - Training System
     run_training_seed(db, num_students=20)
+
+    # Phase 4 seeds - Dues Tracking
+    run_dues_seed(db, verbose=True)
 
     print("✅ Database seeding complete.")
 

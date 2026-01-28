@@ -1021,8 +1021,50 @@ uploads/{entity_type}s/{LastName_FirstName_ID}/{category}/{year}/{MM-Month}/{fil
 **Total Tests:** 144 passing (133 existing + 11 new document tests)
 **Status:** ✅ Document management system ready for production
 
+### Phase 4: Dues Tracking - ✅ COMPLETE (January 28, 2026)
+**Purpose:** Implement complete dues management system for member financial tracking
+**Migration:** `[dues tracking migration]` - Add dues models
+
+**Models Implemented (4 models):**
+- [x] DuesRate - Classification-based dues rates with effective dates
+- [x] DuesPeriod - Monthly billing periods with close functionality
+- [x] DuesPayment - Member payment records with status tracking
+- [x] DuesAdjustment - Waivers, credits, and adjustments with approval workflow
+
+**Dues Enums (4 enums):**
+- [x] DuesPaymentStatus (5 values: pending, paid, partial, overdue, waived)
+- [x] DuesPaymentMethod (6 values: cash, check, credit_card, debit_card, bank_transfer, payroll_deduction)
+- [x] DuesAdjustmentType (5 values: waiver, credit, hardship, correction, other)
+- [x] AdjustmentStatus (3 values: pending, approved, denied)
+
+**Complete Implementation:**
+- [x] 4 Pydantic schemas (Base/Create/Update/Read variants for all models)
+- [x] 4 service modules (CRUD + helpers like get_current_rate, generate_period_dues)
+- [x] 4 FastAPI routers (~35 endpoints total)
+- [x] Dues seed data with rates for all 9 member classifications
+- [x] 21 comprehensive tests (all passing)
+
+**API Endpoints (4 routers, ~35 endpoints):**
+- [x] /dues-rates/ - Rate CRUD, get current/for-date by classification
+- [x] /dues-periods/ - Period CRUD, generate year, close period, get by month
+- [x] /dues-payments/ - Payment CRUD, record payment, update overdue status
+- [x] /dues-adjustments/ - Adjustment CRUD, approve/deny workflow, pending list
+
+**Key Features:**
+- [x] Classification-based rate management (apprentice_1-5, journeyman, foreman, retiree, honorary)
+- [x] Period generation for entire years
+- [x] Overdue payment status tracking
+- [x] Adjustment approval workflow (pending → approved/denied)
+- [x] Member dues summary calculation
+
+**Testing:**
+- [x] 21 new tests for all dues models (165 total passing)
+- [x] Test coverage: CRUD operations, rate lookup, period management, adjustments
+
+**Total Tests:** 165 passing (144 existing + 21 new dues tests)
+**Status:** ✅ Dues tracking system ready for production use
+
 ### Future Phases
-- Phase 4: Dues tracking (financial)
 - Phase 5: TradeSchool integration (external system)
 - Phase 6: Web portal, deployment (production launch)
 
@@ -1124,14 +1166,15 @@ When switching between Claude.ai and Claude Code:
 
 ### 📊 Current State
 - **Branch:** main
-- **Tag:** v0.6.0 (Phase 3 Document Management)
-- **Tests:** 144 total (all passing) ✅
+- **Tag:** Ready for v0.7.0 (Phase 4 Dues Tracking)
+- **Tests:** 165 total (all passing) ✅
   - Core Models: 17 tests
   - Auth System: 52 tests
   - Union Operations: 31 tests
   - Training System: 33 tests
   - Document Management: 11 tests
-- **Migrations:** At head (`9b75a876ef60` - training models)
+  - Dues Tracking: 21 tests (NEW!)
+- **Migrations:** At head (dues tracking models)
 - **Authentication System:** ✅ Complete and production-ready
   - JWT-based auth with bcrypt password hashing
   - User registration with email verification
@@ -1150,13 +1193,18 @@ When switching between Claude.ai and Claude Code:
   - S3/MinIO integration for file storage
   - 8 API endpoints (upload, download, presigned URLs, delete, list)
   - File validation, soft/hard delete, organized paths
-- **Next:** Phase 4 Dues Tracking
+- **Dues Tracking:** ✅ Complete (Phase 4)
+  - 4 models (DuesRate, DuesPeriod, DuesPayment, DuesAdjustment)
+  - 4 enums, ~35 API endpoints across 4 routers
+  - Approval workflow for adjustments
+  - 21 tests passing
+- **Next:** Phase 5 TradeSchool Integration or v0.7.0 release
 
 ---
 
-*Last Updated: January 28, 2026*
+*Last Updated: January 28, 2026 (Phase 4 Dues Tracking Complete)*
 *Working Branch: main*
-*Next Task: Phase 4 Dues Tracking*
+*Next Task: Tag v0.7.0 (Phase 4), then Phase 5 planning*
 
 ---
 
@@ -1231,9 +1279,10 @@ docker-compose up -d
 | 2026-01-28 19:30 UTC | Claude Code | Legacy Test Cleanup: Fixed test isolation issues, archived Phase 0 legacy tests to archive/phase0_legacy/, downgraded bcrypt to 4.1.3 for passlib compatibility, updated pytest.ini to exclude archive folder. 133 tests passing after cleanup. |
 | 2026-01-28 19:45 UTC | Claude Code | Phase 3 Complete - Document Management System: S3/MinIO integration with presigned URLs. 8 API endpoints (upload, presigned-upload, confirm-upload, get, download-url, download, delete, list). File validation (extension whitelist, 50MB max). Soft/hard delete. Organized paths. Core modules: s3_config.py, s3_service.py, document_service.py, document.py schemas, documents.py router. MinIO service in docker-compose.yml. 11 new tests (144 total passing). ADR-004 implemented. Commit: 116b705. |
 | 2026-01-28 20:30 UTC | Claude Code | v0.6.0 Tagged and Released: Phase 3 Document Management complete. Created CHANGELOG.md v0.6.0 section, docs/releases/RELEASE_NOTES_v0.6.0.md. Starting Phase 4 Dues Tracking implementation. |
+| 2026-01-28 21:00 UTC | Claude Code | Phase 4 Complete - Dues Tracking System: 4 models (DuesRate, DuesPeriod, DuesPayment, DuesAdjustment). 4 enums (DuesPaymentStatus, DuesPaymentMethod, DuesAdjustmentType, AdjustmentStatus). ~35 API endpoints across 4 routers. Dues seed data for all 9 member classifications. 21 new tests (165 total passing). Full dues lifecycle: rate management, period tracking, payments, adjustments with approval workflow. |
 
 ---
 
 *Working Branch: main*
-*Current Status: v0.6.0 released, Phase 4 Dues Tracking in progress*
-*Next Task: Phase 4 Dues Tracking implementation*
+*Current Status: Phase 4 Dues Tracking complete, 165 tests passing*
+*Next Task: Tag v0.7.0 (Phase 4), then Phase 5 planning*

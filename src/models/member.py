@@ -51,6 +51,8 @@ class Member(Base, TimestampMixin, SoftDeleteMixin):
     student = relationship("Student", back_populates="member", uselist=False)
     employments = relationship("MemberEmployment", back_populates="member")
     user = relationship("User", back_populates="member", uselist=False)
+    dues_payments = relationship("DuesPayment", back_populates="member")
+    dues_adjustments = relationship("DuesAdjustment", back_populates="member")
 
     def __repr__(self):
         return f"<Member(id={self.id}, number='{self.member_number}', name='{self.first_name} {self.last_name}')>"

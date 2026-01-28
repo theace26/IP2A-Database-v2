@@ -45,6 +45,12 @@ from src.routers.certifications import router as certifications_router
 # Phase 3 Document Management router
 from src.routers.documents import router as documents_router
 
+# Phase 4 Dues Tracking routers
+from src.routers.dues_rates import router as dues_rates_router
+from src.routers.dues_periods import router as dues_periods_router
+from src.routers.dues_payments import router as dues_payments_router
+from src.routers.dues_adjustments import router as dues_adjustments_router
+
 # ------------------------------------------------------------
 # Initialize FastAPI
 # ------------------------------------------------------------
@@ -125,3 +131,9 @@ app.include_router(certifications_router)
 
 # Phase 3 Document Management router
 app.include_router(documents_router)
+
+# Phase 4 Dues Tracking routers
+app.include_router(dues_rates_router)
+app.include_router(dues_periods_router)
+app.include_router(dues_payments_router)
+app.include_router(dues_adjustments_router)

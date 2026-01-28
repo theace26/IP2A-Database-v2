@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Phase 4: Dues Tracking System**
+  * 4 new models: DuesRate, DuesPeriod, DuesPayment, DuesAdjustment
+  * 4 new enums: DuesPaymentStatus, DuesPaymentMethod, DuesAdjustmentType, AdjustmentStatus
+  * Complete dues lifecycle: rate management, period tracking, payments, adjustments
+  * Member classification-based rate lookup
+  * Approval workflow for dues adjustments (pending/approved/denied)
+  * Period management with close functionality
+  * Overdue payment tracking
+  * ~35 API endpoints across 4 routers
+  * Dues seed data with rates for all 9 member classifications
+  * 21 new tests (165 total passing)
+  * Migration for dues tables with proper indexes
+
 ## [0.6.0] - 2026-01-28
 
 ### Added

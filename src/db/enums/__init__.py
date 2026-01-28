@@ -51,6 +51,13 @@ from src.db.enums.training_enums import (
     CourseType,
 )
 
+from src.db.enums.dues_enums import (
+    DuesPaymentMethod,
+    DuesPaymentStatus,
+    DuesAdjustmentType,
+    AdjustmentStatus,
+)
+
 __all__ = [
     # Base enums (education/training)
     "LocationType",
@@ -88,4 +95,9 @@ __all__ = [
     "CertificationType",
     "CertificationStatus",
     "CourseType",
+    # Dues enums
+    "DuesPaymentMethod",
+    "DuesPaymentStatus",
+    "DuesAdjustmentType",
+    "AdjustmentStatus",
 ]
