@@ -1,0 +1,32 @@
+<!-- Modal backdrop and container -->
+<div id="modal-backdrop"
+     class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden"
+     onclick="closeModal()"
+     x-data
+     @keydown.escape.window="closeModal()">
+</div>
+
+<div id="modal-content"
+     class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 hidden">
+    <!-- Modal content loaded here via HTMX -->
+</div>
+
+<script>
+function openModal() {
+    document.getElementById('modal-backdrop').classList.remove('hidden');
+    document.getElementById('modal-content').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('modal-backdrop').classList.add('hidden');
+    document.getElementById('modal-content').classList.add('hidden');
+    document.getElementById('modal-content').innerHTML = '';
+}
+
+// HTMX event listener for modals
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.detail.target.id === 'modal-content') {
+        openModal();
+    }
+});
+</script>

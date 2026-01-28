@@ -1,0 +1,132 @@
+/* IP2A Database - Custom Styles */
+
+/* Base styles and resets */
+:root {
+    --primary-color: #3b82f6;
+    --secondary-color: #6366f1;
+}
+
+/* Smooth transitions for interactive elements */
+.btn, .menu a, .dropdown-content a {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Sidebar active state enhancement */
+.menu li > a.active {
+    background-color: hsl(var(--p) / 0.1);
+    color: hsl(var(--p));
+    font-weight: 600;
+}
+
+/* Card hover effects */
+.card {
+    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* Stats card styling */
+.stat-title {
+    font-size: 0.875rem;
+    opacity: 0.7;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+/* Form improvements */
+.form-control {
+    margin-bottom: 1rem;
+}
+
+.input:focus, .select:focus, .textarea:focus {
+    outline: none;
+    border-color: hsl(var(--p));
+    box-shadow: 0 0 0 2px hsl(var(--p) / 0.2);
+}
+
+/* Alert auto-dismiss animation */
+.alert {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Table improvements */
+.table th {
+    background-color: hsl(var(--b2));
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+.table tr:hover {
+    background-color: hsl(var(--b2) / 0.5);
+}
+
+/* Loading states */
+.htmx-request .htmx-indicator {
+    display: inline-block;
+}
+
+.htmx-indicator {
+    display: none;
+}
+
+/* HTMX loading spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner 0.6s linear infinite;
+}
+
+@keyframes spinner {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Badge styling */
+.badge {
+    font-weight: 500;
+}
+
+/* Mobile improvements */
+@media (max-width: 1024px) {
+    .drawer-content {
+        padding-top: 0;
+    }
+}
+
+/* Print styles */
+@media print {
+    .navbar, .drawer-side, footer {
+        display: none !important;
+    }
+
+    .drawer-content {
+        margin-left: 0 !important;
+    }
+
+    .card {
+        break-inside: avoid;
+    }
+}

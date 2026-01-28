@@ -1,25 +1,43 @@
 """Tests for Dues Tracking endpoints (Phase 4)."""
 
 import uuid
-import random
+import time
+
+
+# Sequential counter for guaranteed uniqueness within a test run
+# Use nanoseconds to get a unique base that changes each run
+_base = time.time_ns() % 1_000_000_000
+_call_counter = 0
 
 
 def get_unique_date(base_year: int = 2100) -> str:
-    """Generate a unique future date for testing to avoid constraint violations."""
-    year = base_year + random.randint(0, 900)
-    month = random.randint(1, 12)
-    day = random.randint(1, 28)
+    """Generate a unique future date for testing to avoid constraint violations.
+
+    Uses years in the 2500-2999 range (valid dates but won't conflict with seed data).
+    """
+    global _call_counter
+    _call_counter += 1
+    # Year range 2500-2999: avoids seed data (2025-2100) and stays within 4-digit years
+    unique_val = (_base + _call_counter) % 500
+    year = 2500 + unique_val
+    month = (_call_counter % 12) + 1
+    day = (_call_counter % 28) + 1
     return f"{year}-{month:02d}-{day:02d}"
 
 
 def get_unique_year_month() -> tuple[int, int]:
     """Generate a unique future year/month combo for testing to avoid constraint violations.
 
-    The schema limits period_year to ≤ 2100, so we use random years in 2027-2099 range
-    combined with random months to reduce collision probability.
+    Uses years in 2090-2100 range with nanosecond-based uniqueness.
+    Schema limits period_year to 2000-2100.
     """
-    year = random.randint(2027, 2099)
-    month = random.randint(1, 12)
+    global _call_counter
+    _call_counter += 1
+    # Map to year range 2090-2100 (11 years) × 12 months = 132 combinations
+    # Use nanoseconds + counter for uniqueness
+    unique_val = (_base + _call_counter)
+    year = 2090 + (unique_val % 11)  # 2090-2100
+    month = ((unique_val // 11) % 12) + 1  # 1-12
     return year, month
 
 

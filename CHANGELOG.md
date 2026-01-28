@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Phase 6 Week 1: Frontend Foundation** (In Progress)
+  * Base templates with DaisyUI + Tailwind CSS + HTMX + Alpine.js (CDN)
+  * Login page with HTMX form submission
+  * Dashboard placeholder with stats cards
+  * Responsive sidebar navigation with drawer component
+  * Component templates (navbar, sidebar, flash messages, modal)
+  * Custom CSS and JavaScript
+  * Error pages (404, 500)
+  * Frontend router for HTML page serving
+
+### Changed
+- Updated CLAUDE.md with frontend phase context
+- Created docs/instructions/ for Claude Code instruction documents
+
+## [0.7.0] - 2026-01-28
+
+### Added
 - **Phase 4: Dues Tracking System**
   * 4 new models: DuesRate, DuesPeriod, DuesPayment, DuesAdjustment
   * 4 new enums: DuesPaymentStatus, DuesPaymentMethod, DuesAdjustmentType, AdjustmentStatus
@@ -20,6 +37,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * Dues seed data with rates for all 9 member classifications
   * 21 new tests (165 total passing)
   * Migration for dues tables with proper indexes
+
+**Note:** This marks the completion of all backend phases. The system now has:
+- 165 tests passing
+- ~120 API endpoints
+- 8 Architecture Decision Records
 
 ## [0.6.0] - 2026-01-28
 
