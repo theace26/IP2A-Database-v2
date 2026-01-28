@@ -769,7 +769,42 @@ uploads/{entity_type}s/{LastName_FirstName_ID}/{category}/{year}/{MM-Month}/{fil
 - Month format: `01-January` (sortable + readable)
 - Categories match business domains (grievances, benevolence, certifications, dues, salting, etc.)
 
+### Phase 1.1: Authentication Database Schema - ✅ COMPLETE (January 28, 2026)
+**Purpose:** Implement RBAC-based authentication foundation for JWT implementation
+**Migration:** `e382f497c5e3` - Add auth models: User, Role, UserRole, RefreshToken
+
+**Models Built:**
+- [x] User - Authentication with email/password, optional Member link, soft delete
+- [x] Role - RBAC role definitions with system role protection
+- [x] UserRole - Many-to-many junction with assignment metadata (assigned_by, expires_at)
+- [x] RefreshToken - JWT token management with rotation, revocation, device tracking
+
+**Auth Enums:**
+- [x] RoleType - 6 default roles (admin, officer, staff, organizer, instructor, member)
+- [x] TokenType - Token types for access, refresh, password reset, email verification
+
+**Delivered:**
+- [x] 4 auth models with SQLAlchemy 2.0 Mapped[] syntax
+- [x] Database migration applied (replaced old simple user.role string with RBAC)
+- [x] Pydantic schemas for all auth models (Create/Update/Read variants)
+- [x] Service layer with full CRUD operations (user_service, role_service, user_role_service)
+- [x] Role seed data with 6 default system roles
+- [x] 16 new tests (all passing) - model tests + service tests
+- [x] Member.user relationship backref
+- [x] SoftDeleteMixin enhanced with soft_delete() method
+- [x] Test fixture (db_session) added to conftest.py
+- [x] Timezone-aware datetime handling in RefreshToken
+
+**Key Design Decisions:**
+- RBAC over simple role string - Allows multi-role assignments with metadata
+- RefreshToken storage - Tokens stored as hashes, supports rotation and device tracking
+- User optionally linked to Member - One user per member via unique FK
+- System roles protected - Cannot be deleted, only description can be updated
+
+**Total Tests:** 98 passing (82 existing + 16 new auth tests)
+
 ### Future Phases
+- Phase 1.2: JWT Authentication (password hashing, token generation, login/logout, refresh flow)
 - Phase 3: Document management, S3 (file storage)
 - Phase 4: Dues tracking (financial)
 - Phase 5: TradeSchool integration (external system)
@@ -874,23 +909,28 @@ When switching between Claude.ai and Claude Code:
 ### 📊 Current State
 - **Branch:** main
 - **Tag:** v0.2.0 (Phase 1) - ready for v0.3.0 (Phase 2)
-- **Tests:** 82 total (79 passing, 3 pre-existing audit_log schema issues)
-- **Phase 2 Tests:** 31/31 passing
-- **Migrations:** At head (`6f77d764d2c3` - file_category)
+- **Tests:** 98 total (all passing)
+  - Phase 1: 51 tests
+  - Phase 2: 31 tests
+  - Auth (Phase 1.1): 16 tests
+- **Migrations:** At head (`e382f497c5e3` - auth models)
 - **Phase 2 Tables:** ✅ All created with seed data
   - salting_activities (30 records)
   - benevolence_applications (25 records)
   - benevolence_reviews (47 records)
   - grievances (20 records)
   - grievance_step_records (31 records)
+- **Auth Tables:** ✅ Created, ready for JWT implementation
+  - users, roles, user_roles, refresh_tokens
+  - 6 default system roles seeded
 - **Decision Made:** Features first, scale when real users exist
-- **Next:** Tag v0.3.0 release, then authentication or Phase 3
+- **Next:** Phase 1.2 (JWT authentication implementation)
 
 ---
 
-*Last Updated: January 28, 2026 (Phase 2 Seed Data Complete)*
+*Last Updated: January 28, 2026 (Phase 1.1: Auth Database Schema Complete)*
 *Working Branch: main*
-*Next Task: Tag v0.3.0, then authentication or Phase 3*
+*Next Task: Phase 1.2 - JWT Authentication*
 
 ---
 
@@ -958,9 +998,10 @@ docker-compose up -d
 | 2026-01-28 04:00 UTC | Claude Code | File Attachment Reorganization: Organized storage paths (uploads/{type}s/{Name_ID}/{category}/{year}/{MM-Month}/), file_path_builder.py utility, file_category column (migration 6f77d764d2c3), entity name lookup, category endpoints |
 | 2026-01-28 05:00 UTC | Claude Code | Updated CLAUDE.md: All Documentation/ references → docs/, updated project structure tree to match actual docs/ layout, consolidated docs directory listing |
 | 2026-01-28 06:00 UTC | Claude Code | Phase 2 Seed Data Complete: Created phase2_seed.py (853 lines) with realistic union operations test data. 30 SALTing activities, 25 benevolence applications with 47 reviews, 20 grievances with 31 step records. Integrated with run_seed.py. All enums and field names aligned with actual models. Commit ec5bfee. |
+| 2026-01-28 07:30 UTC | Claude Code | Phase 1.1 Complete - Auth Database Schema: User, Role, UserRole, RefreshToken models with RBAC. Migration e382f497c5e3. 16 new tests (98 total passing). Schemas, services, seed data for 6 default roles. Enhanced SoftDeleteMixin with soft_delete() method. Test fixture (db_session) added. Timezone-aware datetime handling. Ready for Phase 1.2 (JWT implementation). |
 
 ---
 
 *Working Branch: main*
-*Current Status: Phase 2 seed data complete, ready for v0.3.0 release*
-*Next Task: Tag v0.3.0, then authentication or Phase 3*
+*Current Status: Phase 1.1 complete (Auth DB Schema), 98 tests passing*
+*Next Task: Phase 1.2 - JWT Authentication Implementation*

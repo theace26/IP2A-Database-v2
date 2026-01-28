@@ -50,6 +50,18 @@ from src.schemas.tools import (
     ToolIssuedRead,
 )
 
+# Auth schemas
+from src.schemas.user import (
+    UserBase,
+    UserCreate,
+    UserUpdate,
+    UserRead,
+    UserReadWithRoles,
+)
+from src.schemas.role import RoleBase, RoleCreate, RoleUpdate, RoleRead
+from src.schemas.user_role import UserRoleBase, UserRoleCreate, UserRoleRead
+from src.schemas.refresh_token import RefreshTokenCreate, RefreshTokenRead
+
 __all__ = [
     "StudentBase",
     "StudentCreate",
@@ -75,4 +87,19 @@ __all__ = [
     "ToolIssuedCreate",
     "ToolIssuedUpdate",
     "ToolIssuedRead",
+    # Auth
+    "UserBase",
+    "UserCreate",
+    "UserUpdate",
+    "UserRead",
+    "UserReadWithRoles",
+    "RoleBase",
+    "RoleCreate",
+    "RoleUpdate",
+    "RoleRead",
+    "UserRoleBase",
+    "UserRoleCreate",
+    "UserRoleRead",
+    "RefreshTokenCreate",
+    "RefreshTokenRead",
 ]

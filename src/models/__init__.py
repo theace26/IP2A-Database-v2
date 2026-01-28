@@ -1,4 +1,7 @@
 from .user import User
+from .role import Role
+from .user_role import UserRole
+from .refresh_token import RefreshToken
 from .student import Student
 from .cohort import Cohort
 from .instructor import Instructor
@@ -25,6 +28,9 @@ from src.models.grievance import Grievance, GrievanceStepRecord
 
 __all__ = [
     "User",
+    "Role",
+    "UserRole",
+    "RefreshToken",
     "Student",
     "Cohort",
     "Instructor",

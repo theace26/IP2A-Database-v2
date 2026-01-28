@@ -39,7 +39,12 @@
       "Bash(alembic downgrade:*)",
       "Bash(git mv:*)",
       "Bash(ruff check:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(alembic heads:*)",
+      "Bash(alembic revision:*)",
+      "Bash(ruff format:*)",
+      "Bash(pip install:*)",
+      "Bash(pre-commit install:*)"
     ]
   }
 }

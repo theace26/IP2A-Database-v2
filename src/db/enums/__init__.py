@@ -36,6 +36,11 @@ from src.db.enums.organization_enums import (
     GrievanceStepOutcome,
 )
 
+from src.db.enums.auth_enums import (
+    RoleType,
+    TokenType,
+)
+
 __all__ = [
     # Base enums (education/training)
     "LocationType",
@@ -62,4 +67,7 @@ __all__ = [
     "GrievanceStep",
     "GrievanceStatus",
     "GrievanceStepOutcome",
+    # Auth enums
+    "RoleType",
+    "TokenType",
 ]

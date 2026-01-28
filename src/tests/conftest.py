@@ -1,8 +1,36 @@
 # src/tests/conftest.py
+import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 from src.main import app
+from src.db.base import Base
+from src.config.settings import settings
+
+
+@pytest.fixture(scope="function")
+def db_session():
+    """
+    Database session fixture for direct model testing.
+    Creates a new session for each test and rolls back after.
+    """
+    # Use test database
+    engine = create_engine(str(settings.DATABASE_URL))
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+    # Create tables
+    Base.metadata.create_all(bind=engine)
+
+    # Create session
+    session = TestingSessionLocal()
+
+    try:
+        yield session
+    finally:
+        session.rollback()
+        session.close()
 
 
 @pytest_asyncio.fixture

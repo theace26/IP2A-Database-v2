@@ -27,3 +27,8 @@ class SoftDeleteMixin:
     @declared_attr
     def deleted_at(cls):
         return Column(DateTime, nullable=True)
+
+    def soft_delete(self):
+        """Mark record as deleted without actually removing it from the database."""
+        self.is_deleted = True
+        self.deleted_at = datetime.utcnow()

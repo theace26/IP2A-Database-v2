@@ -1,69 +1,100 @@
-"""
-User model for system authentication and authorization.
-"""
+"""User model for authentication."""
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Index
+from datetime import datetime
+from typing import TYPE_CHECKING, Optional
+
+from sqlalchemy import Boolean, DateTime, Integer, String, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db.base import Base
 from src.db.mixins import TimestampMixin, SoftDeleteMixin
 
+if TYPE_CHECKING:
+    from src.models.member import Member
+    from src.models.role import Role
+    from src.models.user_role import UserRole
+    from src.models.refresh_token import RefreshToken
 
-class User(TimestampMixin, SoftDeleteMixin, Base):
+
+class User(Base, TimestampMixin, SoftDeleteMixin):
     """
-    System user for authentication and authorization.
+    User account for authentication.
 
-    Separate from Student/Instructor - represents people who log into the system.
-    A User may be linked to a Student or Instructor record, or be an admin.
-
-    Note: Password handling should use proper hashing (bcrypt/argon2).
-    This model stores the hash, never the plaintext password.
+    A User may optionally be linked to a Member record.
+    Users have roles assigned through the UserRole junction table.
     """
 
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
-    # Identity
-    first_name = Column(String(50), nullable=False)
-    last_name = Column(String(50), nullable=False)
-    email = Column(String(255), unique=True, nullable=False, index=True)
+    # Authentication fields
+    email: Mapped[str] = mapped_column(
+        String(255), unique=True, nullable=False, index=True
+    )
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    # Authentication (to be implemented)
-    password_hash = Column(String(255), nullable=True)  # bcrypt/argon2 hash
-
-    # Role-based access (simple approach)
-    # Roles: admin, staff, instructor, student
-    role = Column(String(50), nullable=False, default="student", index=True)
+    # Profile fields
+    first_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(100), nullable=False)
 
     # Account status
-    is_active = Column(Boolean, default=True, nullable=False, index=True)
-    is_verified = Column(Boolean, default=False, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
-    # Login tracking
-    last_login_at = Column(DateTime, nullable=True)
-    failed_login_attempts = Column(Integer, default=0, nullable=False)
-    locked_until = Column(DateTime, nullable=True)
+    # Security tracking
+    last_login: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    failed_login_attempts: Mapped[int] = mapped_column(
+        Integer, default=0, nullable=False
+    )
+    locked_until: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
-    # Optional links to domain entities
-    # These allow a user to be associated with their Student or Instructor record
-    student_id = Column(Integer, nullable=True, index=True)
-    instructor_id = Column(Integer, nullable=True, index=True)
+    # Optional link to Member
+    member_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("members.id", ondelete="SET NULL"),
+        nullable=True,
+        unique=True,  # One user per member
+    )
 
-    __table_args__ = (Index("ix_user_role_active", "role", "is_active"),)
+    # Relationships
+    member: Mapped[Optional["Member"]] = relationship(
+        "Member", back_populates="user", lazy="joined"
+    )
+
+    user_roles: Mapped[list["UserRole"]] = relationship(
+        "UserRole", back_populates="user", lazy="selectin", cascade="all, delete-orphan"
+    )
+
+    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
+        "RefreshToken",
+        back_populates="user",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+    )
 
     @property
     def full_name(self) -> str:
-        """Return user's full name."""
+        """Return the user's full name."""
         return f"{self.first_name} {self.last_name}"
 
     @property
-    def is_locked(self) -> bool:
-        """Check if account is locked due to failed login attempts."""
-        from datetime import datetime
+    def roles(self) -> list["Role"]:
+        """Return list of roles assigned to this user."""
+        return [ur.role for ur in self.user_roles if ur.role]
 
-        if self.locked_until is None:
-            return False
-        return datetime.utcnow() < self.locked_until
+    @property
+    def role_names(self) -> list[str]:
+        """Return list of role names for this user."""
+        return [ur.role.name for ur in self.user_roles if ur.role]
 
-    def __repr__(self):
-        return f"<User(id={self.id}, email='{self.email}', role='{self.role}')>"
+    def has_role(self, role_name: str) -> bool:
+        """Check if user has a specific role."""
+        return role_name.lower() in [r.lower() for r in self.role_names]
+
+    def __repr__(self) -> str:
+        return f"<User(id={self.id}, email='{self.email}')>"

@@ -16,6 +16,7 @@ from .seed_organization_contacts import seed_organization_contacts
 from .seed_members import seed_members
 from .seed_member_employments import seed_member_employments
 from .phase2_seed import seed_phase2
+from .auth_seed import run_auth_seed
 from .base_seed import init_seed
 
 
@@ -48,6 +49,10 @@ def run(force: bool = False):
     seed_tools_issued(db)
     seed_credentials(db)
     seed_jatc_applications(db)
+
+    # Auth seeds
+    auth_results = run_auth_seed(db)
+    print(f"Auth: Created {auth_results['roles_created']} roles")
 
     # Phase 1 seeds
     seed_organizations(db, count=20)

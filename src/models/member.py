@@ -1,11 +1,16 @@
 """Member model for union members."""
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import Column, Integer, String, Date, Text, ForeignKey, Enum as SAEnum
 from sqlalchemy.orm import relationship
 
 from src.db.base import Base
 from src.db.mixins import TimestampMixin, SoftDeleteMixin
 from src.db.enums import MemberStatus, MemberClassification
+
+if TYPE_CHECKING:
+    pass
 
 
 class Member(Base, TimestampMixin, SoftDeleteMixin):
@@ -48,6 +53,7 @@ class Member(Base, TimestampMixin, SoftDeleteMixin):
     # Relationships
     student = relationship("Student", backref="member_record")
     employments = relationship("MemberEmployment", back_populates="member")
+    user = relationship("User", back_populates="member", uselist=False)
 
     def __repr__(self):
         return f"<Member(id={self.id}, number='{self.member_number}', name='{self.first_name} {self.last_name}')>"
