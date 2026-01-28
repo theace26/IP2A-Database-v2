@@ -42,6 +42,9 @@ from src.routers.attendances import router as attendances_router
 from src.routers.grades import router as grades_router
 from src.routers.certifications import router as certifications_router
 
+# Phase 3 Document Management router
+from src.routers.documents import router as documents_router
+
 # ------------------------------------------------------------
 # Initialize FastAPI
 # ------------------------------------------------------------
@@ -119,3 +122,6 @@ app.include_router(enrollments_router)
 app.include_router(attendances_router)
 app.include_router(grades_router)
 app.include_router(certifications_router)
+
+# Phase 3 Document Management router
+app.include_router(documents_router)

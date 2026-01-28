@@ -81,8 +81,34 @@ services:
       - ip2a_pgadmin_data:/var/lib/pgadmin
 
 
+  minio:
+    image: minio/minio:latest
+    container_name: ip2a-minio
+    restart: unless-stopped
+
+    command: server /data --console-address ":9001"
+
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Web Console
+
+    volumes:
+      - minio_data:/data
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+
 volumes:
   ip2a_db_data:
   ip2a_pgadmin_data:
   uploads_data:
   vscode_server_data:
+  minio_data:
