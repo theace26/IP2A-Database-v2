@@ -24,7 +24,6 @@ class MemberBase(BaseModel):
     hire_date: Optional[date] = None
     status: MemberStatus = MemberStatus.ACTIVE
     classification: MemberClassification
-    student_id: Optional[int] = None
     notes: Optional[str] = None
 
 
@@ -51,7 +50,6 @@ class MemberUpdate(BaseModel):
     hire_date: Optional[date] = None
     status: Optional[MemberStatus] = None
     classification: Optional[MemberClassification] = None
-    student_id: Optional[int] = None
     notes: Optional[str] = None
 
 

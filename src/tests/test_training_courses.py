@@ -26,28 +26,27 @@ async def test_create_course(async_client):
     assert "id" in data
 
 
-async def test_get_course(async_client, db_session):
+async def test_get_course(async_client):
     """Test getting a course by ID."""
-    # Create course first
-    from src.models.course import Course
-    from src.db.enums import CourseType
-
+    # Create course via API first
     unique = str(uuid.uuid4())[:8]
-    course = Course(
-        code=f"TEST{unique[:4]}",
-        name="Test Course",
-        course_type=CourseType.CORE,
-        credits=3.0,
-        hours=60,
-    )
-    db_session.add(course)
-    db_session.commit()
+    payload = {
+        "code": f"TEST{unique[:4]}",
+        "name": "Test Course",
+        "course_type": "core",
+        "credits": 3.0,
+        "hours": 60,
+    }
+    create_response = await async_client.post("/training/courses/", json=payload)
+    assert create_response.status_code == 201
+    created = create_response.json()
 
-    response = await async_client.get(f"/training/courses/{course.id}")
+    # Get the course
+    response = await async_client.get(f"/training/courses/{created['id']}")
     assert response.status_code == 200
     data = response.json()
-    assert data["id"] == course.id
-    assert data["code"] == course.code
+    assert data["id"] == created["id"]
+    assert data["code"] == payload["code"]
 
 
 async def test_get_nonexistent_course(async_client):
@@ -64,22 +63,20 @@ async def test_list_courses(async_client):
     assert isinstance(data, list)
 
 
-async def test_update_course(async_client, db_session):
+async def test_update_course(async_client):
     """Test updating a course."""
-    # Create course first
-    from src.models.course import Course
-    from src.db.enums import CourseType
-
+    # Create course via API first
     unique = str(uuid.uuid4())[:8]
-    course = Course(
-        code=f"TEST{unique[:4]}",
-        name="Original Name",
-        course_type=CourseType.CORE,
-        credits=3.0,
-        hours=60,
-    )
-    db_session.add(course)
-    db_session.commit()
+    payload = {
+        "code": f"TEST{unique[:4]}",
+        "name": "Original Name",
+        "course_type": "core",
+        "credits": 3.0,
+        "hours": 60,
+    }
+    create_response = await async_client.post("/training/courses/", json=payload)
+    assert create_response.status_code == 201
+    created = create_response.json()
 
     # Update it
     update_payload = {
@@ -87,7 +84,7 @@ async def test_update_course(async_client, db_session):
         "is_active": False,
     }
     response = await async_client.patch(
-        f"/training/courses/{course.id}", json=update_payload
+        f"/training/courses/{created['id']}", json=update_payload
     )
     assert response.status_code == 200
     data = response.json()
@@ -95,23 +92,21 @@ async def test_update_course(async_client, db_session):
     assert data["is_active"] is False
 
 
-async def test_delete_course(async_client, db_session):
+async def test_delete_course(async_client):
     """Test deleting a course."""
-    # Create course first
-    from src.models.course import Course
-    from src.db.enums import CourseType
-
+    # Create course via API first
     unique = str(uuid.uuid4())[:8]
-    course = Course(
-        code=f"TEST{unique[:4]}",
-        name="Test Course",
-        course_type=CourseType.ELECTIVE,
-        credits=2.0,
-        hours=40,
-    )
-    db_session.add(course)
-    db_session.commit()
+    payload = {
+        "code": f"TEST{unique[:4]}",
+        "name": "Test Course",
+        "course_type": "elective",
+        "credits": 2.0,
+        "hours": 40,
+    }
+    create_response = await async_client.post("/training/courses/", json=payload)
+    assert create_response.status_code == 201
+    created = create_response.json()
 
     # Delete it
-    response = await async_client.delete(f"/training/courses/{course.id}")
+    response = await async_client.delete(f"/training/courses/{created['id']}")
     assert response.status_code == 200
