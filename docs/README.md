@@ -8,6 +8,7 @@ Welcome to the IP2A Database documentation. This index helps you find what you n
 |--------------|----------|
 | Understand the system | [System Overview](architecture/SYSTEM_OVERVIEW.md) |
 | Set up development | [Getting Started](guides/getting-started.md) |
+| See current progress | [Milestone Checklist](IP2A_MILESTONE_CHECKLIST.md) |
 | Use the CLI tools | [ip2adb Reference](reference/ip2adb-cli.md) |
 | Track member dues | [Dues Tracking Guide](guides/dues-tracking.md) |
 | Understand a decision | [Architecture Decisions](decisions/README.md) |
@@ -63,6 +64,25 @@ Coding standards and conventions for contributors.
 - [Coding Standards](standards/coding-standards.md) - Code style guide
 - [Naming Conventions](standards/naming-conventions.md) - Naming patterns
 
+### `/instructions`
+Claude Code instruction documents for development sessions.
+- [Week 2 Instructions](instructions/week2_instructions/) - Auth cookies + Dashboard
+- [Week 1 Instructions](instructions/) - Frontend setup + Login
+
+---
+
+## Current Status
+
+**Version:** v0.7.1 (Phase 6 Week 2 Complete)
+
+| Component | Status | Tests |
+|-----------|--------|-------|
+| Backend API | Complete | 165 |
+| Frontend (Auth + Dashboard) | Complete | 22 |
+| **Total** | **In Progress** | **187** |
+
+See [Milestone Checklist](IP2A_MILESTONE_CHECKLIST.md) for detailed progress.
+
 ---
 
 ## Getting Help
@@ -73,4 +93,4 @@ Coding standards and conventions for contributors.
 
 ---
 
-*Last Updated: January 28, 2026*
+*Last Updated: January 29, 2026*

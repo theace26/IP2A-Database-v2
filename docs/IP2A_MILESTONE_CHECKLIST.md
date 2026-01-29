@@ -1,175 +1,107 @@
 # IP2A Milestone Checklist (Quick Reference)
 
 > **Print this or keep it open during sessions**
-> Last Updated: January 27, 2026
+> Last Updated: January 29, 2026
 
 ---
 
-## Current Focus: Phase 0 → Phase 1
+## Current Focus: Phase 6 Frontend (Week 3 - Staff Management)
 
-### ✅ = Complete | 🟡 = In Progress | ⬜ = Not Started
-
----
-
-## Phase 0: Documentation & Structure (Week 1)
-
-### 0.1 Documentation Reorganization
-| Status | Task | Est. |
-|--------|------|------|
-| ⬜ | Execute DOCS_REORGANIZATION_INSTRUCTIONS.md | 2h |
-| ⬜ | Create ADRs (001-004) | 1h |
-| ⬜ | Create runbook templates | 1h |
-| ⬜ | Create CHANGELOG.md + CONTRIBUTING.md | 30m |
-| ⬜ | Update CLAUDE.md | 30m |
-
-### 0.2 Frontend Scaffolding
-| Status | Task | Est. |
-|--------|------|------|
-| ⬜ | Create templates/ directory structure | 30m |
-| ⬜ | Set up Tailwind CSS (CLI or CDN) | 1h |
-| ⬜ | Add HTMX + Alpine.js (CDN) | 30m |
-| ⬜ | Create base.html layout | 1h |
-| ⬜ | Create health check page | 30m |
-
-**Phase 0 Target:** End of Week 1
+### Legend: Done | In Progress | Pending
 
 ---
 
-## Phase 1: Foundation (Weeks 2-9)
+## Backend Phases: ALL COMPLETE
 
-### 1.1 Auth Database Schema (Week 2)
-| Status | Task |
-|--------|------|
-| ⬜ | User model |
-| ⬜ | Role model |
-| ⬜ | UserRole junction |
-| ⬜ | RefreshToken model |
-| ⬜ | Alembic migration |
-| ⬜ | Seed default roles + admin |
-
-### 1.2 Password Service (Week 3)
-| Status | Task |
-|--------|------|
-| ⬜ | Install bcrypt |
-| ⬜ | hash_password() |
-| ⬜ | verify_password() |
-| ⬜ | check_strength() |
-| ⬜ | Unit tests (8+) |
-
-### 1.3 JWT Service (Week 3-4)
-| Status | Task |
-|--------|------|
-| ⬜ | Install PyJWT |
-| ⬜ | create_access_token() |
-| ⬜ | create_refresh_token() |
-| ⬜ | verify_token() |
-| ⬜ | refresh_access_token() |
-| ⬜ | revoke_refresh_token() |
-| ⬜ | Unit tests (10+) |
-
-### 1.4 Auth Endpoints (Week 4-5)
-| Status | Task |
-|--------|------|
-| ⬜ | POST /auth/login |
-| ⬜ | POST /auth/logout |
-| ⬜ | POST /auth/refresh |
-| ⬜ | POST /auth/password/reset-request |
-| ⬜ | POST /auth/password/reset-confirm |
-| ⬜ | GET /auth/me |
-| ⬜ | Rate limiting |
-| ⬜ | Integration tests (12+) |
-
-### 1.5 Task Service Abstraction (Week 5)
-| Status | Task |
-|--------|------|
-| ⬜ | TaskService ABC |
-| ⬜ | FastAPITaskService implementation |
-| ⬜ | Task status tracking |
-| ⬜ | Dependency injection |
-| ⬜ | Unit tests |
-| ⬜ | Document Celery migration path (ADR-006) |
-
-### 1.6 Auth Middleware (Week 5-6)
-| Status | Task |
-|--------|------|
-| ⬜ | get_current_user dependency |
-| ⬜ | require_roles() factory |
-| ⬜ | Protect existing endpoints |
-| ⬜ | Update audit logs with user_id |
-| ⬜ | Tests for role enforcement |
-
-### 1.7 Login UI (Week 6-7)
-| Status | Task |
-|--------|------|
-| ⬜ | Login page (Tailwind styled) |
-| ⬜ | Logout page |
-| ⬜ | Forgot password page |
-| ⬜ | Reset password page |
-| ⬜ | Flash messages |
-| ⬜ | Redirect handling |
-
-### 1.8 File Storage (Week 7-8)
-| Status | Task |
-|--------|------|
-| ⬜ | Add MinIO to docker-compose |
-| ⬜ | FileStorageService |
-| ⬜ | upload_file() |
-| ⬜ | download_file() |
-| ⬜ | delete_file() |
-| ⬜ | generate_presigned_url() |
-| ⬜ | Update FileAttachment model |
-| ⬜ | Integration tests |
-
-### 1.9 File Upload UI (Week 8-9)
-| Status | Task |
-|--------|------|
-| ⬜ | Upload component (HTMX) |
-| ⬜ | Drag-and-drop |
-| ⬜ | Progress indicator |
-| ⬜ | File list display |
-| ⬜ | Download links |
-| ⬜ | Delete confirmation |
-
-### 1.10 Phase 1 Stabilization (Week 9-10)
-| Status | Task |
-|--------|------|
-| ⬜ | Full test suite passes |
-| ⬜ | Security checklist complete |
-| ⬜ | Documentation updated |
-| ⬜ | Merge to main |
-| ⬜ | Tag v0.3.0 |
-
-**Phase 1 Target:** End of Week 10
+| Phase | Description | Models | Endpoints | Tests | Status |
+|-------|-------------|--------|-----------|-------|--------|
+| Phase 0 | Documentation & Structure | - | - | - | Done |
+| Phase 1 | Auth (JWT, RBAC, Registration) | 4 | 13 | 52 | Done |
+| Phase 2a | Union Ops (SALT, Benevolence, Grievance) | 5 | 27 | 31 | Done |
+| Phase 2b | Training (Students, Courses, Grades) | 7 | ~35 | 33 | Done |
+| Phase 3 | Documents (S3/MinIO) | 1 | 8 | 11 | Done |
+| Phase 4 | Dues Tracking | 4 | ~35 | 21 | Done |
+| **Total** | **Backend Complete** | **25** | **~120** | **165** | **Done** |
 
 ---
 
-## Quick Stats Tracker
+## Phase 6: Frontend Build
 
-| Metric | Target | Actual |
-|--------|--------|--------|
-| Phase 0 Hours | 5-8 | ___ |
-| Phase 1 Hours | 55-70 | ___ |
-| Tests Written | 50+ | ___ |
-| Pages Created | 8+ | ___ |
+### Week 1: Setup + Login (COMPLETE)
+
+| Task | Status |
+|------|--------|
+| Base templates (DaisyUI + Tailwind + HTMX + Alpine.js) | Done |
+| Component templates (navbar, sidebar, flash, modal) | Done |
+| Login page with HTMX form | Done |
+| Forgot password page | Done |
+| Dashboard placeholder | Done |
+| Error pages (404, 500) | Done |
+| Frontend router | Done |
+| 12 frontend tests | Done |
+
+**Commit:** `1274c12` - v0.7.0 (Week 1 Complete)
+
+### Week 2: Auth Cookies + Dashboard (COMPLETE)
+
+| Task | Status |
+|------|--------|
+| Cookie-based authentication (auth_cookie.py) | Done |
+| HTTP-only cookies on login/logout | Done |
+| Protected routes redirect to login | Done |
+| Dashboard service with real stats | Done |
+| Activity feed from audit log | Done |
+| HTMX refresh for dashboard | Done |
+| Flash message support | Done |
+| 10 new auth tests (22 total) | Done |
+
+**Commit:** `b997022` - v0.7.1 (Week 2 Complete)
+
+### Week 3: Staff Management (NEXT)
+
+| Task | Status |
+|------|--------|
+| User list page with search/filter | Pending |
+| User detail/edit modal | Pending |
+| Role assignment UI | Pending |
+| Account status management | Pending |
+| Pagination component | Pending |
+| Tests for staff pages | Pending |
+
+### Week 4: Training Landing (Pending)
+
+| Task | Status |
+|------|--------|
+| Training overview page | Pending |
+| Student list with status indicators | Pending |
+| Course list | Pending |
+| Quick enrollment actions | Pending |
 
 ---
 
-## Blockers Log
+## Quick Stats
 
-| Date | Blocker | Resolution |
-|------|---------|------------|
-| | | |
-| | | |
+| Metric | Current |
+|--------|---------|
+| Total Tests | 187 |
+| Backend Tests | 165 |
+| Frontend Tests | 22 |
+| API Endpoints | ~120 |
+| ORM Models | 25 |
+| ADRs | 8 |
+| Version | v0.7.1 |
 
 ---
 
-## Session Log
+## Version History
 
-| Date | Time | Milestone | Tasks Completed |
-|------|------|-----------|-----------------|
-| | | | |
-| | | | |
-| | | | |
+| Version | Date | Milestone |
+|---------|------|-----------|
+| v0.7.1 | 2026-01-29 | Phase 6 Week 2 - Auth cookies + Dashboard |
+| v0.7.0 | 2026-01-28 | Phase 4 Complete (Backend milestone) |
+| v0.6.0 | 2026-01-28 | Phase 3 + Auth + Training |
+| v0.2.0 | 2026-01-27 | Phase 1 Services Layer |
+| v0.1.0 | 2026-01-XX | Initial backend stabilization |
 
 ---
 
@@ -177,13 +109,13 @@
 
 ```bash
 # Start dev environment
-cd $IP2A && docker-compose up -d
+docker-compose up -d
 
 # Run tests
 pytest -v
 
-# Run specific test file
-pytest src/tests/test_auth.py -v
+# Run frontend tests only
+pytest src/tests/test_frontend.py -v
 
 # Check code quality
 ruff check . --fix && ruff format .
@@ -194,18 +126,32 @@ alembic upgrade head
 # Create new migration
 alembic revision --autogenerate -m "description"
 
+# Run API server
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+
 # View logs
 docker-compose logs -f api
 
 # Access MinIO console (file storage)
 open http://localhost:9001
-
-# Access Grafana (Phase 4+)
-open http://localhost:3000
-
-# Build Tailwind CSS (watch mode)
-npm run build:css
 ```
+
+---
+
+## Session Workflow
+
+### Starting a Session
+1. `git pull origin main`
+2. `docker-compose up -d`
+3. `pytest -v --tb=short` (verify green)
+4. Check CLAUDE.md for current tasks
+
+### Ending a Session
+1. `pytest -v` (verify green)
+2. `git status` (check for uncommitted changes)
+3. Commit with conventional commit message
+4. `git push origin main`
+5. Update CLAUDE.md with session summary
 
 ---
 

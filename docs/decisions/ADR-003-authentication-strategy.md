@@ -163,3 +163,20 @@ refresh_tokens
 - Tests: `src/tests/test_auth_{jwt,authentication,router}.py`
 - Security tests: `src/tests/test_security_robustness.py`
 - Security documentation: [docs/standards/password-security.md](../standards/password-security.md)
+
+### Phase 6 Week 2 (Cookie-Based Auth for Frontend) - COMPLETE
+- Cookie dependency: `src/routers/dependencies/auth_cookie.py`
+- HTTP-only cookies set on login/logout
+- Access token cookie: 30 min, path `/`
+- Refresh token cookie: 7 days, path `/api/auth`
+- Protected routes redirect to `/login` with flash message
+- Token expiry handled gracefully with redirect
+- Tests: `src/tests/test_frontend.py` (22 tests)
+
+**Cookie Flow:**
+1. User submits login form via HTMX to `/auth/login`
+2. Server validates credentials, creates tokens
+3. Server sets HTTP-only cookies in response
+4. Browser automatically sends cookies on subsequent requests
+5. `auth_cookie.py` validates JWT from cookie on protected routes
+6. On logout, cookies are cleared and user redirected to login

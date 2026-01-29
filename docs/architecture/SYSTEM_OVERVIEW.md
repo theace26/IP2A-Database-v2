@@ -139,6 +139,15 @@ as the schema and business rules scale.
 
 See [ADR-008: Dues Tracking System](../decisions/ADR-008-dues-tracking-system.md) for design details.
 
+### Phase 6: Frontend (In Progress)
+- **Templates** - Jinja2 with DaisyUI + Tailwind CSS
+- **Interactivity** - HTMX for HTML-over-the-wire, Alpine.js for micro-interactions
+- **Authentication** - Cookie-based JWT for browser sessions
+- **Dashboard** - Real-time stats from all modules
+- **Routing** - Frontend router with auth middleware
+
+See [ADR-002: Frontend Framework](../decisions/ADR-002-frontend-framework.md) and [ADR-005: CSS Framework](../decisions/ADR-005-css-framework.md) for design choices.
+
 ---
 
 # 2️⃣ Mermaid Architecture Diagram
