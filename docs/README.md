@@ -66,6 +66,8 @@ Coding standards and conventions for contributors.
 
 ### `/instructions`
 Claude Code instruction documents for development sessions.
+- [Week 5 Instructions](instructions/week5_instructions/) - Members Landing
+- [Week 4 Instructions](instructions/week4_instructions/) - Training Landing
 - [Week 3 Instructions](instructions/week3_instructions/) - Staff Management
 - [Week 2 Instructions](instructions/week2_instructions/) - Auth cookies + Dashboard
 - [Week 1 Instructions](instructions/) - Frontend setup + Login
@@ -74,13 +76,13 @@ Claude Code instruction documents for development sessions.
 
 ## Current Status
 
-**Version:** v0.7.2 (Phase 6 Week 3 Complete)
+**Version:** v0.7.4 (Phase 6 Week 5 Complete)
 
 | Component | Status | Tests |
 |-----------|--------|-------|
 | Backend API | Complete | 165 |
-| Frontend (Auth + Dashboard + Staff) | Complete | 40 |
-| **Total** | **In Progress** | **205** |
+| Frontend (Auth + Dashboard + Staff + Training + Members) | Complete | 73 |
+| **Total** | **In Progress** | **238** |
 
 See [Milestone Checklist](IP2A_MILESTONE_CHECKLIST.md) for detailed progress.
 

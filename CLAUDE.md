@@ -2,8 +2,8 @@
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
 **Last Updated:** January 29, 2026
-**Current Version:** v0.7.3
-**Current Phase:** Phase 6 Week 5 - Members Landing (Week 4 Complete)
+**Current Version:** v0.7.4
+**Current Phase:** Phase 6 Week 6 - Union Operations (Week 5 Complete)
 
 ---
 
@@ -13,11 +13,11 @@
 
 **Who:** Xerxes - Business Representative by day, solo developer (5-10 hrs/week)
 
-**Where:** Backend COMPLETE. Frontend authentication COMPLETE. Staff management COMPLETE. Training landing COMPLETE.
+**Where:** Backend COMPLETE. Frontend authentication COMPLETE. Staff management COMPLETE. Training landing COMPLETE. Members landing COMPLETE.
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI
 
-**Status:** 59 frontend tests passing, ~120 API endpoints, 8 ADRs, Phase 6 Week 4 complete
+**Status:** 73 frontend tests passing, ~120 API endpoints, 8 ADRs, Phase 6 Week 5 complete
 
 ---
 
@@ -43,9 +43,10 @@
 | Week 2 | Auth cookies + Dashboard | Done |
 | Week 3 | Staff management | Done |
 | Week 4 | Training landing | Done |
-| Week 5 | Members landing | NEXT |
+| Week 5 | Members landing | Done |
+| Week 6 | Union operations | NEXT |
 
-### Frontend Tests: 59 tests
+### Frontend Tests: 73 tests
 
 | Component | Tests | Status |
 |-----------|-------|--------|
@@ -57,9 +58,10 @@
 | Cookie Auth | 3 | Done |
 | Flash Messages | 2 | Done |
 | Dashboard API | 2 | Done |
-| Placeholder Routes | 3 | Done |
+| Placeholder Routes | 2 | Done |
 | Staff Management | 18 | Done |
 | Training Frontend | 19 | Done |
+| Members Frontend | 15 | Done |
 
 ---
 
@@ -77,7 +79,7 @@
 | **Interactivity** | HTMX | HTML-over-the-wire |
 | **Micro-interactions** | Alpine.js | Dropdowns, toggles |
 | **CSS** | DaisyUI + Tailwind | CDN, no build step |
-| **Testing** | pytest + httpx | 59 frontend tests passing |
+| **Testing** | pytest + httpx | 73 frontend tests passing |
 | **Container** | Docker | Full dev environment |
 
 ---
@@ -100,13 +102,15 @@ IP2A-Database-v2/
 │   ├── services/               # Business logic
 │   │   ├── dashboard_service.py  # Dashboard stats (Week 2)
 │   │   ├── staff_service.py      # Staff management (Week 3)
-│   │   └── training_frontend_service.py  # Training stats (Week 4)
+│   │   ├── training_frontend_service.py  # Training stats (Week 4)
+│   │   └── member_frontend_service.py    # Member stats (Week 5)
 │   ├── routers/                # API endpoints
 │   │   ├── dependencies/
 │   │   │   ├── auth.py         # Bearer token auth
 │   │   │   └── auth_cookie.py  # Cookie-based auth (Week 2)
 │   │   ├── staff.py            # Staff management (Week 3)
-│   │   └── training_frontend.py # Training pages (Week 4)
+│   │   ├── training_frontend.py # Training pages (Week 4)
+│   │   └── member_frontend.py   # Member pages (Week 5)
 │   ├── templates/              # Jinja2 templates (Phase 6)
 │   │   ├── base.html
 │   │   ├── base_auth.html
@@ -118,6 +122,10 @@ IP2A-Database-v2/
 │   │   │   ├── index.html
 │   │   │   ├── students/
 │   │   │   └── courses/
+│   │   ├── members/            # Week 5
+│   │   │   ├── index.html
+│   │   │   ├── detail.html
+│   │   │   └── partials/
 │   │   └── errors/
 │   ├── static/                 # CSS, JS, images (Phase 6)
 │   │   ├── css/
@@ -130,7 +138,8 @@ IP2A-Database-v2/
 │   ├── instructions/           # Claude Code instruction docs
 │   │   ├── week2_instructions/
 │   │   ├── week3_instructions/
-│   │   └── week4_instructions/
+│   │   ├── week4_instructions/
+│   │   └── week5_instructions/
 │   ├── architecture/           # System docs
 │   ├── guides/                 # How-to guides
 │   └── archive/                # Old documentation
@@ -166,6 +175,76 @@ uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 
 # Format code
 ruff check . --fix && ruff format .
+```
+
+---
+
+## Phase 6 Week 5: COMPLETE
+
+**Objective:** Build Members landing page with search, detail, and employment/dues views
+
+**Instruction Documents:** `docs/instructions/week5_instructions/`
+
+### Session A: Members Overview (January 29, 2026)
+
+| Task | Status |
+|------|--------|
+| Create MemberFrontendService with stats queries | Done |
+| Create member_frontend router | Done |
+| Create members/index.html landing page | Done |
+| Stats: total, active, inactive/suspended, dues current % | Done |
+| Classification breakdown with badges | Done |
+| Search and filter controls | Done |
+
+### Session B: Member List (January 29, 2026)
+
+| Task | Status |
+|------|--------|
+| Create _table.html with pagination | Done |
+| Create _row.html with badges | Done |
+| HTMX live search with 300ms debounce | Done |
+| Filter by status and classification | Done |
+| Status and classification badges | Done |
+| Current employer display | Done |
+| Quick edit modal | Done |
+| Row actions dropdown | Done |
+
+### Session C: Member Detail + Tests (January 29, 2026)
+
+| Task | Status |
+|------|--------|
+| Create members/detail.html page | Done |
+| Contact information section | Done |
+| Employment history timeline (HTMX loaded) | Done |
+| Dues summary section (HTMX loaded) | Done |
+| Current employer sidebar | Done |
+| Quick actions sidebar | Done |
+| Comprehensive tests (15 total) | Done |
+
+**Commit:**
+- `d6f7132 feat(members): Phase 6 Week 5 Complete - Members Landing Page`
+
+### Files Created
+
+```
+src/
+├── services/
+│   └── member_frontend_service.py   # Stats and queries
+├── routers/
+│   └── member_frontend.py           # Member page routes
+├── templates/
+│   └── members/
+│       ├── index.html               # Landing page
+│       ├── detail.html              # Detail page
+│       └── partials/
+│           ├── _stats.html          # Stats cards
+│           ├── _table.html          # Table with pagination
+│           ├── _row.html            # Single row
+│           ├── _edit_modal.html     # Quick edit
+│           ├── _employment.html     # Employment timeline
+│           └── _dues_summary.html   # Dues section
+└── tests/
+    └── test_member_frontend.py      # 15 tests
 ```
 
 ---

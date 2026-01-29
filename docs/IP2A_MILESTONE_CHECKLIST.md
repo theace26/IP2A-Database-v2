@@ -5,7 +5,7 @@
 
 ---
 
-## Current Focus: Phase 6 Frontend (Week 5 - Members Landing)
+## Current Focus: Phase 6 Frontend (Week 6 - Union Operations)
 
 ### Legend: Done | In Progress | Pending
 
@@ -104,14 +104,37 @@
 
 **Version:** v0.7.3 (Week 4 Complete)
 
-### Week 5: Members Landing (NEXT)
+### Week 5: Members Landing (COMPLETE)
 
 | Task | Status |
 |------|--------|
-| Member list with search/filter | Pending |
-| Member detail with employment history | Pending |
-| Dues status indicators | Pending |
-| Member classification badges | Pending |
+| MemberFrontendService with stats queries | Done |
+| Members landing page with stats dashboard | Done |
+| Stats: total, active, inactive/suspended, dues % | Done |
+| Classification breakdown with badges | Done |
+| Member list with HTMX search (300ms debounce) | Done |
+| Filter by status and classification | Done |
+| Status and classification badges | Done |
+| Current employer display | Done |
+| Quick edit modal | Done |
+| Pagination component | Done |
+| Member detail page with contact info | Done |
+| Employment history timeline (HTMX loaded) | Done |
+| Dues summary section (HTMX loaded) | Done |
+| 15 new member tests (73 frontend total) | Done |
+
+**Commit:**
+- `d6f7132` - Phase 6 Week 5 Complete - Members Landing Page
+
+**Version:** v0.7.4 (Week 5 Complete)
+
+### Week 6: Union Operations (NEXT)
+
+| Task | Status |
+|------|--------|
+| SALTing activities landing | Pending |
+| Benevolence fund management | Pending |
+| Grievance tracking | Pending |
 
 ---
 
@@ -119,13 +142,13 @@
 
 | Metric | Current |
 |--------|---------|
-| Total Tests | ~224 |
+| Total Tests | ~238 |
 | Backend Tests | 165 |
-| Frontend Tests | 59 |
+| Frontend Tests | 73 |
 | API Endpoints | ~120 |
 | ORM Models | 25 |
 | ADRs | 8 |
-| Version | v0.7.3 |
+| Version | v0.7.4 |
 
 ---
 
@@ -133,6 +156,7 @@
 
 | Version | Date | Milestone |
 |---------|------|-----------|
+| v0.7.4 | 2026-01-29 | Phase 6 Week 5 - Members Landing |
 | v0.7.3 | 2026-01-29 | Phase 6 Week 4 - Training Landing |
 | v0.7.2 | 2026-01-29 | Phase 6 Week 3 - Staff Management |
 | v0.7.1 | 2026-01-29 | Phase 6 Week 2 - Auth cookies + Dashboard |
@@ -160,6 +184,9 @@ pytest src/tests/test_staff.py -v
 
 # Run training tests only
 pytest src/tests/test_training_frontend.py -v
+
+# Run member tests only
+pytest src/tests/test_member_frontend.py -v
 
 # Check code quality
 ruff check . --fix && ruff format .

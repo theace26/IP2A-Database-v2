@@ -8,6 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Phase 6 Week 5: Members Landing Page** (Complete)
+  * Members landing page with overview stats dashboard
+  * Stats: total members, active, inactive/suspended, dues current %
+  * Classification breakdown with color-coded badges
+  * Member list page with HTMX search (300ms debounce)
+  * Filter by status (active/inactive/suspended/retired) and classification
+  * Status and classification badges with color coding
+  * Current employer display in table
+  * Quick edit modal for member info
+  * Member detail page with contact info
+  * Employment history timeline (HTMX loaded)
+  * Dues summary section with payment history (HTMX loaded)
+  * Current employer and quick actions sidebar
+  * MemberFrontendService for stats and queries
+  * 15 new member frontend tests (73 frontend total)
+
 - **Phase 6 Week 4: Training Landing Page** (Complete)
   * Training landing page with overview stats dashboard
   * Stats: total students, active students, completed, completion rate
