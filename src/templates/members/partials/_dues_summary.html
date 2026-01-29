@@ -1,0 +1,80 @@
+{# Dues summary section - loaded via HTMX #}
+
+<div class="space-y-4">
+    <!-- Status Banner -->
+    <div class="alert {{ 'alert-success' if dues_summary.status == 'current' else 'alert-error' if dues_summary.status == 'overdue' else 'alert-warning' if dues_summary.status == 'pending' else 'alert-info' }}">
+        {% if dues_summary.status == 'current' %}
+        <svg class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Dues are current</span>
+        {% elif dues_summary.status == 'overdue' %}
+        <svg class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span>Dues are overdue</span>
+        {% elif dues_summary.status == 'pending' %}
+        <svg class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Payment pending</span>
+        {% else %}
+        <svg class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>No dues information</span>
+        {% endif %}
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="stats stats-vertical sm:stats-horizontal shadow w-full">
+        <div class="stat">
+            <div class="stat-title">YTD Paid</div>
+            <div class="stat-value text-lg">${{ "%.2f"|format(dues_summary.total_paid_ytd) }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">Payments</div>
+            <div class="stat-value text-lg">{{ dues_summary.payment_count }}</div>
+        </div>
+    </div>
+
+    <!-- Recent Payments -->
+    {% if dues_summary.recent_payments %}
+    <div>
+        <h3 class="font-medium mb-2">Recent Payments</h3>
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in dues_summary.recent_payments %}
+                    <tr>
+                        <td>{{ payment.period.period_name if payment.period else 'N/A' }}</td>
+                        <td>${{ "%.2f"|format(payment.amount_paid) }}</td>
+                        <td>
+                            <span class="badge badge-{{ 'success' if payment.status.value == 'paid' else 'error' if payment.status.value == 'overdue' else 'warning' }} badge-xs">
+                                {{ payment.status.value | replace('_', ' ') | title }}
+                            </span>
+                        </td>
+                        <td>{{ payment.payment_date.strftime('%b %d') if payment.payment_date else '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- View All Link -->
+    <div class="text-center">
+        <a href="/dues/member/{{ member_id }}" class="link link-primary text-sm">
+            View Full Dues History &rarr;
+        </a>
+    </div>
+</div>

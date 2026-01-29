@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}{{ member.first_name }} {{ member.last_name }} - Members - IP2A{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/members">Members</a></li>
+            <li>{{ member.first_name }} {{ member.last_name }}</li>
+        </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <div class="avatar placeholder">
+                <div class="bg-neutral text-neutral-content rounded-full w-20">
+                    <span class="text-2xl">
+                        {{ member.first_name[0] | upper if member.first_name else '?' }}{{ member.last_name[0] | upper if member.last_name else '' }}
+                    </span>
+                </div>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold">
+                    {{ member.first_name }} {{ member.last_name }}
+                </h1>
+                <div class="flex flex-wrap items-center gap-2 mt-1">
+                    <span class="font-mono text-base-content/60">{{ member.member_number or 'No Member Number' }}</span>
+                    <span class="badge {{ get_status_badge_class(member.status) }}">
+                        {{ member.status.value | replace('_', ' ') | title }}
+                    </span>
+                    {% if member.classification %}
+                    <span class="badge {{ get_classification_badge_class(member.classification) }}">
+                        {{ format_classification(member.classification) }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <a href="/members" class="btn btn-ghost">
+                &larr; Back to Members
+            </a>
+            <button class="btn btn-primary">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                Edit
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Content (2/3) -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Contact Information -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title">Contact Information</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <div>
+                            <label class="text-sm text-base-content/60">Email</label>
+                            <p class="font-medium">
+                                {% if member.email %}
+                                <a href="mailto:{{ member.email }}" class="link link-primary">{{ member.email }}</a>
+                                {% else %}
+                                <span class="text-base-content/40">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <label class="text-sm text-base-content/60">Phone</label>
+                            <p class="font-medium">
+                                {% if member.phone %}
+                                <a href="tel:{{ member.phone }}" class="link">{{ member.phone }}</a>
+                                {% else %}
+                                <span class="text-base-content/40">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="text-sm text-base-content/60">Address</label>
+                            <p class="font-medium">
+                                {% if member.address %}
+                                {{ member.address }}<br>
+                                {{ member.city }}{% if member.state %}, {{ member.state }}{% endif %} {{ member.zip_code }}
+                                {% else %}
+                                <span class="text-base-content/40">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employment History -->
+            <div class="card bg-base-100 shadow" id="employment">
+                <div class="card-body">
+                    <div class="flex items-center justify-between">
+                        <h2 class="card-title">Employment History</h2>
+                        <button class="btn btn-sm btn-ghost">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Add Employment
+                        </button>
+                    </div>
+
+                    <div
+                        id="employment-content"
+                        hx-get="/members/{{ member.id }}/employment"
+                        hx-trigger="load"
+                        hx-swap="innerHTML"
+                    >
+                        <div class="flex justify-center py-8">
+                            <span class="loading loading-spinner loading-md"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dues History -->
+            <div class="card bg-base-100 shadow" id="dues">
+                <div class="card-body">
+                    <div class="flex items-center justify-between">
+                        <h2 class="card-title">Dues Status</h2>
+                        <a href="/dues/payments/new?member_id={{ member.id }}" class="btn btn-sm btn-ghost">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Record Payment
+                        </a>
+                    </div>
+
+                    <div
+                        id="dues-content"
+                        hx-get="/members/{{ member.id }}/dues"
+                        hx-trigger="load, dues-updated from:body"
+                        hx-swap="innerHTML"
+                    >
+                        <div class="flex justify-center py-8">
+                            <span class="loading loading-spinner loading-md"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar (1/3) -->
+        <div class="space-y-6">
+            <!-- Current Employment -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-lg">Current Employment</h2>
+
+                    {% if current_employer %}
+                    <div class="space-y-2">
+                        <div>
+                            <label class="text-sm text-base-content/60">Employer</label>
+                            <p class="font-bold">{{ current_employer.name }}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm text-base-content/60">Since</label>
+                            <p>{{ current_employer.start_date.strftime('%B %d, %Y') }}</p>
+                        </div>
+                        {% if current_employer.job_title %}
+                        <div>
+                            <label class="text-sm text-base-content/60">Position</label>
+                            <p>{{ current_employer.job_title }}</p>
+                        </div>
+                        {% endif %}
+                        {% if current_employer.hourly_rate %}
+                        <div>
+                            <label class="text-sm text-base-content/60">Hourly Rate</label>
+                            <p>${{ "%.2f"|format(current_employer.hourly_rate) }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p class="text-base-content/50">Not currently employed</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Info -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-lg">Member Info</h2>
+
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Member ID</span>
+                            <span class="font-mono">{{ member.id }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Member Number</span>
+                            <span class="font-mono">{{ member.member_number or '-' }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Status</span>
+                            <span class="badge {{ get_status_badge_class(member.status) }} badge-sm">
+                                {{ member.status.value | replace('_', ' ') | title }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Classification</span>
+                            <span>
+                                {% if member.classification %}
+                                {{ format_classification(member.classification) }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="divider my-2"></div>
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Hire Date</span>
+                            <span>{{ member.hire_date.strftime('%b %d, %Y') if member.hire_date else '-' }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Created</span>
+                            <span>{{ member.created_at.strftime('%b %d, %Y') }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Updated</span>
+                            <span>{{ member.updated_at.strftime('%b %d, %Y') }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-lg">Quick Actions</h2>
+
+                    <div class="space-y-2">
+                        <button class="btn btn-outline btn-block btn-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            Schedule Meeting
+                        </button>
+                        <button class="btn btn-outline btn-block btn-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            Send Email
+                        </button>
+                        <button class="btn btn-outline btn-block btn-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            View Documents
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

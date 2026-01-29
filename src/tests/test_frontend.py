@@ -4,7 +4,6 @@ Frontend route tests.
 Tests for HTML page rendering, static file serving, and authentication flows.
 """
 
-import pytest
 from fastapi.testclient import TestClient
 from src.main import app
 
@@ -186,7 +185,4 @@ class TestPlaceholderRoutes:
         response = client.get("/settings")
         assert response.status_code == 404
 
-    def test_members_returns_404(self):
-        """Members page should return 404."""
-        response = client.get("/members")
-        assert response.status_code == 404
+    # Note: /members is now implemented in Phase 6 Week 5

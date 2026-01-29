@@ -1,0 +1,64 @@
+{# Employment history timeline - loaded via HTMX #}
+
+{% if employment_history %}
+<ul class="timeline timeline-vertical timeline-compact">
+    {% for emp in employment_history %}
+    <li>
+        {% if not loop.first %}
+        <hr class="{{ 'bg-primary' if emp.is_current else 'bg-base-300' }}"/>
+        {% endif %}
+
+        <div class="timeline-start text-sm text-base-content/60">
+            {{ emp.start_date.strftime('%b %Y') }}
+            {% if emp.end_date %}
+            <br>to {{ emp.end_date.strftime('%b %Y') }}
+            {% endif %}
+        </div>
+
+        <div class="timeline-middle">
+            {% if emp.is_current %}
+            <svg class="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            {% else %}
+            <svg class="w-5 h-5 text-base-300" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16z" clip-rule="evenodd"/>
+            </svg>
+            {% endif %}
+        </div>
+
+        <div class="timeline-end timeline-box {{ 'border-primary' if emp.is_current else '' }}">
+            <div class="flex items-start justify-between gap-2">
+                <div>
+                    <div class="font-bold">{{ emp.organization_name }}</div>
+                    {% if emp.job_title %}
+                    <div class="text-sm text-base-content/70">{{ emp.job_title }}</div>
+                    {% endif %}
+                </div>
+                {% if emp.is_current %}
+                <span class="badge badge-primary badge-sm">Current</span>
+                {% endif %}
+            </div>
+
+            <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-base-content/60">
+                <span>{{ emp.duration }}</span>
+                {% if emp.hourly_rate %}
+                <span>${{ "%.2f"|format(emp.hourly_rate) }}/hr</span>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if not loop.last %}
+        <hr class="{{ 'bg-primary' if emp.is_current else 'bg-base-300' }}"/>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<div class="text-center py-8 text-base-content/50">
+    <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+    </svg>
+    <p>No employment history recorded</p>
+</div>
+{% endif %}

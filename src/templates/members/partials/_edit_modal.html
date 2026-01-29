@@ -1,0 +1,146 @@
+{# Quick edit modal content - loaded via HTMX #}
+
+<h3 class="font-bold text-lg mb-4">
+    Edit Member: {{ member.first_name }} {{ member.last_name }}
+</h3>
+
+<form
+    hx-post="/members/{{ member.id }}/edit"
+    hx-target="#modal-feedback"
+    hx-swap="innerHTML"
+    class="space-y-4"
+>
+    <!-- Feedback area -->
+    <div id="modal-feedback"></div>
+
+    <!-- Member Number (read-only) -->
+    <div class="form-control">
+        <label class="label">
+            <span class="label-text font-medium">Member Number</span>
+        </label>
+        <input
+            type="text"
+            value="{{ member.member_number or 'Not assigned' }}"
+            class="input input-bordered bg-base-200"
+            disabled
+        />
+    </div>
+
+    <!-- Name Fields -->
+    <div class="grid grid-cols-2 gap-4">
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text font-medium">First Name</span>
+            </label>
+            <input
+                type="text"
+                name="first_name"
+                value="{{ member.first_name or '' }}"
+                class="input input-bordered"
+                required
+            />
+        </div>
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text font-medium">Last Name</span>
+            </label>
+            <input
+                type="text"
+                name="last_name"
+                value="{{ member.last_name or '' }}"
+                class="input input-bordered"
+                required
+            />
+        </div>
+    </div>
+
+    <!-- Contact Info -->
+    <div class="grid grid-cols-2 gap-4">
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text font-medium">Email</span>
+            </label>
+            <input
+                type="email"
+                name="email"
+                value="{{ member.email or '' }}"
+                class="input input-bordered"
+            />
+        </div>
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text font-medium">Phone</span>
+            </label>
+            <input
+                type="tel"
+                name="phone"
+                value="{{ member.phone or '' }}"
+                class="input input-bordered"
+            />
+        </div>
+    </div>
+
+    <!-- Status and Classification -->
+    <div class="grid grid-cols-2 gap-4">
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text font-medium">Status</span>
+            </label>
+            <select name="status" class="select select-bordered">
+                {% for status in all_statuses %}
+                <option value="{{ status }}" {% if member.status.value == status %}selected{% endif %}>
+                    {{ status | replace('_', ' ') | title }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text font-medium">Classification</span>
+            </label>
+            <select name="classification" class="select select-bordered">
+                {% for classification in all_classifications %}
+                <option value="{{ classification }}" {% if member.classification and member.classification.value == classification %}selected{% endif %}>
+                    {{ format_classification(classification) }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="divider">Quick Links</div>
+
+    <div class="flex flex-wrap gap-2">
+        <a href="/members/{{ member.id }}" class="btn btn-sm btn-outline">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            </svg>
+            Full Profile
+        </a>
+        <a href="/members/{{ member.id }}#employment" class="btn btn-sm btn-outline">
+            Employment History
+        </a>
+        <a href="/members/{{ member.id }}#dues" class="btn btn-sm btn-outline">
+            Dues History
+        </a>
+    </div>
+
+    <!-- Modal Actions -->
+    <div class="modal-action">
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('edit-modal').close()">
+            Cancel
+        </button>
+        <button type="submit" class="btn btn-primary">
+            Save Changes
+        </button>
+    </div>
+</form>
+
+<!-- Member Info Footer -->
+<div class="text-xs text-base-content/50 mt-4 pt-4 border-t border-base-200">
+    <div class="flex justify-between">
+        <span>Member ID: {{ member.id }}</span>
+        <span>Created: {{ member.created_at.strftime('%b %d, %Y') }}</span>
+    </div>
+</div>

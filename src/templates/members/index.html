@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Members - IP2A{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold">Members</h1>
+            <p class="text-base-content/60">Manage union membership</p>
+        </div>
+        <div class="flex gap-2">
+            <button class="btn btn-primary" onclick="document.getElementById('add-member-modal').showModal()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                </svg>
+                Add Member
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div
+        id="stats-container"
+        hx-get="/members/stats"
+        hx-trigger="stats-refresh from:body"
+    >
+        {% include "members/partials/_stats.html" %}
+    </div>
+
+    <!-- Classification Breakdown -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title text-lg">Members by Classification</h2>
+            <div class="flex flex-wrap gap-3 mt-2">
+                {% for item in classification_breakdown %}
+                <div class="flex items-center gap-2 px-3 py-2 bg-base-200 rounded-lg">
+                    <span class="badge {{ item.badge_class }}">{{ item.display_name }}</span>
+                    <span class="font-bold">{{ item.count }}</span>
+                </div>
+                {% endfor %}
+                {% if not classification_breakdown %}
+                <p class="text-base-content/50">No classification data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body p-4">
+            <div class="flex flex-col lg:flex-row gap-4">
+                <!-- Search Input -->
+                <div class="flex-1">
+                    <div class="relative">
+                        <input
+                            type="search"
+                            name="q"
+                            placeholder="Search by name, member number, or email..."
+                            class="input input-bordered w-full pl-10"
+                            hx-get="/members/search"
+                            hx-trigger="input changed delay:300ms, search"
+                            hx-target="#table-container"
+                            hx-include="[name='status'], [name='classification']"
+                            hx-indicator="#search-spinner"
+                        />
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <span id="search-spinner" class="loading loading-spinner loading-sm absolute right-3 top-1/2 -translate-y-1/2 htmx-indicator"></span>
+                    </div>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="w-full lg:w-48">
+                    <select
+                        name="status"
+                        class="select select-bordered w-full"
+                        hx-get="/members/search"
+                        hx-trigger="change"
+                        hx-target="#table-container"
+                        hx-include="[name='q'], [name='classification']"
+                    >
+                        <option value="all">All Status</option>
+                        {% for status in all_statuses %}
+                        <option value="{{ status }}">{{ status | replace('_', ' ') | title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Classification Filter -->
+                <div class="w-full lg:w-56">
+                    <select
+                        name="classification"
+                        class="select select-bordered w-full"
+                        hx-get="/members/search"
+                        hx-trigger="change"
+                        hx-target="#table-container"
+                        hx-include="[name='q'], [name='status']"
+                    >
+                        <option value="all">All Classifications</option>
+                        {% for classification in all_classifications %}
+                        <option value="{{ classification }}">{{ format_classification(classification) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Member Table -->
+    <div class="card bg-base-100 shadow overflow-hidden">
+        <div
+            id="table-container"
+            hx-get="/members/search"
+            hx-trigger="load"
+        >
+            <div class="flex justify-center py-12">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Member Modal (placeholder) -->
+<dialog id="add-member-modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Add New Member</h3>
+        <p class="py-4 text-base-content/60">Member registration form coming in a future update.</p>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn">Close</button>
+            </form>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<!-- Edit Modal -->
+<dialog id="edit-modal" class="modal">
+    <div class="modal-box max-w-2xl">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">X</button>
+        </form>
+        <div id="modal-content">
+            <!-- HTMX loads content here -->
+            <div class="flex items-center justify-center py-8">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+{% endblock %}
