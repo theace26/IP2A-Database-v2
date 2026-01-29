@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Phase 6 Week 10: Dues UI** (Session A Complete)
+  * Dues landing page with current period display and days until due
+  * Stats cards: MTD collected, YTD collected, overdue count, pending adjustments
+  * Quick action cards linking to rates, periods, payments, adjustments
+  * Rates list page with HTMX filtering by classification
+  * Active only toggle for filtering current rates
+  * Rates table partial with status badges (Active/Expired/Future)
+  * DuesFrontendService with stats queries and badge color helpers
+  * Currency formatting and period name formatting utilities
+  * Sidebar navigation updated with Dues dropdown menu
+  * 19 new dues frontend tests (149 frontend total)
+
 - **Phase 6 Week 9: Documents Frontend** (Complete)
   * Documents landing page with storage stats and recent files
   * Upload page with Alpine.js drag-drop zone
@@ -127,6 +139,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * jinja2 added to requirements.txt
 
 ### Changed
+- Updated CLAUDE.md with Week 10 Dues UI progress
+- Updated sidebar navigation with Dues dropdown menu (Overview, Rates, Periods, Payments, Adjustments)
 - Updated CLAUDE.md with frontend phase context
 - Updated auth router to set/clear HTTP-only cookies on login/logout
 - Updated frontend router with auth middleware and real data

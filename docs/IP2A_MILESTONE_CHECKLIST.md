@@ -5,7 +5,7 @@
 
 ---
 
-## Current Focus: Phase 6 Frontend (Week 6 - Union Operations)
+## Current Focus: Phase 6 Frontend (Week 10 - Dues UI)
 
 ### Legend: Done | In Progress | Pending
 
@@ -128,13 +128,78 @@
 
 **Version:** v0.7.4 (Week 5 Complete)
 
-### Week 6: Union Operations (NEXT)
+### Week 6: Union Operations (COMPLETE)
 
 | Task | Status |
 |------|--------|
-| SALTing activities landing | Pending |
-| Benevolence fund management | Pending |
-| Grievance tracking | Pending |
+| OperationsFrontendService with stats queries | Done |
+| Operations landing page with module cards | Done |
+| SALTing activities list with type/outcome badges | Done |
+| SALTing detail with organizer and employer info | Done |
+| Benevolence applications list with status workflow | Done |
+| Benevolence detail with payment history | Done |
+| Grievances list with step progress indicators | Done |
+| Grievance detail with step timeline | Done |
+| 21 new operations tests (94 frontend total) | Done |
+
+**Commits:**
+- `78efab7` - Phase 6 Week 6 Session D - Tests + Documentation
+
+**Version:** v0.7.5 (Week 6 Complete)
+
+### Week 8: Reports & Export (COMPLETE)
+
+| Task | Status |
+|------|--------|
+| ReportService with PDF/Excel generation | Done |
+| Reports landing page with categorized reports | Done |
+| Member roster report (PDF/Excel) | Done |
+| Dues summary report (PDF/Excel) | Done |
+| Overdue members report (PDF/Excel) | Done |
+| Training enrollment report (Excel) | Done |
+| Grievance summary report (PDF) | Done |
+| SALTing activities report (Excel) | Done |
+| 30 new report tests (124 frontend total) | Done |
+
+**Commit:** `d031451` - Phase 6 Week 8 - Reports & Export
+
+**Version:** v0.7.6 (Week 8 Complete)
+
+### Week 9: Documents Frontend (COMPLETE)
+
+| Task | Status |
+|------|--------|
+| Documents landing page with storage stats | Done |
+| Upload page with Alpine.js drag-drop zone | Done |
+| Browse page with entity type filtering | Done |
+| Download redirect endpoint (presigned URLs) | Done |
+| Delete endpoint with HTMX confirmation | Done |
+| HTMX partials for success/error states | Done |
+| 6 new document tests (130 frontend total) | Done |
+
+**Commit:** `79cb86e` - Phase 6 Week 9 - Documents Frontend
+
+**Version:** v0.7.7 (Week 9 Complete)
+
+### Week 10: Dues UI (IN PROGRESS)
+
+| Task | Status |
+|------|--------|
+| DuesFrontendService with stats and badge helpers | Done |
+| Dues landing page with current period display | Done |
+| Stats cards (MTD, YTD, overdue, pending) | Done |
+| Quick action cards for rates/periods/payments/adjustments | Done |
+| Rates list page with HTMX filtering | Done |
+| Rates table partial with status badges | Done |
+| Sidebar navigation with Dues dropdown | Done |
+| 19 new dues frontend tests (149 frontend total) | Done |
+| Periods management page | Pending |
+| Payments list and recording | Pending |
+| Adjustments workflow | Pending |
+
+**Commit:** `8bb7eba` - feat(dues-ui): add dues landing and rates management
+
+**Version:** v0.7.8 (Week 10 Session A Complete)
 
 ---
 
@@ -142,13 +207,13 @@
 
 | Metric | Current |
 |--------|---------|
-| Total Tests | ~238 |
+| Total Tests | ~312 |
 | Backend Tests | 165 |
-| Frontend Tests | 73 |
-| API Endpoints | ~120 |
+| Frontend Tests | 149 |
+| API Endpoints | ~130 |
 | ORM Models | 25 |
-| ADRs | 8 |
-| Version | v0.7.4 |
+| ADRs | 10 |
+| Version | v0.7.8 |
 
 ---
 
@@ -156,6 +221,10 @@
 
 | Version | Date | Milestone |
 |---------|------|-----------|
+| v0.7.8 | 2026-01-29 | Phase 6 Week 10 - Dues UI (Session A) |
+| v0.7.7 | 2026-01-29 | Phase 6 Week 9 - Documents Frontend |
+| v0.7.6 | 2026-01-29 | Phase 6 Week 8 - Reports & Export |
+| v0.7.5 | 2026-01-29 | Phase 6 Week 6 - Union Operations |
 | v0.7.4 | 2026-01-29 | Phase 6 Week 5 - Members Landing |
 | v0.7.3 | 2026-01-29 | Phase 6 Week 4 - Training Landing |
 | v0.7.2 | 2026-01-29 | Phase 6 Week 3 - Staff Management |
@@ -187,6 +256,9 @@ pytest src/tests/test_training_frontend.py -v
 
 # Run member tests only
 pytest src/tests/test_member_frontend.py -v
+
+# Run dues frontend tests only
+pytest src/tests/test_dues_frontend.py -v
 
 # Check code quality
 ruff check . --fix && ruff format .

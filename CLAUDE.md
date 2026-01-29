@@ -2,8 +2,8 @@
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
 **Last Updated:** January 29, 2026
-**Current Version:** v0.7.7
-**Current Phase:** Phase 6 Week 9 - Documents Frontend (COMPLETE)
+**Current Version:** v0.7.8
+**Current Phase:** Phase 6 Week 10 - Dues UI (IN PROGRESS)
 
 ---
 
@@ -13,11 +13,11 @@
 
 **Who:** Xerxes - Business Representative by day, solo developer (5-10 hrs/week)
 
-**Where:** Backend COMPLETE. Frontend COMPLETE through Week 9 (Documents Frontend).
+**Where:** Backend COMPLETE. Frontend in progress - Week 10 (Dues UI Session A complete).
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl
 
-**Status:** 130 frontend tests passing, 295 total tests, ~130 API endpoints, 10 ADRs, Phase 6 Week 9 complete
+**Status:** 149 frontend tests passing, 312 total tests, ~130 API endpoints, 10 ADRs, Phase 6 Week 10 in progress
 
 ---
 
@@ -35,7 +35,7 @@
 | Dues (Rates, Periods, Payments, Adjustments) | 4 | ~35 | 21 | Done |
 | **Total** | **25** | **~120** | **165** | Done |
 
-### Frontend: PHASE 6 COMPLETE
+### Frontend: PHASE 6 IN PROGRESS
 
 | Week | Focus | Status |
 |------|-------|--------|
@@ -48,8 +48,9 @@
 | Week 7 | (Skipped - docs only) | N/A |
 | Week 8 | Reports & Export | Done |
 | Week 9 | Documents Frontend | Done |
+| Week 10 | Dues UI | In Progress |
 
-### Frontend Tests: 130 tests
+### Frontend Tests: 149 tests
 
 | Component | Tests | Status |
 |-----------|-------|--------|
@@ -68,6 +69,7 @@
 | Operations Frontend | 21 | Done |
 | Reports | 30 | Done |
 | Documents Frontend | 6 | Done |
+| Dues Frontend | 19 | Done |
 
 ---
 
@@ -85,7 +87,7 @@
 | **Interactivity** | HTMX | HTML-over-the-wire |
 | **Micro-interactions** | Alpine.js | Dropdowns, toggles |
 | **CSS** | DaisyUI + Tailwind | CDN, no build step |
-| **Testing** | pytest + httpx | 130 frontend tests passing |
+| **Testing** | pytest + httpx | 149 frontend tests passing |
 | **Reports** | WeasyPrint + openpyxl | PDF/Excel generation |
 | **Container** | Docker | Full dev environment |
 
@@ -111,7 +113,8 @@ IP2A-Database-v2/
 │   │   ├── staff_service.py      # Staff management (Week 3)
 │   │   ├── training_frontend_service.py  # Training stats (Week 4)
 │   │   ├── member_frontend_service.py    # Member stats (Week 5)
-│   │   └── operations_frontend_service.py  # Union ops (Week 6)
+│   │   ├── operations_frontend_service.py  # Union ops (Week 6)
+│   │   └── dues_frontend_service.py  # Dues UI (Week 10)
 │   ├── routers/                # API endpoints
 │   │   ├── dependencies/
 │   │   │   ├── auth.py         # Bearer token auth
@@ -119,7 +122,8 @@ IP2A-Database-v2/
 │   │   ├── staff.py            # Staff management (Week 3)
 │   │   ├── training_frontend.py # Training pages (Week 4)
 │   │   ├── member_frontend.py   # Member pages (Week 5)
-│   │   └── operations_frontend.py  # Union ops (Week 6)
+│   │   ├── operations_frontend.py  # Union ops (Week 6)
+│   │   └── dues_frontend.py     # Dues UI (Week 10)
 │   ├── templates/              # Jinja2 templates (Phase 6)
 │   │   ├── base.html
 │   │   ├── base_auth.html
@@ -140,6 +144,9 @@ IP2A-Database-v2/
 │   │   │   ├── salting/
 │   │   │   ├── benevolence/
 │   │   │   └── grievances/
+│   │   ├── dues/               # Week 10
+│   │   │   ├── index.html
+│   │   │   └── rates/
 │   │   └── errors/
 │   ├── static/                 # CSS, JS, images (Phase 6)
 │   │   ├── css/
@@ -192,6 +199,59 @@ uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 # Format code
 ruff check . --fix && ruff format .
 ```
+
+---
+
+## Phase 6 Week 10: IN PROGRESS
+
+**Objective:** Implement dues management frontend UI
+
+**Instruction Documents:** `docs/instructions/dues_ui_session_a.md`
+
+### Session A: Dues Landing + Rates Management (January 29, 2026)
+
+| Task | Status |
+|------|--------|
+| Create DuesFrontendService with stats and badge helpers | Done |
+| Create dues_frontend router with landing and rates routes | Done |
+| Create dues landing template with stats cards | Done |
+| Create quick action cards for rates/periods/payments/adjustments | Done |
+| Create rates list page with HTMX filtering | Done |
+| Create rates table partial | Done |
+| Add classification filter dropdown | Done |
+| Add active only toggle | Done |
+| Update sidebar navigation with Dues dropdown menu | Done |
+| Comprehensive tests (19 total) | Done |
+
+### Files Created
+
+```
+src/
+├── services/
+│   └── dues_frontend_service.py    # Stats, badge helpers, formatting
+├── routers/
+│   └── dues_frontend.py            # Dues page routes
+├── templates/
+│   └── dues/
+│       ├── index.html              # Landing page with stats
+│       └── rates/
+│           ├── index.html          # Rates list with filters
+│           └── partials/
+│               └── _table.html     # HTMX rates table
+└── tests/
+    └── test_dues_frontend.py       # 19 tests
+```
+
+### Modified Files
+
+```
+src/main.py                              # Added dues_frontend router
+src/templates/components/_sidebar.html   # Converted Dues to dropdown menu
+```
+
+**Commit:** `8bb7eba feat(dues-ui): add dues landing and rates management`
+
+**Next:** Session B - Periods Management
 
 ---
 

@@ -66,6 +66,11 @@ Coding standards and conventions for contributors.
 
 ### `/instructions`
 Claude Code instruction documents for development sessions.
+- [Week 10 Instructions](instructions/dues_ui_session_a.md) - Dues UI (Current)
+- [Week 9 Instructions](instructions/week9_instructions/) - Documents Frontend
+- [Week 8 Instructions](instructions/week8_instructions/) - Reports & Export
+- [Week 7 Instructions](instructions/week7_instructions/) - Dues (Skipped)
+- [Week 6 Instructions](instructions/week6_instructions/) - Union Operations
 - [Week 5 Instructions](instructions/week5_instructions/) - Members Landing
 - [Week 4 Instructions](instructions/week4_instructions/) - Training Landing
 - [Week 3 Instructions](instructions/week3_instructions/) - Staff Management
@@ -76,13 +81,13 @@ Claude Code instruction documents for development sessions.
 
 ## Current Status
 
-**Version:** v0.7.4 (Phase 6 Week 5 Complete)
+**Version:** v0.7.8 (Phase 6 Week 10 Session A Complete)
 
 | Component | Status | Tests |
 |-----------|--------|-------|
 | Backend API | Complete | 165 |
-| Frontend (Auth + Dashboard + Staff + Training + Members) | Complete | 73 |
-| **Total** | **In Progress** | **238** |
+| Frontend (Auth + Dashboard + Staff + Training + Members + Operations + Reports + Documents + Dues) | In Progress | 149 |
+| **Total** | **In Progress** | **312** |
 
 See [Milestone Checklist](IP2A_MILESTONE_CHECKLIST.md) for detailed progress.
 
