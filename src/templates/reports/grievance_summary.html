@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }} - IP2A Report</title>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>{{ title }}</h1>
+            <p class="meta">{{ subtitle }}</p>
+        </div>
+        <div class="meta" style="text-align: right;">
+            <p>Generated: {{ generated_at }}</p>
+            <p>By: {{ generated_by }}</p>
+        </div>
+    </div>
+
+    <!-- Status Summary -->
+    <h2>Status Summary</h2>
+    <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+        {% for status, count in status_counts.items() %}
+        <div class="stat-box" style="flex: 1;">
+            <div class="stat-label">{{ status.replace('_', ' ').title() }}</div>
+            <div class="stat-value">{{ count }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Grievance List -->
+    <h2>All Grievances</h2>
+    {% if grievances %}
+    <table>
+        <thead>
+            <tr>
+                <th>Filed Date</th>
+                <th>Grievant</th>
+                <th>Subject</th>
+                <th>Status</th>
+                <th>Resolved</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for grievance in grievances %}
+            <tr>
+                <td>{{ format_date(grievance.filed_date) }}</td>
+                <td>
+                    {% if grievance.member %}
+                    {{ grievance.member.last_name }}, {{ grievance.member.first_name }}
+                    {% else %}
+                    —
+                    {% endif %}
+                </td>
+                <td>{{ grievance.subject or '—' }}</td>
+                <td>
+                    <span class="badge {% if grievance.status.value == 'resolved' %}badge-success{% elif grievance.status.value == 'pending' %}badge-warning{% else %}badge-info{% endif %}">
+                        {{ grievance.status.value.replace('_', ' ').title() if grievance.status else '—' }}
+                    </span>
+                </td>
+                <td>{{ format_date(grievance.resolved_date) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="text-align: center; padding: 40px; color: #666;">
+        <p>No grievances found.</p>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>IBEW Local 46 - Grievance Summary Report</p>
+        <p>This report contains confidential grievance information.</p>
+    </div>
+</body>
+</html>

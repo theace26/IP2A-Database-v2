@@ -2,8 +2,8 @@
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
 **Last Updated:** January 29, 2026
-**Current Version:** v0.7.5
-**Current Phase:** Phase 6 Week 6 - Union Operations (COMPLETE)
+**Current Version:** v0.7.6
+**Current Phase:** Phase 6 Week 8 - Reports & Export (COMPLETE)
 
 ---
 
@@ -13,11 +13,11 @@
 
 **Who:** Xerxes - Business Representative by day, solo developer (5-10 hrs/week)
 
-**Where:** Backend COMPLETE. Frontend COMPLETE through Week 6 (Union Operations).
+**Where:** Backend COMPLETE. Frontend COMPLETE through Week 8 (Reports & Export).
 
-**Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI
+**Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + WeasyPrint + openpyxl
 
-**Status:** 94 frontend tests passing, 259 total tests, ~120 API endpoints, 9 ADRs, Phase 6 Week 6 complete
+**Status:** 124 frontend tests passing, 289 total tests, ~130 API endpoints, 10 ADRs, Phase 6 Week 8 complete
 
 ---
 
@@ -45,8 +45,10 @@
 | Week 4 | Training landing | Done |
 | Week 5 | Members landing | Done |
 | Week 6 | Union operations | Done |
+| Week 7 | (Skipped - docs only) | N/A |
+| Week 8 | Reports & Export | Done |
 
-### Frontend Tests: 94 tests
+### Frontend Tests: 124 tests
 
 | Component | Tests | Status |
 |-----------|-------|--------|
@@ -63,6 +65,7 @@
 | Training Frontend | 19 | Done |
 | Members Frontend | 15 | Done |
 | Operations Frontend | 21 | Done |
+| Reports | 30 | Done |
 
 ---
 
@@ -80,7 +83,8 @@
 | **Interactivity** | HTMX | HTML-over-the-wire |
 | **Micro-interactions** | Alpine.js | Dropdowns, toggles |
 | **CSS** | DaisyUI + Tailwind | CDN, no build step |
-| **Testing** | pytest + httpx | 73 frontend tests passing |
+| **Testing** | pytest + httpx | 124 frontend tests passing |
+| **Reports** | WeasyPrint + openpyxl | PDF/Excel generation |
 | **Container** | Docker | Full dev environment |
 
 ---
@@ -185,6 +189,60 @@ uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 
 # Format code
 ruff check . --fix && ruff format .
+```
+
+---
+
+## Phase 6 Week 8: COMPLETE
+
+**Objective:** Implement report generation with PDF and Excel export capabilities
+
+**Instruction Documents:** `docs/instructions/week8_instructions/`
+
+### Session A-C: Reports Implementation (January 29, 2026)
+
+| Task | Status |
+|------|--------|
+| Add weasyprint and openpyxl dependencies | Done |
+| Create ReportService with PDF/Excel generation | Done |
+| Create reports router with landing page | Done |
+| Create reports landing template | Done |
+| Create PDF templates (member roster, dues, etc.) | Done |
+| Member roster report (PDF/Excel) | Done |
+| Dues summary report (PDF/Excel) | Done |
+| Overdue members report (PDF/Excel) | Done |
+| Training enrollment report (Excel) | Done |
+| Grievance summary report (PDF) | Done |
+| SALTing activities report (Excel) | Done |
+| Comprehensive tests (30 total) | Done |
+
+**Note:** WeasyPrint requires system libraries (libpango, libgdk-pixbuf) for PDF generation. Tests skip PDF generation when these aren't available.
+
+### Files Created
+
+```
+src/
+├── services/
+│   └── report_service.py            # PDF/Excel generation utilities
+├── routers/
+│   └── reports.py                   # Report routes
+├── templates/
+│   └── reports/
+│       ├── index.html               # Reports landing page
+│       ├── base_pdf.html            # PDF base template
+│       ├── member_roster.html       # Member roster PDF
+│       ├── dues_summary.html        # Dues summary PDF
+│       ├── overdue_report.html      # Overdue members PDF
+│       └── grievance_summary.html   # Grievance PDF
+└── tests/
+    └── test_reports.py              # 30 tests
+```
+
+### Modified Files
+
+```
+requirements.txt                     # Added weasyprint, openpyxl
+src/main.py                          # Added reports router
 ```
 
 ---

@@ -60,6 +60,7 @@ from src.routers.staff import router as staff_router
 from src.routers.training_frontend import router as training_frontend_router
 from src.routers.member_frontend import router as member_frontend_router
 from src.routers.operations_frontend import router as operations_frontend_router
+from src.routers.reports import router as reports_router
 
 # ------------------------------------------------------------
 # Initialize FastAPI
@@ -160,6 +161,9 @@ app.include_router(member_frontend_router)
 
 # Phase 6 Operations Frontend router
 app.include_router(operations_frontend_router)
+
+# Phase 6 Reports router
+app.include_router(reports_router)
 
 # Frontend routes (HTML pages) - include LAST to not interfere with API routes
 app.include_router(frontend.router)

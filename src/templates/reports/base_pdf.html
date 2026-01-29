@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }} - IP2A Report</title>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>{{ title }}</h1>
+            {% if subtitle %}
+            <p class="meta">{{ subtitle }}</p>
+            {% endif %}
+        </div>
+        <div class="meta" style="text-align: right;">
+            <p>Generated: {{ generated_at }}</p>
+            {% if generated_by %}
+            <p>By: {{ generated_by }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% block content %}{% endblock %}
+
+    <div class="footer">
+        <p>IBEW Local 46 - IP2A Database Report</p>
+        <p>This report contains confidential information. Handle accordingly.</p>
+    </div>
+</body>
+</html>

@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Phase 6 Week 8: Reports & Export** (Complete)
+  * Reports landing page with categorized report list
+  * ReportService with PDF generation (WeasyPrint) and Excel generation (openpyxl)
+  * Member roster report (PDF/Excel) with filtering by status
+  * Dues summary report (PDF/Excel) with year parameter
+  * Overdue members report (PDF/Excel) with balance calculation
+  * Training enrollment report (Excel) with course enrollment counts
+  * Grievance summary report (PDF) with status breakdown
+  * SALTing activities report (Excel) with full activity details
+  * PDF templates with professional styling and header/footer
+  * Lazy loading for WeasyPrint to handle missing system dependencies
+  * 30 new report tests (124 frontend total)
+  * Updated requirements.txt with weasyprint and openpyxl
+
 - **Infrastructure Phase 2: Migration Safety** (Complete)
   * Alembic wrapper for timestamped migrations (YYYYMMDD_HHMMSS_description.py)
   * FK dependency graph analyzer (scripts/migration_graph.py)

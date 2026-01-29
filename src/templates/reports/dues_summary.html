@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }} - IP2A Report</title>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>{{ title }}</h1>
+            <p class="meta">{{ subtitle }}</p>
+        </div>
+        <div class="meta" style="text-align: right;">
+            <p>Generated: {{ generated_at }}</p>
+            <p>By: {{ generated_by }}</p>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+        <div class="stat-box" style="flex: 1;">
+            <div class="stat-label">Total Due</div>
+            <div class="stat-value">{{ format_currency(grand_total_due) }}</div>
+        </div>
+        <div class="stat-box" style="flex: 1;">
+            <div class="stat-label">Total Collected</div>
+            <div class="stat-value">{{ format_currency(grand_total_paid) }}</div>
+        </div>
+        <div class="stat-box" style="flex: 1;">
+            <div class="stat-label">Collection Rate</div>
+            <div class="stat-value">{{ "%.1f"|format(grand_collection_rate) }}%</div>
+        </div>
+    </div>
+
+    <h2>Monthly Breakdown</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Period</th>
+                <th>Status</th>
+                <th>Members</th>
+                <th>Paid</th>
+                <th>Total Due</th>
+                <th>Total Paid</th>
+                <th>Collection %</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ps in period_stats %}
+            <tr>
+                <td>{{ ps.period_name }}</td>
+                <td>
+                    <span class="badge {% if ps.is_closed %}badge-success{% else %}badge-warning{% endif %}">
+                        {% if ps.is_closed %}Closed{% else %}Open{% endif %}
+                    </span>
+                </td>
+                <td>{{ ps.member_count }}</td>
+                <td>{{ ps.paid_count }}</td>
+                <td>{{ format_currency(ps.total_due) }}</td>
+                <td>{{ format_currency(ps.total_paid) }}</td>
+                <td>{{ "%.1f"|format(ps.collection_rate) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr style="font-weight: bold; background-color: #edf2f7;">
+                <td colspan="4">Totals</td>
+                <td>{{ format_currency(grand_total_due) }}</td>
+                <td>{{ format_currency(grand_total_paid) }}</td>
+                <td>{{ "%.1f"|format(grand_collection_rate) }}%</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="footer">
+        <p>IBEW Local 46 - Dues Summary Report</p>
+        <p>This report contains confidential financial information.</p>
+    </div>
+</body>
+</html>

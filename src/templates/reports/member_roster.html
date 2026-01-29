@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }} - IP2A Report</title>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>{{ title }}</h1>
+            <p class="meta">{{ subtitle }}</p>
+        </div>
+        <div class="meta" style="text-align: right;">
+            <p>Generated: {{ generated_at }}</p>
+            <p>By: {{ generated_by }}</p>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Member #</th>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Classification</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in members %}
+            <tr>
+                <td>{{ member.member_number or '—' }}</td>
+                <td>
+                    <strong>{{ member.last_name }}, {{ member.first_name }}</strong>
+                </td>
+                <td>
+                    {% if member.email %}{{ member.email }}<br>{% endif %}
+                    {{ format_phone(member.phone) }}
+                </td>
+                <td>
+                    {% if member.classification %}
+                    <span class="badge badge-info">{{ member.classification.value.replace('_', ' ').title() }}</span>
+                    {% else %}
+                    —
+                    {% endif %}
+                </td>
+                <td>
+                    {% if member.status %}
+                    <span class="badge {% if member.status.value == 'active' %}badge-success{% elif member.status.value == 'inactive' %}badge-warning{% else %}badge-error{% endif %}">
+                        {{ member.status.value.title() }}
+                    </span>
+                    {% else %}
+                    —
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>IBEW Local 46 - Member Roster Report</p>
+        <p>This report contains confidential member information. Handle accordingly.</p>
+    </div>
+</body>
+</html>
