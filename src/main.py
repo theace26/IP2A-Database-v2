@@ -56,6 +56,7 @@ from src.routers.dues_adjustments import router as dues_adjustments_router
 
 # Phase 6 Frontend router
 from src.routers import frontend
+from src.routers.staff import router as staff_router
 
 # ------------------------------------------------------------
 # Initialize FastAPI
@@ -144,6 +145,9 @@ app.include_router(dues_rates_router)
 app.include_router(dues_periods_router)
 app.include_router(dues_payments_router)
 app.include_router(dues_adjustments_router)
+
+# Phase 6 Staff Management router
+app.include_router(staff_router)
 
 # Frontend routes (HTML pages) - include LAST to not interfere with API routes
 app.include_router(frontend.router)

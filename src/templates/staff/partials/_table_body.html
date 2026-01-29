@@ -1,0 +1,92 @@
+{# Table body partial - updated via HTMX search #}
+
+<div class="overflow-x-auto">
+    <table class="table table-zebra">
+        <thead>
+            <tr class="bg-base-200">
+                <th class="w-12">
+                    <label>
+                        <input type="checkbox" class="checkbox checkbox-sm" id="select-all" />
+                    </label>
+                </th>
+                <th>User</th>
+                <th>Roles</th>
+                <th>Status</th>
+                <th>Last Login</th>
+                <th class="w-32">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="user-table-body">
+            {% if users %}
+                {% for user in users %}
+                {% include "staff/partials/_row.html" %}
+                {% endfor %}
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center py-8">
+                    <div class="text-base-content/50">
+                        <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                        </svg>
+                        <p>No users found</p>
+                        {% if query %}
+                        <p class="text-sm">Try adjusting your search or filters</p>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% if users %}
+<!-- Pagination -->
+<div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-base-200">
+    <div class="text-sm text-base-content/60">
+        Showing {{ ((current_page - 1) * 20) + 1 }} - {{ ((current_page - 1) * 20) + users|length }} of {{ total }} users
+    </div>
+
+    <div class="join">
+        {% if current_page > 1 %}
+        <button
+            class="join-item btn btn-sm"
+            hx-get="/staff/search?page={{ current_page - 1 }}&q={{ query }}&role={{ role_filter }}&status={{ status_filter }}"
+            hx-target="#table-container"
+        >
+            Previous
+        </button>
+        {% else %}
+        <button class="join-item btn btn-sm btn-disabled">Previous</button>
+        {% endif %}
+
+        {% for p in range(1, total_pages + 1) %}
+            {% if p == current_page %}
+            <button class="join-item btn btn-sm btn-active">{{ p }}</button>
+            {% elif p == 1 or p == total_pages or (p >= current_page - 2 and p <= current_page + 2) %}
+            <button
+                class="join-item btn btn-sm"
+                hx-get="/staff/search?page={{ p }}&q={{ query }}&role={{ role_filter }}&status={{ status_filter }}"
+                hx-target="#table-container"
+            >
+                {{ p }}
+            </button>
+            {% elif p == current_page - 3 or p == current_page + 3 %}
+            <button class="join-item btn btn-sm btn-disabled">...</button>
+            {% endif %}
+        {% endfor %}
+
+        {% if current_page < total_pages %}
+        <button
+            class="join-item btn btn-sm"
+            hx-get="/staff/search?page={{ current_page + 1 }}&q={{ query }}&role={{ role_filter }}&status={{ status_filter }}"
+            hx-target="#table-container"
+        >
+            Next
+        </button>
+        {% else %}
+        <button class="join-item btn btn-sm btn-disabled">Next</button>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
