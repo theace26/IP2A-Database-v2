@@ -1,62 +1,66 @@
 # IP2A-Database-v2: Project Context Document
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
-**Last Updated:** January 28, 2026
-**Current Version:** v0.7.0
-**Current Phase:** Phase 6 Week 2 - Auth Cookies + Dashboard (Week 1 Complete)
+**Last Updated:** January 29, 2026
+**Current Version:** v0.7.1
+**Current Phase:** Phase 6 Week 3 - Staff Management (Week 2 Complete)
 
 ---
 
-## 🎯 TL;DR
+## TL;DR
 
 **What:** Union operations management system for IBEW Local 46 (Seattle-area electrical workers union)
 
 **Who:** Xerxes - Business Representative by day, solo developer (5-10 hrs/week)
 
-**Where:** Backend COMPLETE. Starting frontend build.
+**Where:** Backend COMPLETE. Frontend authentication COMPLETE. Dashboard with real data COMPLETE.
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI
 
-**Status:** 177 tests passing, ~120 API endpoints, 8 ADRs, Phase 6 Week 1 complete
+**Status:** 187 tests passing, ~120 API endpoints, 8 ADRs, Phase 6 Week 2 complete
 
 ---
 
-## 📊 Current State
+## Current State
 
-### Backend: COMPLETE ✅
+### Backend: COMPLETE
 
 | Component | Models | Endpoints | Tests | Status |
 |-----------|--------|-----------|-------|--------|
-| Core (Org, Member, Employment) | 4 | ~20 | 17 | ✅ |
-| Auth (JWT, RBAC, Registration) | 4 | 13 | 52 | ✅ |
-| Union Ops (SALTing, Benevolence, Grievance) | 5 | 27 | 31 | ✅ |
-| Training (Students, Courses, Grades, Certs) | 7 | ~35 | 33 | ✅ |
-| Documents (S3/MinIO) | 1 | 8 | 11 | ✅ |
-| Dues (Rates, Periods, Payments, Adjustments) | 4 | ~35 | 21 | ✅ |
-| **Total** | **25** | **~120** | **165** | ✅ |
+| Core (Org, Member, Employment) | 4 | ~20 | 17 | Done |
+| Auth (JWT, RBAC, Registration) | 4 | 13 | 52 | Done |
+| Union Ops (SALTing, Benevolence, Grievance) | 5 | 27 | 31 | Done |
+| Training (Students, Courses, Grades, Certs) | 7 | ~35 | 33 | Done |
+| Documents (S3/MinIO) | 1 | 8 | 11 | Done |
+| Dues (Rates, Periods, Payments, Adjustments) | 4 | ~35 | 21 | Done |
+| **Total** | **25** | **~120** | **165** | Done |
 
-### Frontend: IN PROGRESS 🟡
+### Frontend: IN PROGRESS
 
 | Week | Focus | Status |
 |------|-------|--------|
-| Week 1 | Setup + Login | ✅ Complete |
-| Week 2 | Auth cookies + Dashboard | ← NEXT |
-| Week 3 | Staff management | Pending |
+| Week 1 | Setup + Login | Done |
+| Week 2 | Auth cookies + Dashboard | Done |
+| Week 3 | Staff management | NEXT |
 | Week 4 | Training landing | Pending |
 
-### Frontend Tests: 12 tests
+### Frontend Tests: 22 tests
 
 | Component | Tests | Status |
 |-----------|-------|--------|
-| Public Routes (login, forgot-password) | 3 | ✅ |
-| Protected Routes (dashboard, logout) | 2 | ✅ |
-| Static Files (CSS, JS) | 2 | ✅ |
-| Error Pages (404, 500) | 2 | ✅ |
-| Page Content | 3 | ✅ |
+| Public Routes (login, forgot-password) | 3 | Done |
+| Protected Routes (dashboard, logout) | 2 | Done |
+| Static Files (CSS, JS) | 2 | Done |
+| Error Pages (404, 500) | 2 | Done |
+| Page Content | 3 | Done |
+| Cookie Auth | 3 | Done |
+| Flash Messages | 2 | Done |
+| Dashboard API | 2 | Done |
+| Placeholder Routes | 3 | Done |
 
 ---
 
-## 🏗️ Tech Stack
+## Tech Stack
 
 | Layer | Technology | Notes |
 |-------|------------|-------|
@@ -64,18 +68,18 @@
 | **ORM** | SQLAlchemy 2.0 | Models = source of truth |
 | **Database** | PostgreSQL 16 | JSONB, proper constraints |
 | **Migrations** | Alembic | Governed, drift-detected |
-| **Auth** | JWT + bcrypt | 30min access, 7day refresh |
+| **Auth** | JWT + bcrypt | 30min access, 7day refresh, HTTP-only cookies |
 | **Files** | MinIO (dev) / S3 (prod) | Presigned URLs |
 | **Templates** | Jinja2 | Server-side rendering |
 | **Interactivity** | HTMX | HTML-over-the-wire |
 | **Micro-interactions** | Alpine.js | Dropdowns, toggles |
 | **CSS** | DaisyUI + Tailwind | CDN, no build step |
-| **Testing** | pytest + httpx | 177 tests passing |
+| **Testing** | pytest + httpx | 187 tests passing |
 | **Container** | Docker | Full dev environment |
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 IP2A-Database-v2/
@@ -91,8 +95,11 @@ IP2A-Database-v2/
 │   ├── models/                 # ORM models
 │   ├── schemas/                # Pydantic schemas
 │   ├── services/               # Business logic
+│   │   └── dashboard_service.py # Dashboard stats aggregation (Week 2)
 │   ├── routers/                # API endpoints
-│   │   └── dependencies/       # Auth dependencies
+│   │   └── dependencies/
+│   │       ├── auth.py         # Bearer token auth
+│   │       └── auth_cookie.py  # Cookie-based auth (Week 2)
 │   ├── templates/              # Jinja2 templates (Phase 6)
 │   │   ├── base.html
 │   │   ├── base_auth.html
@@ -120,7 +127,7 @@ IP2A-Database-v2/
 
 ---
 
-## 🔧 Quick Commands
+## Quick Commands
 
 ```bash
 # Start environment
@@ -148,77 +155,123 @@ ruff check . --fix && ruff format .
 
 ---
 
-## 🎯 Phase 6 Week 1: COMPLETE ✅
+## Phase 6 Week 2: COMPLETE
 
-**Objective:** Set up frontend foundation and working login page
+**Objective:** Implement cookie-based authentication and dashboard with real data
 
-**Instruction Documents:** `docs/instructions/1-preflight-and-setup.md` through `6-testing-and-commit.md`
+**Instruction Documents:** `docs/instructions/week2_instructions/`
 
-### Session A Complete ✅ (January 28, 2026)
-
-**Documents Completed:** 1, 2, 3 of 6
+### Session A: Cookie-Based Authentication (January 29, 2026)
 
 | Task | Status |
 |------|--------|
-| Pre-flight checks (Docker, tests, API, git) | ✅ |
-| Tag v0.7.0 (backend milestone) | ✅ |
-| Update CLAUDE.md for frontend phase | ✅ |
-| Create directory structure (templates, static) | ✅ |
-| Create base.html (sidebar layout) | ✅ |
-| Create base_auth.html (centered layout) | ✅ |
-| Create _navbar.html component | ✅ |
-| Create _sidebar.html component | ✅ |
-| Create _flash.html component | ✅ |
-| Create _modal.html component | ✅ |
-| Create custom.css (2.3 KB) | ✅ |
-| Create app.js (4.7 KB) | ✅ |
-| Archive old instruction files to docs/archive/ | ✅ |
-| All 165 tests passing | ✅ |
+| Create auth_cookie.py dependency | Done |
+| Update auth router to set HTTP-only cookies | Done |
+| Update frontend router with auth middleware | Done |
+| Fix login template path (/auth/login) | Done |
 
-**Commit:** `009fa3b feat(frontend): Phase 6 Week 1 Session A - Frontend foundation`
+**Key Changes:**
+- HTTP-only cookies for access_token (30 min) and refresh_token (7 days)
+- Protected routes redirect to login with flash message
+- Token expiry handled gracefully
 
-### Session B Complete ✅ (January 28, 2026)
-
-**Documents Completed:** 4, 5, 6 of 6
+### Session B: Dashboard with Real Data (January 29, 2026)
 
 | Task | Status |
 |------|--------|
-| Create login.html (HTMX form, error handling) | ✅ |
-| Create forgot_password.html | ✅ |
-| Create dashboard/index.html (stats cards, quick actions) | ✅ |
-| Create errors/404.html | ✅ |
-| Create errors/500.html | ✅ |
-| Create src/routers/frontend.py | ✅ |
-| Update main.py (static files, router, exception handlers) | ✅ |
-| Add jinja2 to requirements.txt | ✅ |
-| Create test_frontend.py (12 tests) | ✅ |
-| All 177 tests passing | ✅ |
+| Create dashboard_service.py | Done |
+| Count active members from Member model | Done |
+| Count active students from Student model | Done |
+| Count pending grievances | Done |
+| Sum dues collected this month | Done |
+| Add HTMX refresh for stats | Done |
+| Add recent activity from audit log | Done |
 
-**Commit:** `1274c12 feat(frontend): Phase 6 Week 1 Session B - Pages and integration`
+**Key Changes:**
+- DashboardService class with efficient COUNT queries
+- Stats: active_members, members_change, active_students, pending_grievances, dues_mtd
+- Activity feed from AuditLog with badges and time-ago formatting
 
-### Acceptance Criteria - All Met ✅
+### Session C: Polish and Tests (January 29, 2026)
 
-- [x] `/login` renders styled login form
-- [x] Form submits via HTMX to `/api/auth/login`
-- [x] `/dashboard` renders with sidebar and stats cards
-- [x] Static files created (CSS/JS)
-- [x] All tests pass (165 existing + 12 frontend = 177)
+| Task | Status |
+|------|--------|
+| Add flash message support | Done |
+| Handle token expiry with redirect | Done |
+| Add comprehensive auth tests | Done |
+| All 187 tests passing | Done |
+
+**Commit:** `b997022 feat(frontend): Phase 6 Week 2 - Auth cookies and dashboard data`
+
+### Acceptance Criteria - All Met
+
+- [x] Login sets HTTP-only cookies
+- [x] Protected routes redirect to login when not authenticated
+- [x] Dashboard shows real member/student/grievance/dues stats
+- [x] Activity feed shows recent audit log entries
+- [x] Flash messages display on login page
+- [x] All tests pass (177 existing + 10 new = 187)
 
 ---
 
-## 🚨 Important Patterns
+## Phase 6 Week 1: COMPLETE
+
+**Objective:** Set up frontend foundation and working login page
+
+### Session A Complete (January 28, 2026)
+
+| Task | Status |
+|------|--------|
+| Pre-flight checks (Docker, tests, API, git) | Done |
+| Tag v0.7.0 (backend milestone) | Done |
+| Create directory structure (templates, static) | Done |
+| Create base templates and components | Done |
+| Create custom.css and app.js | Done |
+
+**Commit:** `009fa3b feat(frontend): Phase 6 Week 1 Session A - Frontend foundation`
+
+### Session B Complete (January 28, 2026)
+
+| Task | Status |
+|------|--------|
+| Create login.html and forgot_password.html | Done |
+| Create dashboard/index.html | Done |
+| Create error pages (404, 500) | Done |
+| Create frontend router | Done |
+| Add frontend tests (12 tests) | Done |
+
+**Commit:** `1274c12 feat(frontend): Phase 6 Week 1 Session B - Pages and integration`
+
+---
+
+## Important Patterns
 
 ### Enum Imports
 ```python
-# ✅ CORRECT
+# CORRECT
 from src.db.enums import MemberStatus, CohortStatus
 
-# ❌ WRONG (old location)
+# WRONG (old location)
 from src.models.enums import MemberStatus
 ```
 
 ### Service Layer Pattern
 All business logic goes through services, not directly in routes.
+
+### Cookie-Based Auth (Week 2)
+```python
+from src.routers.dependencies.auth_cookie import require_auth
+
+@router.get("/protected")
+async def protected_page(
+    request: Request,
+    current_user: dict = Depends(require_auth),
+):
+    # Handle redirect
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+    # current_user has: id, email, roles
+```
 
 ### Template Rendering
 ```python
@@ -232,14 +285,14 @@ async def page(request: Request):
 
 ### HTMX Form Pattern
 ```html
-<form hx-post="/api/endpoint" hx-target="#result" hx-swap="innerHTML">
+<form hx-post="/auth/login" hx-target="#result" hx-swap="innerHTML">
     <!-- form fields -->
 </form>
 ```
 
 ---
 
-## 📝 Session Workflow
+## Session Workflow
 
 ### Starting a Session
 1. `git pull origin main`
@@ -261,18 +314,18 @@ async def page(request: Request):
 
 ---
 
-## 🔄 Claude.ai Sync Schedule
+## Claude.ai Sync Schedule
 
 ### When to Update Claude.ai
 
 **Update immediately when:**
-- ✅ Major phase complete
-- ✅ Critical decisions needed
-- ✅ Blockers encountered
+- Major phase complete
+- Critical decisions needed
+- Blockers encountered
 
 **Update weekly for:**
-- 📊 Progress report
-- 🎯 Planning sessions
+- Progress report
+- Planning sessions
 
 ### What to Share
 
@@ -284,42 +337,29 @@ async def page(request: Request):
 
 ---
 
-## 📂 Phase 6 Week 1 Files Created
+## Phase 6 Week 2 Files Created/Modified
 
-### Session A
+### New Files
 ```
-src/templates/
-├── base.html              # Main layout with sidebar
-├── base_auth.html         # Centered layout for auth pages
-└── components/
-    ├── _navbar.html       # Top navigation bar
-    ├── _sidebar.html      # Left sidebar menu
-    ├── _flash.html        # Alert messages with auto-dismiss
-    └── _modal.html        # HTMX modal container
+src/routers/dependencies/
+└── auth_cookie.py         # Cookie-based JWT validation
 
-src/static/
-├── css/custom.css         # Custom styles (transitions, cards, tables)
-├── js/app.js              # HTMX handlers, toast notifications, utilities
-└── images/favicon.ico     # Placeholder
+src/services/
+└── dashboard_service.py   # Dashboard stats aggregation
 ```
 
-### Session B
+### Modified Files
 ```
-src/templates/
-├── auth/
-│   ├── login.html         # Login page with HTMX form
-│   └── forgot_password.html
-├── dashboard/
-│   └── index.html         # Dashboard with stats cards
-└── errors/
-    ├── 404.html           # Not found page
-    └── 500.html           # Server error page
-
 src/routers/
-└── frontend.py            # Frontend router (HTML pages)
+├── auth.py                # Added cookie setting on login/logout
+└── frontend.py            # Added auth middleware, real data, placeholders
+
+src/templates/
+├── auth/login.html        # Flash messages, correct /auth/login path
+└── dashboard/index.html   # HTMX refresh, activity feed
 
 src/tests/
-└── test_frontend.py       # 12 frontend tests
+└── test_frontend.py       # 22 tests (10 new auth tests)
 ```
 
 ---

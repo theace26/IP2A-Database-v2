@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Phase 6 Week 2: Auth Cookies + Dashboard** (Complete)
+  * Cookie-based authentication with HTTP-only cookies
+  * `auth_cookie.py` dependency for JWT cookie validation
+  * `dashboard_service.py` for real-time stats aggregation
+  * Dashboard shows real data: active members, students, grievances, dues MTD
+  * Activity feed from audit log with badges and time-ago formatting
+  * HTMX refresh for dashboard stats and activity
+  * Flash message support via URL parameters
+  * Token expiry handling with redirect to login
+  * Placeholder routes for future pages (members, dues, training, etc.)
+  * 10 new auth tests (187 total)
+
 - **Phase 6 Week 1: Frontend Foundation** (Complete)
   * Base templates with DaisyUI + Tailwind CSS + HTMX + Alpine.js (CDN)
   * Login page with HTMX form submission
@@ -18,12 +30,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * Custom CSS and JavaScript (toast notifications, HTMX handlers)
   * Error pages (404, 500) with hybrid HTML/JSON responses
   * Frontend router for HTML page serving
-  * Placeholder routes for future pages (members, dues, training, etc.)
   * 12 frontend tests (177 total)
   * jinja2 added to requirements.txt
 
 ### Changed
 - Updated CLAUDE.md with frontend phase context
+- Updated auth router to set/clear HTTP-only cookies on login/logout
+- Updated frontend router with auth middleware and real data
+- Updated login template to use correct /auth/login path
+- Updated dashboard template with HTMX refresh and activity feed
 - Created docs/instructions/ for Claude Code instruction documents
 - Updated main.py with static file mounting and exception handlers
 
