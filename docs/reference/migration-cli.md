@@ -116,3 +116,70 @@ alembic downgrade -1
 ```
 
 Note: Direct `alembic revision` will not use timestamp naming.
+
+## Dependency Analysis
+
+### Show FK Graph
+
+```bash
+python scripts/migration_graph.py analyze
+# Or via CLI:
+ip2adb migrate graph
+```
+
+Analyzes foreign key relationships and shows:
+- Dependencies between tables
+- Migration order (create)
+- Migration order (drop - reverse)
+
+### Generate Mermaid Diagram
+
+```bash
+python scripts/migration_graph.py visualize
+ip2adb migrate graph -v
+ip2adb migrate graph -v -o docs/architecture/diagrams/migration-deps.mermaid
+```
+
+## Destructive Operation Detection
+
+### Check All Migrations
+
+```bash
+python scripts/migration_validator.py check
+# Or via CLI:
+ip2adb migrate check-destructive
+```
+
+Scans for:
+- DROP TABLE
+- DROP COLUMN
+- TRUNCATE
+- DELETE without WHERE
+- ALTER TABLE DROP
+
+### Strict Mode
+
+```bash
+ip2adb migrate check-destructive --strict
+```
+
+Treats warnings as errors (useful for CI).
+
+### Check Specific File
+
+```bash
+ip2adb migrate check-destructive -f 20260129_143052_add_users.py
+```
+
+## Pre-commit Hooks
+
+Two hooks validate migrations:
+
+1. **migration-naming** - Validates timestamp format
+2. **migration-destructive** - Scans for dangerous operations
+
+```bash
+# Run manually
+pre-commit run migration-naming --all-files
+pre-commit run migration-destructive --all-files
+```

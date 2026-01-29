@@ -10,13 +10,13 @@
 
 ---
 
-## Phase 2 — Migration Safety (Current) 🟡
+## Phase 2 — Migration Safety ✅
 - [x] Migration naming enforcement
 - [x] Legacy migration freeze
 - [x] Breaking change detection
 - [x] Alembic wrapper for timestamped generation
-- [ ] Migration dependency graph (FK-based)
-- [ ] Auto-detect destructive downgrades
+- [x] Migration dependency graph (FK-based)
+- [x] Auto-detect destructive downgrades
 
 ---
 

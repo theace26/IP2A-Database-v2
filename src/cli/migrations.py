@@ -105,3 +105,48 @@ def migrate_history(verbose: bool):
 
     result = subprocess.run(cmd, cwd=PROJECT_ROOT)
     sys.exit(result.returncode)
+
+
+@migrate.command("graph")
+@click.option("--visualize", "-v", is_flag=True, help="Output Mermaid diagram")
+@click.option("--output", "-o", help="Save diagram to file")
+def migrate_graph(visualize: bool, output: str):
+    """
+    Show migration dependency graph.
+
+    Analyzes FK relationships to determine correct migration order.
+    """
+    script = PROJECT_ROOT / "scripts" / "migration_graph.py"
+
+    cmd = [sys.executable, str(script)]
+
+    if visualize:
+        cmd.append("visualize")
+        if output:
+            cmd.extend(["-o", output])
+    else:
+        cmd.append("analyze")
+
+    result = subprocess.run(cmd, cwd=PROJECT_ROOT)
+    sys.exit(result.returncode)
+
+
+@migrate.command("check-destructive")
+@click.option("--strict", is_flag=True, help="Treat warnings as errors")
+@click.option("--file", "-f", help="Check specific file")
+def migrate_check_destructive(strict: bool, file: str):
+    """
+    Check migrations for destructive operations.
+
+    Scans for DROP TABLE, DROP COLUMN, TRUNCATE, etc.
+    """
+    script = PROJECT_ROOT / "scripts" / "migration_validator.py"
+
+    cmd = [sys.executable, str(script), "check"]
+    if strict:
+        cmd.append("--strict")
+    if file:
+        cmd.extend(["-f", file])
+
+    result = subprocess.run(cmd, cwd=PROJECT_ROOT)
+    sys.exit(result.returncode)

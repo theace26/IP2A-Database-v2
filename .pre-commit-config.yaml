@@ -23,3 +23,11 @@ repos:
         files: ^src/db/migrations/versions/.*\.py$
         pass_filenames: false
         always_run: true
+
+      - id: migration-destructive
+        name: Check for destructive migrations
+        entry: python scripts/migration_validator.py check
+        language: python
+        files: ^src/db/migrations/versions/.*\.py$
+        pass_filenames: false
+        always_run: true
