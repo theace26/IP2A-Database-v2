@@ -5,7 +5,7 @@
 
 ---
 
-## Current Focus: Phase 6 Frontend (Week 3 - Staff Management)
+## Current Focus: Phase 6 Frontend (Week 4 - Training Landing)
 
 ### Legend: Done | In Progress | Pending
 
@@ -57,18 +57,30 @@
 
 **Commit:** `b997022` - v0.7.1 (Week 2 Complete)
 
-### Week 3: Staff Management (NEXT)
+### Week 3: Staff Management (COMPLETE)
 
 | Task | Status |
 |------|--------|
-| User list page with search/filter | Pending |
-| User detail/edit modal | Pending |
-| Role assignment UI | Pending |
-| Account status management | Pending |
-| Pagination component | Pending |
-| Tests for staff pages | Pending |
+| StaffService with search/filter/paginate | Done |
+| User list page with table and stats | Done |
+| HTMX live search (300ms debounce) | Done |
+| Filter by role and status | Done |
+| Pagination component | Done |
+| Quick edit modal with role checkboxes | Done |
+| Account status toggle (active/locked) | Done |
+| Full detail page with edit form | Done |
+| Account actions (lock, unlock, reset password, delete) | Done |
+| 403 error page | Done |
+| 18 new staff tests (40 frontend total) | Done |
 
-### Week 4: Training Landing (Pending)
+**Commits:**
+- `4d80365` - Session A: User list with search
+- `85ada48` - Session B: Quick edit modal
+- `89a045c` - Session C: Actions and detail page
+
+**Version:** v0.7.2 (Week 3 Complete)
+
+### Week 4: Training Landing (NEXT)
 
 | Task | Status |
 |------|--------|
@@ -83,13 +95,13 @@
 
 | Metric | Current |
 |--------|---------|
-| Total Tests | 187 |
+| Total Tests | 205 |
 | Backend Tests | 165 |
-| Frontend Tests | 22 |
+| Frontend Tests | 40 |
 | API Endpoints | ~120 |
 | ORM Models | 25 |
 | ADRs | 8 |
-| Version | v0.7.1 |
+| Version | v0.7.2 |
 
 ---
 
@@ -97,6 +109,7 @@
 
 | Version | Date | Milestone |
 |---------|------|-----------|
+| v0.7.2 | 2026-01-29 | Phase 6 Week 3 - Staff Management |
 | v0.7.1 | 2026-01-29 | Phase 6 Week 2 - Auth cookies + Dashboard |
 | v0.7.0 | 2026-01-28 | Phase 4 Complete (Backend milestone) |
 | v0.6.0 | 2026-01-28 | Phase 3 + Auth + Training |
@@ -116,6 +129,9 @@ pytest -v
 
 # Run frontend tests only
 pytest src/tests/test_frontend.py -v
+
+# Run staff tests only
+pytest src/tests/test_staff.py -v
 
 # Check code quality
 ruff check . --fix && ruff format .
