@@ -1,5 +1,6 @@
 """
-Training frontend tests.
+Comprehensive training frontend tests.
+Tests training landing, student list, course list, and enrollment.
 """
 
 import pytest
@@ -43,7 +44,7 @@ class TestStudentList:
     async def test_students_search_exists(self, async_client: AsyncClient):
         """Students search endpoint should exist."""
         response = await async_client.get("/training/students/search")
-        # 302 = redirect to login, 401 = unauthorized, 422 = validation error (expected without auth)
+        # 302 = redirect to login, 401 = unauthorized, 422 = validation error
         assert response.status_code in [200, 302, 401, 422]
 
     @pytest.mark.asyncio
@@ -56,6 +57,14 @@ class TestStudentList:
     async def test_students_search_with_status(self, async_client: AsyncClient):
         """Students search accepts status filter."""
         response = await async_client.get("/training/students/search?status=enrolled")
+        assert response.status_code in [200, 302, 401, 422]
+
+    @pytest.mark.asyncio
+    async def test_students_search_with_cohort(self, async_client: AsyncClient):
+        """Students search accepts cohort filter."""
+        response = await async_client.get(
+            "/training/students/search?cohort=2026-Spring"
+        )
         assert response.status_code in [200, 302, 401, 422]
 
     @pytest.mark.asyncio
@@ -76,12 +85,10 @@ class TestStudentDetail:
 
     @pytest.mark.asyncio
     async def test_student_detail_requires_auth(self, async_client: AsyncClient):
-        """Student detail page should require authentication or handle missing student."""
+        """Student detail page should require authentication or handle missing."""
         response = await async_client.get(
             "/training/students/1", follow_redirects=False
         )
-        # May redirect to login (302), return unauthorized (401), not found (404),
-        # or OK if following redirects internally (200)
         assert response.status_code in [200, 302, 401, 404]
 
     @pytest.mark.asyncio
@@ -105,3 +112,41 @@ class TestCourseList:
         """Courses page should require authentication."""
         response = await async_client.get("/training/courses", follow_redirects=False)
         assert response.status_code in [302, 401]
+
+
+class TestCourseDetail:
+    """Tests for course detail page."""
+
+    @pytest.mark.asyncio
+    async def test_course_detail_exists(self, async_client: AsyncClient):
+        """Course detail page route should exist."""
+        response = await async_client.get("/training/courses/1")
+        assert response.status_code in [200, 302, 401, 404]
+
+    @pytest.mark.asyncio
+    async def test_course_detail_requires_auth(self, async_client: AsyncClient):
+        """Course detail page should require authentication or handle missing."""
+        response = await async_client.get("/training/courses/1", follow_redirects=False)
+        assert response.status_code in [200, 302, 401, 404]
+
+    @pytest.mark.asyncio
+    async def test_course_detail_nonexistent(self, async_client: AsyncClient):
+        """Course detail for nonexistent ID returns appropriate status."""
+        response = await async_client.get("/training/courses/99999")
+        assert response.status_code in [302, 401, 404]
+
+
+class TestErrorHandling:
+    """Tests for error handling."""
+
+    @pytest.mark.asyncio
+    async def test_invalid_student_id_handled(self, async_client: AsyncClient):
+        """Invalid student ID should be handled gracefully."""
+        response = await async_client.get("/training/students/invalid")
+        assert response.status_code in [302, 401, 404, 422]
+
+    @pytest.mark.asyncio
+    async def test_invalid_course_id_handled(self, async_client: AsyncClient):
+        """Invalid course ID should be handled gracefully."""
+        response = await async_client.get("/training/courses/invalid")
+        assert response.status_code in [302, 401, 404, 422]

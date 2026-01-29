@@ -215,3 +215,44 @@ async def course_list_page(
             "courses": courses,
         },
     )
+
+
+# ============================================================
+# Course Detail Page
+# ============================================================
+
+
+@router.get("/courses/{course_id}", response_class=HTMLResponse)
+async def course_detail_page(
+    request: Request,
+    course_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_auth),
+):
+    """Render the course detail page."""
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
+    service = TrainingFrontendService(db)
+    course = await service.get_course_by_id(course_id)
+
+    if not course:
+        return templates.TemplateResponse(
+            "errors/404.html",
+            {"request": request, "message": "Course not found"},
+            status_code=404,
+        )
+
+    # Count active enrollments
+    enrolled_count = sum(1 for e in course.enrollments if e.status.value == "enrolled")
+
+    return templates.TemplateResponse(
+        "training/courses/detail.html",
+        {
+            "request": request,
+            "user": current_user,
+            "course": course,
+            "enrolled_count": enrolled_count,
+            "get_enrollment_badge": TrainingFrontendService.get_enrollment_badge_class,
+        },
+    )

@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course.code }} - {{ course.name }} - IP2A{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/training">Training</a></li>
+            <li><a href="/training/courses">Courses</a></li>
+            <li>{{ course.code }}</li>
+        </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-3">
+                <span class="badge badge-outline badge-lg">{{ course.code }}</span>
+                <span class="badge {{ 'badge-success' if course.is_active else 'badge-ghost' }}">
+                    {{ 'Active' if course.is_active else 'Inactive' }}
+                </span>
+            </div>
+            <h1 class="text-2xl font-bold mt-2">{{ course.name }}</h1>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Description -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title">Description</h2>
+                    {% if course.description %}
+                    <p class="whitespace-pre-wrap">{{ course.description }}</p>
+                    {% else %}
+                    <p class="text-base-content/50">No description available.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Enrollments -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="card-title">Enrolled Students</h2>
+                        <span class="badge badge-primary">{{ enrolled_count }} enrolled</span>
+                    </div>
+                    {% if course.enrollments %}
+                    <div class="overflow-x-auto">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Status</th>
+                                    <th>Enrolled</th>
+                                    <th>Grade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for enrollment in course.enrollments[:10] %}
+                                <tr>
+                                    <td>
+                                        {% if enrollment.student and enrollment.student.member %}
+                                        <a href="/training/students/{{ enrollment.student.id }}" class="link link-hover">
+                                            {{ enrollment.student.member.first_name }} {{ enrollment.student.member.last_name }}
+                                        </a>
+                                        {% else %}
+                                        <span class="text-base-content/50">Unknown</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-sm {{ get_enrollment_badge(enrollment.status) }}">
+                                            {{ enrollment.status.value | title }}
+                                        </span>
+                                    </td>
+                                    <td>{{ enrollment.enrollment_date.strftime('%b %d, %Y') }}</td>
+                                    <td>{{ enrollment.letter_grade or enrollment.final_grade or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if course.enrollments | length > 10 %}
+                    <p class="text-center text-base-content/50 text-sm mt-2">
+                        Showing 10 of {{ course.enrollments | length }} enrollments
+                    </p>
+                    {% endif %}
+                    {% else %}
+                    <p class="text-center py-4 text-base-content/50">No students enrolled yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Course Info -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title">Course Details</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="label"><span class="label-text text-base-content/60">Course Type</span></label>
+                            <p class="font-medium">{{ course.course_type.value | title }}</p>
+                        </div>
+                        <div>
+                            <label class="label"><span class="label-text text-base-content/60">Credits</span></label>
+                            <p class="font-medium">{{ course.credits }}</p>
+                        </div>
+                        <div>
+                            <label class="label"><span class="label-text text-base-content/60">Hours</span></label>
+                            <p class="font-medium">{{ course.hours }} contact hours</p>
+                        </div>
+                        <div>
+                            <label class="label"><span class="label-text text-base-content/60">Passing Grade</span></label>
+                            <p class="font-medium">{{ course.passing_grade }}%</p>
+                        </div>
+                        <div>
+                            <label class="label"><span class="label-text text-base-content/60">Required</span></label>
+                            <p class="font-medium">{{ 'Yes' if course.is_required else 'No' }}</p>
+                        </div>
+                        {% if course.prerequisites %}
+                        <div>
+                            <label class="label"><span class="label-text text-base-content/60">Prerequisites</span></label>
+                            <p class="font-medium">{{ course.prerequisites }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title">Actions</h2>
+                    <div class="space-y-2">
+                        <button class="btn btn-outline btn-block btn-disabled" title="Coming soon">
+                            Edit Course
+                        </button>
+                        <button class="btn btn-outline btn-block btn-disabled" title="Coming soon">
+                            Manage Sessions
+                        </button>
+                        <a href="/training/courses" class="btn btn-ghost btn-block">
+                            Back to Courses
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
