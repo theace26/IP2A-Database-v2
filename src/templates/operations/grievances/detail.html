@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}{{ grievance.grievance_number or 'Grievance' }} - IP2A{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/operations">Operations</a></li>
+            <li><a href="/operations/grievances">Grievances</a></li>
+            <li>{{ grievance.grievance_number or 'Case #' ~ grievance.id }}</li>
+        </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl font-bold font-mono">{{ grievance.grievance_number or 'GRV-' ~ grievance.id }}</h1>
+                <span class="badge {{ get_status_badge_class(grievance.status) }} badge-lg">
+                    {{ grievance.status.value.replace('_', ' ') | title }}
+                </span>
+                <span class="badge {{ get_step_badge_class(grievance.current_step) }}">
+                    {{ grievance.current_step.value.replace('_', ' ') | title }}
+                </span>
+            </div>
+            <p class="text-base-content/60 mt-1">
+                vs. {{ grievance.employer.name if grievance.employer else 'Unknown Employer' }}
+            </p>
+        </div>
+        <div class="flex gap-2">
+            <a href="/operations/grievances" class="btn btn-ghost">Back to List</a>
+            {% if grievance.status.value not in ['settled', 'withdrawn', 'closed'] %}
+            <button class="btn btn-primary">Escalate</button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Step Progress -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title text-lg">Grievance Progress</h2>
+            <ul class="steps steps-horizontal w-full mt-4">
+                <li class="step step-primary" data-content="✓">Filed</li>
+                <li class="step {{ 'step-primary' if grievance.current_step.value in ['step_1', 'step_2', 'step_3', 'arbitration'] else '' }}" data-content="{{ '✓' if grievance.current_step.value in ['step_2', 'step_3', 'arbitration'] else '1' }}">
+                    Step 1
+                    <span class="text-xs block">Supervisor</span>
+                </li>
+                <li class="step {{ 'step-primary' if grievance.current_step.value in ['step_2', 'step_3', 'arbitration'] else '' }}" data-content="{{ '✓' if grievance.current_step.value in ['step_3', 'arbitration'] else '2' }}">
+                    Step 2
+                    <span class="text-xs block">HR/Manager</span>
+                </li>
+                <li class="step {{ 'step-primary' if grievance.current_step.value in ['step_3', 'arbitration'] else '' }}" data-content="{{ '✓' if grievance.current_step.value == 'arbitration' else '3' }}">
+                    Step 3
+                    <span class="text-xs block">Director</span>
+                </li>
+                <li class="step {{ 'step-error' if grievance.current_step.value == 'arbitration' else '' }}" data-content="{{ '⚖' if grievance.current_step.value == 'arbitration' else '4' }}">
+                    Arbitration
+                </li>
+                <li class="step {{ 'step-success' if grievance.status.value in ['settled', 'closed'] else '' }}" data-content="{{ '✓' if grievance.status.value in ['settled', 'closed'] else '?' }}">
+                    Resolution
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Case Details -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title">Case Details</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label class="text-sm text-base-content/60">Grievant</label>
+                            <p class="font-medium">
+                                {{ grievance.member.first_name if grievance.member else 'N/A' }}
+                                {{ grievance.member.last_name if grievance.member else '' }}
+                            </p>
+                        </div>
+                        <div>
+                            <label class="text-sm text-base-content/60">Employer</label>
+                            <p class="font-medium">{{ grievance.employer.name if grievance.employer else 'Unknown' }}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm text-base-content/60">Filed Date</label>
+                            <p>{{ grievance.filed_date.strftime('%B %d, %Y') if grievance.filed_date else '—' }}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm text-base-content/60">Incident Date</label>
+                            <p>{{ grievance.incident_date.strftime('%B %d, %Y') if grievance.incident_date else '—' }}</p>
+                        </div>
+                        {% if grievance.contract_article %}
+                        <div>
+                            <label class="text-sm text-base-content/60">Contract Article</label>
+                            <p class="font-mono">{{ grievance.contract_article }}</p>
+                        </div>
+                        {% endif %}
+                        {% if grievance.assigned_rep %}
+                        <div>
+                            <label class="text-sm text-base-content/60">Assigned Rep</label>
+                            <p>{{ grievance.assigned_rep }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="text-sm text-base-content/60">Violation Description</label>
+                        <div class="bg-base-200 p-4 rounded-lg mt-1 whitespace-pre-wrap">{{ grievance.violation_description }}</div>
+                    </div>
+
+                    {% if grievance.remedy_sought %}
+                    <div class="mt-4">
+                        <label class="text-sm text-base-content/60">Remedy Sought</label>
+                        <div class="bg-base-200 p-4 rounded-lg mt-1 whitespace-pre-wrap">{{ grievance.remedy_sought }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if grievance.resolution %}
+                    <div class="mt-4">
+                        <label class="text-sm text-base-content/60">Resolution</label>
+                        <div class="alert alert-success mt-1">
+                            <svg class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>{{ grievance.resolution }}</span>
+                        </div>
+                        {% if grievance.settlement_amount %}
+                        <p class="mt-2 font-bold text-success">Settlement: ${{ grievance.settlement_amount }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Step History -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <div class="flex items-center justify-between">
+                        <h2 class="card-title">Step History</h2>
+                        <button class="btn btn-sm btn-primary">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Add Step Record
+                        </button>
+                    </div>
+
+                    {% if grievance.steps %}
+                    <ul class="timeline timeline-vertical mt-4">
+                        {% for step in grievance.steps | sort(attribute='step_number') %}
+                        <li>
+                            {% if not loop.first %}
+                            <hr class="{{ 'bg-primary' if step.outcome and step.outcome.value in ['settled', 'advanced'] else 'bg-base-300' }}"/>
+                            {% endif %}
+
+                            <div class="timeline-start text-sm">
+                                {{ step.meeting_date.strftime('%b %d, %Y') if step.meeting_date else '—' }}
+                            </div>
+
+                            <div class="timeline-middle">
+                                {% if step.outcome and step.outcome.value == 'settled' %}
+                                <svg class="w-5 h-5 text-success" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                {% elif step.outcome and step.outcome.value == 'advanced' %}
+                                <svg class="w-5 h-5 text-warning" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clip-rule="evenodd"/>
+                                </svg>
+                                {% else %}
+                                <svg class="w-5 h-5 text-error" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                                {% endif %}
+                            </div>
+
+                            <div class="timeline-end timeline-box">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="font-bold">Step {{ step.step_number }}{% if step.step_number == 4 %} (Arbitration){% endif %}</span>
+                                    {% if step.outcome %}
+                                    <span class="badge badge-sm {{ 'badge-success' if step.outcome.value == 'settled' else 'badge-warning' if step.outcome.value == 'advanced' else 'badge-error' }}">
+                                        {{ step.outcome.value | title }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                {% if step.notes %}
+                                <p class="text-sm mt-1">{{ step.notes }}</p>
+                                {% endif %}
+                                {% if step.union_attendees %}
+                                <div class="text-xs text-base-content/60 mt-2">
+                                    Union: {{ step.union_attendees }}
+                                </div>
+                                {% endif %}
+                                {% if step.employer_attendees %}
+                                <div class="text-xs text-base-content/60">
+                                    Employer: {{ step.employer_attendees }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            {% if not loop.last %}
+                            <hr class="{{ 'bg-primary' if step.outcome and step.outcome.value in ['settled', 'advanced'] else 'bg-base-300' }}"/>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="text-center py-8 text-base-content/50">
+                        <p>No step history recorded</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Status Card -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-lg">Update Status</h2>
+                    <select class="select select-bordered w-full mt-2">
+                        {% for status in all_statuses %}
+                        <option value="{{ status }}" {{ 'selected' if grievance.status.value == status }}>
+                            {{ status.replace('_', ' ') | title }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-primary btn-sm mt-2">Update</button>
+                </div>
+            </div>
+
+            <!-- Timeline Card -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-lg">Timeline</h2>
+                    <div class="space-y-3 text-sm mt-2">
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Filed</span>
+                            <span>{{ grievance.filed_date.strftime('%b %d, %Y') if grievance.filed_date else '—' }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Current Step</span>
+                            <span class="font-bold">{{ grievance.current_step.value.replace('_', ' ') | title }}</span>
+                        </div>
+                        {% if grievance.resolution_date %}
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Resolved</span>
+                            <span>{{ grievance.resolution_date.strftime('%b %d, %Y') }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="divider my-2"></div>
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Created</span>
+                            <span>{{ grievance.created_at.strftime('%b %d, %Y') if grievance.created_at else '—' }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Updated</span>
+                            <span>{{ grievance.updated_at.strftime('%b %d, %Y') if grievance.updated_at else '—' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Links -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-lg">Related</h2>
+                    <div class="space-y-2 mt-2">
+                        {% if grievance.member %}
+                        <a href="/members/{{ grievance.member.id }}" class="btn btn-outline btn-sm btn-block">
+                            View Member Profile
+                        </a>
+                        {% endif %}
+                        <button class="btn btn-outline btn-sm btn-block">
+                            View Documents
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Grievances - IP2A{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/operations">Operations</a></li>
+            <li>Grievances</li>
+        </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold">Grievances</h1>
+            <p class="text-base-content/60">Contract enforcement and dispute resolution</p>
+        </div>
+        <button class="btn btn-error">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            File Grievance
+        </button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats stats-vertical lg:stats-horizontal shadow w-full">
+        <div class="stat">
+            <div class="stat-title">Total Filed</div>
+            <div class="stat-value">{{ stats.total }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">Open Cases</div>
+            <div class="stat-value text-warning">{{ stats.open }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">Step 1</div>
+            <div class="stat-value text-info">{{ stats.step_1 }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">Arbitration</div>
+            <div class="stat-value text-error">{{ stats.arbitration }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">Resolution Rate</div>
+            <div class="stat-value text-success">{{ stats.resolution_rate }}%</div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body p-4">
+            <div class="flex flex-col lg:flex-row gap-4">
+                <!-- Search -->
+                <div class="flex-1">
+                    <div class="relative">
+                        <input
+                            type="search"
+                            name="q"
+                            placeholder="Search by grievance #, member, or employer..."
+                            class="input input-bordered w-full pl-10"
+                            hx-get="/operations/grievances/search"
+                            hx-trigger="input changed delay:300ms, search"
+                            hx-target="#table-container"
+                            hx-include="[name='status'], [name='step']"
+                            hx-indicator="#search-spinner"
+                        />
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <span id="search-spinner" class="loading loading-spinner loading-sm absolute right-3 top-1/2 -translate-y-1/2 htmx-indicator"></span>
+                    </div>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="w-full lg:w-48">
+                    <select
+                        name="status"
+                        class="select select-bordered w-full"
+                        hx-get="/operations/grievances/search"
+                        hx-trigger="change"
+                        hx-target="#table-container"
+                        hx-include="[name='q'], [name='step']"
+                    >
+                        <option value="all">All Status</option>
+                        {% for status in all_statuses %}
+                        <option value="{{ status }}">{{ status.replace('_', ' ') | title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Step Filter -->
+                <div class="w-full lg:w-48">
+                    <select
+                        name="step"
+                        class="select select-bordered w-full"
+                        hx-get="/operations/grievances/search"
+                        hx-trigger="change"
+                        hx-target="#table-container"
+                        hx-include="[name='q'], [name='status']"
+                    >
+                        <option value="all">All Steps</option>
+                        {% for step in all_steps %}
+                        <option value="{{ step }}">{{ step.replace('_', ' ') | title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grievances Table -->
+    <div class="card bg-base-100 shadow overflow-hidden">
+        <div
+            id="table-container"
+            hx-get="/operations/grievances/search"
+            hx-trigger="load"
+        >
+            <div class="flex justify-center py-12">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

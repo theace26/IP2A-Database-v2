@@ -52,14 +52,22 @@
                 </a>
             </li>
 
-            <!-- Grievances -->
+            <!-- Operations -->
             <li>
-                <a href="/grievances" class="{% if '/grievances' in request.url.path %}active{% endif %}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Grievances
-                </a>
+                <details {% if '/operations' in request.url.path %}open{% endif %}>
+                    <summary>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Operations
+                    </summary>
+                    <ul>
+                        <li><a href="/operations" class="{% if request.url.path == '/operations' %}active{% endif %}">Overview</a></li>
+                        <li><a href="/operations/salting" class="{% if '/operations/salting' in request.url.path %}active{% endif %}">SALTing</a></li>
+                        <li><a href="/operations/benevolence" class="{% if '/operations/benevolence' in request.url.path %}active{% endif %}">Benevolence</a></li>
+                        <li><a href="/operations/grievances" class="{% if '/operations/grievances' in request.url.path %}active{% endif %}">Grievances</a></li>
+                    </ul>
+                </details>
             </li>
 
             <li class="menu-title mt-4">

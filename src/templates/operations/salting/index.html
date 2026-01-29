@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}SALTing Activities - IP2A{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/operations">Operations</a></li>
+            <li>SALTing</li>
+        </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold">SALTing Activities</h1>
+            <p class="text-base-content/60">Organizing activities at target employers</p>
+        </div>
+        <button class="btn btn-primary">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            Log Activity
+        </button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats stats-vertical lg:stats-horizontal shadow w-full">
+        <div class="stat">
+            <div class="stat-title">Total Activities</div>
+            <div class="stat-value">{{ stats.total }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">This Month</div>
+            <div class="stat-value text-primary">{{ stats.this_month }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">Workers Contacted</div>
+            <div class="stat-value text-info">{{ stats.workers_contacted }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">Cards Signed</div>
+            <div class="stat-value text-success">{{ stats.cards_signed }}</div>
+        </div>
+    </div>
+
+    <!-- Outcome Distribution -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body p-4">
+            <h3 class="font-semibold mb-2">Outcomes</h3>
+            <div class="flex flex-wrap gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="badge badge-success">Positive</span>
+                    <span class="font-bold">{{ stats.positive }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="badge badge-warning">Neutral</span>
+                    <span class="font-bold">{{ stats.neutral }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="badge badge-error">Negative</span>
+                    <span class="font-bold">{{ stats.negative }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body p-4">
+            <div class="flex flex-col lg:flex-row gap-4">
+                <!-- Search -->
+                <div class="flex-1">
+                    <div class="relative">
+                        <input
+                            type="search"
+                            name="q"
+                            placeholder="Search by member, employer, or location..."
+                            class="input input-bordered w-full pl-10"
+                            hx-get="/operations/salting/search"
+                            hx-trigger="input changed delay:300ms, search"
+                            hx-target="#table-container"
+                            hx-include="[name='activity_type'], [name='outcome']"
+                            hx-indicator="#search-spinner"
+                        />
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <span id="search-spinner" class="loading loading-spinner loading-sm absolute right-3 top-1/2 -translate-y-1/2 htmx-indicator"></span>
+                    </div>
+                </div>
+
+                <!-- Type Filter -->
+                <div class="w-full lg:w-48">
+                    <select
+                        name="activity_type"
+                        class="select select-bordered w-full"
+                        hx-get="/operations/salting/search"
+                        hx-trigger="change"
+                        hx-target="#table-container"
+                        hx-include="[name='q'], [name='outcome']"
+                    >
+                        <option value="all">All Types</option>
+                        {% for atype in all_types %}
+                        <option value="{{ atype }}">{{ atype.replace('_', ' ') | title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Outcome Filter -->
+                <div class="w-full lg:w-48">
+                    <select
+                        name="outcome"
+                        class="select select-bordered w-full"
+                        hx-get="/operations/salting/search"
+                        hx-trigger="change"
+                        hx-target="#table-container"
+                        hx-include="[name='q'], [name='activity_type']"
+                    >
+                        <option value="all">All Outcomes</option>
+                        {% for out in all_outcomes %}
+                        <option value="{{ out }}">{{ out.replace('_', ' ') | title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activities Table -->
+    <div class="card bg-base-100 shadow overflow-hidden">
+        <div
+            id="table-container"
+            hx-get="/operations/salting/search"
+            hx-trigger="load"
+        >
+            <div class="flex justify-center py-12">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
