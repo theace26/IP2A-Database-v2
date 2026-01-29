@@ -318,6 +318,42 @@ class StaffService:
         self.db.refresh(user)
         return user
 
+    def log_password_reset_request(
+        self,
+        user_id: int,
+        requested_by: str,
+    ) -> None:
+        """Log a password reset request."""
+        logger.info(
+            f"Password reset requested for user {user_id} by {requested_by} at {datetime.utcnow().isoformat()}"
+        )
+        # In a full implementation, this would log to the audit table
+
+    def soft_delete_user(
+        self,
+        user_id: int,
+        deleted_by: str,
+    ) -> bool:
+        """
+        Soft delete a user account.
+        Sets is_active=False and logs the deletion.
+        """
+        user = self.get_user_by_id(user_id)
+        if not user:
+            return False
+
+        # Store user info for logging before "deleting"
+        user_email = user.email
+
+        # Soft delete: deactivate and lock
+        user.is_active = False
+        from datetime import timedelta
+        user.locked_until = datetime.utcnow() + timedelta(days=365 * 100)
+
+        self.db.commit()
+        logger.info(f"User {user_id} ({user_email}) soft deleted by {deleted_by}")
+        return True
+
 
 def get_staff_service(db: Session) -> StaffService:
     """Factory function for dependency injection."""

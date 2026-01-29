@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block title %}{{ target_user.email }} - Staff Details{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/staff">Staff</a></li>
+            <li>{{ target_user.first_name or target_user.email.split('@')[0] }}</li>
+        </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <div class="avatar placeholder">
+                <div class="bg-neutral text-neutral-content rounded-full w-16">
+                    <span class="text-xl">
+                        {{ (target_user.first_name or target_user.email)[0] | upper }}{{ (target_user.last_name or '')[0] | upper if target_user.last_name else '' }}
+                    </span>
+                </div>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold">
+                    {% if target_user.first_name or target_user.last_name %}
+                        {{ target_user.first_name or '' }} {{ target_user.last_name or '' }}
+                    {% else %}
+                        {{ target_user.email.split('@')[0] }}
+                    {% endif %}
+                </h1>
+                <p class="text-base-content/60">{{ target_user.email }}</p>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            {% set is_locked = service.is_user_locked(target_user) %}
+            {% if is_locked %}
+            <span class="badge badge-error badge-lg gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                Locked
+            </span>
+            {% elif not target_user.is_active %}
+            <span class="badge badge-warning badge-lg">Inactive</span>
+            {% else %}
+            <span class="badge badge-success badge-lg gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="4"/>
+                </svg>
+                Active
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- User Info Card -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title">User Information</h2>
+
+                    <form
+                        hx-post="/staff/{{ target_user.id }}/edit"
+                        hx-target="#detail-feedback"
+                        hx-swap="innerHTML"
+                        class="space-y-4"
+                    >
+                        <div id="detail-feedback"></div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">Email</span>
+                                </label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value="{{ target_user.email }}"
+                                    class="input input-bordered"
+                                    required
+                                />
+                            </div>
+
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">User ID</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value="{{ target_user.id }}"
+                                    class="input input-bordered"
+                                    disabled
+                                />
+                            </div>
+
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">First Name</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="first_name"
+                                    value="{{ target_user.first_name or '' }}"
+                                    class="input input-bordered"
+                                />
+                            </div>
+
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">Last Name</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="last_name"
+                                    value="{{ target_user.last_name or '' }}"
+                                    class="input input-bordered"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Roles -->
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Roles</span>
+                            </label>
+                            <div class="flex flex-wrap gap-2 p-3 bg-base-200 rounded-lg">
+                                {% for role in all_roles %}
+                                <label class="label cursor-pointer gap-2 px-3 py-2 rounded-lg hover:bg-base-300">
+                                    <input
+                                        type="checkbox"
+                                        name="roles"
+                                        value="{{ role.name }}"
+                                        class="checkbox checkbox-sm checkbox-primary"
+                                        {% if role.name in user_role_names %}checked{% endif %}
+                                    />
+                                    <span class="label-text">{{ role.display_name or role.name | title }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        {% set is_locked = service.is_user_locked(target_user) %}
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Account Status</span>
+                            </label>
+                            <div class="flex gap-4">
+                                <label class="label cursor-pointer gap-2">
+                                    <input
+                                        type="radio"
+                                        name="is_locked"
+                                        value="false"
+                                        class="radio radio-success"
+                                        {% if not is_locked %}checked{% endif %}
+                                    />
+                                    <span>Active</span>
+                                </label>
+                                <label class="label cursor-pointer gap-2">
+                                    <input
+                                        type="radio"
+                                        name="is_locked"
+                                        value="true"
+                                        class="radio radio-error"
+                                        {% if is_locked %}checked{% endif %}
+                                    />
+                                    <span>Locked</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="card-actions justify-end">
+                            <button type="submit" class="btn btn-primary">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Quick Actions -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title">Quick Actions</h2>
+
+                    <div class="space-y-2">
+                        {% set is_locked = service.is_user_locked(target_user) %}
+                        {% if is_locked %}
+                        <button
+                            class="btn btn-success btn-block"
+                            hx-post="/staff/{{ target_user.id }}/unlock"
+                            hx-target="#detail-feedback"
+                            hx-swap="innerHTML"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                            </svg>
+                            Unlock Account
+                        </button>
+                        {% else %}
+                        <button
+                            class="btn btn-warning btn-block"
+                            hx-post="/staff/{{ target_user.id }}/lock"
+                            hx-target="#detail-feedback"
+                            hx-swap="innerHTML"
+                            hx-confirm="Are you sure you want to lock this account?"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                            Lock Account
+                        </button>
+                        {% endif %}
+
+                        <button
+                            class="btn btn-outline btn-block"
+                            hx-post="/staff/{{ target_user.id }}/reset-password"
+                            hx-target="#detail-feedback"
+                            hx-swap="innerHTML"
+                            hx-confirm="Send password reset email to {{ target_user.email }}?"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                            </svg>
+                            Reset Password
+                        </button>
+
+                        <div class="divider"></div>
+
+                        <button
+                            class="btn btn-error btn-outline btn-block"
+                            hx-delete="/staff/{{ target_user.id }}"
+                            hx-confirm="Are you sure you want to delete this user? This action cannot be undone."
+                            hx-redirect="/staff?message=User+deleted&type=success"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Info -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title">Account Info</h2>
+
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Created</span>
+                            <span>{{ target_user.created_at.strftime('%b %d, %Y') }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Last Login</span>
+                            <span>
+                                {% if target_user.last_login %}
+                                {{ target_user.last_login.strftime('%b %d, %Y') }}
+                                {% else %}
+                                Never
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Failed Logins</span>
+                            <span class="{{ 'text-error' if target_user.failed_login_attempts > 0 else '' }}">
+                                {{ target_user.failed_login_attempts }}
+                            </span>
+                        </div>
+                        {% if target_user.locked_until and service.is_user_locked(target_user) %}
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Locked Until</span>
+                            <span class="text-error">
+                                {% if target_user.locked_until.year > 2100 %}
+                                Indefinitely
+                                {% else %}
+                                {{ target_user.locked_until.strftime('%b %d, %Y %I:%M %p') }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% endif %}
+                        {% if target_user.member_id %}
+                        <div class="divider my-2"></div>
+                        <div class="flex justify-between">
+                            <span class="text-base-content/60">Linked Member</span>
+                            <a href="/members/{{ target_user.member_id }}" class="link link-primary">
+                                #{{ target_user.member_id }}
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Roles Summary -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title">Assigned Roles</h2>
+                    <div class="flex flex-wrap gap-2">
+                        {% for role in target_user.roles %}
+                        <span class="badge badge-{{ 'primary' if role.name == 'admin' else 'secondary' if role.name == 'officer' else 'accent' if role.name == 'staff' else 'ghost' }} badge-lg">
+                            {{ role.display_name or role.name | title }}
+                        </span>
+                        {% else %}
+                        <span class="text-base-content/50">No roles assigned</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -295,3 +295,191 @@ async def update_user_roles(
 
     except Exception as e:
         return HTMLResponse(content=f"Error: {str(e)}", status_code=500)
+
+
+# ============================================================
+# Account Actions
+# ============================================================
+
+
+@router.post("/{user_id}/lock", response_class=HTMLResponse)
+async def lock_user_account(
+    request: Request,
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth),
+):
+    """Lock a user account. Returns updated row HTML."""
+    if isinstance(current_user, RedirectResponse):
+        return HTMLResponse(content="Session expired", status_code=401)
+
+    # Prevent self-lock
+    if current_user.get("id") == user_id:
+        return HTMLResponse(
+            content='<div class="alert alert-error">You cannot lock your own account</div>',
+            status_code=400,
+        )
+
+    service = StaffService(db)
+    user = service.toggle_lock(user_id, lock=True, updated_by=current_user.get("email", "unknown"))
+
+    if not user:
+        return HTMLResponse(content="User not found", status_code=404)
+
+    # Return the updated row
+    return templates.TemplateResponse(
+        "staff/partials/_row.html",
+        {"request": request, "user": user, "service": service},
+    )
+
+
+@router.post("/{user_id}/unlock", response_class=HTMLResponse)
+async def unlock_user_account(
+    request: Request,
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth),
+):
+    """Unlock a user account. Returns updated row HTML."""
+    if isinstance(current_user, RedirectResponse):
+        return HTMLResponse(content="Session expired", status_code=401)
+
+    service = StaffService(db)
+    user = service.toggle_lock(user_id, lock=False, updated_by=current_user.get("email", "unknown"))
+
+    if not user:
+        return HTMLResponse(content="User not found", status_code=404)
+
+    return templates.TemplateResponse(
+        "staff/partials/_row.html",
+        {"request": request, "user": user, "service": service},
+    )
+
+
+@router.post("/{user_id}/reset-password", response_class=HTMLResponse)
+async def reset_user_password(
+    request: Request,
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth),
+):
+    """
+    Trigger password reset for a user.
+    In production, this would send an email.
+    For now, it logs the action and returns success.
+    """
+    if isinstance(current_user, RedirectResponse):
+        return HTMLResponse(content="Session expired", status_code=401)
+
+    service = StaffService(db)
+    user = service.get_user_by_id(user_id)
+
+    if not user:
+        return HTMLResponse(
+            content='<div class="alert alert-error">User not found</div>',
+            status_code=404,
+        )
+
+    # Log the password reset request
+    service.log_password_reset_request(user_id, current_user.get("email", "unknown"))
+
+    # In production, trigger email here:
+    # await send_password_reset_email(user.email)
+
+    return HTMLResponse(
+        content=f"""
+        <div class="alert alert-success">
+            <svg class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Password reset initiated for {user.email}</span>
+        </div>
+        """,
+        status_code=200,
+    )
+
+
+@router.delete("/{user_id}", response_class=HTMLResponse)
+async def delete_user(
+    request: Request,
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth),
+):
+    """
+    Soft delete a user account.
+    Returns empty content to remove the row via HTMX.
+    """
+    if isinstance(current_user, RedirectResponse):
+        return HTMLResponse(content="Session expired", status_code=401)
+
+    # Prevent self-delete
+    if current_user.get("id") == user_id:
+        return HTMLResponse(
+            content='<tr><td colspan="6"><div class="alert alert-error">You cannot delete your own account</div></td></tr>',
+            status_code=400,
+        )
+
+    service = StaffService(db)
+    success = service.soft_delete_user(user_id, current_user.get("email", "unknown"))
+
+    if not success:
+        return HTMLResponse(
+            content='<tr><td colspan="6"><div class="alert alert-error">User not found</div></td></tr>',
+            status_code=404,
+        )
+
+    # Return empty string - HTMX will remove the row
+    return HTMLResponse(content="", status_code=200)
+
+
+# ============================================================
+# Full Detail Page
+# ============================================================
+
+
+@router.get("/{user_id}", response_class=HTMLResponse)
+async def user_detail_page(
+    request: Request,
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth),
+):
+    """Render the full user detail page."""
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
+    # Check permission
+    user_roles = current_user.get("roles", [])
+    if not any(r in ["admin", "officer", "staff"] for r in user_roles):
+        return templates.TemplateResponse(
+            "errors/403.html",
+            {"request": request, "message": "You don't have permission to view user details."},
+            status_code=403,
+        )
+
+    service = StaffService(db)
+    user = service.get_user_by_id(user_id)
+
+    if not user:
+        return templates.TemplateResponse(
+            "errors/404.html",
+            {"request": request, "message": "User not found"},
+            status_code=404,
+        )
+
+    # Get all roles for editing
+    all_roles = service.get_all_roles()
+    user_role_names = [r.name for r in user.roles]
+
+    return templates.TemplateResponse(
+        "staff/detail.html",
+        {
+            "request": request,
+            "current_user": current_user,
+            "target_user": user,
+            "all_roles": all_roles,
+            "user_role_names": user_role_names,
+            "service": service,
+        },
+    )
