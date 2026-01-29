@@ -194,6 +194,8 @@ ruff check . --fix && ruff format .
 | Create test_frontend.py (12 tests) | ✅ |
 | All 177 tests passing | ✅ |
 
+**Commit:** `1274c12 feat(frontend): Phase 6 Week 1 Session B - Pages and integration`
+
 ### Acceptance Criteria - All Met ✅
 
 - [x] `/login` renders styled login form
