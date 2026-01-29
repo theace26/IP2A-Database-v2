@@ -1,0 +1,96 @@
+{# Single student row #}
+
+<tr class="hover" id="student-row-{{ student.id }}">
+    <td>
+        <div class="flex items-center gap-3">
+            <div class="avatar placeholder">
+                <div class="bg-neutral text-neutral-content rounded-full w-10">
+                    <span class="text-sm">
+                        {{ student.member.first_name[0] | upper }}{{ student.member.last_name[0] | upper }}
+                    </span>
+                </div>
+            </div>
+            <div>
+                <div class="font-bold">{{ student.member.first_name }} {{ student.member.last_name }}</div>
+                <div class="text-sm text-base-content/60">{{ student.member.email }}</div>
+            </div>
+        </div>
+    </td>
+    <td>
+        <span class="font-mono text-sm">{{ student.student_number }}</span>
+    </td>
+    <td>
+        <span class="badge {{ get_status_badge(student.status) }} badge-sm">
+            {{ student.status.value | replace('_', ' ') | title }}
+        </span>
+    </td>
+    <td>
+        {% if student.cohort %}
+        <span class="text-sm">{{ student.cohort }}</span>
+        {% else %}
+        <span class="text-sm text-base-content/50">None</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if student.enrollment_date %}
+        <span class="text-sm">{{ student.enrollment_date.strftime('%b %d, %Y') }}</span>
+        {% else %}
+        <span class="text-sm text-base-content/50">Not enrolled</span>
+        {% endif %}
+    </td>
+    <td>
+        <div class="flex gap-1">
+            <a href="/training/students/{{ student.id }}" class="btn btn-ghost btn-sm" title="View Details">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+            </a>
+            <div class="dropdown dropdown-end">
+                <label tabindex="0" class="btn btn-ghost btn-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                    </svg>
+                </label>
+                <ul tabindex="0" class="dropdown-content z-[1] menu menu-sm p-2 shadow-lg bg-base-100 rounded-box w-48">
+                    <li>
+                        <a href="/training/students/{{ student.id }}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            View Details
+                        </a>
+                    </li>
+                    <li>
+                        <a onclick="alert('Edit coming soon!')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                            Edit Student
+                        </a>
+                    </li>
+                    <li>
+                        <a onclick="alert('Enrollment coming soon!')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                            </svg>
+                            Enroll in Course
+                        </a>
+                    </li>
+                    {% if student.status.value == 'enrolled' %}
+                    <div class="divider my-1"></div>
+                    <li>
+                        <a class="text-warning" onclick="alert('Status change coming soon!')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                            Mark Dropped
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </td>
+</tr>

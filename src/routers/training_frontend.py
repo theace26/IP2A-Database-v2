@@ -150,6 +150,44 @@ async def student_search_partial(
 
 
 # ============================================================
+# Student Detail Page
+# ============================================================
+
+
+@router.get("/students/{student_id}", response_class=HTMLResponse)
+async def student_detail_page(
+    request: Request,
+    student_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_auth),
+):
+    """Render the student detail page."""
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
+    service = TrainingFrontendService(db)
+    student = await service.get_student_by_id(student_id)
+
+    if not student:
+        return templates.TemplateResponse(
+            "errors/404.html",
+            {"request": request, "message": "Student not found"},
+            status_code=404,
+        )
+
+    return templates.TemplateResponse(
+        "training/students/detail.html",
+        {
+            "request": request,
+            "user": current_user,
+            "student": student,
+            "get_status_badge": TrainingFrontendService.get_status_badge_class,
+            "get_enrollment_badge": TrainingFrontendService.get_enrollment_badge_class,
+        },
+    )
+
+
+# ============================================================
 # Course List Page
 # ============================================================
 
