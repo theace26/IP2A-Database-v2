@@ -8,6 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Infrastructure Phase 2: Migration Safety** (Complete)
+  * Alembic wrapper for timestamped migrations (YYYYMMDD_HHMMSS_description.py)
+  * FK dependency graph analyzer (scripts/migration_graph.py)
+  * Destructive operation detector (scripts/migration_validator.py)
+  * CLI commands: migrate new, validate, list, graph, check-destructive
+  * Pre-commit hooks for migration naming and destructive checks
+  * ADR-009: Migration Safety Strategy
+
+- **Phase 6 Week 6: Union Operations Frontend** (Complete)
+  * Union operations landing page with module cards
+  * Overview stats: SALTing activities/month, benevolence pending/YTD, grievances open/total
+  * SALTing activities list with type and outcome badges
+  * SALTing detail with organizer and employer info
+  * Filter SALTing by activity type and outcome
+  * Benevolence applications list with status workflow badges
+  * Benevolence detail with payment history and review timeline
+  * Status workflow steps visualization (Draft -> Paid)
+  * Filter benevolence by status and reason
+  * Grievances list with step progress indicators
+  * Grievance detail with step timeline
+  * Step progress visualization (Steps 1-3 + Arbitration)
+  * Filter grievances by status and step
+  * OperationsFrontendService for all 3 modules
+  * 21 new operations frontend tests (94 frontend total)
+  * Updated sidebar navigation with Operations dropdown
+
 - **Phase 6 Week 5: Members Landing Page** (Complete)
   * Members landing page with overview stats dashboard
   * Stats: total members, active, inactive/suspended, dues current %

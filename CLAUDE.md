@@ -2,8 +2,8 @@
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
 **Last Updated:** January 29, 2026
-**Current Version:** v0.7.4
-**Current Phase:** Phase 6 Week 6 - Union Operations (Week 5 Complete)
+**Current Version:** v0.7.5
+**Current Phase:** Phase 6 Week 6 - Union Operations (COMPLETE)
 
 ---
 
@@ -13,11 +13,11 @@
 
 **Who:** Xerxes - Business Representative by day, solo developer (5-10 hrs/week)
 
-**Where:** Backend COMPLETE. Frontend authentication COMPLETE. Staff management COMPLETE. Training landing COMPLETE. Members landing COMPLETE.
+**Where:** Backend COMPLETE. Frontend COMPLETE through Week 6 (Union Operations).
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI
 
-**Status:** 73 frontend tests passing, ~120 API endpoints, 8 ADRs, Phase 6 Week 5 complete
+**Status:** 94 frontend tests passing, 259 total tests, ~120 API endpoints, 9 ADRs, Phase 6 Week 6 complete
 
 ---
 
@@ -35,7 +35,7 @@
 | Dues (Rates, Periods, Payments, Adjustments) | 4 | ~35 | 21 | Done |
 | **Total** | **25** | **~120** | **165** | Done |
 
-### Frontend: IN PROGRESS
+### Frontend: PHASE 6 COMPLETE
 
 | Week | Focus | Status |
 |------|-------|--------|
@@ -44,9 +44,9 @@
 | Week 3 | Staff management | Done |
 | Week 4 | Training landing | Done |
 | Week 5 | Members landing | Done |
-| Week 6 | Union operations | NEXT |
+| Week 6 | Union operations | Done |
 
-### Frontend Tests: 73 tests
+### Frontend Tests: 94 tests
 
 | Component | Tests | Status |
 |-----------|-------|--------|
@@ -62,6 +62,7 @@
 | Staff Management | 18 | Done |
 | Training Frontend | 19 | Done |
 | Members Frontend | 15 | Done |
+| Operations Frontend | 21 | Done |
 
 ---
 
@@ -103,14 +104,16 @@ IP2A-Database-v2/
 │   │   ├── dashboard_service.py  # Dashboard stats (Week 2)
 │   │   ├── staff_service.py      # Staff management (Week 3)
 │   │   ├── training_frontend_service.py  # Training stats (Week 4)
-│   │   └── member_frontend_service.py    # Member stats (Week 5)
+│   │   ├── member_frontend_service.py    # Member stats (Week 5)
+│   │   └── operations_frontend_service.py  # Union ops (Week 6)
 │   ├── routers/                # API endpoints
 │   │   ├── dependencies/
 │   │   │   ├── auth.py         # Bearer token auth
 │   │   │   └── auth_cookie.py  # Cookie-based auth (Week 2)
 │   │   ├── staff.py            # Staff management (Week 3)
 │   │   ├── training_frontend.py # Training pages (Week 4)
-│   │   └── member_frontend.py   # Member pages (Week 5)
+│   │   ├── member_frontend.py   # Member pages (Week 5)
+│   │   └── operations_frontend.py  # Union ops (Week 6)
 │   ├── templates/              # Jinja2 templates (Phase 6)
 │   │   ├── base.html
 │   │   ├── base_auth.html
@@ -126,6 +129,11 @@ IP2A-Database-v2/
 │   │   │   ├── index.html
 │   │   │   ├── detail.html
 │   │   │   └── partials/
+│   │   ├── operations/         # Week 6
+│   │   │   ├── index.html
+│   │   │   ├── salting/
+│   │   │   ├── benevolence/
+│   │   │   └── grievances/
 │   │   └── errors/
 │   ├── static/                 # CSS, JS, images (Phase 6)
 │   │   ├── css/
@@ -134,12 +142,14 @@ IP2A-Database-v2/
 │   ├── seed/                   # Seed data
 │   └── tests/                  # pytest tests
 ├── docs/
-│   ├── decisions/              # ADRs (001-008)
+│   ├── decisions/              # ADRs (001-010)
 │   ├── instructions/           # Claude Code instruction docs
 │   │   ├── week2_instructions/
 │   │   ├── week3_instructions/
 │   │   ├── week4_instructions/
-│   │   └── week5_instructions/
+│   │   ├── week5_instructions/
+│   │   ├── week6_instructions/
+│   │   └── infra_phase2_instructions/
 │   ├── architecture/           # System docs
 │   ├── guides/                 # How-to guides
 │   └── archive/                # Old documentation
