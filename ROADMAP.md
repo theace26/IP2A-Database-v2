@@ -14,7 +14,7 @@
 - [x] Migration naming enforcement
 - [x] Legacy migration freeze
 - [x] Breaking change detection
-- [ ] Alembic wrapper for timestamped generation
+- [x] Alembic wrapper for timestamped generation
 - [ ] Migration dependency graph (FK-based)
 - [ ] Auto-detect destructive downgrades
 
