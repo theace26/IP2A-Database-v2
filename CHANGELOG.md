@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Phase 6 Week 3: Staff Management** (Complete)
+  * Staff list page with search, filter, and pagination
+  * HTMX-powered live search (300ms debounce)
+  * Filter by role and account status (active/locked/inactive)
+  * Quick edit modal with role checkboxes and status toggle
+  * Full detail page with user info and quick actions
+  * Account actions: lock/unlock, reset password, soft delete
+  * Prevent self-lock and self-delete
+  * 403 error page for unauthorized access
+  * StaffService with complete CRUD operations
+  * 18 new staff management tests (205 total)
+
 - **Phase 6 Week 2: Auth Cookies + Dashboard** (Complete)
   * Cookie-based authentication with HTTP-only cookies
   * `auth_cookie.py` dependency for JWT cookie validation

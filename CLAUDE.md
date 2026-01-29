@@ -2,8 +2,8 @@
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
 **Last Updated:** January 29, 2026
-**Current Version:** v0.7.1
-**Current Phase:** Phase 6 Week 3 - Staff Management (Week 2 Complete)
+**Current Version:** v0.7.2
+**Current Phase:** Phase 6 Week 4 - Training Landing (Week 3 Complete)
 
 ---
 
@@ -13,11 +13,11 @@
 
 **Who:** Xerxes - Business Representative by day, solo developer (5-10 hrs/week)
 
-**Where:** Backend COMPLETE. Frontend authentication COMPLETE. Dashboard with real data COMPLETE.
+**Where:** Backend COMPLETE. Frontend authentication COMPLETE. Staff management COMPLETE.
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI
 
-**Status:** 187 tests passing, ~120 API endpoints, 8 ADRs, Phase 6 Week 2 complete
+**Status:** 205 tests passing, ~120 API endpoints, 8 ADRs, Phase 6 Week 3 complete
 
 ---
 
@@ -41,10 +41,10 @@
 |------|-------|--------|
 | Week 1 | Setup + Login | Done |
 | Week 2 | Auth cookies + Dashboard | Done |
-| Week 3 | Staff management | NEXT |
-| Week 4 | Training landing | Pending |
+| Week 3 | Staff management | Done |
+| Week 4 | Training landing | NEXT |
 
-### Frontend Tests: 22 tests
+### Frontend Tests: 40 tests
 
 | Component | Tests | Status |
 |-----------|-------|--------|
@@ -74,7 +74,7 @@
 | **Interactivity** | HTMX | HTML-over-the-wire |
 | **Micro-interactions** | Alpine.js | Dropdowns, toggles |
 | **CSS** | DaisyUI + Tailwind | CDN, no build step |
-| **Testing** | pytest + httpx | 187 tests passing |
+| **Testing** | pytest + httpx | 205 tests passing |
 | **Container** | Docker | Full dev environment |
 
 ---
@@ -151,6 +151,76 @@ uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 
 # Format code
 ruff check . --fix && ruff format .
+```
+
+---
+
+## Phase 6 Week 3: COMPLETE
+
+**Objective:** Build Staff Management feature with search, edit, and account actions
+
+**Instruction Documents:** `docs/instructions/week3_instructions/`
+
+### Session A: User List with Search (January 29, 2026)
+
+| Task | Status |
+|------|--------|
+| Create StaffService with search/filter/paginate | Done |
+| Create staff router with list endpoints | Done |
+| Create staff/index.html with user table | Done |
+| Create table partials (_table_body.html, _row.html) | Done |
+| Add 403 error page | Done |
+| HTMX live search with debounce | Done |
+| Filter by role and status | Done |
+| Pagination component | Done |
+
+### Session B: Quick Edit Modal (January 29, 2026)
+
+| Task | Status |
+|------|--------|
+| Create _edit_modal.html template | Done |
+| Add edit modal GET/POST endpoints | Done |
+| Multi-select role checkboxes | Done |
+| Account status toggle | Done |
+| HTMX save with feedback | Done |
+| Auto-dismiss alerts | Done |
+
+### Session C: Account Actions + Detail Page (January 29, 2026)
+
+| Task | Status |
+|------|--------|
+| Add lock/unlock endpoints | Done |
+| Add password reset endpoint | Done |
+| Add soft delete endpoint | Done |
+| Create detail.html full page | Done |
+| Service methods for actions | Done |
+| Comprehensive tests (18 total) | Done |
+
+**Commits:**
+- `4d80365 feat(staff): Phase 6 Week 3 Session A - User list with search`
+- `85ada48 feat(staff): Phase 6 Week 3 Session B - Quick edit modal`
+- `89a045c feat(staff): Phase 6 Week 3 Session C - Actions and detail page`
+
+### Files Created
+
+```
+src/
+├── services/
+│   └── staff_service.py         # User CRUD, search, audit
+├── routers/
+│   └── staff.py                 # All staff endpoints
+├── templates/
+│   ├── staff/
+│   │   ├── index.html           # List page
+│   │   ├── detail.html          # Detail page
+│   │   └── partials/
+│   │       ├── _table_body.html
+│   │       ├── _row.html
+│   │       └── _edit_modal.html
+│   └── errors/
+│       └── 403.html             # Access denied
+└── tests/
+    └── test_staff.py            # 18 tests
 ```
 
 ---
