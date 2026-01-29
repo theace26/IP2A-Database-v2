@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Training - IP2A{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold">Training Program</h1>
+            <p class="text-base-content/60">Pre-apprenticeship training management</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="/training/students" class="btn btn-outline">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+                View Students
+            </a>
+            <a href="/training/courses" class="btn btn-primary">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+                View Courses
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Students Card -->
+        <div class="stat bg-base-100 rounded-box shadow">
+            <div class="stat-figure text-primary">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+            </div>
+            <div class="stat-title">Total Students</div>
+            <div class="stat-value text-primary">{{ stats.total_students }}</div>
+            <div class="stat-desc">
+                <span class="text-success">{{ stats.active_students }} active</span>
+                {% if stats.new_this_month > 0 %}
+                · <span class="text-info">+{{ stats.new_this_month }} this month</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Completed Card -->
+        <div class="stat bg-base-100 rounded-box shadow">
+            <div class="stat-figure text-success">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                </svg>
+            </div>
+            <div class="stat-title">Completed</div>
+            <div class="stat-value text-success">{{ stats.completed }}</div>
+            <div class="stat-desc">Finished the program</div>
+        </div>
+
+        <!-- Courses Card -->
+        <div class="stat bg-base-100 rounded-box shadow">
+            <div class="stat-figure text-secondary">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+            </div>
+            <div class="stat-title">Courses</div>
+            <div class="stat-value text-secondary">{{ stats.active_courses }}</div>
+            <div class="stat-desc">{{ stats.total_courses }} total courses</div>
+        </div>
+
+        <!-- Completion Rate Card -->
+        <div class="stat bg-base-100 rounded-box shadow">
+            <div class="stat-figure text-accent">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+            </div>
+            <div class="stat-title">Completion Rate</div>
+            <div class="stat-value text-accent">{{ stats.completion_rate }}%</div>
+            <div class="stat-desc">{{ stats.active_enrollments }} active enrollments</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Recent Students -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="card-title">Recent Students</h2>
+                    <a href="/training/students" class="btn btn-ghost btn-sm">View All</a>
+                </div>
+
+                {% if recent_students %}
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Status</th>
+                                <th>Enrolled</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in recent_students %}
+                            <tr class="hover">
+                                <td>
+                                    <div>
+                                        <div class="font-bold">{{ student.member.first_name }} {{ student.member.last_name }}</div>
+                                        <div class="text-sm text-base-content/60">{{ student.student_number }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge {{ get_status_badge(student.status) }} badge-sm">
+                                        {{ student.status.value | title }}
+                                    </span>
+                                </td>
+                                <td class="text-sm">
+                                    {% if student.enrollment_date %}
+                                    {{ student.enrollment_date.strftime('%b %d, %Y') }}
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-8 text-base-content/50">
+                    <p>No students enrolled yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h2 class="card-title mb-4">Quick Actions</h2>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <a href="/training/students" class="btn btn-outline btn-block justify-start gap-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        Student List
+                    </a>
+
+                    <a href="/training/courses" class="btn btn-outline btn-block justify-start gap-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                        Course List
+                    </a>
+
+                    <a href="#" class="btn btn-outline btn-block justify-start gap-3 btn-disabled" title="Coming soon">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                        </svg>
+                        Attendance
+                    </a>
+
+                    <a href="#" class="btn btn-outline btn-block justify-start gap-3 btn-disabled" title="Coming soon">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

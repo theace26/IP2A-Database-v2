@@ -57,6 +57,7 @@ from src.routers.dues_adjustments import router as dues_adjustments_router
 # Phase 6 Frontend router
 from src.routers import frontend
 from src.routers.staff import router as staff_router
+from src.routers.training_frontend import router as training_frontend_router
 
 # ------------------------------------------------------------
 # Initialize FastAPI
@@ -149,6 +150,9 @@ app.include_router(dues_adjustments_router)
 # Phase 6 Staff Management router
 app.include_router(staff_router)
 
+# Phase 6 Training Frontend router
+app.include_router(training_frontend_router)
+
 # Frontend routes (HTML pages) - include LAST to not interfere with API routes
 app.include_router(frontend.router)
 
@@ -164,14 +168,9 @@ _templates = Jinja2Templates(directory="src/templates")
 async def not_found_handler(request: Request, exc):
     """Custom 404 handler - returns JSON for API, HTML for browser."""
     if request.url.path.startswith("/api/"):
-        return JSONResponse(
-            status_code=404,
-            content={"detail": "Not found"}
-        )
+        return JSONResponse(status_code=404, content={"detail": "Not found"})
     return _templates.TemplateResponse(
-        "errors/404.html",
-        {"request": request},
-        status_code=404
+        "errors/404.html", {"request": request}, status_code=404
     )
 
 
@@ -180,11 +179,8 @@ async def server_error_handler(request: Request, exc):
     """Custom 500 handler - returns JSON for API, HTML for browser."""
     if request.url.path.startswith("/api/"):
         return JSONResponse(
-            status_code=500,
-            content={"detail": "Internal server error"}
+            status_code=500, content={"detail": "Internal server error"}
         )
     return _templates.TemplateResponse(
-        "errors/500.html",
-        {"request": request},
-        status_code=500
+        "errors/500.html", {"request": request}, status_code=500
     )

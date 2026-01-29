@@ -49,7 +49,9 @@
       "Bash(ls:*)",
       "Bash(pip show:*)",
       "Bash(pip uninstall:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git pull:*)",
+      "Bash(git rev-list:*)"
     ]
   }
 }

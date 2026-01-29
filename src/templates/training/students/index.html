@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Students - Training - IP2A{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <div class="text-sm breadcrumbs">
+                <ul>
+                    <li><a href="/training">Training</a></li>
+                    <li>Students</li>
+                </ul>
+            </div>
+            <h1 class="text-2xl font-bold">Students</h1>
+            <p class="text-base-content/60">{{ total }} student{{ 's' if total != 1 else '' }} total</p>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex flex-col md:flex-row gap-4">
+                <!-- Search -->
+                <div class="flex-1">
+                    <input
+                        type="search"
+                        name="q"
+                        value="{{ query }}"
+                        placeholder="Search by name, email, or student number..."
+                        class="input input-bordered w-full"
+                        hx-get="/training/students/search"
+                        hx-trigger="input changed delay:300ms, search"
+                        hx-target="#student-table-container"
+                        hx-include="[name='status'], [name='cohort']"
+                    />
+                </div>
+
+                <!-- Status Filter -->
+                <select
+                    name="status"
+                    class="select select-bordered w-full md:w-48"
+                    hx-get="/training/students/search"
+                    hx-trigger="change"
+                    hx-target="#student-table-container"
+                    hx-include="[name='q'], [name='cohort']"
+                >
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Statuses</option>
+                    {% for st in statuses %}
+                    <option value="{{ st.value }}" {% if status_filter == st.value %}selected{% endif %}>
+                        {{ st.value | title }}
+                    </option>
+                    {% endfor %}
+                </select>
+
+                <!-- Cohort Filter -->
+                <select
+                    name="cohort"
+                    class="select select-bordered w-full md:w-48"
+                    hx-get="/training/students/search"
+                    hx-trigger="change"
+                    hx-target="#student-table-container"
+                    hx-include="[name='q'], [name='status']"
+                >
+                    <option value="all" {% if cohort_filter == 'all' %}selected{% endif %}>All Cohorts</option>
+                    {% for c in cohorts %}
+                    <option value="{{ c }}" {% if cohort_filter == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Table -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body p-0">
+            <div id="student-table-container">
+                {% include "training/students/partials/_table.html" %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
