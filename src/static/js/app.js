@@ -112,6 +112,28 @@ function debounce(func, wait) {
     };
 }
 
+// Close modal on escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const modal = document.getElementById('edit-modal');
+        if (modal && modal.open) {
+            modal.close();
+        }
+    }
+});
+
+// Auto-dismiss alerts after 5 seconds
+document.addEventListener('htmx:afterSwap', function(event) {
+    const alerts = event.target.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            alert.style.opacity = '0';
+            alert.style.transition = 'opacity 0.5s ease-out';
+            setTimeout(() => alert.remove(), 500);
+        }, 5000);
+    });
+});
+
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', function() {
     // Add loading indicator class for HTMX requests

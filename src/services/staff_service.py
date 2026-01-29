@@ -166,6 +166,158 @@ class StaffService:
             return False
         return user.locked_until >= datetime.utcnow()
 
+    def update_user(
+        self,
+        user_id: int,
+        email: str,
+        first_name: Optional[str],
+        last_name: Optional[str],
+        roles: List[str],
+        is_locked: bool,
+        updated_by: str,
+    ) -> Optional[User]:
+        """
+        Update user details including roles.
+
+        Args:
+            user_id: ID of user to update
+            email: New email address
+            first_name: New first name (can be None)
+            last_name: New last name (can be None)
+            roles: List of role names to assign
+            is_locked: Whether to lock the account
+            updated_by: Email of user making the change
+
+        Returns:
+            Updated User or None if not found
+        """
+        user = self.get_user_by_id(user_id)
+        if not user:
+            return None
+
+        # Check for duplicate email
+        if user.email != email:
+            existing = self.db.execute(
+                select(User).where(User.email == email, User.id != user_id)
+            ).scalar_one_or_none()
+            if existing:
+                raise ValueError(f"Email {email} is already in use")
+            user.email = email
+
+        # Update name fields
+        user.first_name = first_name or ""
+        user.last_name = last_name or ""
+
+        # Update locked status using locked_until field
+        now = datetime.utcnow()
+        currently_locked = self.is_user_locked(user)
+        if is_locked and not currently_locked:
+            # Lock the account - set locked_until far in the future
+            from datetime import timedelta
+            user.locked_until = now + timedelta(days=365 * 100)  # 100 years = effectively forever
+        elif not is_locked and currently_locked:
+            # Unlock the account
+            user.locked_until = None
+            user.failed_login_attempts = 0
+
+        # Update roles
+        current_role_names = set(r.name for r in user.roles)
+        new_role_names = set(roles)
+
+        if current_role_names != new_role_names:
+            # Get role objects for new roles
+            if roles:
+                role_stmt = select(Role).where(Role.name.in_(roles))
+                role_result = self.db.execute(role_stmt)
+                new_roles = list(role_result.scalars().all())
+            else:
+                new_roles = []
+
+            # Clear existing user_roles and add new ones
+            user.user_roles.clear()
+            for role in new_roles:
+                user_role = UserRole(
+                    user_id=user.id,
+                    role_id=role.id,
+                    assigned_by=updated_by,
+                )
+                user.user_roles.append(user_role)
+
+        self.db.commit()
+        self.db.refresh(user)
+
+        logger.info(f"User {user_id} updated by {updated_by}")
+        return user
+
+    def update_user_roles(
+        self,
+        user_id: int,
+        roles: List[str],
+        updated_by: str,
+    ) -> Optional[User]:
+        """Update only the user's roles."""
+        user = self.get_user_by_id(user_id)
+        if not user:
+            return None
+
+        current_role_names = set(r.name for r in user.roles)
+        new_role_names = set(roles)
+
+        if current_role_names != new_role_names:
+            # Get role objects for new roles
+            if roles:
+                role_stmt = select(Role).where(Role.name.in_(roles))
+                role_result = self.db.execute(role_stmt)
+                new_roles = list(role_result.scalars().all())
+            else:
+                new_roles = []
+
+            # Clear existing user_roles and add new ones
+            user.user_roles.clear()
+            for role in new_roles:
+                user_role = UserRole(
+                    user_id=user.id,
+                    role_id=role.id,
+                    assigned_by=updated_by,
+                )
+                user.user_roles.append(user_role)
+
+            self.db.commit()
+            self.db.refresh(user)
+
+            logger.info(f"Roles updated for user {user_id} by {updated_by}: {roles}")
+
+        return user
+
+    def toggle_lock(
+        self,
+        user_id: int,
+        lock: bool,
+        updated_by: str,
+    ) -> Optional[User]:
+        """Lock or unlock a user account."""
+        user = self.get_user_by_id(user_id)
+        if not user:
+            return None
+
+        now = datetime.utcnow()
+        currently_locked = self.is_user_locked(user)
+
+        if lock and not currently_locked:
+            # Lock the account
+            from datetime import timedelta
+            user.locked_until = now + timedelta(days=365 * 100)
+            logger.info(f"User {user_id} locked by {updated_by}")
+        elif not lock and currently_locked:
+            # Unlock the account
+            user.locked_until = None
+            user.failed_login_attempts = 0
+            logger.info(f"User {user_id} unlocked by {updated_by}")
+
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
 
 def get_staff_service(db: Session) -> StaffService:
     """Factory function for dependency injection."""

@@ -1,0 +1,187 @@
+{# Quick edit modal content - loaded via HTMX #}
+
+<h3 class="font-bold text-lg mb-4">
+    Edit User: {{ target_user.first_name or target_user.email.split('@')[0] }}
+</h3>
+
+<form
+    hx-post="/staff/{{ target_user.id }}/edit"
+    hx-target="#modal-feedback"
+    hx-swap="innerHTML"
+    hx-indicator="#save-spinner"
+    class="space-y-4"
+>
+    <!-- Feedback area -->
+    <div id="modal-feedback"></div>
+
+    <!-- Email -->
+    <div class="form-control">
+        <label class="label">
+            <span class="label-text font-medium">Email Address</span>
+        </label>
+        <input
+            type="email"
+            name="email"
+            value="{{ target_user.email }}"
+            class="input input-bordered"
+            required
+        />
+    </div>
+
+    <!-- Name Fields (side by side) -->
+    <div class="grid grid-cols-2 gap-4">
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text font-medium">First Name</span>
+            </label>
+            <input
+                type="text"
+                name="first_name"
+                value="{{ target_user.first_name or '' }}"
+                class="input input-bordered"
+                placeholder="Optional"
+            />
+        </div>
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text font-medium">Last Name</span>
+            </label>
+            <input
+                type="text"
+                name="last_name"
+                value="{{ target_user.last_name or '' }}"
+                class="input input-bordered"
+                placeholder="Optional"
+            />
+        </div>
+    </div>
+
+    <!-- Roles (Checkboxes) -->
+    <div class="form-control">
+        <label class="label">
+            <span class="label-text font-medium">Roles</span>
+            <span class="label-text-alt text-base-content/60">Select all that apply</span>
+        </label>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 bg-base-200 rounded-lg">
+            {% for role in all_roles %}
+            <label class="label cursor-pointer justify-start gap-3 p-2 rounded hover:bg-base-300">
+                <input
+                    type="checkbox"
+                    name="roles"
+                    value="{{ role.name }}"
+                    class="checkbox checkbox-sm checkbox-primary"
+                    {% if role.name in user_role_names %}checked{% endif %}
+                />
+                <span class="label-text">
+                    {{ role.display_name or role.name | title }}
+                    {% if role.name == 'admin' %}
+                    <span class="badge badge-xs badge-warning ml-1">Full Access</span>
+                    {% endif %}
+                </span>
+            </label>
+            {% endfor %}
+        </div>
+        <label class="label">
+            <span class="label-text-alt text-warning">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                Admin role grants full system access
+            </span>
+        </label>
+    </div>
+
+    <!-- Account Status -->
+    {% set is_locked = service.is_user_locked(target_user) %}
+    <div class="form-control">
+        <label class="label">
+            <span class="label-text font-medium">Account Status</span>
+        </label>
+        <div class="flex gap-4 p-3 bg-base-200 rounded-lg">
+            <label class="label cursor-pointer justify-start gap-3">
+                <input
+                    type="radio"
+                    name="is_locked"
+                    value="false"
+                    class="radio radio-success radio-sm"
+                    {% if not is_locked %}checked{% endif %}
+                />
+                <span class="label-text flex items-center gap-2">
+                    <span class="badge badge-success badge-xs"></span>
+                    Active
+                </span>
+            </label>
+            <label class="label cursor-pointer justify-start gap-3">
+                <input
+                    type="radio"
+                    name="is_locked"
+                    value="true"
+                    class="radio radio-error radio-sm"
+                    {% if is_locked %}checked{% endif %}
+                />
+                <span class="label-text flex items-center gap-2">
+                    <span class="badge badge-error badge-xs"></span>
+                    Locked
+                </span>
+            </label>
+        </div>
+        {% if is_locked and target_user.locked_until %}
+        <label class="label">
+            <span class="label-text-alt text-error">
+                Locked until {{ target_user.locked_until.strftime('%b %d, %Y %I:%M %p') }}
+            </span>
+        </label>
+        {% endif %}
+    </div>
+
+    <!-- Divider -->
+    <div class="divider">Quick Actions</div>
+
+    <!-- Quick Action Buttons -->
+    <div class="flex flex-wrap gap-2">
+        <button
+            type="button"
+            class="btn btn-sm btn-outline"
+            hx-post="/staff/{{ target_user.id }}/reset-password"
+            hx-target="#modal-feedback"
+            hx-swap="innerHTML"
+            hx-confirm="Send password reset email to {{ target_user.email }}?"
+        >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+            </svg>
+            Reset Password
+        </button>
+
+        <a href="/staff/{{ target_user.id }}" class="btn btn-sm btn-outline">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            </svg>
+            Full Details
+        </a>
+    </div>
+
+    <!-- Modal Actions -->
+    <div class="modal-action">
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('edit-modal').close()">
+            Cancel
+        </button>
+        <button type="submit" class="btn btn-primary">
+            <span id="save-spinner" class="loading loading-spinner loading-sm htmx-indicator"></span>
+            Save Changes
+        </button>
+    </div>
+</form>
+
+<!-- User Info Footer -->
+<div class="text-xs text-base-content/50 mt-4 pt-4 border-t border-base-200">
+    <div class="flex justify-between">
+        <span>User ID: {{ target_user.id }}</span>
+        <span>Created: {{ target_user.created_at.strftime('%b %d, %Y') }}</span>
+    </div>
+    {% if target_user.last_login %}
+    <div class="mt-1">
+        Last login: {{ target_user.last_login.strftime('%b %d, %Y at %I:%M %p') }}
+    </div>
+    {% endif %}
+</div>

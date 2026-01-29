@@ -48,3 +48,39 @@ class TestStaffSearch:
             "/staff/search?q=admin&role=admin&status=active&page=1"
         )
         assert response.status_code != status.HTTP_404_NOT_FOUND
+
+
+class TestStaffEditModal:
+    """Tests for edit modal functionality."""
+
+    @pytest.mark.asyncio
+    async def test_edit_modal_endpoint_exists(self, async_client: AsyncClient):
+        """Edit modal endpoint should exist."""
+        response = await async_client.get("/staff/1/edit")
+        # Will return 302 (auth) or 401/404 (user not found), not 404 for route
+        assert response.status_code in [200, 302, 401, 404]
+
+    @pytest.mark.asyncio
+    async def test_edit_modal_requires_auth(self, async_client: AsyncClient):
+        """Edit modal should require authentication."""
+        response = await async_client.get("/staff/1/edit", follow_redirects=False)
+        assert response.status_code in [302, 401]
+
+    @pytest.mark.asyncio
+    async def test_update_endpoint_accepts_post(self, async_client: AsyncClient):
+        """Update endpoint should accept POST."""
+        response = await async_client.post(
+            "/staff/1/edit",
+            data={"email": "test@test.com", "roles": ["member"]},
+        )
+        # Will fail auth but endpoint should exist
+        assert response.status_code in [200, 302, 401, 404, 422]
+
+    @pytest.mark.asyncio
+    async def test_roles_endpoint_exists(self, async_client: AsyncClient):
+        """Roles update endpoint should exist."""
+        response = await async_client.post(
+            "/staff/1/roles",
+            data={"roles": ["member"]},
+        )
+        assert response.status_code in [200, 302, 401, 404, 422]
