@@ -2,8 +2,8 @@
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
 **Last Updated:** January 29, 2026
-**Current Version:** v0.7.2
-**Current Phase:** Phase 6 Week 4 - Training Landing (Week 3 Complete)
+**Current Version:** v0.7.3
+**Current Phase:** Phase 6 Week 5 - Members Landing (Week 4 Complete)
 
 ---
 
@@ -13,11 +13,11 @@
 
 **Who:** Xerxes - Business Representative by day, solo developer (5-10 hrs/week)
 
-**Where:** Backend COMPLETE. Frontend authentication COMPLETE. Staff management COMPLETE.
+**Where:** Backend COMPLETE. Frontend authentication COMPLETE. Staff management COMPLETE. Training landing COMPLETE.
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI
 
-**Status:** 205 tests passing, ~120 API endpoints, 8 ADRs, Phase 6 Week 3 complete
+**Status:** 59 frontend tests passing, ~120 API endpoints, 8 ADRs, Phase 6 Week 4 complete
 
 ---
 
@@ -42,9 +42,10 @@
 | Week 1 | Setup + Login | Done |
 | Week 2 | Auth cookies + Dashboard | Done |
 | Week 3 | Staff management | Done |
-| Week 4 | Training landing | NEXT |
+| Week 4 | Training landing | Done |
+| Week 5 | Members landing | NEXT |
 
-### Frontend Tests: 40 tests
+### Frontend Tests: 59 tests
 
 | Component | Tests | Status |
 |-----------|-------|--------|
@@ -57,6 +58,8 @@
 | Flash Messages | 2 | Done |
 | Dashboard API | 2 | Done |
 | Placeholder Routes | 3 | Done |
+| Staff Management | 18 | Done |
+| Training Frontend | 19 | Done |
 
 ---
 
@@ -74,7 +77,7 @@
 | **Interactivity** | HTMX | HTML-over-the-wire |
 | **Micro-interactions** | Alpine.js | Dropdowns, toggles |
 | **CSS** | DaisyUI + Tailwind | CDN, no build step |
-| **Testing** | pytest + httpx | 205 tests passing |
+| **Testing** | pytest + httpx | 59 frontend tests passing |
 | **Container** | Docker | Full dev environment |
 
 ---
@@ -95,17 +98,26 @@ IP2A-Database-v2/
 │   ├── models/                 # ORM models
 │   ├── schemas/                # Pydantic schemas
 │   ├── services/               # Business logic
-│   │   └── dashboard_service.py # Dashboard stats aggregation (Week 2)
+│   │   ├── dashboard_service.py  # Dashboard stats (Week 2)
+│   │   ├── staff_service.py      # Staff management (Week 3)
+│   │   └── training_frontend_service.py  # Training stats (Week 4)
 │   ├── routers/                # API endpoints
-│   │   └── dependencies/
-│   │       ├── auth.py         # Bearer token auth
-│   │       └── auth_cookie.py  # Cookie-based auth (Week 2)
+│   │   ├── dependencies/
+│   │   │   ├── auth.py         # Bearer token auth
+│   │   │   └── auth_cookie.py  # Cookie-based auth (Week 2)
+│   │   ├── staff.py            # Staff management (Week 3)
+│   │   └── training_frontend.py # Training pages (Week 4)
 │   ├── templates/              # Jinja2 templates (Phase 6)
 │   │   ├── base.html
 │   │   ├── base_auth.html
 │   │   ├── components/
 │   │   ├── auth/
 │   │   ├── dashboard/
+│   │   ├── staff/              # Week 3
+│   │   ├── training/           # Week 4
+│   │   │   ├── index.html
+│   │   │   ├── students/
+│   │   │   └── courses/
 │   │   └── errors/
 │   ├── static/                 # CSS, JS, images (Phase 6)
 │   │   ├── css/
@@ -116,6 +128,9 @@ IP2A-Database-v2/
 ├── docs/
 │   ├── decisions/              # ADRs (001-008)
 │   ├── instructions/           # Claude Code instruction docs
+│   │   ├── week2_instructions/
+│   │   ├── week3_instructions/
+│   │   └── week4_instructions/
 │   ├── architecture/           # System docs
 │   ├── guides/                 # How-to guides
 │   └── archive/                # Old documentation
@@ -138,7 +153,7 @@ docker-compose up -d
 pytest -v
 
 # Run specific test file
-pytest src/tests/test_frontend.py -v
+pytest src/tests/test_training_frontend.py -v
 
 # Apply migrations
 alembic upgrade head
@@ -151,6 +166,77 @@ uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 
 # Format code
 ruff check . --fix && ruff format .
+```
+
+---
+
+## Phase 6 Week 4: COMPLETE
+
+**Objective:** Build Training module landing page with student/course management
+
+**Instruction Documents:** `docs/instructions/week4_instructions/`
+
+### Session A: Training Overview (January 29, 2026)
+
+| Task | Status |
+|------|--------|
+| Create TrainingFrontendService with stats queries | Done |
+| Create training_frontend router | Done |
+| Create training/index.html landing page | Done |
+| Stats: students, completed, courses, completion rate | Done |
+| Recent students table | Done |
+| Quick action buttons | Done |
+
+### Session B: Student List (January 29, 2026)
+
+| Task | Status |
+|------|--------|
+| Create students/index.html with search/filter | Done |
+| Create _table.html and _row.html partials | Done |
+| HTMX live search with 300ms debounce | Done |
+| Filter by status and cohort | Done |
+| Status badges with colors | Done |
+| Pagination component | Done |
+| Create students/detail.html page | Done |
+| Add student detail route | Done |
+
+### Session C: Course List + Tests (January 29, 2026)
+
+| Task | Status |
+|------|--------|
+| Create courses/index.html with card layout | Done |
+| Create courses/detail.html page | Done |
+| Add course detail route | Done |
+| Enrollment counts per course | Done |
+| Comprehensive tests (19 total) | Done |
+
+**Commits:**
+- `ef77cb8 feat(training): Phase 6 Week 4 Session A - Training landing page`
+- `db19cac feat(training): Phase 6 Week 4 Session B - Student list enhancements`
+- `bbcd7ca feat(training): Phase 6 Week 4 Session C - Course detail and comprehensive tests`
+
+### Files Created
+
+```
+src/
+├── services/
+│   └── training_frontend_service.py  # Stats and queries
+├── routers/
+│   └── training_frontend.py          # Training page routes
+├── templates/
+│   └── training/
+│       ├── index.html                # Landing page
+│       ├── students/
+│       │   ├── index.html            # Student list
+│       │   ├── detail.html           # Student detail
+│       │   └── partials/
+│       │       ├── _table.html       # Table with pagination
+│       │       └── _row.html         # Single row
+│       └── courses/
+│           ├── index.html            # Course cards
+│           └── detail.html           # Course detail
+└── tests/
+    └── test_training_frontend.py     # 19 tests
 ```
 
 ---
@@ -319,7 +405,7 @@ src/
 ### Enum Imports
 ```python
 # CORRECT
-from src.db.enums import MemberStatus, CohortStatus
+from src.db.enums import MemberStatus, StudentStatus, CourseEnrollmentStatus
 
 # WRONG (old location)
 from src.models.enums import MemberStatus
@@ -358,6 +444,18 @@ async def page(request: Request):
 <form hx-post="/auth/login" hx-target="#result" hx-swap="innerHTML">
     <!-- form fields -->
 </form>
+```
+
+### HTMX Search Pattern (Week 3/4)
+```html
+<input
+    type="search"
+    name="q"
+    hx-get="/training/students/search"
+    hx-trigger="input changed delay:300ms, search"
+    hx-target="#table-container"
+    hx-include="[name='status'], [name='cohort']"
+/>
 ```
 
 ---
@@ -407,29 +505,36 @@ async def page(request: Request):
 
 ---
 
-## Phase 6 Week 2 Files Created/Modified
+## Phase 6 Week 4 Files Created/Modified
 
 ### New Files
 ```
-src/routers/dependencies/
-└── auth_cookie.py         # Cookie-based JWT validation
-
 src/services/
-└── dashboard_service.py   # Dashboard stats aggregation
+└── training_frontend_service.py   # Training stats and queries
+
+src/routers/
+└── training_frontend.py           # Training page routes
+
+src/templates/training/
+├── index.html                     # Landing page
+├── students/
+│   ├── index.html                 # Student list
+│   ├── detail.html                # Student detail
+│   └── partials/
+│       ├── _table.html
+│       └── _row.html
+└── courses/
+    ├── index.html                 # Course cards
+    └── detail.html                # Course detail
+
+src/tests/
+└── test_training_frontend.py      # 19 tests
 ```
 
 ### Modified Files
 ```
-src/routers/
-├── auth.py                # Added cookie setting on login/logout
-└── frontend.py            # Added auth middleware, real data, placeholders
-
-src/templates/
-├── auth/login.html        # Flash messages, correct /auth/login path
-└── dashboard/index.html   # HTMX refresh, activity feed
-
-src/tests/
-└── test_frontend.py       # 22 tests (10 new auth tests)
+src/main.py                        # Added training_frontend router
+src/templates/components/_sidebar.html  # Training nav already present
 ```
 
 ---

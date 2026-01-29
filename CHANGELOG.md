@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Phase 6 Week 4: Training Landing Page** (Complete)
+  * Training landing page with overview stats dashboard
+  * Stats: total students, active students, completed, completion rate
+  * Recent students table with quick view
+  * Quick action buttons for navigation
+  * Student list page with HTMX search (300ms debounce)
+  * Filter by status (enrolled/completed/dropped/etc) and cohort
+  * Status badges with color coding
+  * Student detail page with enrollments and program dates
+  * Course list with card layout showing enrollment counts
+  * Course detail page with enrolled students table
+  * TrainingFrontendService for stats and queries
+  * 19 new training frontend tests (59 frontend total)
+
 - **Phase 6 Week 3: Staff Management** (Complete)
   * Staff list page with search, filter, and pagination
   * HTMX-powered live search (300ms debounce)

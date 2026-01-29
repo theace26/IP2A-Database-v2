@@ -5,7 +5,7 @@
 
 ---
 
-## Current Focus: Phase 6 Frontend (Week 4 - Training Landing)
+## Current Focus: Phase 6 Frontend (Week 5 - Members Landing)
 
 ### Legend: Done | In Progress | Pending
 
@@ -80,14 +80,38 @@
 
 **Version:** v0.7.2 (Week 3 Complete)
 
-### Week 4: Training Landing (NEXT)
+### Week 4: Training Landing (COMPLETE)
 
 | Task | Status |
 |------|--------|
-| Training overview page | Pending |
-| Student list with status indicators | Pending |
-| Course list | Pending |
-| Quick enrollment actions | Pending |
+| TrainingFrontendService with stats queries | Done |
+| Training landing page with stats dashboard | Done |
+| Stats: students, completed, courses, completion rate | Done |
+| Recent students table | Done |
+| Student list with HTMX search (300ms debounce) | Done |
+| Filter by status and cohort | Done |
+| Status badges with color coding | Done |
+| Pagination component | Done |
+| Student detail page with enrollments | Done |
+| Course list with card layout | Done |
+| Course detail page with enrolled students | Done |
+| 19 new training tests (59 frontend total) | Done |
+
+**Commits:**
+- `ef77cb8` - Session A: Training landing page
+- `db19cac` - Session B: Student list enhancements
+- `bbcd7ca` - Session C: Course detail and tests
+
+**Version:** v0.7.3 (Week 4 Complete)
+
+### Week 5: Members Landing (NEXT)
+
+| Task | Status |
+|------|--------|
+| Member list with search/filter | Pending |
+| Member detail with employment history | Pending |
+| Dues status indicators | Pending |
+| Member classification badges | Pending |
 
 ---
 
@@ -95,13 +119,13 @@
 
 | Metric | Current |
 |--------|---------|
-| Total Tests | 205 |
+| Total Tests | ~224 |
 | Backend Tests | 165 |
-| Frontend Tests | 40 |
+| Frontend Tests | 59 |
 | API Endpoints | ~120 |
 | ORM Models | 25 |
 | ADRs | 8 |
-| Version | v0.7.2 |
+| Version | v0.7.3 |
 
 ---
 
@@ -109,6 +133,7 @@
 
 | Version | Date | Milestone |
 |---------|------|-----------|
+| v0.7.3 | 2026-01-29 | Phase 6 Week 4 - Training Landing |
 | v0.7.2 | 2026-01-29 | Phase 6 Week 3 - Staff Management |
 | v0.7.1 | 2026-01-29 | Phase 6 Week 2 - Auth cookies + Dashboard |
 | v0.7.0 | 2026-01-28 | Phase 4 Complete (Backend milestone) |
@@ -132,6 +157,9 @@ pytest src/tests/test_frontend.py -v
 
 # Run staff tests only
 pytest src/tests/test_staff.py -v
+
+# Run training tests only
+pytest src/tests/test_training_frontend.py -v
 
 # Check code quality
 ruff check . --fix && ruff format .
