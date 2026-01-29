@@ -1,0 +1,58 @@
+{% if rates %}
+<div class="overflow-x-auto">
+    <table class="table table-zebra">
+        <thead>
+            <tr>
+                <th>Classification</th>
+                <th>Monthly Amount</th>
+                <th>Effective Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rate in rates %}
+            <tr>
+                <td>
+                    <span class="badge {{ get_badge_class(rate.classification) }}">
+                        {{ rate.classification.value.replace('_', ' ').title() }}
+                    </span>
+                </td>
+                <td class="font-mono">{{ format_currency(rate.monthly_amount) }}</td>
+                <td>{{ rate.effective_date.strftime('%b %d, %Y') }}</td>
+                <td>
+                    {% if rate.end_date %}
+                    {{ rate.end_date.strftime('%b %d, %Y') }}
+                    {% else %}
+                    <span class="text-base-content/50">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if rate.end_date and rate.end_date < today %}
+                    <span class="badge badge-ghost">Expired</span>
+                    {% elif rate.effective_date > today %}
+                    <span class="badge badge-info">Future</span>
+                    {% else %}
+                    <span class="badge badge-success">Active</span>
+                    {% endif %}
+                </td>
+                <td class="max-w-xs truncate">{{ rate.description or '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% if total is defined %}
+<div class="mt-4 text-sm text-base-content/70">
+    Showing {{ rates|length }} of {{ total }} rates
+</div>
+{% endif %}
+{% else %}
+<div class="text-center py-8 text-base-content/50">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+    </svg>
+    <p>No rates found</p>
+</div>
+{% endif %}

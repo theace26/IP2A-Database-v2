@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Dues Rates - IP2A{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/dues">Dues</a></li>
+            <li>Rates</li>
+        </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold">Dues Rates</h1>
+            <p class="text-base-content/70">Monthly dues rates by member classification</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex flex-wrap gap-4 items-end">
+                <!-- Classification Filter -->
+                <div class="form-control w-full max-w-xs">
+                    <label class="label">
+                        <span class="label-text">Classification</span>
+                    </label>
+                    <select
+                        name="classification"
+                        class="select select-bordered"
+                        hx-get="/dues/rates/search"
+                        hx-trigger="change"
+                        hx-target="#rates-table"
+                        hx-include="[name='active_only']"
+                    >
+                        <option value="">All Classifications</option>
+                        {% for c in classifications %}
+                        <option value="{{ c.value }}">{{ c.value.replace('_', ' ').title() }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Active Only Toggle -->
+                <div class="form-control">
+                    <label class="label cursor-pointer gap-2">
+                        <span class="label-text">Active only</span>
+                        <input
+                            type="checkbox"
+                            name="active_only"
+                            value="true"
+                            class="checkbox checkbox-primary"
+                            hx-get="/dues/rates/search"
+                            hx-trigger="change"
+                            hx-target="#rates-table"
+                            hx-include="[name='classification']"
+                        />
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rates Table -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div id="rates-table">
+                {% include "dues/rates/partials/_table.html" %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
