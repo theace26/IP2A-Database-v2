@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status, Request
 from sqlalchemy.orm import Session
 
 from src.db.session import get_db
@@ -75,13 +75,15 @@ def get_client_info(request: Request) -> tuple[Optional[str], Optional[str]]:
 def login(
     login_data: LoginRequest,
     request: Request,
+    response: Response,
     db: Session = Depends(get_db),
 ):
     """
     Authenticate user and return tokens.
 
     Returns access token (short-lived) and refresh token (long-lived).
-    Store refresh token securely (httpOnly cookie or secure storage).
+    Sets HTTP-only cookies for browser-based auth.
+    Also returns tokens in response body for API clients.
     """
     try:
         user = authenticate_user(db, login_data.email, login_data.password)
@@ -103,6 +105,26 @@ def login(
 
     device_info, ip_address = get_client_info(request)
     tokens = create_tokens(db, user, device_info, ip_address)
+
+    # Set HTTP-only cookies for browser auth
+    response.set_cookie(
+        key="access_token",
+        value=tokens["access_token"],
+        httponly=True,
+        secure=False,  # Set True in production with HTTPS
+        samesite="lax",
+        max_age=1800,  # 30 minutes
+        path="/",
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=tokens["refresh_token"],
+        httponly=True,
+        secure=False,  # Set True in production with HTTPS
+        samesite="strict",
+        max_age=604800,  # 7 days
+        path="/api/auth",  # Only sent to auth endpoints
+    )
 
     return TokenResponse(**tokens)
 
@@ -137,15 +159,31 @@ def refresh_token(
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(
-    refresh_data: RefreshTokenRequest,
+    response: Response,
+    refresh_data: Optional[RefreshTokenRequest] = None,
+    refresh_token_cookie: Optional[str] = Cookie(default=None, alias="refresh_token"),
     db: Session = Depends(get_db),
 ):
     """
     Logout from current device by revoking the refresh token.
 
-    Client should also discard the access token.
+    Clears HTTP-only cookies for browser-based auth.
+    Also accepts refresh token in request body for API clients.
     """
-    revoke_refresh_token(db, refresh_data.refresh_token)
+    # Get refresh token from body or cookie
+    token_to_revoke = None
+    if refresh_data and refresh_data.refresh_token:
+        token_to_revoke = refresh_data.refresh_token
+    elif refresh_token_cookie:
+        token_to_revoke = refresh_token_cookie
+
+    if token_to_revoke:
+        revoke_refresh_token(db, token_to_revoke)
+
+    # Clear cookies
+    response.delete_cookie(key="access_token", path="/")
+    response.delete_cookie(key="refresh_token", path="/api/auth")
+
     return None
 
 

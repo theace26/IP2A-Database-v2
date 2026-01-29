@@ -8,15 +8,28 @@
     <div class="flex justify-between items-center">
         <div>
             <h1 class="text-2xl font-bold">Dashboard</h1>
-            <p class="text-base-content/60">Welcome back, {{ current_user.first_name if current_user else 'User' }}</p>
+            <p class="text-base-content/60">Welcome back{% if user %}, {{ user.email }}{% endif %}</p>
         </div>
-        <div class="text-sm text-base-content/60">
-            {{ now.strftime('%A, %B %d, %Y') if now else '' }}
+        <div class="flex items-center gap-4">
+            <button
+                hx-get="/api/dashboard/refresh"
+                hx-target="#stats-grid"
+                hx-swap="innerHTML"
+                class="btn btn-ghost btn-sm"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+            </button>
+            <div class="text-sm text-base-content/60">
+                {{ now.strftime('%A, %B %d, %Y') if now else '' }}
+            </div>
         </div>
     </div>
 
     <!-- Stats cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div id="stats-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Members card -->
         <div class="stat bg-base-100 rounded-box shadow">
             <div class="stat-figure text-primary">
@@ -24,9 +37,9 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
             </div>
-            <div class="stat-title">Total Members</div>
-            <div class="stat-value text-primary">{{ stats.member_count if stats else '—' }}</div>
-            <div class="stat-desc">Active members</div>
+            <div class="stat-title">Active Members</div>
+            <div class="stat-value text-primary">{{ '{:,}'.format(stats.active_members) if stats and stats.active_members else '0' }}</div>
+            <div class="stat-desc">{{ stats.members_change if stats and stats.members_change else '+0' }} this month</div>
         </div>
 
         <!-- Students card -->
@@ -36,21 +49,21 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
             </div>
-            <div class="stat-title">Students</div>
-            <div class="stat-value text-secondary">{{ stats.student_count if stats else '—' }}</div>
-            <div class="stat-desc">In pre-apprenticeship</div>
+            <div class="stat-title">Active Students</div>
+            <div class="stat-value text-secondary">{{ stats.active_students if stats else '0' }}</div>
+            <div class="stat-desc">In current cohorts</div>
         </div>
 
         <!-- Grievances card -->
         <div class="stat bg-base-100 rounded-box shadow">
             <div class="stat-figure text-warning">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
             </div>
-            <div class="stat-title">Open Grievances</div>
-            <div class="stat-value text-warning">{{ stats.open_grievances if stats else '—' }}</div>
-            <div class="stat-desc">Requiring attention</div>
+            <div class="stat-title">Pending Grievances</div>
+            <div class="stat-value text-warning">{{ stats.pending_grievances if stats else '0' }}</div>
+            <div class="stat-desc">Requires attention</div>
         </div>
 
         <!-- Dues card -->
@@ -61,8 +74,8 @@
                 </svg>
             </div>
             <div class="stat-title">Dues MTD</div>
-            <div class="stat-value text-success">${{ '{:,.0f}'.format(stats.dues_mtd) if stats and stats.dues_mtd else '—' }}</div>
-            <div class="stat-desc">Collected this month</div>
+            <div class="stat-value text-success">${{ '{:,.0f}'.format(stats.dues_mtd) if stats and stats.dues_mtd else '0' }}</div>
+            <div class="stat-desc">This month</div>
         </div>
     </div>
 
@@ -84,27 +97,34 @@
         <!-- Recent activity -->
         <div class="card bg-base-100 shadow lg:col-span-2">
             <div class="card-body">
-                <h2 class="card-title">Recent Activity</h2>
-                <div class="overflow-x-auto">
-                    <table class="table table-sm">
-                        <tbody>
-                            {% if activities %}
-                            {% for activity in activities %}
-                            <tr>
-                                <td>
-                                    <span class="badge badge-ghost badge-sm">{{ activity.action }}</span>
-                                </td>
-                                <td>{{ activity.description }}</td>
-                                <td class="text-base-content/60 text-xs">{{ activity.timestamp }}</td>
-                            </tr>
-                            {% endfor %}
-                            {% else %}
-                            <tr>
-                                <td class="text-base-content/60">No recent activity</td>
-                            </tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
+                <div class="flex justify-between items-center">
+                    <h2 class="card-title">Recent Activity</h2>
+                    <button
+                        hx-get="/api/dashboard/recent-activity"
+                        hx-target="#activity-list"
+                        hx-swap="innerHTML"
+                        class="btn btn-ghost btn-xs"
+                    >
+                        Refresh
+                    </button>
+                </div>
+                <div id="activity-list" class="mt-4">
+                    {% if activities %}
+                    <ul class="space-y-3">
+                        {% for activity in activities %}
+                        <li class="flex items-start gap-3 p-2 rounded hover:bg-base-200">
+                            <div class="badge {{ activity.badge.class }} badge-sm mt-1">{{ activity.badge.text }}</div>
+                            <div>
+                                <p class="text-sm font-medium">{{ activity.description }}</p>
+                                <p class="text-xs text-base-content/60">{{ activity.time_ago }}</p>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <p class="text-xs text-base-content/50 mt-4 text-center">Showing last 10 activities</p>
+                    {% else %}
+                    <p class="text-center text-base-content/50 py-4">No recent activity</p>
+                    {% endif %}
                 </div>
             </div>
         </div>

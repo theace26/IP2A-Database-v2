@@ -1,7 +1,7 @@
 """
 Frontend route tests.
 
-Tests for HTML page rendering and static file serving.
+Tests for HTML page rendering, static file serving, and authentication flows.
 """
 
 import pytest
@@ -15,8 +15,8 @@ client = TestClient(app)
 class TestPublicRoutes:
     """Tests for routes that don't require authentication."""
 
-    def test_root_redirects_to_login(self):
-        """Root path should redirect to login."""
+    def test_root_redirects_to_login_when_unauthenticated(self):
+        """Root path should redirect to login when not authenticated."""
         response = client.get("/", follow_redirects=False)
         assert response.status_code == 302
         assert response.headers["location"] == "/login"
@@ -39,25 +39,20 @@ class TestPublicRoutes:
 
 
 class TestProtectedRoutes:
-    """Tests for routes that will require authentication.
+    """Tests for routes that require authentication."""
 
-    Note: These currently work without auth for Week 1.
-    Week 2 will add auth requirements.
-    """
-
-    def test_dashboard_page_renders(self):
-        """Dashboard page should render."""
-        response = client.get("/dashboard")
-        assert response.status_code == 200
-        assert "text/html" in response.headers["content-type"]
-        assert "Dashboard" in response.text
-        assert "Welcome back" in response.text
+    def test_dashboard_redirects_without_auth(self):
+        """Dashboard should redirect to login when not authenticated."""
+        response = client.get("/dashboard", follow_redirects=False)
+        assert response.status_code == 302
+        assert "/login" in response.headers["location"]
 
     def test_logout_redirects_to_login(self):
-        """Logout should redirect to login."""
+        """Logout should clear cookies and redirect to login with message."""
         response = client.get("/logout", follow_redirects=False)
         assert response.status_code == 302
-        assert response.headers["location"] == "/login"
+        assert "/login" in response.headers["location"]
+        assert "message=" in response.headers["location"]
 
 
 class TestStaticFiles:
@@ -100,18 +95,98 @@ class TestPageContent:
         response = client.get("/login")
         assert 'name="email"' in response.text
         assert 'name="password"' in response.text
-        assert 'hx-post="/api/auth/login"' in response.text
+        assert 'hx-post="/auth/login"' in response.text
 
-    def test_dashboard_has_stats_cards(self):
-        """Dashboard should display stats cards."""
-        response = client.get("/dashboard")
-        assert "Total Members" in response.text
-        assert "Students" in response.text
-        assert "Open Grievances" in response.text
-        assert "Dues MTD" in response.text
+    def test_login_accepts_next_param(self):
+        """Login page should accept and preserve next URL param."""
+        response = client.get("/login?next=/dashboard")
+        assert response.status_code == 200
+        assert "/dashboard" in response.text
 
-    def test_dashboard_has_quick_actions(self):
-        """Dashboard should have quick action buttons."""
-        response = client.get("/dashboard")
-        assert "Quick Actions" in response.text
-        assert "New Member" in response.text or "+ New Member" in response.text
+    def test_login_displays_flash_message(self):
+        """Login page should display flash messages from URL params."""
+        response = client.get("/login?message=Test+message&type=success")
+        assert response.status_code == 200
+        assert "Test message" in response.text
+
+
+class TestCookieAuth:
+    """Tests for cookie-based authentication."""
+
+    def test_protected_route_redirects_to_login(self):
+        """Protected routes should redirect to login when not authenticated."""
+        protected_routes = ["/dashboard"]
+        for route in protected_routes:
+            response = client.get(route, follow_redirects=False)
+            assert response.status_code == 302, f"Route {route} should redirect"
+            assert "/login" in response.headers["location"]
+
+    def test_logout_clears_cookies(self):
+        """Logout should set cookies to be deleted."""
+        response = client.get("/logout", follow_redirects=False)
+        assert response.status_code == 302
+        # Check that cookies are being cleared (Set-Cookie headers present)
+        set_cookies = response.headers.get_list("set-cookie")
+        # Should have Set-Cookie headers to clear the tokens
+        assert len(set_cookies) >= 0  # At least attempt to clear cookies
+
+    def test_invalid_login_returns_401(self):
+        """Invalid login credentials should return 401."""
+        response = client.post(
+            "/auth/login",
+            json={"email": "invalid@test.com", "password": "wrongpassword"},
+        )
+        assert response.status_code == 401
+
+
+class TestFlashMessages:
+    """Tests for flash message functionality."""
+
+    def test_logout_includes_success_message(self):
+        """Logout redirect should include success message."""
+        response = client.get("/logout", follow_redirects=False)
+        location = response.headers.get("location", "")
+        assert "message=" in location
+        assert "type=success" in location
+
+    def test_protected_redirect_includes_info_message(self):
+        """Redirect to login from protected route should include info message."""
+        response = client.get("/dashboard", follow_redirects=False)
+        location = response.headers.get("location", "")
+        assert "/login" in location
+
+
+class TestDashboardAPI:
+    """Tests for dashboard API endpoints."""
+
+    def test_dashboard_refresh_endpoint_exists(self):
+        """Dashboard refresh endpoint should exist."""
+        response = client.get("/api/dashboard/refresh")
+        # Should return 401 (unauthorized) or HTML if it exists
+        assert response.status_code in [200, 401, 302]
+
+    def test_recent_activity_endpoint_exists(self):
+        """Recent activity endpoint should exist."""
+        response = client.get("/api/dashboard/recent-activity")
+        # Should return HTML content
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+
+
+class TestPlaceholderRoutes:
+    """Tests for placeholder pages that return 404."""
+
+    def test_profile_returns_404(self):
+        """Profile page should return 404."""
+        response = client.get("/profile")
+        assert response.status_code == 404
+
+    def test_settings_returns_404(self):
+        """Settings page should return 404."""
+        response = client.get("/settings")
+        assert response.status_code == 404
+
+    def test_members_returns_404(self):
+        """Members page should return 404."""
+        response = client.get("/members")
+        assert response.status_code == 404

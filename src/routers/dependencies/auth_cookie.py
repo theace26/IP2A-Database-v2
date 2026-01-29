@@ -1,0 +1,125 @@
+"""
+Cookie-based authentication for frontend routes.
+Uses HTTP-only cookies to store JWT tokens securely.
+"""
+
+from typing import Optional
+import logging
+
+from fastapi import Cookie, HTTPException, Request, Response, status
+from fastapi.responses import RedirectResponse
+from sqlalchemy.orm import Session
+
+from src.core.jwt import (
+    verify_access_token,
+    TokenExpiredError,
+    TokenInvalidError,
+    create_access_token,
+)
+from src.db.session import get_db
+
+logger = logging.getLogger(__name__)
+
+
+class AuthenticationRequired:
+    """
+    Dependency that requires a valid JWT cookie.
+    Redirects to login page if not authenticated.
+    """
+
+    def __init__(self, redirect_to_login: bool = True):
+        self.redirect_to_login = redirect_to_login
+
+    async def __call__(
+        self,
+        request: Request,
+        access_token: Optional[str] = Cookie(default=None),
+    ):
+        """
+        Validate the access_token cookie.
+
+        Returns:
+            User dict if valid token
+
+        Raises:
+            RedirectResponse to /login if redirect_to_login=True
+            HTTPException 401 if redirect_to_login=False
+        """
+        if not access_token:
+            return self._handle_unauthorized(request)
+
+        try:
+            # Verify the JWT token
+            payload = verify_access_token(access_token)
+            if not payload:
+                return self._handle_unauthorized(request)
+
+            user_id = payload.get("sub")
+            if not user_id:
+                return self._handle_unauthorized(request)
+
+            # Return user info from token (avoid DB call on every request)
+            return {
+                "id": int(user_id),
+                "email": payload.get("email"),
+                "roles": payload.get("roles", []),
+            }
+
+        except TokenExpiredError:
+            logger.debug("Access token expired")
+            return self._handle_unauthorized(request)
+        except TokenInvalidError as e:
+            logger.warning(f"Token validation failed: {e}")
+            return self._handle_unauthorized(request)
+        except Exception as e:
+            logger.warning(f"Token validation failed: {e}")
+            return self._handle_unauthorized(request)
+
+    def _handle_unauthorized(self, request: Request):
+        """Handle unauthorized access."""
+        if self.redirect_to_login:
+            # Store the original URL to redirect back after login
+            return_url = str(request.url.path)
+            return RedirectResponse(
+                url=f"/login?next={return_url}&message=Please+log+in+to+continue&type=info",
+                status_code=status.HTTP_302_FOUND,
+            )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+        )
+
+
+# Convenience instances
+require_auth = AuthenticationRequired(redirect_to_login=True)
+require_auth_api = AuthenticationRequired(redirect_to_login=False)
+
+
+async def get_current_user_from_cookie(
+    access_token: Optional[str] = Cookie(default=None),
+) -> Optional[dict]:
+    """
+    Get current user from cookie without raising exceptions.
+    Returns None if not authenticated.
+    Useful for pages that work both with and without auth.
+    """
+    if not access_token:
+        return None
+
+    try:
+        payload = verify_access_token(access_token)
+        if not payload:
+            return None
+
+        user_id = payload.get("sub")
+        if not user_id:
+            return None
+
+        return {
+            "id": int(user_id),
+            "email": payload.get("email"),
+            "roles": payload.get("roles", []),
+        }
+    except (TokenExpiredError, TokenInvalidError):
+        return None
+    except Exception:
+        return None
