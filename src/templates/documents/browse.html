@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Documents - IP2A{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/documents">Documents</a></li>
+            <li>Browse</li>
+        </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold">Browse Documents</h1>
+            <p class="text-base-content/70">{{ total }} document{% if total != 1 %}s{% endif %} found</p>
+        </div>
+        <a href="/documents/upload" class="btn btn-primary btn-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Upload
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body py-4">
+            <div class="flex flex-wrap gap-4 items-end">
+                <div class="form-control">
+                    <label class="label py-1">
+                        <span class="label-text text-xs">Entity Type</span>
+                    </label>
+                    <select
+                        name="entity_type"
+                        class="select select-bordered select-sm"
+                        hx-get="/documents/browse"
+                        hx-target="#file-list"
+                        hx-include="[name='entity_id']"
+                    >
+                        <option value="all" {% if entity_type == 'all' %}selected{% endif %}>All Types</option>
+                        {% for etype, config in entity_types.items() %}
+                        <option value="{{ etype }}" {% if entity_type == etype %}selected{% endif %}>
+                            {{ config.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-control">
+                    <label class="label py-1">
+                        <span class="label-text text-xs">Entity ID</span>
+                    </label>
+                    <input
+                        type="number"
+                        name="entity_id"
+                        class="input input-bordered input-sm w-24"
+                        placeholder="ID"
+                        value="{{ entity_id or '' }}"
+                        hx-get="/documents/browse"
+                        hx-target="#file-list"
+                        hx-trigger="change, keyup delay:500ms"
+                        hx-include="[name='entity_type']"
+                    >
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File List -->
+    <div id="file-list">
+        {% include "documents/partials/_file_list.html" %}
+    </div>
+</div>
+{% endblock %}

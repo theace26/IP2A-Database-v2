@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Phase 6 Week 9: Documents Frontend** (Complete)
+  * Documents landing page with storage stats and recent files
+  * Upload page with Alpine.js drag-drop zone
+  * Browse page with entity type filtering
+  * Download redirect endpoint (presigned S3 URLs)
+  * Delete endpoint with HTMX confirmation
+  * HTMX partials for upload/delete success and error states
+  * Entity type dropdown (Member, Student, Grievance, SALTing, Benevolence)
+  * Documents link added to sidebar navigation
+  * 6 new document frontend tests (130 frontend total)
+
 - **Phase 6 Week 8: Reports & Export** (Complete)
   * Reports landing page with categorized report list
   * ReportService with PDF generation (WeasyPrint) and Excel generation (openpyxl)

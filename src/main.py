@@ -61,6 +61,7 @@ from src.routers.training_frontend import router as training_frontend_router
 from src.routers.member_frontend import router as member_frontend_router
 from src.routers.operations_frontend import router as operations_frontend_router
 from src.routers.reports import router as reports_router
+from src.routers.documents_frontend import router as documents_frontend_router
 
 # ------------------------------------------------------------
 # Initialize FastAPI
@@ -164,6 +165,9 @@ app.include_router(operations_frontend_router)
 
 # Phase 6 Reports router
 app.include_router(reports_router)
+
+# Phase 6 Documents Frontend router
+app.include_router(documents_frontend_router)
 
 # Frontend routes (HTML pages) - include LAST to not interfere with API routes
 app.include_router(frontend.router)

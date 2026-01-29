@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Document - IP2A{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/documents">Documents</a></li>
+            <li>Upload</li>
+        </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div>
+        <h1 class="text-2xl font-bold">Upload Document</h1>
+        <p class="text-base-content/70">Drag and drop files or click to browse</p>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <form
+                id="upload-form"
+                hx-post="/documents/upload"
+                hx-target="#upload-result"
+                hx-swap="innerHTML"
+                hx-encoding="multipart/form-data"
+                class="space-y-6"
+            >
+                <!-- Drag-Drop Zone -->
+                <div
+                    x-data="{
+                        isDragging: false,
+                        fileName: '',
+                        fileSize: '',
+                        handleDrop(e) {
+                            const files = e.dataTransfer.files;
+                            if (files.length > 0) {
+                                document.getElementById('file-input').files = files;
+                                this.fileName = files[0].name;
+                                this.fileSize = this.formatSize(files[0].size);
+                            }
+                            this.isDragging = false;
+                        },
+                        handleSelect(e) {
+                            const files = e.target.files;
+                            if (files.length > 0) {
+                                this.fileName = files[0].name;
+                                this.fileSize = this.formatSize(files[0].size);
+                            }
+                        },
+                        formatSize(bytes) {
+                            if (bytes < 1024) return bytes + ' B';
+                            if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+                            return (bytes/(1024*1024)).toFixed(1) + ' MB';
+                        }
+                    }"
+                    @dragover.prevent="isDragging = true"
+                    @dragleave.prevent="isDragging = false"
+                    @drop.prevent="handleDrop($event)"
+                    :class="isDragging ? 'border-primary bg-primary/10' : 'border-base-300'"
+                    class="border-2 border-dashed rounded-lg p-8 text-center transition-colors"
+                >
+                    <input
+                        type="file"
+                        id="file-input"
+                        name="file"
+                        class="hidden"
+                        @change="handleSelect($event)"
+                        required
+                    >
+
+                    <template x-if="!fileName">
+                        <div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-base-content/40 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <p class="text-base-content/70 mb-2">Drag and drop a file here, or</p>
+                            <label for="file-input" class="btn btn-outline btn-sm cursor-pointer">
+                                Browse Files
+                            </label>
+                        </div>
+                    </template>
+
+                    <template x-if="fileName">
+                        <div class="flex items-center justify-center gap-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div class="text-left">
+                                <p class="font-semibold" x-text="fileName"></p>
+                                <p class="text-sm text-base-content/70" x-text="fileSize"></p>
+                            </div>
+                            <label for="file-input" class="btn btn-ghost btn-sm cursor-pointer">
+                                Change
+                            </label>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Entity Selection -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Attach to Entity Type</span>
+                        </label>
+                        <select name="entity_type" class="select select-bordered" required>
+                            <option value="" disabled {% if not selected_entity_type %}selected{% endif %}>Select type...</option>
+                            {% for entity_type, config in entity_types.items() %}
+                            <option value="{{ entity_type }}" {% if selected_entity_type == entity_type %}selected{% endif %}>
+                                {{ config.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Entity ID</span>
+                        </label>
+                        <input
+                            type="number"
+                            name="entity_id"
+                            class="input input-bordered"
+                            placeholder="Enter ID"
+                            value="{{ selected_entity_id or '' }}"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <!-- Category (Optional) -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Category (Optional)</span>
+                    </label>
+                    <select name="category" class="select select-bordered">
+                        <option value="">No category</option>
+                        <option value="identification">Identification</option>
+                        <option value="legal">Legal Documents</option>
+                        <option value="financial">Financial</option>
+                        <option value="certification">Certification</option>
+                        <option value="correspondence">Correspondence</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex justify-end gap-2">
+                    <a href="/documents" class="btn btn-ghost">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        Upload
+                    </button>
+                </div>
+            </form>
+
+            <!-- Upload Result -->
+            <div id="upload-result" class="mt-4"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

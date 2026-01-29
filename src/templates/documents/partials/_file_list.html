@@ -1,0 +1,123 @@
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        {% if documents %}
+        <div class="overflow-x-auto">
+            <table class="table table-zebra">
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>Entity</th>
+                        <th>Category</th>
+                        <th>Size</th>
+                        <th>Uploaded</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in documents %}
+                    <tr id="doc-row-{{ doc.id }}">
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                <div>
+                                    <div class="font-medium truncate max-w-xs">{{ doc.original_name or doc.file_name }}</div>
+                                    <div class="text-xs text-base-content/50">{{ doc.file_type }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge badge-outline badge-sm">{{ doc.record_type }}</span>
+                            <span class="text-xs text-base-content/50">#{{ doc.record_id }}</span>
+                        </td>
+                        <td>
+                            {% if doc.file_category %}
+                            <span class="badge badge-ghost badge-sm">{{ doc.file_category }}</span>
+                            {% else %}
+                            <span class="text-base-content/30">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-sm">{{ format_file_size(doc.file_size) }}</td>
+                        <td class="text-sm">{{ doc.created_at.strftime('%b %d, %Y') if doc.created_at else '—' }}</td>
+                        <td>
+                            <div class="flex gap-1">
+                                <a href="/documents/{{ doc.id }}/download" class="btn btn-xs btn-ghost" title="Download">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                </a>
+                                <button
+                                    class="btn btn-xs btn-ghost text-error"
+                                    title="Delete"
+                                    hx-post="/documents/{{ doc.id }}/delete"
+                                    hx-target="#doc-row-{{ doc.id }}"
+                                    hx-swap="outerHTML"
+                                    hx-confirm="Are you sure you want to delete this document?"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="flex justify-center mt-4">
+            <div class="join">
+                {% if page > 1 %}
+                <button
+                    class="join-item btn btn-sm"
+                    hx-get="/documents/browse?entity_type={{ entity_type }}&page={{ page - 1 }}"
+                    hx-target="#file-list"
+                >
+                    &laquo;
+                </button>
+                {% endif %}
+
+                {% for p in range(1, total_pages + 1) %}
+                {% if p == page %}
+                <button class="join-item btn btn-sm btn-active">{{ p }}</button>
+                {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+                <button
+                    class="join-item btn btn-sm"
+                    hx-get="/documents/browse?entity_type={{ entity_type }}&page={{ p }}"
+                    hx-target="#file-list"
+                >
+                    {{ p }}
+                </button>
+                {% elif p == page - 3 or p == page + 3 %}
+                <button class="join-item btn btn-sm btn-disabled">...</button>
+                {% endif %}
+                {% endfor %}
+
+                {% if page < total_pages %}
+                <button
+                    class="join-item btn btn-sm"
+                    hx-get="/documents/browse?entity_type={{ entity_type }}&page={{ page + 1 }}"
+                    hx-target="#file-list"
+                >
+                    &raquo;
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-12 text-base-content/50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p>No documents found</p>
+            <a href="/documents/upload" class="btn btn-primary btn-sm mt-4">Upload Document</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
