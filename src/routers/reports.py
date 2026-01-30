@@ -10,8 +10,7 @@ from fastapi import APIRouter, Depends, Request, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import Session, selectinload
 
 from src.db.session import get_db
 from src.routers.dependencies.auth_cookie import require_auth
@@ -50,7 +49,7 @@ def get_file_extension(format: str) -> str:
 @router.get("", response_class=HTMLResponse)
 async def reports_landing(
     request: Request,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: dict = Depends(require_auth),
 ):
     """Reports landing page with available reports."""
@@ -106,7 +105,7 @@ async def member_roster_report(
     request: Request,
     format: str = Query("pdf", pattern="^(pdf|excel)$"),
     status: Optional[str] = Query(None),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: dict = Depends(require_auth),
 ):
     """Generate member roster report."""
@@ -124,7 +123,7 @@ async def member_roster_report(
             pass
 
     stmt = stmt.order_by(Member.last_name, Member.first_name)
-    result = await db.execute(stmt)
+    result = db.execute(stmt)
     members = result.scalars().all()
 
     if format == "excel":
@@ -195,7 +194,7 @@ async def dues_summary_report(
     request: Request,
     format: str = Query("pdf", pattern="^(pdf|excel)$"),
     year: Optional[int] = Query(None),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: dict = Depends(require_auth),
 ):
     """Generate dues summary report by period."""
@@ -212,7 +211,7 @@ async def dues_summary_report(
         .where(DuesPeriod.period_year == year)
         .order_by(DuesPeriod.period_month)
     )
-    result = await db.execute(stmt)
+    result = db.execute(stmt)
     periods = result.scalars().all()
 
     # Calculate stats for each period
@@ -223,7 +222,7 @@ async def dues_summary_report(
     for period in periods:
         # Get payments for this period
         payments_stmt = select(DuesPayment).where(DuesPayment.period_id == period.id)
-        payments_result = await db.execute(payments_stmt)
+        payments_result = db.execute(payments_stmt)
         payments = payments_result.scalars().all()
 
         total_due = sum(p.amount_due for p in payments) if payments else Decimal("0")
@@ -308,7 +307,7 @@ async def dues_summary_report(
 async def overdue_report(
     request: Request,
     format: str = Query("pdf", pattern="^(pdf|excel)$"),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: dict = Depends(require_auth),
 ):
     """Generate overdue members report."""
@@ -321,7 +320,7 @@ async def overdue_report(
         .options(selectinload(DuesPayment.member), selectinload(DuesPayment.period))
         .where(DuesPayment.status == DuesPaymentStatus.OVERDUE)
     )
-    result = await db.execute(stmt)
+    result = db.execute(stmt)
     overdue_payments = result.scalars().all()
 
     # Sort by member name
@@ -405,7 +404,7 @@ async def overdue_report(
 async def training_enrollment_report(
     request: Request,
     format: str = Query("excel", pattern="^(excel)$"),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: dict = Depends(require_auth),
 ):
     """Generate course enrollment report."""
@@ -414,14 +413,14 @@ async def training_enrollment_report(
 
     # Get courses with enrollment counts
     stmt = select(Course).order_by(Course.course_code)
-    result = await db.execute(stmt)
+    result = db.execute(stmt)
     courses = result.scalars().all()
 
     data = []
     for course in courses:
         # Count enrollments
         enrollment_stmt = select(func.count(Enrollment.id)).where(Enrollment.course_id == course.id)
-        enrollment_result = await db.execute(enrollment_stmt)
+        enrollment_result = db.execute(enrollment_stmt)
         enrollment_count = enrollment_result.scalar() or 0
 
         data.append({
@@ -463,7 +462,7 @@ async def training_enrollment_report(
 async def grievance_report(
     request: Request,
     format: str = Query("pdf", pattern="^(pdf)$"),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: dict = Depends(require_auth),
 ):
     """Generate grievance summary report."""
@@ -472,7 +471,7 @@ async def grievance_report(
 
     # Get all grievances
     stmt = select(Grievance).options(selectinload(Grievance.member)).order_by(Grievance.filed_date.desc())
-    result = await db.execute(stmt)
+    result = db.execute(stmt)
     grievances = result.scalars().all()
 
     # Count by status
@@ -505,7 +504,7 @@ async def grievance_report(
 async def salting_report(
     request: Request,
     format: str = Query("excel", pattern="^(excel)$"),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: dict = Depends(require_auth),
 ):
     """Generate SALTing activities report."""
@@ -517,7 +516,7 @@ async def salting_report(
         selectinload(SALTingActivity.member),
         selectinload(SALTingActivity.organization)
     ).order_by(SALTingActivity.activity_date.desc())
-    result = await db.execute(stmt)
+    result = db.execute(stmt)
     activities = result.scalars().all()
 
     data = []
