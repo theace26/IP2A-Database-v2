@@ -173,23 +173,44 @@ refresh_tokens
 - Token expiry handled gracefully with redirect
 - Tests: `src/tests/test_frontend.py` (22 tests)
 
-**Cookie Flow:**
-1. User submits login form via HTMX to `/auth/login`
-2. Server validates credentials, creates tokens
-3. Server sets HTTP-only cookies in response
-4. Browser automatically sends cookies on subsequent requests
-5. `auth_cookie.py` validates JWT from cookie on protected routes
-6. On logout, cookies are cleared and user redirected to login
+**Cookie Flow (Updated 2026-01-30):**
+1. User submits login form via HTMX to `POST /login` (form-based endpoint)
+2. Server accepts URL-encoded form data via FastAPI `Form()` parameters
+3. Server validates credentials using `authenticate_user()` service
+4. Server creates tokens and sets HTTP-only cookies in response
+5. Browser automatically sends cookies on subsequent requests
+6. `auth_cookie.py` validates JWT from cookie on protected routes
+7. On logout, cookies are cleared and user redirected to login
 
-**HTMX JSON Encoding (Bug Fix - 2026-01-30):**
+**Two Login Endpoints:**
+| Endpoint | Content-Type | Use Case |
+|----------|--------------|----------|
+| `POST /login` | `application/x-www-form-urlencoded` | HTML forms (HTMX) |
+| `POST /auth/login` | `application/json` | API clients (mobile, external services) |
 
-The `/auth/login` endpoint expects JSON body, but HTMX sends form data (`application/x-www-form-urlencoded`) by default. This caused 422 validation errors.
+**Form-Based Login (Bug #005 Fix - 2026-01-30):**
 
-**Required Configuration:**
-- Include `json-enc` extension: `<script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/json-enc.js"></script>`
-- Add `hx-ext="json-enc"` attribute to forms that POST to JSON API endpoints
+The original approach used the HTMX `json-enc` extension to convert form data to JSON for the `/auth/login` endpoint. This was unreliable in production (Railway deployment).
 
-See: [docs/BUGS_LOG.md](../BUGS_LOG.md#bug-001-login-page-object-object-error) for full details.
+**Solution:** Created a dedicated `POST /login` endpoint in `frontend.py` that accepts URL-encoded form data directly:
+
+```python
+@router.post("/login")
+async def login_form_submit(
+    request: Request,
+    db: Session = Depends(get_db),
+    email: str = Form(...),
+    password: str = Form(...),
+):
+    # Accepts form data, uses same auth service, sets cookies
+```
+
+**Key Files:**
+- Form endpoint: `src/routers/frontend.py` (POST `/login`)
+- API endpoint: `src/routers/auth.py` (POST `/auth/login`)
+- Login template: `src/templates/auth/login.html` (posts to `/login`)
+
+See: [docs/BUGS_LOG.md](../BUGS_LOG.md#bug-005-htmx-json-enc-extension-not-encoding-form-data) for full details.
 
 ### System Setup Flow - COMPLETE (January 30, 2026)
 

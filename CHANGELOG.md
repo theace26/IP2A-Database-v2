@@ -163,6 +163,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * Fix: Changed to `.get()` method for safe dict access with fallbacks
   * Files modified: `src/templates/components/_navbar.html`
 
+- **Frontend Services Async/Await TypeError** (Bug #003)
+  * Root cause: Frontend service files incorrectly used `AsyncSession` and `await` with synchronous `Session`
+  * Python raised `TypeError: object ChunkedIteratorResult can't be used in 'await' expression`
+  * Fix: Changed all frontend services to use synchronous `Session` and removed `await` from db calls
+  * Files modified: `src/services/member_frontend_service.py`, `src/services/training_frontend_service.py`, `src/services/operations_frontend_service.py`
+
+- **Mixed Content Blocking Static Files** (Bug #004)
+  * Root cause: FastAPI's `url_for()` generates HTTP URLs behind Railway's HTTPS reverse proxy
+  * Browsers blocked HTTP resources on HTTPS pages as "Mixed Content"
+  * Fix: Changed all static file references to use relative URLs (`/static/...`)
+  * Files modified: `src/templates/base.html`, `src/templates/base_auth.html`
+
+- **HTMX json-enc Extension Not Encoding Form Data** (Bug #005)
+  * Root cause: HTMX `json-enc` extension was unreliable, not converting form data to JSON
+  * Login form sent URL-encoded data causing 422 validation errors on `/auth/login`
+  * Fix: Created form-based `POST /login` endpoint that accepts `Form()` data directly
+  * Fix: Updated login form to POST to `/login` instead of `/auth/login`
+  * Files modified: `src/routers/frontend.py`, `src/templates/auth/login.html`
+
 ### Changed
 - Updated CLAUDE.md with Week 10 Dues UI progress
 - Updated sidebar navigation with Dues dropdown menu (Overview, Rates, Periods, Payments, Adjustments)

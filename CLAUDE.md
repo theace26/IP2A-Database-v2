@@ -713,21 +713,38 @@ async def protected_page(
     # current_user has: id, email, roles
 ```
 
-### HTMX JSON Encoding (IMPORTANT)
-When HTMX forms POST to FastAPI JSON endpoints, use the `json-enc` extension:
+### Form-Based Login (IMPORTANT - Bug #005 Fix)
+
+The login form uses a **form-based endpoint** that accepts URL-encoded data directly:
 
 ```html
-<!-- In base template (already in base_auth.html) -->
-<script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/json-enc.js"></script>
-
-<!-- On forms that POST to JSON API -->
-<form hx-post="/auth/login" hx-ext="json-enc">
+<!-- Login form posts to form-based endpoint (NOT /auth/login) -->
+<form hx-post="/login">
+    <input name="email" type="email">
+    <input name="password" type="password">
+</form>
 ```
 
-**Why:** HTMX sends `application/x-www-form-urlencoded` by default. FastAPI Pydantic models expect JSON.
-Without `json-enc`, you get 422 validation errors.
+**Two Login Endpoints:**
+| Endpoint | Content-Type | Use Case |
+|----------|--------------|----------|
+| `POST /login` | Form data | HTML forms (HTMX) - in `frontend.py` |
+| `POST /auth/login` | JSON | API clients (mobile apps) - in `auth.py` |
 
-See: `docs/BUGS_LOG.md` Bug #001 for full details.
+**Why:** The HTMX `json-enc` extension was unreliable in production. Instead of converting form data to JSON, we accept form data directly using FastAPI's `Form()` parameters.
+
+```python
+# frontend.py - accepts form data
+@router.post("/login")
+async def login_form_submit(
+    email: str = Form(...),
+    password: str = Form(...),
+):
+    user = authenticate_user(db, email, password)
+    # ... set cookies and return
+```
+
+See: `docs/BUGS_LOG.md` Bug #005 for full details.
 
 ### System Setup Flow
 
