@@ -56,11 +56,12 @@
             </div>
         </div>
 
-        <!-- Login form -->
+        <!-- Login form - uses json-enc extension to send JSON to API -->
         <form id="login-form"
               hx-post="/auth/login"
               hx-target="#login-error"
               hx-swap="none"
+              hx-ext="json-enc"
               x-data="{ loading: false }"
               @htmx:before-request="loading = true"
               @htmx:after-request="loading = false">
@@ -130,7 +131,38 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
 
             try {
                 const response = JSON.parse(evt.detail.xhr.responseText);
-                errorMsg.textContent = response.detail || 'Invalid email or password';
+                let errorText = 'Invalid email or password';
+
+                // Handle various response formats
+                if (response.detail) {
+                    if (typeof response.detail === 'string') {
+                        errorText = response.detail;
+                    } else if (Array.isArray(response.detail)) {
+                        // Handle array of errors (like Pydantic validation)
+                        errorText = response.detail.map(function(e) {
+                            if (typeof e === 'string') return e;
+                            if (e && typeof e === 'object') {
+                                return e.msg || e.message || e.detail || JSON.stringify(e);
+                            }
+                            return 'Validation error';
+                        }).join(', ');
+                    } else if (typeof response.detail === 'object') {
+                        // Handle object detail
+                        errorText = response.detail.msg || response.detail.message ||
+                                   response.detail.detail || JSON.stringify(response.detail);
+                    }
+                } else if (response.message) {
+                    errorText = response.message;
+                } else if (response.msg) {
+                    errorText = response.msg;
+                }
+
+                // Prevent displaying raw object notation
+                if (errorText === '[object Object]') {
+                    errorText = 'Invalid email or password';
+                }
+
+                errorMsg.textContent = errorText;
             } catch {
                 errorMsg.textContent = 'Invalid email or password';
             }
