@@ -1,11 +1,18 @@
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
 
+# Configuration checks
+from src.config.auth_config import check_jwt_secret_configuration
+
 # Middleware
 from src.middleware import AuditContextMiddleware
+
+logger = logging.getLogger(__name__)
 
 # Routers
 from src.routers.instructors import router as instructors_router
@@ -95,6 +102,16 @@ app.add_middleware(
 # Static Files
 # ------------------------------------------------------------
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
+
+
+# ------------------------------------------------------------
+# Startup Events
+# ------------------------------------------------------------
+@app.on_event("startup")
+async def startup_event():
+    """Run configuration checks on startup."""
+    check_jwt_secret_configuration()
+    logger.info("IP2A Database API started successfully")
 
 
 # ------------------------------------------------------------

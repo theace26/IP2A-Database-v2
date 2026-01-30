@@ -1,10 +1,17 @@
 """Authentication configuration settings."""
 
+import logging
+import os
 import secrets
 from datetime import timedelta
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
+
+logger = logging.getLogger(__name__)
+
+# Check if secret was provided via environment BEFORE settings load
+_SECRET_KEY_PROVIDED = bool(os.environ.get("AUTH_JWT_SECRET_KEY"))
 
 
 class AuthSettings(BaseSettings):
@@ -55,3 +62,24 @@ class AuthSettings(BaseSettings):
 
 # Singleton instance
 auth_settings = AuthSettings()
+
+
+def check_jwt_secret_configuration() -> None:
+    """
+    Log a warning if JWT secret key was auto-generated.
+
+    This should be called at application startup to alert operators
+    that tokens will not persist across container restarts.
+    """
+    if not _SECRET_KEY_PROVIDED:
+        logger.warning(
+            "=" * 60 + "\n"
+            "WARNING: AUTH_JWT_SECRET_KEY not set in environment!\n"
+            "A random secret was generated. This means:\n"
+            "  - All user sessions will be invalidated on restart\n"
+            "  - Users will see 'Signature verification failed' errors\n"
+            "\n"
+            "To fix, set AUTH_JWT_SECRET_KEY in your environment:\n"
+            "  python -c 'import secrets; print(secrets.token_urlsafe(32))'\n"
+            "=" * 60
+        )
