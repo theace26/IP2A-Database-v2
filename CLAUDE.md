@@ -2,8 +2,8 @@
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
 **Last Updated:** January 30, 2026
-**Current Version:** v0.7.9
-**Current Phase:** Phase 6 Week 10 - Dues UI (COMPLETE)
+**Current Version:** v0.8.0-rc1
+**Current Phase:** Deployment Active - Railway Live (with expanded seed data)
 
 ---
 
@@ -13,11 +13,11 @@
 
 **Who:** Xerxes - Business Representative by day, solo developer (5-10 hrs/week)
 
-**Where:** Backend COMPLETE. Frontend FEATURE-COMPLETE - Week 10 (Dues UI Complete).
+**Where:** Backend COMPLETE. Frontend FEATURE-COMPLETE. **Deployed to Railway.**
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl
 
-**Status:** 167 frontend tests passing, ~330 total tests, ~130 API endpoints, 11 ADRs, Phase 6 Week 10 complete
+**Status:** 167 frontend tests passing, ~330 total tests, ~130 API endpoints, 11 ADRs, Railway deployment live
 
 ---
 
@@ -848,6 +848,57 @@ async def page(request: Request):
     hx-include="[name='status'], [name='cohort']"
 />
 ```
+
+---
+
+## Production Deployment (Railway)
+
+### Required Environment Variables
+
+| Variable | Purpose | Required |
+|----------|---------|----------|
+| `DATABASE_URL` | PostgreSQL connection | Auto-set by Railway |
+| `AUTH_JWT_SECRET_KEY` | JWT signing key | **YES - CRITICAL** |
+| `DEFAULT_ADMIN_PASSWORD` | admin@ibew46.com password | YES |
+| `IP2A_ENV` | Environment (`prod`) | Recommended |
+| `RUN_PRODUCTION_SEED` | One-time seed flag | Set to `false` after initial |
+
+### Generate JWT Secret Key
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+### Common Deployment Issues
+
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| Container restart loop | `RUN_PRODUCTION_SEED=true` | Set to `false` |
+| "Signature verification failed" | `AUTH_JWT_SECRET_KEY` not set | Add the env var |
+| Users can't log in | Old browser cookies | Cookies now auto-clear on invalid token |
+| Health check fails | Production seed error (KeyError) | Ensure latest code deployed |
+| passlib errors | Bcrypt compatibility | Code uses direct bcrypt now |
+| Enum value errors | Old seed data | Update to current enum values |
+| Reports page 500 error | `category.items` dict conflict (Bug #013) | Fixed in `013cf92` |
+| SQLAlchemy cartesian product warning | Count query with selectinload (Bug #014) | Fixed in `013cf92` |
+
+**Note:** As of commit `013cf92`, invalid JWT cookies are automatically cleared on redirect to login, preventing repeated "Signature verification failed" log spam.
+
+### Production Seed Data Counts
+
+The expanded production seed creates:
+- **1000** Members
+- **500** Students
+- **100** Organizations
+- **75** Instructors
+- **10** Grants
+- **200** Expenses
+- **15** Cohorts
+- Plus: Tools issued, credentials, JATC applications, training enrollments, union ops, dues
+
+### Documentation
+- Deployment instructions: `docs/instructions/deployment_instructions/`
+- Bugs encountered: `docs/BUGS_LOG.md` (Bugs #006-#012)
+- Session log: `docs/reports/session-logs/2026-01-30-deployment-prep.md`
 
 ---
 

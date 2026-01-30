@@ -517,6 +517,628 @@ AUTH_JWT_SECRET_KEY=<generated-key>
 
 ---
 
+## Bug #007: Production Seed Causing Container Restart Loop
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Critical (application unable to start)
+**Status:** RESOLVED
+
+### Symptoms
+- Railway container starts, runs migrations, then gets killed before web server starts
+- Container restart loop - repeatedly starting and stopping
+- Logs show seed running but never reach "Starting application server..."
+- Health check fails because server never becomes available
+
+### Root Cause Analysis
+
+The `RUN_PRODUCTION_SEED=true` environment variable causes the startup script to run a full database seed (1000+ members, 500 students, etc.) on EVERY container startup:
+
+```bash
+# scripts/start.sh
+if [ "$RUN_PRODUCTION_SEED" = "true" ]; then
+    echo "Checking if production seed is needed..."
+    python -m src.seed.production_seed  # Takes 30-60 seconds
+fi
+```
+
+**The Problem Chain:**
+1. Container starts → migrations run → seed starts
+2. Seed takes 30-60 seconds (seeding 1000 members, 500 students, etc.)
+3. Railway health check times out (default ~30s) - no web server responding
+4. Railway kills container and restarts it
+5. New container starts → runs seed AGAIN → cycle repeats
+6. Database gets truncated and re-seeded on each attempt
+
+**Why This Caused Data Loss:**
+The production seed script calls `truncate_all_tables(db)` first, wiping all existing data before seeding fresh data. This is intentional for initial setup but destructive if triggered repeatedly.
+
+### Solution
+
+**1. Set `RUN_PRODUCTION_SEED=false` in Railway:**
+```bash
+# Railway Dashboard → Variables
+RUN_PRODUCTION_SEED=false
+```
+
+**2. The seed should only run ONCE for initial data population:**
+- The environment variable is a one-time flag
+- After initial seed completes, set it to `false`
+- Or remove the variable entirely
+
+**3. If database needs seeding, do it as a one-time job:**
+```bash
+# Railway CLI
+railway run python -m src.seed.production_seed
+
+# Or via Railway shell
+python -m src.seed.production_seed
+```
+
+### Files Related
+- `scripts/start.sh` - Startup script that checks RUN_PRODUCTION_SEED
+- `src/seed/production_seed.py` - Seed script that truncates and re-seeds
+
+### Resolution
+Set `RUN_PRODUCTION_SEED=false` in Railway environment variables. The container then starts quickly (migrations only), web server comes up, and health check passes.
+
+### Lessons Learned
+
+1. **One-Time Seeds vs Startup Scripts**: Production seeds should be run as one-time jobs, not on every container startup. The startup script should only do quick tasks (migrations).
+
+2. **Health Check Timing**: Railway's health check timeout is relatively short. Any startup task taking >30s risks triggering a restart loop.
+
+3. **Destructive Operations**: A seed script that truncates tables is dangerous if it can run multiple times. Consider adding idempotency checks.
+
+4. **Environment Variable Hygiene**: One-time configuration flags like `RUN_PRODUCTION_SEED` should be disabled immediately after use.
+
+### Prevention
+
+1. **Document the seed workflow**: Added to deployment documentation that `RUN_PRODUCTION_SEED` must be `false` after initial setup.
+
+2. **Future Improvement Ideas**:
+   - Add a "seed_completed" marker in database to prevent re-seeding
+   - Check if data already exists before truncating
+   - Move seed to a Railway job instead of startup script
+   - Add a confirmation prompt for destructive operations
+
+---
+
+## Bug #008: Browser Cookies Invalid After JWT Secret Key Change
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Medium (users need to clear cookies)
+**Status:** RESOLVED (user action required)
+
+### Symptoms
+- User accesses the site after deployment
+- Sees login page or blank page
+- Railway logs show repeated: "Token validation failed: Invalid token: Signature verification failed"
+- User appears stuck in a redirect loop or sees errors
+
+### Root Cause Analysis
+
+This is a side effect of Bug #006 (JWT Secret Key not set) and the fix (setting a new key):
+
+1. **Before fix**: Random JWT secret generated on each startup
+2. **User logs in**: Gets JWT token signed with secret A
+3. **Container restarts**: New random secret B generated
+4. **User returns**: Browser sends token signed with A, but server validates with B
+5. **Signature mismatch**: "Signature verification failed" error
+
+**After setting `AUTH_JWT_SECRET_KEY`:**
+- Server now uses consistent secret C
+- But user's browser still has old cookie signed with A or B
+- Same signature mismatch occurs
+
+### Solution
+
+**Users must clear their browser cookies or use incognito mode:**
+
+1. Open browser DevTools (F12)
+2. Go to Application → Cookies
+3. Delete cookies for the Railway app URL
+4. Refresh the page
+5. Log in with fresh credentials
+
+Or simply use an incognito/private browser window.
+
+### Files Related
+- None - this is expected behavior after fixing Bug #006
+
+### Lessons Learned
+
+1. **Token Invalidation is Expected**: When JWT secrets change, ALL existing tokens become invalid. This is by design for security.
+
+2. **User Communication**: After JWT key changes in production, notify users they may need to log in again.
+
+3. **Graceful Token Handling**: The application correctly detects invalid signatures and redirects to login, which is the correct security behavior.
+
+### Prevention
+
+1. **Set JWT secret BEFORE first users**: Configure `AUTH_JWT_SECRET_KEY` before any real users log in.
+
+2. **Document the impact**: Added to deployment checklist that changing JWT secret invalidates all sessions.
+
+---
+
+## Bug #009: Production Seed KeyError - 'users_created' Key Missing
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Critical (blocking deployment - health check fails)
+**Status:** RESOLVED
+
+### Symptoms
+- Railway deployment fails health check: "1/1 replicas never became healthy!"
+- Container builds successfully but application never starts
+- Railway logs show: `KeyError: 'users_created'`
+- Error traceback points to `production_seed.py` line 79
+
+### Root Cause Analysis
+
+The `production_seed.py` file tried to access a dict key that didn't exist:
+
+```python
+# production_seed.py tried to access:
+print(f"Created {auth_results['users_created']} users")
+
+# But auth_seed.py returns:
+return {
+    "roles_created": len(roles),
+    "admin_created": admin is not None,  # Note: 'admin_created', not 'users_created'
+}
+```
+
+**The Problem Chain:**
+1. Container starts → migrations run → production seed starts
+2. `run_auth_seed(db)` returns dict with `admin_created` key
+3. `production_seed.py` tries to access `users_created` key (doesn't exist)
+4. Python raises `KeyError: 'users_created'`
+5. Startup script exits with error (due to `set -e`)
+6. Web server never starts
+7. Health check times out → Railway kills container
+
+**Why Railway Deployed Old Code:**
+- The fix was committed locally (`aa1d98b fix: correct auth_results key`)
+- Railway cached the Docker image from a previous build
+- The new build used cached layers, including the old `production_seed.py`
+- Fix was pushed but Railway needed a fresh deployment to pick it up
+
+### Solution
+
+**1. Fixed Key Access** (`src/seed/production_seed.py`):
+```python
+# Before (WRONG)
+print(f"Created {auth_results['roles_created']} roles, {auth_results['users_created']} users")
+
+# After (CORRECT)
+admin_status = "created" if auth_results['admin_created'] else "already exists"
+print(f"Created {auth_results['roles_created']} roles, admin user {admin_status}")
+```
+
+**2. Triggered Fresh Railway Deployment:**
+After pushing the fix to `origin/main`, a new Railway deployment picked up the corrected code.
+
+### Files Modified
+- `src/seed/production_seed.py` - Fixed dict key access
+
+### Commit
+- `aa1d98b fix: correct auth_results key in production seed script`
+
+### Lessons Learned
+
+1. **Dict Key Consistency**: When returning dicts from functions, document the expected keys and be consistent with naming.
+
+2. **Railway Caching**: Railway aggressively caches Docker layers. If code changes aren't reflected, trigger a fresh build or clear the build cache.
+
+3. **Error Propagation**: `set -e` in shell scripts causes immediate exit on any error. Good for catching problems, but can make debugging harder.
+
+4. **Test Coverage Gap**: The production seed path wasn't fully tested in CI - the integration between `production_seed.py` and `auth_seed.py` return values should have been caught.
+
+### Prevention
+
+1. **Type Hints for Return Values**: Add TypedDict or dataclass for seed return values:
+   ```python
+   class AuthSeedResult(TypedDict):
+       roles_created: int
+       admin_created: bool
+   ```
+
+2. **Integration Tests**: Add tests that call the full production seed flow.
+
+3. **Clear Railway Cache**: When fixing critical deployment issues, clear Railway's build cache to ensure fresh code is used.
+
+---
+
+## Bug #010: Production Seed Expanded - Missing Seed Files
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** High (blocking production seed)
+**Status:** RESOLVED
+
+### Symptoms
+- Production seed fails with `ImportError` or `AttributeError`
+- Missing seed files for grants, expenses, instructor_hours
+- Missing `truncate_all.py` for database cleanup
+
+### Root Cause Analysis
+
+The `production_seed.py` was expanded to include new seed functions, but the corresponding seed files didn't exist:
+
+```python
+# production_seed.py imported:
+from .seed_grants import seed_grants            # File missing
+from .seed_expenses import seed_expenses        # File missing
+from .seed_instructor_hours import seed_instructor_hours  # File missing
+from .truncate_all import truncate_all_tables   # File missing
+```
+
+### Solution
+
+Created the missing seed files:
+
+**1. `src/seed/seed_grants.py`** - Seeds grant/funding source data
+**2. `src/seed/seed_expenses.py`** - Seeds expense records linked to grants
+**3. `src/seed/seed_instructor_hours.py`** - Seeds instructor hour entries
+**4. `src/seed/truncate_all.py`** - Truncates all tables in dependency order
+
+### Files Created
+- `src/seed/seed_grants.py`
+- `src/seed/seed_expenses.py`
+- `src/seed/seed_instructor_hours.py`
+- `src/seed/truncate_all.py`
+
+### Commit
+- `3346ed1 feat: add missing seed files for grants, expenses, instructor_hours`
+
+### Lessons Learned
+
+1. **Complete the Feature**: When expanding imports in a file, ensure all imported modules exist before committing.
+
+2. **Local Testing**: Run the full seed locally before deploying to catch import errors.
+
+---
+
+## Bug #011: StudentStatus Enum Value Mismatch
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Medium (seed data generation fails)
+**Status:** RESOLVED
+
+### Symptoms
+- Seed fails with `ValueError` for StudentStatus enum
+- Error message indicates invalid enum values
+- Seed data was using old enum values
+
+### Root Cause Analysis
+
+The `StudentStatus` enum was refactored, but seed files still used old values:
+
+```python
+# Old (incorrect) values:
+StudentStatus.COMPLETED  # Doesn't exist
+StudentStatus.DROPPED    # Doesn't exist
+
+# Correct enum values:
+StudentStatus.GRADUATED
+StudentStatus.WITHDRAWN
+```
+
+### Solution
+
+Updated all seed files to use correct enum values:
+
+```python
+# Before
+status=StudentStatus.COMPLETED
+
+# After
+status=StudentStatus.GRADUATED
+```
+
+### Files Modified
+- `src/seed/seed_students.py` - Updated enum values
+
+### Commit
+- `8fefc63 fix: use correct StudentStatus enum values (COMPLETED, DROPPED)`
+
+---
+
+## Bug #012: passlib Bcrypt Compatibility Issue
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Critical (authentication completely broken)
+**Status:** RESOLVED
+
+### Symptoms
+- Login fails with cryptic error
+- Password hashing/verification throws exceptions
+- Error related to bcrypt version compatibility
+
+### Root Cause Analysis
+
+The `passlib` library had compatibility issues with newer versions of `bcrypt`. The passlib bcrypt handler was failing due to internal API changes in bcrypt.
+
+### Solution
+
+Replaced passlib with direct bcrypt usage:
+
+```python
+# Before (passlib)
+from passlib.context import CryptContext
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context.hash(password)
+pwd_context.verify(password, hash)
+
+# After (direct bcrypt)
+import bcrypt
+bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+bcrypt.checkpw(password.encode(), hash.encode())
+```
+
+### Files Modified
+- `src/core/security.py` - Replaced passlib with direct bcrypt
+
+### Commit
+- `a78f810 fix: replace passlib with direct bcrypt to fix compatibility issue`
+
+### Lessons Learned
+
+1. **Library Dependencies**: When libraries have compatibility issues, sometimes it's simpler to use the underlying library directly.
+
+2. **bcrypt is Sufficient**: For password hashing, direct bcrypt usage is straightforward and doesn't require wrapper libraries.
+
+---
+
+## Bug #013: Reports Template TypeError - `category.items` Dict Method Conflict
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Critical (Reports page completely broken)
+**Status:** RESOLVED
+
+### Symptoms
+- User navigates to Reports page
+- Railway logs show: `TypeError: 'builtin_function_or_method' object is not iterable`
+- Error at `src/templates/reports/index.html, line 48`
+- Reports page crashes with 500 error
+
+### Root Cause Analysis
+
+The Jinja2 template used dot notation to access a dict key named `items`:
+
+```html
+<!-- WRONG - 'items' conflicts with dict.items() method -->
+{% for item in category.items %}
+```
+
+In Jinja2, `category.items` is resolved as attribute access first. Since `category` is a Python dict, `items` matches the built-in `dict.items()` method, not the "items" key in the dict.
+
+**The Problem Chain:**
+1. Router creates: `{"category": "Members", "items": [...]}`
+2. Template accesses: `category.items`
+3. Jinja2 finds `dict.items` method (not the "items" key)
+4. Template tries to iterate over the method itself
+5. Python raises: `TypeError: 'builtin_function_or_method' object is not iterable`
+
+### Solution
+
+**Option 1 (Not chosen):** Use bracket notation in template:
+```html
+{% for item in category['items'] %}
+```
+
+**Option 2 (Chosen):** Rename the dict key to avoid conflict:
+```python
+# Router - changed 'items' to 'reports'
+{"category": "Members", "reports": [...]}
+```
+```html
+<!-- Template - use the new key name -->
+{% for item in category['reports'] %}
+```
+
+Option 2 was chosen because "reports" is more descriptive and avoids future confusion with Python's built-in dict methods.
+
+### Files Modified
+- `src/routers/reports.py` - Changed `items` key to `reports` (lines 64-85)
+- `src/templates/reports/index.html` - Changed to `category['reports']` (line 48)
+
+### Commit
+- `013cf92 fix: resolve production deployment bugs`
+
+### Lessons Learned
+
+1. **Avoid Python Built-in Names as Dict Keys**: Keys like `items`, `keys`, `values`, `get`, `pop` conflict with dict methods in Jinja2 dot notation.
+
+2. **Jinja2 Attribute vs Key Access**: Jinja2's dot notation (`obj.attr`) checks attributes first, then dict keys. Use bracket notation (`obj['key']`) for guaranteed dict key access.
+
+3. **Test Template Rendering**: This bug passed local tests but failed in production because tests may not render all template paths.
+
+### Prevention
+
+1. **Naming Convention**: Use descriptive, unique names for dict keys passed to templates. Avoid: `items`, `keys`, `values`, `update`, `get`, `pop`, `copy`, `clear`.
+
+2. **Template Testing**: Add tests that actually render templates with data, not just check HTTP status codes.
+
+---
+
+## Bug #014: Staff Service SQLAlchemy Cartesian Product Warning
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Medium (performance warning, not breaking)
+**Status:** RESOLVED
+
+### Symptoms
+- Railway logs show SQLAlchemy warning:
+  ```
+  SAWarning: SELECT statement has a cartesian product between FROM element(s) "users" and FROM element "anon_1"
+  ```
+- Warning occurs when accessing Staff Management page
+- Points to `src/services/staff_service.py:89`
+
+### Root Cause Analysis
+
+The count query was creating a subquery from a statement that included `selectinload` options:
+
+```python
+# Base query with eager loading
+stmt = select(User).options(selectinload(User.user_roles).selectinload(UserRole.role))
+
+# ... apply filters ...
+
+# PROBLEM: Creating subquery from stmt with selectinload
+count_stmt = select(func.count(func.distinct(User.id))).select_from(stmt.subquery())
+```
+
+When `stmt` is converted to a subquery:
+1. The eager loading options create implicit joins in the subquery
+2. The outer `select_from()` doesn't have join conditions with the inner subquery
+3. SQLAlchemy warns about the cartesian product (all rows × all rows)
+
+### Solution
+
+Refactored to build a separate, simpler count query without eager loading:
+
+```python
+# Build conditions list shared between queries
+conditions = []
+# ... populate conditions ...
+
+# Separate count query (no eager loading)
+if role and role != "all":
+    count_stmt = (
+        select(func.count(func.distinct(User.id)))
+        .select_from(User)
+        .join(User.user_roles)
+        .join(UserRole.role)
+        .where(Role.name == role)
+    )
+else:
+    count_stmt = select(func.count(User.id)).select_from(User)
+
+if conditions:
+    count_stmt = count_stmt.where(and_(*conditions))
+
+total = self.db.execute(count_stmt).scalar() or 0
+
+# Separate data query (with eager loading)
+stmt = select(User).options(selectinload(User.user_roles).selectinload(UserRole.role))
+# ... apply same conditions and pagination ...
+```
+
+### Files Modified
+- `src/services/staff_service.py` - Refactored `search_users()` method to use separate count/data queries
+
+### Commit
+- `013cf92 fix: resolve production deployment bugs`
+
+### Lessons Learned
+
+1. **Eager Loading and Subqueries Don't Mix**: Don't create subqueries from statements with `selectinload`/`joinedload` options.
+
+2. **Separate Count Queries**: For paginated results, build count queries separately without relationship loading.
+
+3. **SQLAlchemy Warnings Matter**: Cartesian product warnings indicate inefficient queries that may cause performance issues.
+
+### Prevention
+
+1. **Query Pattern**: For paginated search with eager loading:
+   - Build filter conditions as a list
+   - Create simple count query with conditions
+   - Create data query with eager loading and conditions
+   - Apply sorting/pagination only to data query
+
+---
+
+## Bug #015: Token Validation Errors Spamming Logs After Deployment
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Medium (log spam, user experience)
+**Status:** RESOLVED
+
+### Symptoms
+- After deployment with new JWT secret, Railway logs flood with:
+  ```
+  Token validation failed: Invalid token: Signature verification failed.
+  ```
+- Same error appears repeatedly for every page request
+- Users redirected to login but old cookies remain
+- Logs become hard to read due to repeated errors
+
+### Root Cause Analysis
+
+When JWT tokens become invalid (after secret key change), the auth middleware:
+1. Validates token → fails with `TokenInvalidError`
+2. Logs warning: "Token validation failed"
+3. Redirects to login page
+4. **But cookies are NOT cleared**
+
+Since cookies persist, the next request:
+1. Sends same invalid token
+2. Validation fails again
+3. Same warning logged
+4. Redirect to login again
+5. Cycle continues until user manually clears cookies
+
+### Solution
+
+Modified `_handle_unauthorized()` in `auth_cookie.py` to clear cookies when redirecting:
+
+```python
+def _handle_unauthorized(self, request: Request):
+    """Handle unauthorized access by clearing invalid cookies and redirecting."""
+    if self.redirect_to_login:
+        return_url = str(request.url.path)
+        response = RedirectResponse(
+            url=f"/login?next={return_url}&message=Please+log+in+to+continue&type=info",
+            status_code=status.HTTP_302_FOUND,
+        )
+        # Clear any invalid cookies to prevent repeated validation errors
+        response.delete_cookie("access_token", path="/")
+        response.delete_cookie("refresh_token", path="/")
+        return response
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+    )
+```
+
+Now when tokens are invalid:
+1. Token validation fails
+2. Warning logged once
+3. Response clears cookies AND redirects to login
+4. Next request has no token → clean redirect
+5. No repeated warnings
+
+### Files Modified
+- `src/routers/dependencies/auth_cookie.py` - Added `delete_cookie()` calls in `_handle_unauthorized()`
+
+### Commit
+- `013cf92 fix: resolve production deployment bugs`
+
+### Lessons Learned
+
+1. **Clear Invalid Cookies**: When authentication fails, always clear the invalid tokens to prevent retry loops.
+
+2. **Log Spam Impact**: Repeated log warnings make debugging harder. One warning per issue is sufficient.
+
+3. **Deployment Experience**: After JWT key changes, users should only see one redirect, not repeated failures.
+
+### Prevention
+
+1. **Cookie Lifecycle Management**: Auth redirects should always clean up invalid tokens.
+
+2. **Error Rate Monitoring**: Consider rate-limiting log messages for the same error type.
+
+---
+
 ## Template for New Bugs
 
 ```markdown
@@ -551,4 +1173,4 @@ AUTH_JWT_SECRET_KEY=<generated-key>
 
 ---
 
-*Last Updated: 2026-01-30 (Bug #006 added)*
+*Last Updated: 2026-01-30 (Bugs #013-#015 added - Production Bug Fixes)*

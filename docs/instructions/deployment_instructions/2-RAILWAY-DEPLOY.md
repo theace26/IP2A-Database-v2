@@ -62,12 +62,26 @@ Railway automatically injects the database connection string.
 
 Still in the **Variables** tab, add these:
 
+### Critical Authentication Variables (ADD FIRST!)
+
+| Variable | Value | Notes |
+|----------|-------|-------|
+| `AUTH_JWT_SECRET_KEY` | `python -c "import secrets; print(secrets.token_urlsafe(32))"` | **CRITICAL** - Run command locally, paste output |
+| `DEFAULT_ADMIN_PASSWORD` | (your secure password) | Password for admin@ibew46.com |
+
+> ⚠️ **WARNING:** If `AUTH_JWT_SECRET_KEY` is not set, a random key is generated on each restart, invalidating ALL user sessions. Users will see "Signature verification failed" errors. See Bug #006 in `docs/BUGS_LOG.md`.
+
+### Application Variables
+
 | Variable | Value |
 |----------|-------|
+| `IP2A_ENV` | `prod` |
 | `ENVIRONMENT` | `production` |
-| `SECRET_KEY` | (click "Generate" for a random value) |
 | `DEBUG` | `false` |
 | `LOG_LEVEL` | `INFO` |
+| `RUN_PRODUCTION_SEED` | `false` |
+
+> **Note:** Only set `RUN_PRODUCTION_SEED=true` for initial deployment, then set to `false` immediately. Leaving it `true` will cause database wipes on every restart!
 
 **For S3 (add after Step 4 of `4-S3-STORAGE.md`):**
 | Variable | Value |
@@ -265,6 +279,64 @@ Your Railway project should now show:
 - Check `alembic.ini` has correct path
 - Verify migrations folder is included in Docker build
 - Run manually via Railway CLI
+
+### Container Restart Loop (Seed Timeout)
+**Symptom:** Container starts, runs seed, gets killed, restarts indefinitely
+**Cause:** `RUN_PRODUCTION_SEED=true` causes 30-60s seed on every startup, exceeding health check timeout
+**Fix:** Set `RUN_PRODUCTION_SEED=false` in Railway variables
+**See:** Bug #007 in `docs/BUGS_LOG.md`
+
+### "Signature verification failed" Errors
+**Symptom:** Logs show repeated token validation failures, users can't access protected pages
+**Cause:** `AUTH_JWT_SECRET_KEY` not set - random key generated on each restart
+**Fix:**
+1. Generate key: `python -c "import secrets; print(secrets.token_urlsafe(32))"`
+2. Add `AUTH_JWT_SECRET_KEY` variable in Railway with the generated value
+3. Users must clear browser cookies and log in again
+**See:** Bug #006 in `docs/BUGS_LOG.md`
+
+### Users Can't Log In After Deployment
+**Symptom:** Login page loads but login fails, or users see blank page
+**Possible Causes:**
+1. Old cookies with invalid tokens - clear browser cookies
+2. `DEFAULT_ADMIN_PASSWORD` not set - add to Railway variables
+3. Database not seeded - check if seed ran successfully
+**Fix:** Clear cookies, verify environment variables, check logs
+
+### Health Check Fails - KeyError in Seed
+**Symptom:** Build succeeds but health check fails, logs show `KeyError: 'users_created'`
+**Cause:** Railway deployed cached/old code; production_seed.py has a bug
+**Fix:**
+1. Verify latest code is pushed to `main`
+2. In Railway dashboard, go to Deployments
+3. Click "Deploy" to trigger fresh build (don't use cached)
+4. Or clear build cache in Settings
+**See:** Bug #009 in `docs/BUGS_LOG.md`
+
+### Seed Fails - Missing Seed Files
+**Symptom:** Production seed fails with `ImportError` for grants, expenses, or instructor_hours
+**Cause:** Production seed expanded but seed files not created yet
+**Fix:** Ensure you have these files in `src/seed/`:
+- `seed_grants.py`
+- `seed_expenses.py`
+- `seed_instructor_hours.py`
+- `truncate_all.py`
+**See:** Bug #010 in `docs/BUGS_LOG.md`
+
+### Seed Fails - Enum Value Errors
+**Symptom:** Seed fails with `ValueError` for StudentStatus or other enums
+**Cause:** Seed data uses old enum values that were renamed
+**Fix:** Update seed files to use current enum values:
+- `StudentStatus.GRADUATED` (not COMPLETED)
+- `StudentStatus.WITHDRAWN` (not DROPPED)
+**See:** Bug #011 in `docs/BUGS_LOG.md`
+
+### Authentication Fails - passlib Error
+**Symptom:** Login fails with cryptic error related to password hashing
+**Cause:** passlib library has compatibility issues with bcrypt versions
+**Fix:** Code has been updated to use direct bcrypt (no passlib)
+- Ensure you have the latest `src/core/security.py`
+**See:** Bug #012 in `docs/BUGS_LOG.md`
 
 ---
 

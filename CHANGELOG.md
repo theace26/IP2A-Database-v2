@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Production Database Seeding Expansion** (January 30, 2026)
+  * Increased seed counts: 1000 members, 500 students, 100 organizations, 75 instructors
+  * Added `seed_grants.py` - 10 grant/funding source records
+  * Added `seed_expenses.py` - 200 expense records linked to grants
+  * Added `seed_instructor_hours.py` - 20 entries per instructor
+  * Added `truncate_all.py` - Safe database truncation in dependency order
+  * Added `seed_tools_issued.py` integration (2 per student)
+  * Added `seed_credentials.py` integration (2 per student)
+  * Added `seed_jatc_applications.py` integration (1 per student)
+  * Expanded seed to 18 steps (was 12)
+  * Training seed now creates 200 student enrollments
+  * Production seed now truncates and reseeds on each run (controlled by env var)
+
+- **Documents "Feature Not Implemented" Page**
+  * Friendly placeholder page when S3/MinIO is not configured
+  * Shows setup instructions for production storage
+
 - **Phase 6 Week 10: Dues UI** (Complete)
   * Dues landing page with current period display and days until due
   * Stats cards: MTD collected, YTD collected, overdue count, pending adjustments
@@ -149,6 +166,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * jinja2 added to requirements.txt
 
 ### Fixed
+- **Reports Template TypeError - Dict Method Conflict** (Bug #013)
+  * Root cause: Template used `category.items` which conflicted with Python dict's `.items()` method
+  * Jinja2 found the method instead of the dict key, causing `TypeError: 'builtin_function_or_method' object is not iterable`
+  * Fix: Renamed dict key from `items` to `reports` to avoid conflict
+  * Files modified: `src/routers/reports.py`, `src/templates/reports/index.html`
+
+- **Staff Service SQLAlchemy Cartesian Product Warning** (Bug #014)
+  * Root cause: Count query created subquery from statement with `selectinload` options
+  * SQLAlchemy warned about cartesian product between eager-loaded tables
+  * Fix: Refactored to build separate count query without eager loading
+  * Files modified: `src/services/staff_service.py`
+
+- **Token Validation Errors Spamming Logs After Deployment** (Bug #015)
+  * Root cause: Invalid cookies not cleared on auth redirect, causing repeated validation failures
+  * Every request with stale tokens logged "Signature verification failed" warning
+  * Fix: Added `delete_cookie()` calls in `_handle_unauthorized()` to clear invalid tokens
+  * Users now see one redirect instead of log spam
+  * Files modified: `src/routers/dependencies/auth_cookie.py`
+
+- **Production Seed KeyError 'users_created'** (Bug #009)
+  * Root cause: `production_seed.py` accessed `users_created` but `auth_seed.py` returns `admin_created`
+  * Fixed dict key access to use correct key name
+  * Railway was deploying cached old code; required fresh deployment
+
+- **Missing Seed Files for Expanded Production Seed** (Bug #010)
+  * Created `seed_grants.py`, `seed_expenses.py`, `seed_instructor_hours.py`, `truncate_all.py`
+  * All new seed files now properly integrated with production seed
+
+- **StudentStatus Enum Value Mismatch** (Bug #011)
+  * Seed files used old enum values (`COMPLETED`, `DROPPED`)
+  * Updated to correct values (`GRADUATED`, `WITHDRAWN`)
+
+- **passlib Bcrypt Compatibility Issue** (Bug #012)
+  * passlib had compatibility issues with newer bcrypt versions
+  * Replaced passlib with direct bcrypt usage in `src/core/security.py`
+
 - **JWT Token Signature Verification Failed on Container Restart** (Bug #006)
   * Root cause: `AUTH_JWT_SECRET_KEY` not set in production, causing random secret generation on each restart
   * All user sessions invalidated when container restarts, users see "Signature verification failed"
@@ -189,6 +242,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * Fix: Created form-based `POST /login` endpoint that accepts `Form()` data directly
   * Fix: Updated login form to POST to `/login` instead of `/auth/login`
   * Files modified: `src/routers/frontend.py`, `src/templates/auth/login.html`
+
+- **Production Seed Causing Container Restart Loop** (Bug #007)
+  * Root cause: `RUN_PRODUCTION_SEED=true` caused seed to run on every startup, taking too long
+  * Railway health check failed before web server started, triggering restart loop
+  * Database was truncated and re-seeded on each restart attempt
+  * Fix: Set `RUN_PRODUCTION_SEED=false` after initial seed completes
+  * Seed should be run as a one-time job, not on every startup
+
+- **Browser Cookies Invalid After JWT Secret Key Change** (Bug #008)
+  * Root cause: Existing JWT tokens were signed with old/random secrets
+  * After setting `AUTH_JWT_SECRET_KEY`, old tokens fail signature verification
+  * Fix: Users clear browser cookies and log in again with fresh tokens
+  * This is expected security behavior when JWT secrets change
 
 ### Changed
 - Updated CLAUDE.md with Week 10 Dues UI progress
