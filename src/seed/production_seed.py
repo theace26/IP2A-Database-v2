@@ -76,7 +76,8 @@ def run_production_seed():
         # Auth seeds FIRST (roles and default admin)
         print("\n[1/12] Seeding authentication (roles, default admin)...")
         auth_results = run_auth_seed(db)
-        print(f"       Created {auth_results['roles_created']} roles, {auth_results['users_created']} users")
+        admin_status = "created" if auth_results['admin_created'] else "already exists"
+        print(f"       Created {auth_results['roles_created']} roles, admin user {admin_status}")
 
         # Locations (needed for other seeds)
         print("\n[2/12] Seeding locations...")
