@@ -345,15 +345,15 @@ class MemberFrontendService:
                 return classification.replace("_", " ").title()
 
         mapping = {
-            MemberClassification.JOURNEYMAN_WIREMAN: "Journeyman Wireman",
-            MemberClassification.APPRENTICE_WIREMAN: "Apprentice Wireman",
-            MemberClassification.JOURNEYMAN_TECHNICIAN: "Journeyman Technician",
-            MemberClassification.APPRENTICE_TECHNICIAN: "Apprentice Technician",
-            MemberClassification.RESIDENTIAL_WIREMAN: "Residential Wireman",
-            MemberClassification.RESIDENTIAL_APPRENTICE: "Residential Apprentice",
-            MemberClassification.INSTALLER_TECHNICIAN: "Installer Technician",
-            MemberClassification.TRAINEE: "Trainee",
-            MemberClassification.ORGANIZER: "Organizer",
+            MemberClassification.APPRENTICE_1ST_YEAR: "1st Year Apprentice",
+            MemberClassification.APPRENTICE_2ND_YEAR: "2nd Year Apprentice",
+            MemberClassification.APPRENTICE_3RD_YEAR: "3rd Year Apprentice",
+            MemberClassification.APPRENTICE_4TH_YEAR: "4th Year Apprentice",
+            MemberClassification.APPRENTICE_5TH_YEAR: "5th Year Apprentice",
+            MemberClassification.JOURNEYMAN: "Journeyman",
+            MemberClassification.FOREMAN: "Foreman",
+            MemberClassification.RETIREE: "Retiree",
+            MemberClassification.HONORARY: "Honorary",
         }
         return mapping.get(
             classification, str(classification).replace("_", " ").title()
@@ -369,15 +369,15 @@ class MemberFrontendService:
                 return "badge-ghost"
 
         mapping = {
-            MemberClassification.JOURNEYMAN_WIREMAN: "badge-primary",
-            MemberClassification.APPRENTICE_WIREMAN: "badge-secondary",
-            MemberClassification.JOURNEYMAN_TECHNICIAN: "badge-accent",
-            MemberClassification.APPRENTICE_TECHNICIAN: "badge-info",
-            MemberClassification.RESIDENTIAL_WIREMAN: "badge-success",
-            MemberClassification.RESIDENTIAL_APPRENTICE: "badge-warning",
-            MemberClassification.INSTALLER_TECHNICIAN: "badge-neutral",
-            MemberClassification.TRAINEE: "badge-ghost",
-            MemberClassification.ORGANIZER: "badge-error",
+            MemberClassification.APPRENTICE_1ST_YEAR: "badge-info",
+            MemberClassification.APPRENTICE_2ND_YEAR: "badge-info",
+            MemberClassification.APPRENTICE_3RD_YEAR: "badge-info",
+            MemberClassification.APPRENTICE_4TH_YEAR: "badge-info",
+            MemberClassification.APPRENTICE_5TH_YEAR: "badge-info",
+            MemberClassification.JOURNEYMAN: "badge-primary",
+            MemberClassification.FOREMAN: "badge-accent",
+            MemberClassification.RETIREE: "badge-warning",
+            MemberClassification.HONORARY: "badge-success",
         }
         return mapping.get(classification, "badge-ghost")
 

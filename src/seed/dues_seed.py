@@ -31,11 +31,11 @@ def seed_dues_rates(db: Session) -> list[DuesRate]:
     # Define monthly dues by classification
     # apprentice_1 through apprentice_5 have graduated rates
     rate_schedule = {
-        MemberClassification.APPRENTICE_1: Decimal("35.00"),
-        MemberClassification.APPRENTICE_2: Decimal("40.00"),
-        MemberClassification.APPRENTICE_3: Decimal("45.00"),
-        MemberClassification.APPRENTICE_4: Decimal("50.00"),
-        MemberClassification.APPRENTICE_5: Decimal("55.00"),
+        MemberClassification.APPRENTICE_1ST_YEAR: Decimal("35.00"),
+        MemberClassification.APPRENTICE_2ND_YEAR: Decimal("40.00"),
+        MemberClassification.APPRENTICE_3RD_YEAR: Decimal("45.00"),
+        MemberClassification.APPRENTICE_4TH_YEAR: Decimal("50.00"),
+        MemberClassification.APPRENTICE_5TH_YEAR: Decimal("55.00"),
         MemberClassification.JOURNEYMAN: Decimal("75.00"),
         MemberClassification.FOREMAN: Decimal("85.00"),
         MemberClassification.RETIREE: Decimal("25.00"),
