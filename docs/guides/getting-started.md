@@ -72,6 +72,23 @@ uvicorn src.main:app --reload
 # API docs at http://localhost:8000/docs
 ```
 
+### 7. First-Time Setup
+
+When the database is seeded, a default admin account is created:
+- Email: `admin@ibew46.com`
+- Password: (see `src/seed/auth_seed.py`)
+
+**Important:** On first access, you'll be redirected to `/setup`:
+1. Create your own administrator account (cannot use `admin@ibew46.com`)
+2. Optionally disable the default admin account (recommended for production)
+3. Log in with your new credentials
+
+The default admin account:
+- Exists for system recovery purposes
+- Cannot be deleted, only disabled
+- Email/password cannot be changed via the setup page
+- Can be re-enabled from Staff Management if needed
+
 ### 7. Run Tests
 
 ```bash

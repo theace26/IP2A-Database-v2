@@ -376,6 +376,23 @@ lockout_duration_minutes = 30
 
 **Protection:** Limits brute force attempts to 5 per user per 30 minutes.
 
+### Setup Password Requirements
+
+During first-time setup (`/setup`), passwords must meet these requirements:
+- Minimum 8 characters
+- At least 3 different numbers (e.g., 1, 2, 3)
+- At least one special character (!@#$%^&* etc.)
+- At least one capital letter
+- No repeating letters (case-insensitive)
+- No sequential numbers (123, 234, 456, etc.)
+
+**Implementation:** `src/services/setup_service.py::validate_password()`
+
+**Client-side validation:** Real-time feedback via Alpine.js in setup template
+
+**Example valid password:** `Admin@753!Bc` (meets all requirements)
+**Example invalid password:** `Hello@123` (sequential numbers 123, repeating 'l')
+
 ### Token Security
 
 ```python

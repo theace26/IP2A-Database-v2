@@ -1,0 +1,328 @@
+{% extends "base_auth.html" %}
+
+{% block title %}System Setup{% endblock %}
+
+{% block content %}
+<div class="card bg-base-100 shadow-xl" x-data="setupForm()">
+    <div class="card-body">
+        <!-- Logo and welcome -->
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-primary rounded-xl mx-auto flex items-center justify-center mb-4">
+                <span class="text-primary-content font-bold text-2xl">46</span>
+            </div>
+            <h1 class="text-2xl font-bold">Welcome to IP2A</h1>
+            <p class="text-base-content/60">IBEW Local 46 Database</p>
+        </div>
+
+        <!-- Setup intro -->
+        <div class="alert alert-info mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>First-time setup: Create your personal administrator account to get started.</span>
+        </div>
+
+        <!-- Error display -->
+        {% if error %}
+        <div class="alert alert-error mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{ error }}</span>
+        </div>
+        {% endif %}
+
+        {% if errors %}
+        <div class="alert alert-error mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+                <ul class="list-disc list-inside">
+                {% for err in errors %}
+                    <li>{{ err }}</li>
+                {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Default Admin Account Section -->
+        {% if default_admin_status and default_admin_status.exists %}
+        <div class="bg-base-200 rounded-lg p-4 mb-6">
+            <h3 class="font-semibold mb-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Default System Account
+            </h3>
+            <p class="text-sm text-base-content/70 mb-3">
+                A default admin account exists for system recovery purposes.
+                This account cannot be deleted or have its credentials modified through this page.
+            </p>
+            <div class="flex items-center justify-between bg-base-100 p-3 rounded">
+                <div>
+                    <p class="font-mono text-sm">{{ default_admin_status.email }}</p>
+                    <p class="text-xs text-base-content/50">
+                        Status:
+                        {% if default_admin_status.is_active %}
+                        <span class="badge badge-success badge-xs">Active</span>
+                        {% else %}
+                        <span class="badge badge-ghost badge-xs">Disabled</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Setup form -->
+        <form method="POST" action="/setup" @submit="return validateForm()">
+            <!-- Section Header: Your Account -->
+            <div class="divider text-sm font-semibold text-primary">Create Your Account</div>
+            <p class="text-sm text-base-content/70 mb-4">
+                You must create a personal administrator account. This will be your primary login.
+            </p>
+
+            <!-- Email (Username) -->
+            <div class="form-control mb-4">
+                <label class="label" for="email">
+                    <span class="label-text">Email Address</span>
+                </label>
+                <input type="email"
+                       id="email"
+                       name="email"
+                       placeholder="your.name@ibew46.org"
+                       class="input input-bordered w-full"
+                       required
+                       autofocus
+                       value="{{ form_data.email if form_data else '' }}">
+                <label class="label">
+                    <span class="label-text-alt">This will be your login username</span>
+                </label>
+            </div>
+
+            <!-- Full Name -->
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="form-control">
+                    <label class="label" for="first_name">
+                        <span class="label-text">First Name</span>
+                    </label>
+                    <input type="text"
+                           id="first_name"
+                           name="first_name"
+                           placeholder="John"
+                           class="input input-bordered w-full"
+                           required
+                           value="{{ form_data.first_name if form_data else '' }}">
+                </div>
+                <div class="form-control">
+                    <label class="label" for="last_name">
+                        <span class="label-text">Last Name</span>
+                    </label>
+                    <input type="text"
+                           id="last_name"
+                           name="last_name"
+                           placeholder="Doe"
+                           class="input input-bordered w-full"
+                           required
+                           value="{{ form_data.last_name if form_data else '' }}">
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div class="form-control mb-4">
+                <label class="label" for="password">
+                    <span class="label-text">Password</span>
+                </label>
+                <input type="password"
+                       id="password"
+                       name="password"
+                       placeholder="Create a strong password"
+                       class="input input-bordered w-full"
+                       required
+                       minlength="8"
+                       x-model="password"
+                       @input="validatePassword()">
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="form-control mb-4">
+                <label class="label" for="confirm_password">
+                    <span class="label-text">Confirm Password</span>
+                </label>
+                <input type="password"
+                       id="confirm_password"
+                       name="confirm_password"
+                       placeholder="Enter password again"
+                       class="input input-bordered w-full"
+                       required
+                       x-model="confirmPassword"
+                       @input="validatePassword()">
+                <template x-if="confirmPassword && password !== confirmPassword">
+                    <label class="label">
+                        <span class="label-text-alt text-error">Passwords do not match</span>
+                    </label>
+                </template>
+            </div>
+
+            <!-- Password Requirements -->
+            <div class="bg-base-200 rounded-lg p-4 mb-4">
+                <p class="text-sm font-medium mb-2">Password Requirements:</p>
+                <ul class="text-sm space-y-1">
+                    <li :class="checks.minLength ? 'text-success' : 'text-base-content/60'">
+                        <span x-text="checks.minLength ? '\u2713' : '\u2022'"></span>
+                        At least 8 characters
+                    </li>
+                    <li :class="checks.uniqueNumbers ? 'text-success' : 'text-base-content/60'">
+                        <span x-text="checks.uniqueNumbers ? '\u2713' : '\u2022'"></span>
+                        At least 3 different numbers
+                    </li>
+                    <li :class="checks.specialChar ? 'text-success' : 'text-base-content/60'">
+                        <span x-text="checks.specialChar ? '\u2713' : '\u2022'"></span>
+                        At least one special character (!@#$%^&* etc.)
+                    </li>
+                    <li :class="checks.capitalLetter ? 'text-success' : 'text-base-content/60'">
+                        <span x-text="checks.capitalLetter ? '\u2713' : '\u2022'"></span>
+                        At least one capital letter
+                    </li>
+                    <li :class="checks.noRepeatingLetters ? 'text-success' : 'text-base-content/60'">
+                        <span x-text="checks.noRepeatingLetters ? '\u2713' : '\u2022'"></span>
+                        No repeating letters
+                    </li>
+                    <li :class="checks.noSequentialNumbers ? 'text-success' : 'text-base-content/60'">
+                        <span x-text="checks.noSequentialNumbers ? '\u2713' : '\u2022'"></span>
+                        No sequential numbers (123, 456, etc.)
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Role -->
+            <div class="form-control mb-6">
+                <label class="label" for="role">
+                    <span class="label-text">Account Role</span>
+                </label>
+                <select id="role" name="role" class="select select-bordered w-full">
+                    {% for role in roles %}
+                    <option value="{{ role.value }}" {% if role.value == 'admin' %}selected{% endif %}>
+                        {{ role.label }} - {{ role.description }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <label class="label">
+                    <span class="label-text-alt">You can add more users and roles later</span>
+                </label>
+            </div>
+
+            <!-- Disable Default Admin Checkbox -->
+            {% if default_admin_status and default_admin_status.exists %}
+            <div class="divider text-sm font-semibold text-warning">Default Account Settings</div>
+            <div class="form-control mb-6">
+                <label class="label cursor-pointer justify-start gap-4">
+                    <input type="checkbox"
+                           name="disable_default_admin"
+                           value="1"
+                           class="checkbox checkbox-warning"
+                           {% if form_data and form_data.disable_default_admin %}checked{% endif %}>
+                    <div>
+                        <span class="label-text font-medium">Disable the default admin account</span>
+                        <p class="text-xs text-base-content/60 mt-1">
+                            Recommended for production. You can re-enable it later from Staff Management if needed.
+                            The account cannot be deleted, only disabled.
+                        </p>
+                    </div>
+                </label>
+            </div>
+            {% endif %}
+
+            <!-- Submit button -->
+            <button type="submit"
+                    class="btn btn-primary w-full"
+                    :disabled="!isValid"
+                    :class="{ 'btn-disabled': !isValid }">
+                Complete Setup
+            </button>
+        </form>
+
+        <!-- Security note -->
+        <div class="mt-6 text-center">
+            <p class="text-xs text-base-content/50">
+                Your password is securely hashed and never stored in plain text.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+function setupForm() {
+    return {
+        password: '',
+        confirmPassword: '',
+        checks: {
+            minLength: false,
+            uniqueNumbers: false,
+            specialChar: false,
+            capitalLetter: false,
+            noRepeatingLetters: true,
+            noSequentialNumbers: true
+        },
+        get isValid() {
+            return this.password.length >= 8 &&
+                   this.password === this.confirmPassword &&
+                   this.checks.minLength &&
+                   this.checks.uniqueNumbers &&
+                   this.checks.specialChar &&
+                   this.checks.capitalLetter &&
+                   this.checks.noRepeatingLetters &&
+                   this.checks.noSequentialNumbers;
+        },
+        validatePassword() {
+            const pw = this.password;
+
+            // Min length
+            this.checks.minLength = pw.length >= 8;
+
+            // At least 3 unique numbers
+            const numbers = pw.match(/\d/g) || [];
+            const uniqueNums = new Set(numbers);
+            this.checks.uniqueNumbers = uniqueNums.size >= 3;
+
+            // Special character
+            this.checks.specialChar = /[!@#$%^&*()_+\-=\[\]{}|;:'",.<>?/\\`~]/.test(pw);
+
+            // Capital letter
+            this.checks.capitalLetter = /[A-Z]/.test(pw);
+
+            // No repeating letters (case-insensitive)
+            const letters = (pw.match(/[a-zA-Z]/g) || []).map(l => l.toLowerCase());
+            this.checks.noRepeatingLetters = letters.length === new Set(letters).size;
+
+            // No sequential numbers
+            this.checks.noSequentialNumbers = true;
+            for (let i = 0; i < pw.length - 2; i++) {
+                const n1 = parseInt(pw[i]);
+                const n2 = parseInt(pw[i + 1]);
+                const n3 = parseInt(pw[i + 2]);
+                if (!isNaN(n1) && !isNaN(n2) && !isNaN(n3)) {
+                    if (n2 === n1 + 1 && n3 === n2 + 1) {
+                        this.checks.noSequentialNumbers = false;
+                        break;
+                    }
+                }
+            }
+        },
+        validateForm() {
+            if (!this.isValid) {
+                alert('Please meet all password requirements before submitting.');
+                return false;
+            }
+            if (this.password !== this.confirmPassword) {
+                alert('Passwords do not match.');
+                return false;
+            }
+            return true;
+        }
+    };
+}
+</script>
+{% endblock %}

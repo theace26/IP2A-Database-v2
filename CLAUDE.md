@@ -712,6 +712,50 @@ async def protected_page(
     # current_user has: id, email, roles
 ```
 
+### System Setup Flow
+
+The system has a first-time setup flow that requires creating a personal administrator account:
+
+1. **Default Admin Account** (`admin@ibew46.com`)
+   - Seeded automatically on deployment
+   - Cannot be deleted or have email/password changed via setup page
+   - CAN be disabled via checkbox during setup (recommended for production)
+   - Can be re-enabled later from Staff Management
+
+2. **Setup Required When**
+   - No users exist at all
+   - Only the default admin account exists
+
+3. **Setup Process**
+   - User must create their own administrator account
+   - Optionally disable the default admin account
+   - Default admin email cannot be used for the new account
+
+```python
+from src.services.setup_service import (
+    is_setup_required,
+    get_default_admin_status,
+    create_setup_user,
+    disable_default_admin,
+    DEFAULT_ADMIN_EMAIL,
+)
+
+# Check if setup is needed
+if is_setup_required(db):
+    # Show setup page
+
+# Create user during setup
+create_setup_user(
+    db=db,
+    email="user@example.com",
+    password="SecurePass@247!",
+    first_name="John",
+    last_name="Doe",
+    role="admin",
+    disable_default_admin_account=True,  # Optional
+)
+```
+
 ### Template Rendering
 ```python
 from fastapi.templating import Jinja2Templates

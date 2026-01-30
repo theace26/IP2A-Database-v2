@@ -8,7 +8,7 @@ API routes remain separate in their respective routers.
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -18,6 +18,16 @@ from src.routers.dependencies.auth_cookie import (
     require_auth,
     require_auth_api,
     get_current_user_from_cookie,
+)
+from src.services.setup_service import (
+    has_any_users,
+    validate_password,
+    create_setup_user,
+    get_available_roles,
+    PasswordValidationError,
+    is_setup_required,
+    get_default_admin_status,
+    DEFAULT_ADMIN_EMAIL,
 )
 
 router = APIRouter(tags=["Frontend"])
@@ -69,9 +79,14 @@ def _format_time_ago(dt: datetime) -> str:
 @router.get("/", response_class=HTMLResponse)
 async def root(
     request: Request,
+    db: Session = Depends(get_db),
     current_user: Optional[dict] = Depends(get_current_user_from_cookie),
 ):
-    """Root redirect to dashboard if authenticated, otherwise to login."""
+    """Root redirect to setup if needed, dashboard if authenticated, otherwise to login."""
+    # Check if system needs setup (no users or only default admin)
+    if is_setup_required(db):
+        return RedirectResponse(url="/setup", status_code=302)
+
     if current_user:
         return RedirectResponse(url="/dashboard", status_code=302)
     return RedirectResponse(url="/login", status_code=302)
@@ -80,19 +95,32 @@ async def root(
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(
     request: Request,
+    db: Session = Depends(get_db),
     next: Optional[str] = None,
     message: Optional[str] = None,
     type: Optional[str] = None,
     current_user: Optional[dict] = Depends(get_current_user_from_cookie),
 ):
-    """Render login page. Redirect to dashboard if already logged in."""
+    """Render login page. Redirect to setup if needed, dashboard if logged in."""
+    # Check if system needs setup (no users or only default admin)
+    if is_setup_required(db):
+        return RedirectResponse(url="/setup", status_code=302)
+
     if current_user:
         return RedirectResponse(url="/dashboard", status_code=302)
+
+    # Ensure message is a string (fix [object Object] bug)
+    display_message = None
+    if message:
+        if isinstance(message, str):
+            display_message = message
+        else:
+            display_message = str(message)
 
     return templates.TemplateResponse(
         "auth/login.html",
         get_template_context(
-            request, next=next or "/dashboard", message=message, message_type=type
+            request, next=next or "/dashboard", message=display_message, message_type=type
         ),
     )
 
@@ -102,6 +130,163 @@ async def forgot_password_page(request: Request):
     """Render forgot password page."""
     return templates.TemplateResponse(
         "auth/forgot_password.html", get_template_context(request)
+    )
+
+
+# ============================================================================
+# Setup Routes (First-Time Configuration)
+# ============================================================================
+
+
+@router.get("/setup", response_class=HTMLResponse)
+async def setup_page(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Render setup page for first-time system configuration."""
+    # If setup is not required (non-default users exist), redirect to login
+    if not is_setup_required(db):
+        return RedirectResponse(
+            url="/login?message=System+already+configured&type=info",
+            status_code=302,
+        )
+
+    roles = get_available_roles()
+    default_admin_status = get_default_admin_status(db)
+
+    return templates.TemplateResponse(
+        "auth/setup.html",
+        get_template_context(
+            request,
+            roles=roles,
+            default_admin_status=default_admin_status,
+        ),
+    )
+
+
+@router.post("/setup", response_class=HTMLResponse)
+async def setup_submit(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Handle setup form submission."""
+    # If setup is not required, redirect to login
+    if not is_setup_required(db):
+        return RedirectResponse(
+            url="/login?message=System+already+configured&type=info",
+            status_code=302,
+        )
+
+    # Get form data
+    form = await request.form()
+    email = form.get("email", "").strip()
+    first_name = form.get("first_name", "").strip()
+    last_name = form.get("last_name", "").strip()
+    password = form.get("password", "")
+    confirm_password = form.get("confirm_password", "")
+    role = form.get("role", "admin")
+    disable_default_admin = form.get("disable_default_admin") == "1"
+
+    roles = get_available_roles()
+    default_admin_status = get_default_admin_status(db)
+    form_data = {
+        "email": email,
+        "first_name": first_name,
+        "last_name": last_name,
+        "disable_default_admin": disable_default_admin,
+    }
+
+    # Validate required fields
+    if not all([email, first_name, last_name, password, confirm_password]):
+        return templates.TemplateResponse(
+            "auth/setup.html",
+            get_template_context(
+                request,
+                roles=roles,
+                default_admin_status=default_admin_status,
+                error="All fields are required",
+                form_data=form_data,
+            ),
+        )
+
+    # Prevent using the default admin email
+    if email.lower() == DEFAULT_ADMIN_EMAIL:
+        return templates.TemplateResponse(
+            "auth/setup.html",
+            get_template_context(
+                request,
+                roles=roles,
+                default_admin_status=default_admin_status,
+                error=f"Cannot use {DEFAULT_ADMIN_EMAIL} - please choose a different email address",
+                form_data=form_data,
+            ),
+        )
+
+    # Validate passwords match
+    if password != confirm_password:
+        return templates.TemplateResponse(
+            "auth/setup.html",
+            get_template_context(
+                request,
+                roles=roles,
+                default_admin_status=default_admin_status,
+                error="Passwords do not match",
+                form_data=form_data,
+            ),
+        )
+
+    # Validate password requirements
+    password_errors = validate_password(password)
+    if password_errors:
+        return templates.TemplateResponse(
+            "auth/setup.html",
+            get_template_context(
+                request,
+                roles=roles,
+                default_admin_status=default_admin_status,
+                errors=password_errors,
+                form_data=form_data,
+            ),
+        )
+
+    # Create the user account
+    try:
+        create_setup_user(
+            db=db,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            role=role,
+            disable_default_admin_account=disable_default_admin,
+        )
+    except PasswordValidationError as e:
+        return templates.TemplateResponse(
+            "auth/setup.html",
+            get_template_context(
+                request,
+                roles=roles,
+                default_admin_status=default_admin_status,
+                errors=e.errors,
+                form_data=form_data,
+            ),
+        )
+    except ValueError as e:
+        return templates.TemplateResponse(
+            "auth/setup.html",
+            get_template_context(
+                request,
+                roles=roles,
+                default_admin_status=default_admin_status,
+                error=str(e),
+                form_data=form_data,
+            ),
+        )
+
+    # Success - redirect to login
+    return RedirectResponse(
+        url="/login?message=Setup+complete!+Please+log+in+with+your+new+account&type=success",
+        status_code=302,
     )
 
 

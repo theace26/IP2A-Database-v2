@@ -180,3 +180,48 @@ refresh_tokens
 4. Browser automatically sends cookies on subsequent requests
 5. `auth_cookie.py` validates JWT from cookie on protected routes
 6. On logout, cookies are cleared and user redirected to login
+
+### System Setup Flow - COMPLETE (January 30, 2026)
+
+The system has a first-time setup flow for creating initial user accounts:
+
+**Setup Page:** `/setup`
+- Service: `src/services/setup_service.py`
+- Template: `src/templates/auth/setup.html`
+- Route: `src/routers/frontend.py`
+- Tests: `src/tests/test_setup.py` (25 tests)
+
+**Default Admin Account (`admin@ibew46.com`):**
+- Seeded automatically on deployment via `src/seed/auth_seed.py`
+- Cannot be deleted or have email/password changed via setup page
+- CAN be disabled via checkbox during setup (recommended for production)
+- Can be re-enabled later from Staff Management if needed
+- Password: Set in seed file (change in production)
+
+**Setup Required When:**
+- No users exist at all
+- Only the default admin account exists (system not yet configured)
+
+**Setup Process:**
+1. System detects setup is required (via `is_setup_required()`)
+2. User redirected to `/setup` page
+3. User creates their own administrator account (cannot use `admin@ibew46.com`)
+4. User optionally disables the default admin account via checkbox
+5. On success, redirect to login page
+
+**Key Service Functions:**
+```python
+from src.services.setup_service import (
+    is_setup_required,        # Check if setup needed
+    get_default_admin_status, # Get default admin info
+    create_setup_user,        # Create new user during setup
+    disable_default_admin,    # Disable default admin
+    enable_default_admin,     # Re-enable default admin
+    DEFAULT_ADMIN_EMAIL,      # Constant: "admin@ibew46.com"
+)
+```
+
+**Security Notes:**
+- Strong password requirements enforced (8+ chars, 3 unique numbers, special char, capital, no repeating letters, no sequential numbers)
+- Password validation with real-time client-side feedback (Alpine.js)
+- Default admin account exists for recovery purposes but should be disabled in production
