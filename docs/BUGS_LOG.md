@@ -1687,4 +1687,325 @@ rate_schedule = {
 
 ---
 
-*Last Updated: 2026-01-30 (Bugs #020-#021 added - Migration is_system_role, MemberClassification enum mismatch)*
+---
+
+## Bug #022: HTMX 401 Errors Not Handled Gracefully
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Medium (poor user experience on session expiry)
+**Status:** RESOLVED
+
+### Symptoms
+- User's session expires while browsing
+- HTMX search/filter requests return 401 Unauthorized
+- Browser console shows: `Response Status Error Code 401 from /operations/grievances/search`
+- User sees generic "An error occurred. Please try again." toast
+- User is NOT redirected to login page
+- Error repeats on every HTMX request
+
+### Root Cause Analysis
+
+When HTMX makes an AJAX request and the session has expired:
+1. Backend returns 401 Unauthorized with HTML "Session expired"
+2. HTMX triggers `htmx:responseError` event
+3. JavaScript handler only showed a generic error toast
+4. No redirect to login, no HX-Redirect header
+
+The backend returned 401 but didn't use HTMX's `HX-Redirect` header mechanism for client-side redirect.
+
+### Solution
+
+**1. Added specific 401 handling in JavaScript** (`src/static/js/app.js`):
+```javascript
+document.body.addEventListener('htmx:responseError', function(evt) {
+    var status = evt.detail.xhr ? evt.detail.xhr.status : 0;
+
+    // Handle 401 Unauthorized - redirect to login
+    if (status === 401) {
+        showToast('Session expired. Redirecting to login...', 'warning');
+        setTimeout(function() {
+            window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
+        }, 1000);
+        return;
+    }
+
+    // Handle 404, 403, 500+ with specific messages...
+});
+```
+
+**2. Added HX-Redirect header to backend 401 responses**:
+```python
+# operations_frontend.py, member_frontend.py, dues_frontend.py
+if isinstance(current_user, RedirectResponse):
+    return HTMLResponse(
+        "Session expired",
+        status_code=401,
+        headers={"HX-Redirect": "/auth/login?next=/operations/grievances"},
+    )
+```
+
+### Files Modified
+- `src/static/js/app.js` - Added status-specific error handling (401, 403, 404, 500+)
+- `src/routers/operations_frontend.py` - Added HX-Redirect header to 401 responses
+- `src/routers/member_frontend.py` - Added HX-Redirect header to 401 responses
+- `src/routers/dues_frontend.py` - Added HX-Redirect header to 401 responses
+
+### Commit
+- `8564840 fix: improve HTMX error handling and auth redirects`
+
+### Lessons Learned
+
+1. **HTMX Redirect Mechanism**: For HTMX requests, use `HX-Redirect` header instead of relying on client-side JavaScript.
+
+2. **Specific Error Messages**: Different HTTP status codes deserve different user-facing messages.
+
+3. **Graceful Session Handling**: When sessions expire, redirect to login automatically rather than showing cryptic errors.
+
+### Prevention
+
+1. **HTMX Response Pattern**: For all HTMX partial endpoints, handle authentication failures with HX-Redirect header.
+
+2. **Client-Side Fallback**: The JavaScript handler provides a fallback if the header isn't present.
+
+---
+
+## Bug #023: bcrypt 4.1.x Incompatibility with passlib
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Medium (log spam, potential auth issues)
+**Status:** RESOLVED
+
+### Symptoms
+- Railway logs show repeated error: `(trapped) error reading bcrypt version`
+- Traceback shows: `AttributeError: module 'bcrypt' has no attribute '__about__'`
+- Error occurs during password hashing/verification operations
+- Authentication still works but logs are polluted
+
+### Root Cause Analysis
+
+The `requirements.txt` specified `bcrypt==4.1.3`, but bcrypt 4.1+ removed the `__about__` attribute that passlib tries to access:
+
+```python
+# passlib tries to do:
+version = _bcrypt.__about__.__version__  # Fails in bcrypt 4.1+
+```
+
+bcrypt 4.0.x still had `__about__`, but 4.1.0 removed it as part of internal API cleanup.
+
+### Solution
+
+Pinned bcrypt to 4.0.1 which is compatible with passlib:
+
+```txt
+# requirements.txt
+# --- Authentication ---
+bcrypt>=4.0.1
+python-jose[cryptography]==3.3.0
+```
+
+Also removed `passlib[bcrypt]` since we now use direct bcrypt in `src/core/security.py` (see Bug #012).
+
+### Files Modified
+- `requirements.txt` - Changed bcrypt version constraint
+
+### Commit
+- `8564840 fix: improve HTMX error handling and auth redirects`
+
+### Lessons Learned
+
+1. **Version Pinning**: For security-critical libraries, pin to tested versions rather than using `>=`.
+
+2. **Library Compatibility**: When using wrapper libraries (passlib), check compatibility with underlying libraries (bcrypt).
+
+3. **Direct Usage**: Since we replaced passlib with direct bcrypt (Bug #012), we could use bcrypt>=4.1 if we wanted, but pinning avoids potential future issues.
+
+### Prevention
+
+1. **Test with Specific Versions**: CI should test with exact pinned versions.
+
+2. **Monitor Deprecations**: Watch for deprecation warnings in library changelogs.
+
+---
+
+## Bug #024: Reports Router Async/Sync Session Mismatch
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Critical (Reports page 500 error)
+**Status:** RESOLVED
+
+### Symptoms
+- User navigates to Reports page
+- Browser shows 500 "Something Went Wrong" error
+- Railway logs show: `TypeError: object Result can't be used in 'await' expression`
+- Reports page completely broken
+
+### Root Cause Analysis
+
+The `reports.py` router was incorrectly using async database operations with a synchronous session:
+
+```python
+# WRONG - reports.py
+from sqlalchemy.ext.asyncio import AsyncSession
+
+@router.get("/members/roster")
+async def member_roster_report(
+    db: AsyncSession = Depends(get_db),  # Type hint says async
+):
+    result = await db.execute(stmt)  # await on sync session!
+```
+
+But `get_db()` returns a synchronous `Session`:
+
+```python
+# session.py - returns SYNC session
+def get_db() -> Session:
+    db = SessionLocal()  # Sync session
+    yield db
+```
+
+When `await` is used on a synchronous `Result` object, Python raises TypeError.
+
+### Solution
+
+Changed reports router to use synchronous database calls:
+
+```python
+# CORRECT - reports.py
+from sqlalchemy.orm import Session
+
+@router.get("/members/roster")
+async def member_roster_report(
+    db: Session = Depends(get_db),  # Correct type hint
+):
+    result = db.execute(stmt)  # No await
+```
+
+### Files Modified
+- `src/routers/reports.py` - Changed `AsyncSession` to `Session`, removed all `await` keywords from db calls
+
+### Commit
+- `9543c5b fix: reports router using sync db session instead of async`
+
+### Lessons Learned
+
+1. **Consistent Session Type**: The codebase uses synchronous `Session`, not `AsyncSession`. All routers must match.
+
+2. **FastAPI Async Endpoints**: FastAPI routes can be `async def` even with sync database - just don't `await` db calls.
+
+3. **Type Hints Matter**: Incorrect type hints can mask bugs that only appear at runtime.
+
+### Prevention
+
+1. **Pattern Consistency**: Document that all database operations use sync `Session`, not `AsyncSession`.
+
+2. **IDE Type Checking**: Enable strict type checking to catch type mismatches.
+
+3. **Template Router**: Create a router template with correct imports for copy-paste.
+
+---
+
+## Bug #025: Setup Flow Silent Role Assignment Failure
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Critical (new admin users have no permissions)
+**Status:** RESOLVED
+
+### Symptoms
+- User creates account via setup flow, selects "Administrator" role
+- User logs in successfully
+- User clicks "Staff & Permissions" - sees 403 Access Denied
+- User has NO roles despite selecting admin during setup
+- Railway logs show: "Token validation failed" but user IS logged in
+
+### Root Cause Analysis
+
+The `create_setup_user()` function in `setup_service.py` had silent failure when role lookup failed:
+
+```python
+# setup_service.py - WRONG (silent failure)
+db_role = db.execute(
+    select(Role).where(Role.name == role.lower())
+).scalar_one_or_none()
+
+if db_role:  # If role not found, this block is SKIPPED SILENTLY
+    user_role = UserRole(...)
+    db.add(user_role)
+
+# User created WITHOUT roles!
+```
+
+If the Role table wasn't seeded or the role name didn't match, the user was created without any roles - but no error was raised.
+
+### Solution
+
+**1. Fixed setup_service.py to raise error if role not found:**
+```python
+db_role = db.execute(
+    select(Role).where(Role.name == role.lower())
+).scalar_one_or_none()
+
+if not db_role:
+    db.rollback()
+    raise ValueError(
+        f"Role '{role}' not found in database. Please ensure roles are seeded. "
+        "Run: python -m src.seed.run_seed"
+    )
+
+# Role definitely exists now
+user_role = UserRole(...)
+db.add(user_role)
+```
+
+**2. Created migration to fix existing users without roles:**
+```python
+# 813f955b11af_fix_missing_user_roles.py
+def upgrade():
+    # Find users with no roles
+    result = conn.execute(sa.text("""
+        SELECT u.id, u.email FROM users u
+        LEFT JOIN user_roles ur ON u.id = ur.user_id
+        WHERE ur.id IS NULL
+        AND u.email != 'admin@ibew46.com'
+    """))
+
+    # Assign admin role to each
+    for user in users_without_roles:
+        conn.execute(sa.text("""
+            INSERT INTO user_roles (user_id, role_id, assigned_by, created_at)
+            VALUES (:user_id, :role_id, 'migration_fix', NOW())
+        """), {"user_id": user_id, "role_id": admin_role_id})
+```
+
+### Files Modified
+- `src/services/setup_service.py` - Changed silent failure to explicit error
+- `src/db/migrations/versions/813f955b11af_fix_missing_user_roles.py` - New migration to fix existing users
+
+### Commit
+- `2f16502 fix: add migration to fix users with missing roles`
+- `e9a4c77 fix: include display_name in role creation for production compatibility`
+
+### Lessons Learned
+
+1. **Never Fail Silently**: Critical operations like role assignment should raise errors on failure, not skip silently.
+
+2. **Defensive Coding**: Check for required data and fail fast with clear messages.
+
+3. **Data Integrity**: Users created without roles are in an invalid state - enforce data integrity at creation time.
+
+4. **Migration Fixes**: Data migrations can fix existing invalid data while code fixes prevent new invalid data.
+
+### Prevention
+
+1. **Required Relationships**: Consider making role assignment mandatory (raise error if no roles assigned).
+
+2. **Validation Layer**: Add validation that newly created users have at least one role.
+
+3. **Startup Checks**: Add health check that verifies no users exist without roles.
+
+---
+
+*Last Updated: 2026-01-30 (Bugs #022-#025 added - HTMX error handling, bcrypt compatibility, reports async/sync, setup role assignment)*

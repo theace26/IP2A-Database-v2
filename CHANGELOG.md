@@ -166,6 +166,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * jinja2 added to requirements.txt
 
 ### Fixed
+- **HTMX 401 Errors Not Handled Gracefully** (Bug #022) - January 30, 2026
+  * Root cause: HTMX requests returning 401 showed generic "An error occurred" toast instead of redirecting to login
+  * Added specific error handling for 401, 403, 404, 500+ status codes in `app.js`
+  * Added `HX-Redirect` header to backend 401 responses for proper HTMX redirect
+  * Users now see "Session expired. Redirecting to login..." and are automatically redirected
+  * Files modified: `src/static/js/app.js`, `src/routers/operations_frontend.py`, `src/routers/member_frontend.py`, `src/routers/dues_frontend.py`
+
+- **bcrypt 4.1.x Incompatibility with passlib** (Bug #023) - January 30, 2026
+  * Root cause: bcrypt 4.1+ removed `__about__` attribute that passlib tries to access
+  * Manifested as: `AttributeError: module 'bcrypt' has no attribute '__about__'`
+  * Fix: Pinned bcrypt to `>=4.0.1` in requirements.txt
+  * Files modified: `requirements.txt`
+
+- **Reports Router Async/Sync Session Mismatch** (Bug #024) - January 30, 2026
+  * Root cause: `reports.py` used `await db.execute()` with `AsyncSession` type hint, but `get_db()` returns synchronous `Session`
+  * TypeError: `object Result can't be used in 'await' expression`
+  * Fix: Changed to synchronous database calls (removed `await`, changed type hint to `Session`)
+  * Files modified: `src/routers/reports.py`
+
+- **Setup Flow Silent Role Assignment Failure** (Bug #025) - January 30, 2026
+  * Root cause: `create_setup_user()` silently skipped role assignment if role lookup failed
+  * Users created during setup had no roles, couldn't access Staff Management
+  * Fix: Now raises `ValueError` if role not found; created migration `813f955b11af` to fix existing users
+  * Files modified: `src/services/setup_service.py`, `src/db/migrations/versions/813f955b11af_fix_missing_user_roles.py`
+
 - **Migration INSERT Missing is_system_role Column** (Bug #020)
   * Root cause: Raw SQL INSERT in `813f955b11af_fix_missing_user_roles.py` migration omitted required `is_system_role` column
   * PostgreSQL raised `NotNullViolation: null value in column "is_system_role" of relation "roles"`

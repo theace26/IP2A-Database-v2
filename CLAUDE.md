@@ -849,6 +849,52 @@ async def page(request: Request):
 />
 ```
 
+### HTMX 401 Error Handling (Bug #022 Fix)
+
+When HTMX requests return 401 (session expired), the backend should include the `HX-Redirect` header:
+
+```python
+# In router endpoints for HTMX partials
+if isinstance(current_user, RedirectResponse):
+    return HTMLResponse(
+        "Session expired",
+        status_code=401,
+        headers={"HX-Redirect": "/auth/login?next=/current/path"},
+    )
+```
+
+The frontend JavaScript also handles 401 with automatic redirect:
+
+```javascript
+// src/static/js/app.js
+if (status === 401) {
+    showToast('Session expired. Redirecting to login...', 'warning');
+    setTimeout(function() {
+        window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
+    }, 1000);
+    return;
+}
+```
+
+### Synchronous Database Sessions (Bug #024 Fix)
+
+**IMPORTANT:** This codebase uses **synchronous** SQLAlchemy sessions, NOT async.
+
+```python
+# CORRECT - synchronous
+from sqlalchemy.orm import Session
+
+def some_function(db: Session = Depends(get_db)):
+    result = db.execute(stmt)  # NO await
+    items = result.scalars().all()
+
+# WRONG - async (will cause 500 errors)
+from sqlalchemy.ext.asyncio import AsyncSession
+
+async def some_function(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(stmt)  # FAILS - get_db returns sync session
+```
+
 ---
 
 ## Production Deployment (Railway)
@@ -884,6 +930,10 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 | StudentStatus.GRADUATED error | Wrong enum value in seed (Bug #017) | Use COMPLETED not GRADUATED |
 | Migration is_system_role NOT NULL | Raw SQL INSERT missing column (Bug #020) | Fixed in `8916563` |
 | MemberClassification.JOURNEYMAN_WIREMAN error | Service used non-existent enum values (Bug #021) | Fixed in `70df236` |
+| HTMX 401 errors show generic message | Missing status-specific error handling (Bug #022) | Fixed in `8564840` |
+| bcrypt `__about__` AttributeError | bcrypt 4.1.x incompatible with passlib (Bug #023) | Pin bcrypt>=4.0.1 |
+| Reports 500 error (async/sync mismatch) | Router used `await` with sync Session (Bug #024) | Fixed in `9543c5b` |
+| Setup users have no roles | Role assignment failed silently (Bug #025) | Fixed in `2f16502` |
 
 **Note:** As of commit `013cf92`, invalid JWT cookies are automatically cleared on redirect to login, preventing repeated "Signature verification failed" log spam.
 
