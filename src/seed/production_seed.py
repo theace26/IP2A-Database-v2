@@ -30,6 +30,9 @@ from .phase2_seed import seed_phase2
 from .auth_seed import run_auth_seed
 from .training_seed import run_training_seed
 from .dues_seed import run_dues_seed
+from .seed_grants import seed_grants
+from .seed_expenses import seed_expenses
+from .seed_instructor_hours import seed_instructor_hours
 
 
 def run_production_seed():
@@ -41,6 +44,8 @@ def run_production_seed():
     - Students: 500
     - Organizations: 100
     - Instructors: 75
+    - Grants: 10
+    - Expenses: 200
     """
     env = settings.IP2A_ENV.lower()
 
@@ -58,71 +63,83 @@ def run_production_seed():
 
     try:
         # Clear all existing data
-        print("\n[0/15] Clearing existing data...")
+        print("\n[0/18] Clearing existing data...")
         truncate_all_tables(db)
 
         init_seed(42)  # Consistent seed for reproducibility
 
         # Auth seeds FIRST (roles and default admin)
-        print("\n[1/15] Seeding authentication (roles, default admin)...")
+        print("\n[1/18] Seeding authentication (roles, default admin)...")
         auth_results = run_auth_seed(db)
         admin_status = "created" if auth_results['admin_created'] else "already exists"
         print(f"       Created {auth_results['roles_created']} roles, admin user {admin_status}")
 
         # Locations (needed for other seeds)
-        print("\n[2/15] Seeding locations...")
+        print("\n[2/18] Seeding locations...")
         seed_locations(db)
 
         # Instructors
-        print("\n[3/15] Seeding instructors...")
+        print("\n[3/18] Seeding instructors...")
         seed_instructors(db, count=75)
 
         # Organizations (employers)
-        print("\n[4/15] Seeding organizations...")
+        print("\n[4/18] Seeding organizations...")
         seed_organizations(db, count=100)
 
         # Organization contacts
-        print("\n[5/15] Seeding organization contacts...")
+        print("\n[5/18] Seeding organization contacts...")
         seed_organization_contacts(db, contacts_per_org=3)
 
         # Members (increased to 1000)
-        print("\n[6/15] Seeding members...")
+        print("\n[6/18] Seeding members...")
         seed_members(db, count=1000)
 
         # Member employments
-        print("\n[7/15] Seeding member employments...")
+        print("\n[7/18] Seeding member employments...")
         seed_member_employments(db)
 
         # Students (increased to 500, linked to members)
-        print("\n[8/15] Seeding students...")
+        print("\n[8/18] Seeding students...")
         seed_students(db, count=500)
 
         # Cohorts
-        print("\n[9/15] Seeding cohorts...")
+        print("\n[9/18] Seeding cohorts...")
         seed_cohorts(db, count=15)
 
         # Tools issued to students
-        print("\n[10/15] Seeding tools issued...")
+        print("\n[10/18] Seeding tools issued...")
         seed_tools_issued(db, count_per_student=2)
 
         # Student credentials
-        print("\n[11/15] Seeding credentials...")
+        print("\n[11/18] Seeding credentials...")
         seed_credentials(db, count_per_student=2)
 
         # JATC applications
-        print("\n[12/15] Seeding JATC applications...")
+        print("\n[12/18] Seeding JATC applications...")
         seed_jatc_applications(db, count_per_student=1)
 
+        # Grants (funding sources)
+        print("\n[13/18] Seeding grants...")
+        seed_grants(db, count=10)
+
+        # Expenses (linked to grants, students, locations)
+        print("\n[14/18] Seeding expenses...")
+        seed_expenses(db, count=200)
+
+        # Instructor hours
+        print("\n[15/18] Seeding instructor hours...")
+        seed_instructor_hours(db, entries_per_instructor=20)
+
         # Training system data (courses, enrollments, grades)
-        print("\n[13/15] Seeding training system...")
+        print("\n[16/18] Seeding training system...")
         run_training_seed(db, num_students=200)
 
         # Phase 2 - Union operations (SALTing, Benevolence, Grievances)
-        print("\n[14/15] Seeding union operations...")
+        print("\n[17/18] Seeding union operations...")
         seed_phase2(db, verbose=False)
 
         # Dues system
-        print("\n[15/15] Seeding dues system...")
+        print("\n[18/18] Seeding dues system...")
         run_dues_seed(db, verbose=False)
 
         db.commit()
