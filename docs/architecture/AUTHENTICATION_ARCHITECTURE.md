@@ -2927,12 +2927,18 @@ auth_settings = AuthSettings()
 
 ### Environment Variables
 
+**IMPORTANT:** The `AuthSettings` class uses `env_prefix = "AUTH_"`, so environment variables
+must be prefixed with `AUTH_`. For example, `jwt_secret_key` becomes `AUTH_JWT_SECRET_KEY`.
+
+See `docs/BUGS_LOG.md` Bug #006 for details on what happens if this is not set.
+
 ```bash
 # .env.compose additions for authentication
 
 # JWT Secret - GENERATE A REAL ONE FOR PRODUCTION
-# Use: openssl rand -hex 32
-JWT_SECRET_KEY=your-256-bit-secret-key-here-generate-with-openssl
+# Use: python -c 'import secrets; print(secrets.token_urlsafe(32))'
+# CRITICAL: If not set, a random key is generated on each restart, invalidating all sessions!
+AUTH_JWT_SECRET_KEY=your-secret-key-here-generate-with-python
 
 # Token expiration
 ACCESS_TOKEN_EXPIRE_MINUTES=60

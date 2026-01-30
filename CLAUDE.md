@@ -713,6 +713,36 @@ async def protected_page(
     # current_user has: id, email, roles
 ```
 
+### JWT Secret Key Configuration (CRITICAL - Bug #006 Fix)
+
+**IMPORTANT:** The `AUTH_JWT_SECRET_KEY` environment variable MUST be set in production.
+
+If not set, a random secret is generated on each container restart, which:
+- Invalidates ALL existing user sessions
+- Causes "Signature verification failed" errors
+- Forces all users to re-login after every deployment
+
+**To Fix (Railway/Production):**
+```bash
+# 1. Generate a secure key
+python -c 'import secrets; print(secrets.token_urlsafe(32))'
+
+# 2. Add to Railway environment variables:
+AUTH_JWT_SECRET_KEY=<paste-generated-key-here>
+
+# 3. Redeploy
+```
+
+**Startup Warning:** If the key is not set, the app logs a warning at startup:
+```
+WARNING: AUTH_JWT_SECRET_KEY not set in environment!
+A random secret was generated. This means:
+  - All user sessions will be invalidated on restart
+  - Users will see 'Signature verification failed' errors
+```
+
+See: `docs/BUGS_LOG.md` Bug #006 for full details.
+
 ### Form-Based Login (IMPORTANT - Bug #005 Fix)
 
 The login form uses a **form-based endpoint** that accepts URL-encoded data directly:

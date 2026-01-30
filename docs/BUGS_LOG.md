@@ -406,6 +406,117 @@ if (evt.detail.pathInfo.requestPath === '/login') {
 
 ---
 
+## Bug #006: JWT Token Signature Verification Failed on Container Restart
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Critical (all users logged out on every deployment)
+**Status:** RESOLVED
+
+### Symptoms
+- Users see "Token validation failed: Invalid token: Signature verification failed" errors in Railway logs
+- After every container restart/deployment, all users are logged out
+- Users must re-login after each deployment
+- Error appears repeatedly in logs for every authenticated request
+
+### Root Cause Analysis
+
+The `AUTH_JWT_SECRET_KEY` environment variable was not set in production, causing the application to generate a new random secret on every startup:
+
+```python
+# src/config/auth_config.py
+jwt_secret_key: str = Field(
+    default_factory=lambda: secrets.token_urlsafe(32),  # Random on each startup!
+    ...
+)
+```
+
+**The Problem Chain:**
+1. Container starts → new random `jwt_secret_key` generated
+2. Users have cookies with JWTs signed by the OLD secret
+3. Token verification fails because signatures don't match
+4. All users see "Signature verification failed" and get logged out
+
+**Why This Wasn't Caught Earlier:**
+- Local development uses the same container, so the secret persists
+- Tests use fresh tokens for each test run
+- The issue only manifests in production with container restarts
+
+### Solution
+
+**1. Added Startup Warning** (`src/config/auth_config.py`):
+```python
+# Check if secret was provided BEFORE settings load
+_SECRET_KEY_PROVIDED = bool(os.environ.get("AUTH_JWT_SECRET_KEY"))
+
+def check_jwt_secret_configuration() -> None:
+    """Log a warning if JWT secret key was auto-generated."""
+    if not _SECRET_KEY_PROVIDED:
+        logger.warning(
+            "WARNING: AUTH_JWT_SECRET_KEY not set in environment!\n"
+            "A random secret was generated. This means:\n"
+            "  - All user sessions will be invalidated on restart\n"
+            "  - Users will see 'Signature verification failed' errors\n"
+            "\n"
+            "To fix, set AUTH_JWT_SECRET_KEY in your environment:\n"
+            "  python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+        )
+```
+
+**2. Added Startup Event** (`src/main.py`):
+```python
+@app.on_event("startup")
+async def startup_event():
+    """Run configuration checks on startup."""
+    check_jwt_secret_configuration()
+    logger.info("IP2A Database API started successfully")
+```
+
+**3. Production Fix Required:**
+Operators must set `AUTH_JWT_SECRET_KEY` in Railway/production environment:
+```bash
+# Generate a secure key
+python -c 'import secrets; print(secrets.token_urlsafe(32))'
+
+# Add to Railway environment variables:
+AUTH_JWT_SECRET_KEY=<generated-key>
+```
+
+### Files Modified
+- `src/config/auth_config.py` - Added `_SECRET_KEY_PROVIDED` check and `check_jwt_secret_configuration()` function
+- `src/main.py` - Added startup event to call configuration check
+
+### Commit
+- `91ee142 fix: add startup warning when JWT secret key not configured`
+
+### Lessons Learned
+
+1. **Environment Variables for Secrets**: Never rely on default_factory for production secrets. The default should fail loudly or warn clearly.
+
+2. **Pydantic default_factory Gotcha**: Using `default_factory=lambda: secrets.token_urlsafe(32)` is fine for development but dangerous if not caught in production.
+
+3. **Deployment Testing Gap**: Local testing doesn't simulate container restarts. Need integration tests that verify token persistence across restarts.
+
+4. **Proactive Warnings**: Adding startup warnings for misconfiguration catches issues before they affect users.
+
+5. **Railway Environment Variables**: Critical secrets like JWT keys must be set as environment variables in Railway dashboard, not in code.
+
+### Prevention
+
+1. **Startup Configuration Check**: The new `check_jwt_secret_configuration()` function logs a clear warning when the secret is auto-generated.
+
+2. **Documentation Updated**: Added JWT configuration to:
+   - CLAUDE.md (Important Patterns section)
+   - CHANGELOG.md (Fixed section)
+   - Deployment runbook
+
+3. **Future Improvement Ideas**:
+   - Consider failing startup if `AUTH_JWT_SECRET_KEY` not set in production (`ENVIRONMENT=production`)
+   - Add health check that verifies configuration
+   - Create deployment checklist with required environment variables
+
+---
+
 ## Template for New Bugs
 
 ```markdown
@@ -440,4 +551,4 @@ if (evt.detail.pathInfo.requestPath === '/login') {
 
 ---
 
-*Last Updated: 2026-01-30*
+*Last Updated: 2026-01-30 (Bug #006 added)*

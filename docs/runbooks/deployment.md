@@ -7,8 +7,37 @@ Deploy a new version of IP2A Database to production.
 
 ## Prerequisites
 - Git access to repository
-- SSH access to server
+- SSH access to server (or Railway/Render dashboard access)
 - Docker access
+
+---
+
+## REQUIRED ENVIRONMENT VARIABLES
+
+These environment variables **MUST** be set in production. Missing any of these will cause issues.
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `AUTH_JWT_SECRET_KEY` | Yes | JWT signing key (see below) |
+| `S3_ENDPOINT_URL` | For docs | S3-compatible storage endpoint |
+| `S3_ACCESS_KEY_ID` | For docs | S3 access key |
+| `S3_SECRET_ACCESS_KEY` | For docs | S3 secret key |
+| `S3_BUCKET_NAME` | For docs | S3 bucket name |
+
+### Generating JWT Secret Key
+
+**CRITICAL:** If `AUTH_JWT_SECRET_KEY` is not set, a random key is generated on each restart. This invalidates all user sessions!
+
+```bash
+# Generate a secure key
+python -c 'import secrets; print(secrets.token_urlsafe(32))'
+
+# Set in Railway/Render environment variables:
+AUTH_JWT_SECRET_KEY=<paste-key-here>
+```
+
+See: `docs/BUGS_LOG.md` Bug #006 for details.
 
 ---
 

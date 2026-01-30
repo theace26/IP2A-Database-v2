@@ -149,6 +149,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * jinja2 added to requirements.txt
 
 ### Fixed
+- **JWT Token Signature Verification Failed on Container Restart** (Bug #006)
+  * Root cause: `AUTH_JWT_SECRET_KEY` not set in production, causing random secret generation on each restart
+  * All user sessions invalidated when container restarts, users see "Signature verification failed"
+  * Fix: Added `check_jwt_secret_configuration()` function to log warning at startup
+  * Fix: Added startup event in main.py to call the check
+  * Operators must set `AUTH_JWT_SECRET_KEY` environment variable for persistent sessions
+  * Files modified: `src/config/auth_config.py`, `src/main.py`
+
 - **Login page `[object Object]` error** (Bug #001)
   * Root cause: HTMX sends form data as `application/x-www-form-urlencoded` by default, but FastAPI `/auth/login` endpoint expects JSON body
   * This caused a 422 validation error with a Pydantic error format that JavaScript wasn't handling properly
