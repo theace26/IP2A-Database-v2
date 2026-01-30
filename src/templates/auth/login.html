@@ -56,12 +56,11 @@
             </div>
         </div>
 
-        <!-- Login form - uses json-enc extension to send JSON to API -->
+        <!-- Login form - posts to form-based endpoint that handles URL-encoded data -->
         <form id="login-form"
-              hx-post="/auth/login"
+              hx-post="/login"
               hx-target="#login-error"
               hx-swap="none"
-              hx-ext="json-enc"
               x-data="{ loading: false }"
               @htmx:before-request="loading = true"
               @htmx:after-request="loading = false">
@@ -117,9 +116,19 @@
 <script>
 // Handle login response
 document.body.addEventListener('htmx:afterRequest', function(evt) {
-    if (evt.detail.pathInfo.requestPath === '/auth/login') {
+    if (evt.detail.pathInfo.requestPath === '/login') {
         if (evt.detail.successful) {
             // Success - cookies are set automatically by the browser
+            // Check if password change is required
+            try {
+                const response = JSON.parse(evt.detail.xhr.responseText);
+                if (response.must_change_password) {
+                    window.location.href = '/auth/change-password';
+                    return;
+                }
+            } catch (e) {
+                // Ignore parse errors, proceed to dashboard
+            }
             // Get the redirect URL from the page or default to dashboard
             const nextUrl = '{{ next | default("/dashboard") }}';
             window.location.href = nextUrl;

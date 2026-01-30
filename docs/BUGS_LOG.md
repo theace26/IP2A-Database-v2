@@ -315,6 +315,97 @@ Relative URLs inherit the protocol from the page, avoiding mixed content.
 
 ---
 
+## Bug #005: HTMX json-enc Extension Not Encoding Form Data
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Critical (blocking user login)
+**Status:** RESOLVED
+
+### Symptoms
+- Login form returns 422 "Unprocessable Entity" error
+- Browser console shows POST to `/auth/login` with 422 status
+- Even after Bug #004 fix (Mixed Content), login still fails
+- Error message: "Input should be a valid dictionary or object to extract fields from"
+
+### Root Cause Analysis
+
+The HTMX `json-enc` extension was supposed to convert form data to JSON before sending, but it wasn't working reliably:
+
+1. **Extension Loading**: Even though `json-enc.js` was loading after the Mixed Content fix, the extension wasn't properly encoding the form data.
+
+2. **Form Data vs JSON**:
+   ```
+   Expected by FastAPI: Content-Type: application/json
+                        Body: {"email": "...", "password": "..."}
+
+   Actual sent by HTMX: Content-Type: application/x-www-form-urlencoded
+                        Body: email=...&password=...
+   ```
+
+3. **Pydantic Validation**: FastAPI's `LoginRequest` Pydantic model expects a JSON body, and URL-encoded form data causes a 422 validation error.
+
+4. **Extension Unreliability**: The `hx-ext="json-enc"` attribute wasn't being recognized or applied consistently, possibly due to timing issues with extension loading.
+
+### Solution
+
+Created a dedicated form-based login endpoint that accepts URL-encoded form data directly, bypassing the need for the json-enc extension:
+
+**1. Added Form-Based Login Endpoint** (`src/routers/frontend.py`):
+```python
+@router.post("/login")
+async def login_form_submit(
+    request: Request,
+    response: HTMLResponse,
+    db: Session = Depends(get_db),
+    email: str = Form(...),
+    password: str = Form(...),
+):
+    # Accepts URL-encoded form data directly
+    # Uses same authenticate_user service as /auth/login
+    # Sets HTTP-only cookies on success
+```
+
+**2. Updated Login Form** (`src/templates/auth/login.html`):
+```html
+<!-- Before -->
+<form hx-post="/auth/login" hx-ext="json-enc" ...>
+
+<!-- After -->
+<form hx-post="/login" ...>
+```
+
+**3. Updated JavaScript Handler**:
+```javascript
+// Changed path check from '/auth/login' to '/login'
+if (evt.detail.pathInfo.requestPath === '/login') {
+```
+
+### Files Modified
+- `src/routers/frontend.py` - Added POST `/login` endpoint with Form() parameters
+- `src/templates/auth/login.html` - Changed endpoint and removed json-enc extension
+
+### Commit
+- `[pending] fix: add form-based login endpoint to bypass json-enc extension`
+
+### Lessons Learned
+
+1. **CDN Extension Reliability**: Third-party HTMX extensions loaded from CDNs can be unreliable. For critical functionality, don't depend on them.
+
+2. **Form Data is Default**: HTMX sends forms as URL-encoded by default. Instead of fighting this with extensions, accept form data on the backend.
+
+3. **FastAPI Form() vs JSON**: FastAPI can easily accept form data using `Form()` parameters. This is often more robust than requiring JSON from HTML forms.
+
+4. **Separate Endpoints**: Having a form-friendly endpoint (`/login`) separate from the JSON API endpoint (`/auth/login`) provides flexibility for different clients.
+
+### Prevention
+- Use FastAPI `Form()` parameters for HTML form submissions
+- Reserve JSON body parsing for API clients (mobile apps, other services)
+- Don't rely on browser extensions for critical authentication flows
+- Test forms without JavaScript extensions to ensure fallback works
+
+---
+
 ## Template for New Bugs
 
 ```markdown

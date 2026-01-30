@@ -125,6 +125,95 @@ async def login_page(
     )
 
 
+@router.post("/login")
+async def login_form_submit(
+    request: Request,
+    response: HTMLResponse,
+    db: Session = Depends(get_db),
+    email: str = Form(...),
+    password: str = Form(...),
+):
+    """
+    Handle form-based login submission.
+
+    This endpoint accepts URL-encoded form data from HTML forms,
+    bypassing the need for the HTMX json-enc extension which can be unreliable.
+    """
+    from src.services.auth_service import (
+        authenticate_user,
+        create_tokens,
+        InvalidCredentialsError,
+        AccountLockedError,
+        AccountInactiveError,
+    )
+    from fastapi.responses import JSONResponse
+
+    try:
+        user = authenticate_user(db, email, password)
+    except InvalidCredentialsError:
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Invalid email or password"},
+        )
+    except AccountLockedError as e:
+        return JSONResponse(
+            status_code=423,
+            content={"detail": str(e)},
+        )
+    except AccountInactiveError:
+        return JSONResponse(
+            status_code=403,
+            content={"detail": "Account is inactive"},
+        )
+
+    # Get device info for token tracking
+    device_info = request.headers.get("user-agent", "")[:500]
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        ip_address = forwarded.split(",")[0].strip()
+    else:
+        ip_address = request.client.host if request.client else None
+
+    tokens = create_tokens(db, user, device_info, ip_address)
+
+    # Check if user must change password
+    must_change = getattr(user, "must_change_password", False)
+
+    # Return JSON with tokens - cookies will be set by the response
+    json_response = JSONResponse(
+        status_code=200,
+        content={
+            "access_token": tokens["access_token"],
+            "refresh_token": tokens["refresh_token"],
+            "token_type": "bearer",
+            "expires_in": tokens["expires_in"],
+            "must_change_password": must_change,
+        },
+    )
+
+    # Set HTTP-only cookies
+    json_response.set_cookie(
+        key="access_token",
+        value=tokens["access_token"],
+        httponly=True,
+        secure=True,  # Production with HTTPS
+        samesite="lax",
+        max_age=1800,  # 30 minutes
+        path="/",
+    )
+    json_response.set_cookie(
+        key="refresh_token",
+        value=tokens["refresh_token"],
+        httponly=True,
+        secure=True,  # Production with HTTPS
+        samesite="strict",
+        max_age=604800,  # 7 days
+        path="/",
+    )
+
+    return json_response
+
+
 @router.get("/forgot-password", response_class=HTMLResponse)
 async def forgot_password_page(request: Request):
     """Render forgot password page."""
