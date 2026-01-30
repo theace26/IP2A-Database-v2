@@ -344,4 +344,126 @@ All tests green
 
 ---
 
-*Session complete. All production bugs fixed and pushed to main.*
+## Continuation #3: Documents Placeholder and Seed Completion (Same Day)
+
+**Duration:** ~1 hour
+**Focus:** Fix Documents 500 error, complete all table seeding
+
+### Issues Identified
+
+1. **Documents 500 Error** - Documents page crashed when S3/MinIO not configured
+2. **StudentStatus.GRADUATED Error** - Seed file using non-existent enum value
+3. **Incomplete Table Seeding** - Some database tables not seeded (grants, expenses, instructor_hours)
+
+### Completed Tasks
+
+| Task | Status |
+|------|--------|
+| Replace Documents 500 with "Feature Not Implemented" page | ✅ Done |
+| Create `not_implemented.html` template | ✅ Done |
+| Fix StudentStatus.GRADUATED → COMPLETED | ✅ Done |
+| Add seed_grants.py (10 grants) | ✅ Done |
+| Add seed_expenses.py (200 expenses) | ✅ Done |
+| Add seed_instructor_hours.py (20/instructor) | ✅ Done |
+| Update production_seed.py to 18 steps | ✅ Done |
+| Update BUGS_LOG.md with Bugs #016-#017 | ✅ Done |
+| Fix Bug #011 description (was backwards) | ✅ Done |
+| Update CHANGELOG.md | ✅ Done |
+| Update CLAUDE.md seed counts | ✅ Done |
+
+### Files Created
+
+```
+src/seed/seed_grants.py                    # Grant/funding source seeding
+src/seed/seed_expenses.py                  # Expense records seeding
+src/seed/seed_instructor_hours.py          # Instructor hour entries
+src/templates/documents/not_implemented.html  # Placeholder page
+```
+
+### Files Modified
+
+```
+src/routers/documents_frontend.py   # Show placeholder for landing/upload/browse
+src/seed/production_seed.py         # 18 steps, all tables covered
+docs/BUGS_LOG.md                    # Added Bugs #016, #017; fixed Bug #011
+CHANGELOG.md                        # Fixed Bug #011 description
+CLAUDE.md                           # Updated seed counts, docs feature status
+```
+
+### New Bugs Documented
+
+| Bug # | Title | Severity |
+|-------|-------|----------|
+| #016 | Documents Frontend 500 Error When S3 Not Configured | Medium |
+| #017 | StudentStatus.GRADUATED AttributeError in Production Seed | Critical |
+
+### Bug #011 Correction
+
+The original Bug #011 description was backwards. Corrected from:
+- ❌ "Old values COMPLETED/DROPPED, new values GRADUATED/WITHDRAWN"
+
+To:
+- ✅ "Seed used GRADUATED (doesn't exist), fixed to COMPLETED (correct)"
+
+### Commits
+
+```
+83f9220 feat: show friendly 'Feature not implemented' page for documents
+3346ed1 feat: add missing seed files for grants, expenses, instructor_hours
+c7b8649 feat: increase seed counts and add missing seed categories
+```
+
+### Final Production Seed Summary (18 Steps)
+
+| Step | Category | Count |
+|------|----------|-------|
+| 1 | Auth (roles, admin) | 6 roles, 1 admin |
+| 2 | Locations | 4 |
+| 3 | Instructors | 75 |
+| 4 | Organizations | 100 |
+| 5 | Organization Contacts | 300 |
+| 6 | Members | 1,000 |
+| 7 | Member Employments | ~8,000 |
+| 8 | Students | 500 |
+| 9 | Cohorts | 15 |
+| 10 | Tools Issued | 1,000 |
+| 11 | Credentials | 1,000 |
+| 12 | JATC Applications | 500 |
+| 13 | Grants | 10 |
+| 14 | Expenses | 200 |
+| 15 | Instructor Hours | 1,500 |
+| 16 | Training (courses, enrollments) | 200 enrollments |
+| 17 | Union Ops (SALTing, Benevolence, Grievances) | ~75 records |
+| 18 | Dues (rates, periods, payments) | Full system |
+
+### Database Tables Coverage
+
+All 40+ database tables now seeded or auto-populated:
+
+**Seeded Tables:**
+- members, students, instructors, organizations, organization_contacts
+- cohorts, courses, enrollments, grades, attendances, class_sessions
+- tools_issued, credentials, jatc_applications, certifications
+- grants, expenses, instructor_hours, instructor_cohort
+- member_employments, locations
+- salting_activities, benevolence_applications, benevolence_reviews
+- grievances, grievance_steps
+- dues_rates, dues_periods, dues_payments, dues_adjustments
+- users, roles, user_roles
+
+**Auto-populated Tables (during app usage):**
+- audit_logs, email_tokens, refresh_tokens, file_attachments
+
+**System Tables:**
+- alembic_version (migration tracking)
+
+### Documentation Updated
+
+- `docs/BUGS_LOG.md` - Bugs #016-#017 added, Bug #011 corrected
+- `CHANGELOG.md` - Bug #011 fix description corrected
+- `CLAUDE.md` - Seed counts expanded, Documents feature status added
+- This session log - Continuation #3 added
+
+---
+
+*All documentation updated for historical record. Ready to push and deploy.*

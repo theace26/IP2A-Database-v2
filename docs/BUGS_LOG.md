@@ -802,7 +802,7 @@ Created the missing seed files:
 
 ---
 
-## Bug #011: StudentStatus Enum Value Mismatch
+## Bug #011: StudentStatus Enum Value Mismatch (Initial Discovery)
 
 **Date Discovered:** 2026-01-30
 **Date Fixed:** 2026-01-30
@@ -810,41 +810,47 @@ Created the missing seed files:
 **Status:** RESOLVED
 
 ### Symptoms
-- Seed fails with `ValueError` for StudentStatus enum
-- Error message indicates invalid enum values
-- Seed data was using old enum values
+- Seed fails with `AttributeError` for StudentStatus enum
+- Error: `type object 'StudentStatus' has no attribute 'GRADUATED'`
+- Production seed crashes during student seeding step
 
 ### Root Cause Analysis
 
-The `StudentStatus` enum was refactored, but seed files still used old values:
+The seed file used enum values that don't exist in the `StudentStatus` enum:
 
 ```python
-# Old (incorrect) values:
-StudentStatus.COMPLETED  # Doesn't exist
-StudentStatus.DROPPED    # Doesn't exist
+# Seed file incorrectly used:
+StudentStatus.GRADUATED  # Doesn't exist!
 
-# Correct enum values:
-StudentStatus.GRADUATED
-StudentStatus.WITHDRAWN
+# Correct StudentStatus enum values:
+class StudentStatus(str, Enum):
+    APPLICANT = "applicant"
+    ENROLLED = "enrolled"
+    ON_LEAVE = "on_leave"
+    COMPLETED = "completed"  # <-- Use this
+    DROPPED = "dropped"
+    DISMISSED = "dismissed"
 ```
 
 ### Solution
 
-Updated all seed files to use correct enum values:
+Updated seed file to use correct enum values:
 
 ```python
-# Before
-status=StudentStatus.COMPLETED
-
-# After
+# Before (WRONG)
 status=StudentStatus.GRADUATED
+
+# After (CORRECT)
+status=StudentStatus.COMPLETED
 ```
 
 ### Files Modified
-- `src/seed/seed_students.py` - Updated enum values
+- `src/seed/seed_students.py` - Fixed enum values to use COMPLETED instead of GRADUATED
 
 ### Commit
 - `8fefc63 fix: use correct StudentStatus enum values (COMPLETED, DROPPED)`
+
+**Note:** See Bug #017 for more detailed analysis of this issue when it resurfaced.
 
 ---
 
@@ -1139,6 +1145,148 @@ Now when tokens are invalid:
 
 ---
 
+## Bug #016: Documents Frontend 500 Error When S3 Not Configured
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Medium (feature unavailable but not blocking)
+**Status:** RESOLVED
+
+### Symptoms
+- User navigates to Documents page
+- Browser shows 500 "Something Went Wrong" error
+- No clear indication that the feature requires S3 configuration
+- Console shows `Failed to load resource: the server responded with a status of 500`
+
+### Root Cause Analysis
+
+The Documents frontend attempted to query the `FileAttachment` model and interact with S3/MinIO storage, but:
+
+1. **S3 Not Configured**: Production deployment doesn't have S3/MinIO configured yet
+2. **No Graceful Fallback**: The router attempted database queries without checking if storage was available
+3. **Confusing Error**: Users saw a generic 500 error instead of a helpful message
+
+### Solution
+
+Replaced the document routes with a friendly "Feature Not Implemented" placeholder page:
+
+```python
+@router.get("", response_class=HTMLResponse)
+async def documents_landing(request: Request, ...):
+    # Feature not implemented - show placeholder page
+    return templates.TemplateResponse(
+        "documents/not_implemented.html",
+        {"request": request, "user": current_user},
+    )
+```
+
+Created `not_implemented.html` template with:
+- Clear "Feature Not Implemented" heading
+- "Document management is coming in a future update" message
+- Info box explaining S3/MinIO requirement
+- Back to Dashboard button
+
+### Files Modified
+- `src/routers/documents_frontend.py` - Updated landing, upload, browse routes
+- `src/templates/documents/not_implemented.html` - New placeholder template
+
+### Commit
+- `83f9220 feat: show friendly 'Feature not implemented' page for documents`
+
+### Lessons Learned
+
+1. **Graceful Degradation**: Features depending on external services (S3) should have fallback behavior when those services aren't available.
+
+2. **User-Friendly Errors**: Instead of cryptic 500 errors, show clear messages about feature availability.
+
+3. **Progressive Deployment**: It's acceptable to deploy with some features disabled, as long as users understand the status.
+
+### Prevention
+
+1. **Feature Flags**: Consider using feature flags to explicitly enable/disable features based on configuration.
+
+2. **Service Availability Checks**: Check if required services (S3, etc.) are configured before attempting to use them.
+
+---
+
+## Bug #017: StudentStatus.GRADUATED AttributeError in Production Seed
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Critical (blocking production seed)
+**Status:** RESOLVED
+
+### Symptoms
+- Production seed fails at step [8/18] Seeding students
+- Railway logs show: `AttributeError: type object 'StudentStatus' has no attribute 'GRADUATED'`
+- Container continues but database is partially seeded
+- Error traceback points to `src/seed/seed_students.py` line 88
+
+### Root Cause Analysis
+
+The `seed_students.py` file used enum values that don't exist:
+
+```python
+# seed_students.py used (WRONG):
+StudentStatus.GRADUATED  # Doesn't exist!
+StudentStatus.ACTIVE     # Doesn't exist!
+
+# Actual StudentStatus enum (src/db/enums/training_enums.py):
+class StudentStatus(str, Enum):
+    APPLICANT = "applicant"
+    ENROLLED = "enrolled"
+    ON_LEAVE = "on_leave"
+    COMPLETED = "completed"    # <-- Correct value
+    DROPPED = "dropped"
+    DISMISSED = "dismissed"
+```
+
+The seed file was likely created from outdated documentation or a different codebase where the enum had different values.
+
+### Solution
+
+Updated `seed_students.py` to use correct enum values:
+
+```python
+# Before (WRONG)
+status = random.choice([
+    StudentStatus.ENROLLED,
+    StudentStatus.GRADUATED,  # Doesn't exist
+    StudentStatus.ACTIVE,     # Doesn't exist
+])
+
+# After (CORRECT)
+status = random.choice([
+    StudentStatus.APPLICANT,
+    StudentStatus.ENROLLED,
+    StudentStatus.ON_LEAVE,
+    StudentStatus.COMPLETED,
+    StudentStatus.DROPPED,
+])
+```
+
+### Files Modified
+- `src/seed/seed_students.py` - Fixed enum values
+
+### Commit
+- `8fefc63 fix: use correct StudentStatus enum values (COMPLETED, DROPPED)`
+
+### Lessons Learned
+
+1. **Verify Enum Values**: Always check enum definitions against actual model files, not documentation.
+
+2. **Test Seeds Locally**: Run `python -m src.seed.production_seed` locally before deploying.
+
+3. **IDE Autocomplete**: Use IDE features to autocomplete enum values to catch typos.
+
+### Prevention
+
+1. **Import and Use Enums**: Import enums at the top of seed files and let the IDE validate values.
+
+2. **Seed Tests**: Add unit tests that verify seed files can run without errors.
+
+---
+
 ## Template for New Bugs
 
 ```markdown
@@ -1173,4 +1321,4 @@ Now when tokens are invalid:
 
 ---
 
-*Last Updated: 2026-01-30 (Bugs #013-#015 added - Production Bug Fixes)*
+*Last Updated: 2026-01-30 (Bugs #016-#017 added - Documents placeholder and StudentStatus fix)*

@@ -194,9 +194,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * Created `seed_grants.py`, `seed_expenses.py`, `seed_instructor_hours.py`, `truncate_all.py`
   * All new seed files now properly integrated with production seed
 
-- **StudentStatus Enum Value Mismatch** (Bug #011)
-  * Seed files used old enum values (`COMPLETED`, `DROPPED`)
-  * Updated to correct values (`GRADUATED`, `WITHDRAWN`)
+- **StudentStatus Enum Value Mismatch** (Bug #011, #017)
+  * Seed files incorrectly used `GRADUATED` which doesn't exist in StudentStatus enum
+  * Fixed to use correct values: `COMPLETED`, `DROPPED`, `ENROLLED`, etc.
 
 - **passlib Bcrypt Compatibility Issue** (Bug #012)
   * passlib had compatibility issues with newer bcrypt versions

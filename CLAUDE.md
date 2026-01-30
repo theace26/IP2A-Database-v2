@@ -885,7 +885,7 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 ### Production Seed Data Counts
 
-The expanded production seed creates:
+The expanded production seed (18 steps) creates:
 - **1000** Members
 - **500** Students
 - **100** Organizations
@@ -893,11 +893,19 @@ The expanded production seed creates:
 - **10** Grants
 - **200** Expenses
 - **15** Cohorts
-- Plus: Tools issued, credentials, JATC applications, training enrollments, union ops, dues
+- **1500** Instructor hour entries (20 per instructor)
+- **1000** Tools issued (2 per student)
+- **1000** Credentials (2 per student)
+- **500** JATC applications (1 per student)
+- Plus: Training enrollments, union ops (SALTing, Benevolence, Grievances), dues
+
+### Documents Feature Status
+
+The Documents feature is currently disabled with a "Feature not implemented" placeholder page. This feature requires S3/MinIO configuration which will be set up in a future deployment phase. See Bug #016 for details.
 
 ### Documentation
 - Deployment instructions: `docs/instructions/deployment_instructions/`
-- Bugs encountered: `docs/BUGS_LOG.md` (Bugs #006-#012)
+- Bugs encountered: `docs/BUGS_LOG.md` (Bugs #006-#017)
 - Session log: `docs/reports/session-logs/2026-01-30-deployment-prep.md`
 
 ---
