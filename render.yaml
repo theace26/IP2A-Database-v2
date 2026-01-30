@@ -31,4 +31,3 @@ services:
 databases:
   - name: ip2a-db
     databaseName: ip2a
-    plan: basic
