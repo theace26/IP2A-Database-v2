@@ -65,48 +65,16 @@ async def documents_landing(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_auth),
 ):
-    """Documents landing page with overview and quick actions."""
+    """Documents landing page - currently shows feature not implemented."""
     if isinstance(current_user, RedirectResponse):
         return current_user
 
-    # Get document counts by entity type
-    entity_counts = {}
-    for entity_type in ENTITY_TYPES.keys():
-        stmt = select(func.count(FileAttachment.id)).where(
-            FileAttachment.record_type == entity_type,
-            FileAttachment.is_deleted == False,
-        )
-        result = await db.execute(stmt)
-        entity_counts[entity_type] = result.scalar() or 0
-
-    # Get total document count
-    total_stmt = select(func.count(FileAttachment.id)).where(
-        FileAttachment.is_deleted == False
-    )
-    total_result = await db.execute(total_stmt)
-    total_count = total_result.scalar() or 0
-
-    # Get recent documents
-    recent_stmt = (
-        select(FileAttachment)
-        .where(FileAttachment.is_deleted == False)
-        .order_by(FileAttachment.created_at.desc())
-        .limit(10)
-    )
-    recent_result = await db.execute(recent_stmt)
-    recent_docs = recent_result.scalars().all()
-
+    # Feature not implemented - show placeholder page
     return templates.TemplateResponse(
-        "documents/index.html",
+        "documents/not_implemented.html",
         {
             "request": request,
             "user": current_user,
-            "entity_types": ENTITY_TYPES,
-            "entity_counts": entity_counts,
-            "total_count": total_count,
-            "recent_docs": recent_docs,
-            "format_file_size": format_file_size,
-            "get_file_icon": get_file_icon,
         },
     )
 
@@ -124,18 +92,16 @@ async def upload_page(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_auth),
 ):
-    """Upload page with drag-drop zone."""
+    """Upload page - currently shows feature not implemented."""
     if isinstance(current_user, RedirectResponse):
         return current_user
 
+    # Feature not implemented - show placeholder page
     return templates.TemplateResponse(
-        "documents/upload.html",
+        "documents/not_implemented.html",
         {
             "request": request,
             "user": current_user,
-            "entity_types": ENTITY_TYPES,
-            "selected_entity_type": entity_type,
-            "selected_entity_id": entity_id,
         },
     )
 
@@ -216,68 +182,16 @@ async def browse_page(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_auth),
 ):
-    """Browse documents with filters."""
+    """Browse documents - currently shows feature not implemented."""
     if isinstance(current_user, RedirectResponse):
         return current_user
 
-    page_size = 20
-
-    # Build query
-    stmt = select(FileAttachment).where(FileAttachment.is_deleted == False)
-
-    if entity_type and entity_type != "all":
-        stmt = stmt.where(FileAttachment.record_type == entity_type)
-
-    if entity_id:
-        stmt = stmt.where(FileAttachment.record_id == entity_id)
-
-    # Count total
-    count_stmt = select(func.count(FileAttachment.id)).where(FileAttachment.is_deleted == False)
-    if entity_type and entity_type != "all":
-        count_stmt = count_stmt.where(FileAttachment.record_type == entity_type)
-    if entity_id:
-        count_stmt = count_stmt.where(FileAttachment.record_id == entity_id)
-
-    count_result = await db.execute(count_stmt)
-    total = count_result.scalar() or 0
-    total_pages = (total + page_size - 1) // page_size
-
-    # Get documents
-    stmt = stmt.order_by(FileAttachment.created_at.desc())
-    stmt = stmt.offset((page - 1) * page_size).limit(page_size)
-    result = await db.execute(stmt)
-    documents = result.scalars().all()
-
-    # Check if HTMX request
-    if request.headers.get("HX-Request"):
-        return templates.TemplateResponse(
-            "documents/partials/_file_list.html",
-            {
-                "request": request,
-                "documents": documents,
-                "format_file_size": format_file_size,
-                "get_file_icon": get_file_icon,
-                "entity_type": entity_type,
-                "page": page,
-                "total_pages": total_pages,
-                "total": total,
-            },
-        )
-
+    # Feature not implemented - show placeholder page
     return templates.TemplateResponse(
-        "documents/browse.html",
+        "documents/not_implemented.html",
         {
             "request": request,
             "user": current_user,
-            "entity_types": ENTITY_TYPES,
-            "documents": documents,
-            "format_file_size": format_file_size,
-            "get_file_icon": get_file_icon,
-            "entity_type": entity_type,
-            "entity_id": entity_id,
-            "page": page,
-            "total_pages": total_pages,
-            "total": total,
         },
     )
 
