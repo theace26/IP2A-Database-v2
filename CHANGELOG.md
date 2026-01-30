@@ -148,6 +148,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * 12 frontend tests (177 total)
   * jinja2 added to requirements.txt
 
+### Fixed
+- **Login page `[object Object]` error** (Bug #001)
+  * Root cause: HTMX sends form data as `application/x-www-form-urlencoded` by default, but FastAPI `/auth/login` endpoint expects JSON body
+  * This caused a 422 validation error with a Pydantic error format that JavaScript wasn't handling properly
+  * Fix: Added HTMX `json-enc` extension to `base_auth.html` to send JSON to API endpoints
+  * Fix: Updated login form with `hx-ext="json-enc"` attribute
+  * Fix: Improved JavaScript error handling with better fallbacks and safeguard against `[object Object]` display
+  * Files modified: `src/templates/base_auth.html`, `src/templates/auth/login.html`
+
 ### Changed
 - Updated CLAUDE.md with Week 10 Dues UI progress
 - Updated sidebar navigation with Dues dropdown menu (Overview, Rates, Periods, Payments, Adjustments)

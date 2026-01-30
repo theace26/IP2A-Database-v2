@@ -168,6 +168,7 @@ IP2A-Database-v2/
 │   │   └── infra_phase2_instructions/
 │   ├── architecture/           # System docs
 │   ├── guides/                 # How-to guides
+│   ├── BUGS_LOG.md             # Historical bugs record
 │   └── archive/                # Old documentation
 ├── docker-compose.yml
 ├── CLAUDE.md                   # This file
@@ -711,6 +712,22 @@ async def protected_page(
         return current_user
     # current_user has: id, email, roles
 ```
+
+### HTMX JSON Encoding (IMPORTANT)
+When HTMX forms POST to FastAPI JSON endpoints, use the `json-enc` extension:
+
+```html
+<!-- In base template (already in base_auth.html) -->
+<script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/json-enc.js"></script>
+
+<!-- On forms that POST to JSON API -->
+<form hx-post="/auth/login" hx-ext="json-enc">
+```
+
+**Why:** HTMX sends `application/x-www-form-urlencoded` by default. FastAPI Pydantic models expect JSON.
+Without `json-enc`, you get 422 validation errors.
+
+See: `docs/BUGS_LOG.md` Bug #001 for full details.
 
 ### System Setup Flow
 

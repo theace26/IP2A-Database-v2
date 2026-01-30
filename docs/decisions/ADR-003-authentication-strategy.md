@@ -181,6 +181,16 @@ refresh_tokens
 5. `auth_cookie.py` validates JWT from cookie on protected routes
 6. On logout, cookies are cleared and user redirected to login
 
+**HTMX JSON Encoding (Bug Fix - 2026-01-30):**
+
+The `/auth/login` endpoint expects JSON body, but HTMX sends form data (`application/x-www-form-urlencoded`) by default. This caused 422 validation errors.
+
+**Required Configuration:**
+- Include `json-enc` extension: `<script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/json-enc.js"></script>`
+- Add `hx-ext="json-enc"` attribute to forms that POST to JSON API endpoints
+
+See: [docs/BUGS_LOG.md](../BUGS_LOG.md#bug-001-login-page-object-object-error) for full details.
+
 ### System Setup Flow - COMPLETE (January 30, 2026)
 
 The system has a first-time setup flow for creating initial user accounts:
