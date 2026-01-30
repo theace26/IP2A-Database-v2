@@ -6,6 +6,7 @@
     "dockerfileTarget": "production"
   },
   "deploy": {
+    "preDeployCommand": "alembic upgrade head && python -m src.seed.run_seed",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 30,
     "restartPolicyType": "ON_FAILURE",
