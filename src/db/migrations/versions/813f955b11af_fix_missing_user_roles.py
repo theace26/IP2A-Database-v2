@@ -41,11 +41,11 @@ def upgrade() -> None:
 
     if not admin_role:
         # Create the admin role if it doesn't exist
-        # Include display_name as it's NOT NULL in production
+        # Include display_name and is_system_role as they are NOT NULL in production
         conn.execute(
             sa.text("""
-                INSERT INTO roles (name, display_name, description, created_at, updated_at)
-                VALUES ('admin', 'Administrator', 'Full system access', NOW(), NOW())
+                INSERT INTO roles (name, display_name, description, is_system_role, created_at, updated_at)
+                VALUES ('admin', 'Administrator', 'Full system access', true, NOW(), NOW())
             """)
         )
         result = conn.execute(
