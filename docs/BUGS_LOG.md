@@ -245,6 +245,76 @@ class MemberFrontendService:
 
 ---
 
+## Bug #004: Mixed Content Blocking Static Files
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Critical (completely blocking login and all functionality)
+**Status:** RESOLVED
+
+### Symptoms
+- Login page shows "Input should be a valid dictionary or object to extract fields from"
+- Browser console shows "Mixed Content" errors
+- Static files (CSS, JS) blocked by browser
+- All pages unstyled or non-functional
+
+### Root Cause Analysis
+
+Railway serves the application over HTTPS, but FastAPI's `url_for()` function generates absolute URLs using the internal HTTP protocol:
+
+```html
+<!-- url_for generates -->
+<link href="http://app.railway.app/static/css/custom.css">
+
+<!-- But page is served over -->
+https://app.railway.app/...
+```
+
+Modern browsers block HTTP resources on HTTPS pages as "Mixed Content" for security.
+
+This caused the `json-enc.js` script to fail loading, meaning HTMX forms still sent URL-encoded data instead of JSON - explaining why Bug #001 fix appeared not to work.
+
+### Solution
+
+Changed all `url_for('static', path='...')` calls to relative paths:
+
+```html
+<!-- Before -->
+<link rel="stylesheet" href="{{ url_for('static', path='css/custom.css') }}">
+<script src="{{ url_for('static', path='js/app.js') }}"></script>
+
+<!-- After -->
+<link rel="stylesheet" href="/static/css/custom.css">
+<script src="/static/js/app.js"></script>
+```
+
+Relative URLs inherit the protocol from the page, avoiding mixed content.
+
+### Files Modified
+- `src/templates/base.html` - favicon, custom.css, app.js
+- `src/templates/base_auth.html` - favicon, custom.css
+
+### Commit
+- `721d6fa fix: use relative URLs for static files to avoid mixed content`
+
+### Lessons Learned
+
+1. **Proxy Headers Matter**: FastAPI behind a reverse proxy (Railway, Heroku, etc.) needs proper proxy header handling to generate correct URLs.
+
+2. **Relative URLs are Safer**: For static files, relative URLs (`/static/...`) avoid protocol mismatch issues entirely.
+
+3. **Browser DevTools Essential**: The Mixed Content errors were only visible in browser console, not Railway logs.
+
+4. **Cascading Failures**: This bug made Bug #001 fix appear not to work, because the `json-enc.js` script wasn't loading.
+
+### Prevention
+- Use relative URLs for all static file references
+- Consider adding proxy header middleware for production deployments
+- Test with browser DevTools open to catch console errors
+- Document the static file URL pattern for the project
+
+---
+
 ## Template for New Bugs
 
 ```markdown
