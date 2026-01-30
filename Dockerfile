@@ -59,8 +59,21 @@ CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload
 # ============================
 FROM base AS production
 
+# Install WeasyPrint dependencies for PDF generation and curl for health checks
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf2.0-0 \
+    libffi-dev \
+    shared-mime-info \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy installed Python packages from builder
 COPY --from=builder /usr/local /usr/local
+
+# Install gunicorn for production
+RUN pip install --no-cache-dir gunicorn
 
 # Copy application code (baked into image for production)
 COPY src ./src
@@ -74,4 +87,12 @@ RUN useradd --create-home --shell /bin/bash appuser && \
     chown -R appuser:appuser /app
 USER appuser
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Expose port
+EXPOSE 8000
+
+# Run with gunicorn for production
+CMD ["gunicorn", "src.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000"]

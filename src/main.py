@@ -102,7 +102,8 @@ app.mount("/static", StaticFiles(directory="src/static"), name="static")
 # ------------------------------------------------------------
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    """Health check endpoint for container orchestration."""
+    return {"status": "healthy", "version": "0.7.9"}
 
 
 # ------------------------------------------------------------

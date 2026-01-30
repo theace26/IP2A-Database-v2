@@ -5,6 +5,7 @@ __pycache__/
 # Environment files
 .env
 .env.*
+!.env.example
 
 # VS Code
 # Keep workspace settings for team, but ignore user-specific files

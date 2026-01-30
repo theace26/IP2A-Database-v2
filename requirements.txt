@@ -40,6 +40,9 @@ types-psycopg2>=2.9
 weasyprint==60.1           # PDF generation
 openpyxl==3.1.2            # Excel generation
 
+# --- Production Server ---
+gunicorn>=21.2.0
+
 # --- Dev Tools ---
 ipython>=8.0
 ipdb>=0.13

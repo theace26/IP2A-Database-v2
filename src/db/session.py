@@ -3,13 +3,15 @@ from sqlalchemy.orm import sessionmaker, Session
 
 from src.config.settings import settings
 
-# Database URL from settings
-DATABASE_URL = settings.DATABASE_URL
+# Database URL from settings (uses property that handles Railway's postgres:// format)
+DATABASE_URL = settings.database_url
 
-# SQLAlchemy engine
+# SQLAlchemy engine with production-ready pool settings
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True,
+    pool_pre_ping=True,  # Verify connections before use
+    pool_size=5,
+    max_overflow=10,
 )
 
 # Session factory
