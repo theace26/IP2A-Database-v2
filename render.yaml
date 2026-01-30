@@ -7,7 +7,6 @@ services:
     env: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    dockerTarget: production
     healthCheckPath: /health
     envVars:
       - key: ENVIRONMENT
