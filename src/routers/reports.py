@@ -59,26 +59,26 @@ async def reports_landing(
     reports = [
         {
             "category": "Members",
-            "items": [
+            "reports": [
                 {"name": "Member Roster", "url": "/reports/members/roster", "formats": ["pdf", "excel"]},
             ],
         },
         {
             "category": "Dues",
-            "items": [
+            "reports": [
                 {"name": "Dues Summary", "url": "/reports/dues/summary", "formats": ["pdf", "excel"]},
                 {"name": "Overdue Report", "url": "/reports/dues/overdue", "formats": ["pdf", "excel"]},
             ],
         },
         {
             "category": "Training",
-            "items": [
+            "reports": [
                 {"name": "Course Enrollment", "url": "/reports/training/enrollment", "formats": ["excel"]},
             ],
         },
         {
             "category": "Operations",
-            "items": [
+            "reports": [
                 {"name": "Grievance Summary", "url": "/reports/operations/grievances", "formats": ["pdf"]},
                 {"name": "SALTing Activities", "url": "/reports/operations/salting", "formats": ["excel"]},
             ],

@@ -48,13 +48,14 @@ class StaffService:
         Returns:
             Tuple of (users, total_count, total_pages)
         """
-        # Base query with eager loading of roles through user_roles
-        stmt = select(User).options(selectinload(User.user_roles).selectinload(UserRole.role))
+        # Build WHERE conditions to share between count and data queries
+        now = datetime.utcnow()
+        conditions = []
 
         # Apply search filter
         if query and query.strip():
             search_term = f"%{query.strip()}%"
-            stmt = stmt.where(
+            conditions.append(
                 or_(
                     User.email.ilike(search_term),
                     User.first_name.ilike(search_term),
@@ -62,31 +63,50 @@ class StaffService:
                 )
             )
 
-        # Apply role filter
-        if role and role != "all":
-            stmt = stmt.join(User.user_roles).join(UserRole.role).where(Role.name == role)
-
         # Apply status filter
-        # Note: User model uses locked_until (datetime) instead of is_locked (bool)
-        now = datetime.utcnow()
         if status == "active":
-            stmt = stmt.where(
+            conditions.append(
                 and_(
                     User.is_active == True,
                     or_(User.locked_until == None, User.locked_until < now)
                 )
             )
         elif status == "locked":
-            stmt = stmt.where(
+            conditions.append(
                 and_(User.locked_until != None, User.locked_until >= now)
             )
         elif status == "inactive":
-            stmt = stmt.where(User.is_active == False)
+            conditions.append(User.is_active == False)
         # 'all' or None = no filter
 
-        # Get total count (before pagination)
-        count_stmt = select(func.count(func.distinct(User.id))).select_from(stmt.subquery())
+        # Build count query (simple, no eager loading)
+        if role and role != "all":
+            # When filtering by role, need to join
+            count_stmt = (
+                select(func.count(func.distinct(User.id)))
+                .select_from(User)
+                .join(User.user_roles)
+                .join(UserRole.role)
+                .where(Role.name == role)
+            )
+            if conditions:
+                count_stmt = count_stmt.where(and_(*conditions))
+        else:
+            count_stmt = select(func.count(User.id)).select_from(User)
+            if conditions:
+                count_stmt = count_stmt.where(and_(*conditions))
+
         total = self.db.execute(count_stmt).scalar() or 0
+
+        # Build data query with eager loading
+        stmt = select(User).options(selectinload(User.user_roles).selectinload(UserRole.role))
+
+        if conditions:
+            stmt = stmt.where(and_(*conditions))
+
+        # Apply role filter with join for data query
+        if role and role != "all":
+            stmt = stmt.join(User.user_roles).join(UserRole.role).where(Role.name == role)
 
         # Apply sorting
         sort_column = getattr(User, sort_by, User.email)

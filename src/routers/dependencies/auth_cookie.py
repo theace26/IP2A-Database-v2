@@ -88,14 +88,18 @@ class AuthenticationRequired:
             return self._handle_unauthorized(request)
 
     def _handle_unauthorized(self, request: Request):
-        """Handle unauthorized access."""
+        """Handle unauthorized access by clearing invalid cookies and redirecting."""
         if self.redirect_to_login:
             # Store the original URL to redirect back after login
             return_url = str(request.url.path)
-            return RedirectResponse(
+            response = RedirectResponse(
                 url=f"/login?next={return_url}&message=Please+log+in+to+continue&type=info",
                 status_code=status.HTTP_302_FOUND,
             )
+            # Clear any invalid cookies to prevent repeated validation errors
+            response.delete_cookie("access_token", path="/")
+            response.delete_cookie("refresh_token", path="/")
+            return response
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
         )
