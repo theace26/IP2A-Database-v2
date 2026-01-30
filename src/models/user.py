@@ -42,6 +42,7 @@ class User(Base, TimestampMixin, SoftDeleteMixin):
     # Account status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    must_change_password: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Security tracking
     last_login: Mapped[Optional[datetime]] = mapped_column(

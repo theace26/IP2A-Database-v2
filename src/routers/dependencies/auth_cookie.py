@@ -58,11 +58,23 @@ class AuthenticationRequired:
             if not user_id:
                 return self._handle_unauthorized(request)
 
+            # Check if user must change password
+            must_change_password = payload.get("must_change_password", False)
+            current_path = str(request.url.path)
+
+            # Redirect to change password if required (except for change-password and logout)
+            if must_change_password and current_path not in ["/auth/change-password", "/logout"]:
+                return RedirectResponse(
+                    url="/auth/change-password",
+                    status_code=status.HTTP_302_FOUND,
+                )
+
             # Return user info from token (avoid DB call on every request)
             return {
                 "id": int(user_id),
                 "email": payload.get("email"),
                 "roles": payload.get("roles", []),
+                "must_change_password": must_change_password,
             }
 
         except TokenExpiredError:

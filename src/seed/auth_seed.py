@@ -101,6 +101,7 @@ def seed_admin_user(db: Session) -> User | None:
         last_name=DEFAULT_ADMIN["last_name"],
         is_active=True,
         is_verified=True,  # Pre-verified for admin
+        must_change_password=True,  # Force password change on first login
     )
     db.add(user)
     db.flush()  # Get the user ID

@@ -129,6 +129,7 @@ def create_tokens(
         additional_claims={
             "email": user.email,
             "roles": user.role_names,
+            "must_change_password": user.must_change_password,
         },
     )
 

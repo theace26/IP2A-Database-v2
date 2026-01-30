@@ -105,6 +105,101 @@ async def forgot_password_page(request: Request):
     )
 
 
+@router.get("/auth/change-password", response_class=HTMLResponse)
+async def change_password_page(
+    request: Request,
+    error: Optional[str] = None,
+    current_user: Optional[dict] = Depends(get_current_user_from_cookie),
+):
+    """Render change password page for users who must change their password."""
+    if not current_user:
+        return RedirectResponse(url="/login", status_code=302)
+
+    return templates.TemplateResponse(
+        "auth/change_password.html",
+        get_template_context(request, current_user=current_user, error=error),
+    )
+
+
+@router.post("/auth/change-password", response_class=HTMLResponse)
+async def change_password_submit(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: Optional[dict] = Depends(get_current_user_from_cookie),
+):
+    """Handle password change submission."""
+    from src.models.user import User
+    from src.core.security import hash_password, verify_password
+    from src.services.auth_service import create_tokens
+
+    if not current_user:
+        return RedirectResponse(url="/login", status_code=302)
+
+    form = await request.form()
+    current_password = form.get("current_password")
+    new_password = form.get("new_password")
+    confirm_password = form.get("confirm_password")
+
+    # Validate passwords match
+    if new_password != confirm_password:
+        return templates.TemplateResponse(
+            "auth/change_password.html",
+            get_template_context(
+                request, current_user=current_user, error="New passwords do not match"
+            ),
+        )
+
+    # Validate minimum length
+    if len(new_password) < 8:
+        return templates.TemplateResponse(
+            "auth/change_password.html",
+            get_template_context(
+                request,
+                current_user=current_user,
+                error="Password must be at least 8 characters",
+            ),
+        )
+
+    # Get user from database
+    user = db.query(User).filter(User.id == current_user["id"]).first()
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+
+    # Verify current password
+    if not verify_password(current_password, user.password_hash):
+        return templates.TemplateResponse(
+            "auth/change_password.html",
+            get_template_context(
+                request, current_user=current_user, error="Current password is incorrect"
+            ),
+        )
+
+    # Update password and clear the flag
+    user.password_hash = hash_password(new_password)
+    user.must_change_password = False
+    db.commit()
+
+    # Generate new tokens with updated must_change_password=False
+    tokens = create_tokens(db, user)
+
+    # Redirect to dashboard with new cookies
+    response = RedirectResponse(
+        url="/dashboard?message=Password+changed+successfully&type=success",
+        status_code=302,
+    )
+    response.set_cookie(
+        key="access_token",
+        value=tokens["access_token"],
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=tokens["expires_in"],
+        path="/",
+    )
+
+    return response
+
+
 # ============================================================================
 # Protected Routes (Auth Required)
 # ============================================================================
