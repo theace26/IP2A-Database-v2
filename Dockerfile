@@ -87,12 +87,11 @@ RUN useradd --create-home --shell /bin/bash appuser && \
     chown -R appuser:appuser /app
 USER appuser
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+# Default port (Railway/Render override via $PORT)
+ENV PORT=8000
 
 # Expose port
 EXPOSE 8000
 
-# Run with gunicorn for production
-CMD ["gunicorn", "src.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000"]
+# Run with gunicorn - use shell form so $PORT expands
+CMD gunicorn src.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${PORT}
