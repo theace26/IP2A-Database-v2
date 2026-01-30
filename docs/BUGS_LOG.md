@@ -168,6 +168,83 @@ Changed to use `.get()` method for safe dict access:
 
 ---
 
+## Bug #003: Frontend Services Async/Await TypeError
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** High (blocking members/training/operations pages)
+**Status:** RESOLVED
+
+### Symptoms
+- User logs in successfully
+- Dashboard loads correctly
+- Clicking on Members, Training, or Operations pages causes 500 error
+- User gets logged out and redirected to login page
+- Railway logs show: `TypeError: object ChunkedIteratorResult can't be used in 'await' expression`
+
+### Root Cause Analysis
+
+The frontend service files were incorrectly using `AsyncSession` and `await` keywords, but the actual database session is **synchronous** (`Session` from `sqlalchemy.orm`).
+
+```python
+# WRONG - using AsyncSession with synchronous db
+from sqlalchemy.ext.asyncio import AsyncSession
+
+class MemberFrontendService:
+    def __init__(self, db: AsyncSession):  # Wrong type hint
+        self.db = db
+
+    async def get_member_stats(self) -> dict:
+        total = (await self.db.execute(total_stmt)).scalar()  # await on sync!
+```
+
+When `await` is used on a synchronous `ChunkedIteratorResult`, Python raises:
+```
+TypeError: object ChunkedIteratorResult can't be used in 'await' expression
+```
+
+### Solution
+
+Changed all three frontend service files to use synchronous patterns:
+
+```python
+# CORRECT - using Session without await
+from sqlalchemy.orm import Session
+
+class MemberFrontendService:
+    def __init__(self, db: Session):  # Correct type hint
+        self.db = db
+
+    async def get_member_stats(self) -> dict:
+        total = (self.db.execute(total_stmt)).scalar()  # No await
+```
+
+### Files Modified
+- `src/services/member_frontend_service.py` - Changed AsyncSession to Session, removed await
+- `src/services/training_frontend_service.py` - Changed AsyncSession to Session, removed await
+- `src/services/operations_frontend_service.py` - Changed AsyncSession to Session, removed await
+
+### Commit
+- `28547db fix: remove async/await from synchronous db sessions`
+
+### Lessons Learned
+
+1. **SQLAlchemy Session Types**: The codebase uses synchronous `Session`, not `AsyncSession`. All database operations should NOT use `await`.
+
+2. **FastAPI Async/Sync Compatibility**: FastAPI endpoints can be `async def` even when using synchronous database sessions - you just don't `await` the db calls.
+
+3. **Production vs Local Testing**: Tests passed locally because httpx test client handles async correctly, but real production deployment exposed the mismatch.
+
+4. **Copy-Paste Errors**: All three service files had the same bug, suggesting copy-paste from an async template without adapting to the synchronous session pattern.
+
+### Prevention
+- Establish clear pattern: services use `Session`, not `AsyncSession`
+- Add type checking (mypy) to catch session type mismatches
+- Document the synchronous session pattern in CLAUDE.md
+- Review all service files for consistent session handling
+
+---
+
 ## Template for New Bugs
 
 ```markdown
