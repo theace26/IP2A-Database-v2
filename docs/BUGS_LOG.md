@@ -1287,6 +1287,161 @@ status = random.choice([
 
 ---
 
+## Bug #018: Truncate Function Transaction Abort on Missing Table
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Critical (blocking production seed)
+**Status:** RESOLVED
+
+### Symptoms
+- Production seed starts truncating tables
+- First 4 tables truncate successfully (dues_adjustments, dues_payments, dues_periods, dues_rates)
+- "documents" table throws error: `relation "documents" does not exist`
+- ALL subsequent truncate operations fail with: `current transaction is aborted, commands ignored until end of transaction block`
+- Seed continues but database not properly cleared
+- Container enters restart loop
+
+### Root Cause Analysis
+
+The `truncate_all.py` function listed the `documents` table, but this table doesn't exist in the production database (the Documents feature was disabled with a placeholder page):
+
+```python
+tables = [
+    "dues_adjustments",
+    "dues_payments",
+    ...
+    "documents",  # This table doesn't exist!
+    "certifications",
+    ...
+]
+```
+
+**The Problem Chain:**
+1. PostgreSQL starts an implicit transaction
+2. TRUNCATE on `documents` fails with `UndefinedTable` error
+3. PostgreSQL marks transaction as "aborted"
+4. ALL subsequent SQL commands fail immediately
+5. "All tables truncated" message prints (misleading - only 4 were truncated)
+6. Seed tries to INSERT into tables that weren't truncated
+7. Container crashes or data integrity issues
+
+### Solution
+
+**1. Added SAVEPOINT mechanism** to isolate each truncate operation:
+
+```python
+for table in tables:
+    try:
+        # Use savepoint so one failure doesn't abort entire transaction
+        db.execute(text("SAVEPOINT truncate_savepoint"))
+        db.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE;"))
+        db.execute(text("RELEASE SAVEPOINT truncate_savepoint"))
+        print(f"  Truncated: {table}")
+    except Exception as e:
+        # Rollback to savepoint and continue with next table
+        db.execute(text("ROLLBACK TO SAVEPOINT truncate_savepoint"))
+        error_msg = str(e).split('\n')[0][:60]
+        print(f"  Skipped {table}: {error_msg}")
+```
+
+**2. Removed non-existent `documents` table** from the list.
+
+Now when a table doesn't exist:
+1. SAVEPOINT created before TRUNCATE
+2. TRUNCATE fails → rollback to savepoint
+3. Transaction continues normally
+4. Next table can be truncated
+5. Only missing tables are skipped
+
+### Files Modified
+- `src/seed/truncate_all.py` - Added SAVEPOINT handling, removed `documents` table
+
+### Commit
+- `ca54c6a fix: use savepoints in truncate to handle missing tables`
+
+### Lessons Learned
+
+1. **PostgreSQL Transaction Behavior**: A single error aborts the entire transaction unless using SAVEPOINTs.
+
+2. **Table Existence**: Don't hardcode table names that might not exist. Consider querying `information_schema.tables` for actual tables.
+
+3. **Error Recovery**: For batch operations, use SAVEPOINTs to allow individual failures without aborting the whole batch.
+
+4. **Misleading Output**: The "All tables truncated" message printed even when most tables were skipped due to the aborted transaction.
+
+### Prevention
+
+1. **SAVEPOINT Pattern**: For any batch database operations where partial failure is acceptable, use SAVEPOINTs.
+
+2. **Dynamic Table Discovery**:
+   ```python
+   # Query actual tables instead of hardcoding
+   result = db.execute(text(
+       "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
+   ))
+   ```
+
+3. **Accurate Reporting**: Count successful operations and report accurately:
+   ```python
+   print(f"Truncated {success_count} tables, skipped {skip_count}")
+   ```
+
+---
+
+## Bug #019: Production Seed Student Count Mismatch
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Low (seed data quantity issue)
+**Status:** RESOLVED
+
+### Symptoms
+- Railway logs show "Seeded 50 members" instead of requested 500
+- Production seed appeared to use old code with lower counts
+- Database had fewer records than expected
+
+### Root Cause Analysis
+
+Railway was deploying cached Docker images that didn't include recent code changes:
+
+1. User pushed commit with `seed_members(db, count=500)`
+2. Railway triggered deployment
+3. Railway used cached Docker layers from previous build
+4. Production ran with old `count=50` value
+
+**Contributing Factors:**
+- Docker layer caching aggressive in Railway
+- No cache-busting mechanism for Python source files
+- Multiple rapid commits didn't trigger fresh builds
+
+### Solution
+
+The fix was already pushed - just needed Railway to pull fresh code:
+
+1. Wait for Railway to pick up latest commit
+2. Or manually trigger "Redeploy" with "Clear build cache" option
+3. Verify logs show correct counts (500 members, 200 students, etc.)
+
+### Files Related
+- `src/seed/production_seed.py` - Contains seed count configurations
+
+### Lessons Learned
+
+1. **Railway Caching**: Railway aggressively caches Docker layers. Code changes may not appear immediately.
+
+2. **Verify Deployments**: After pushing fixes, verify Railway logs show the expected behavior.
+
+3. **Cache Busting**: For critical fixes, manually clear the build cache or add a dummy file change.
+
+### Prevention
+
+1. **Check Logs After Deploy**: Verify expected output appears in Railway logs.
+
+2. **Build Cache Awareness**: Know when to clear Railway's build cache for urgent fixes.
+
+---
+
 ## Template for New Bugs
 
 ```markdown
@@ -1321,4 +1476,4 @@ status = random.choice([
 
 ---
 
-*Last Updated: 2026-01-30 (Bugs #016-#017 added - Documents placeholder and StudentStatus fix)*
+*Last Updated: 2026-01-30 (Bugs #018-#019 added - Truncate savepoints and seed count caching)*

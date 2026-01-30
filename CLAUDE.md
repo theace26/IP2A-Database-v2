@@ -880,6 +880,8 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 | Enum value errors | Old seed data | Update to current enum values |
 | Reports page 500 error | `category.items` dict conflict (Bug #013) | Fixed in `013cf92` |
 | SQLAlchemy cartesian product warning | Count query with selectinload (Bug #014) | Fixed in `013cf92` |
+| Truncate transaction abort | Missing table aborts transaction (Bug #018) | Fixed with SAVEPOINTs in `ca54c6a` |
+| StudentStatus.GRADUATED error | Wrong enum value in seed (Bug #017) | Use COMPLETED not GRADUATED |
 
 **Note:** As of commit `013cf92`, invalid JWT cookies are automatically cleared on redirect to login, preventing repeated "Signature verification failed" log spam.
 
@@ -899,14 +901,29 @@ The expanded production seed (18 steps) creates:
 - **500** JATC applications (1 per student)
 - Plus: Training enrollments, union ops (SALTing, Benevolence, Grievances), dues
 
+### Production Seed Technical Notes
+
+**Truncate Safety (Bug #018 fix):**
+The `truncate_all.py` uses PostgreSQL SAVEPOINTs to handle missing tables gracefully:
+- Each table truncation is wrapped in a SAVEPOINT
+- If a table doesn't exist, the savepoint is rolled back
+- Subsequent tables can still be truncated
+- Missing tables are logged and skipped
+
+**Seed Idempotency:**
+- Seed clears ALL data before inserting (via `truncate_all_tables()`)
+- Running seed multiple times produces the same result
+- Auth seed checks for existing roles/admin before creating
+- Set `RUN_PRODUCTION_SEED=false` after initial seed to prevent re-runs
+
 ### Documents Feature Status
 
 The Documents feature is currently disabled with a "Feature not implemented" placeholder page. This feature requires S3/MinIO configuration which will be set up in a future deployment phase. See Bug #016 for details.
 
 ### Documentation
 - Deployment instructions: `docs/instructions/deployment_instructions/`
-- Bugs encountered: `docs/BUGS_LOG.md` (Bugs #006-#017)
-- Session log: `docs/reports/session-logs/2026-01-30-deployment-prep.md`
+- Bugs encountered: `docs/BUGS_LOG.md` (Bugs #006-#019)
+- Session log: `docs/reports/session-logs/2026-01-30-deployment-session.md`
 
 ---
 

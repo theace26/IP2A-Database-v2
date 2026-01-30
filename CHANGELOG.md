@@ -185,6 +185,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * Users now see one redirect instead of log spam
   * Files modified: `src/routers/dependencies/auth_cookie.py`
 
+- **Truncate Function Transaction Abort on Missing Table** (Bug #018)
+  * Root cause: PostgreSQL aborts entire transaction when a TRUNCATE fails (e.g., table doesn't exist)
+  * All subsequent TRUNCATEs failed with "current transaction is aborted"
+  * Fix: Added SAVEPOINT mechanism to isolate each table truncation
+  * Missing tables are now skipped gracefully
+  * Files modified: `src/seed/truncate_all.py`
+
+- **StudentStatus Enum in Seed (GRADUATED → COMPLETED)** (Bug #017, #019)
+  * Root cause: Seed files used `StudentStatus.GRADUATED` which doesn't exist in the enum
+  * Fix: Changed to use correct enum values (`COMPLETED`, `DROPPED`, etc.)
+  * Files modified: `src/seed/seed_students.py`
+
 - **Production Seed KeyError 'users_created'** (Bug #009)
   * Root cause: `production_seed.py` accessed `users_created` but `auth_seed.py` returns `admin_created`
   * Fixed dict key access to use correct key name
