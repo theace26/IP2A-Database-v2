@@ -85,8 +85,8 @@ def seed_students(db: Session, count: int = 500):
         StudentStatus.ENROLLED,
         StudentStatus.ENROLLED,  # Weight toward enrolled
         StudentStatus.ON_LEAVE,
-        StudentStatus.GRADUATED,
-        StudentStatus.WITHDRAWN,
+        StudentStatus.COMPLETED,
+        StudentStatus.DROPPED,
     ]
 
     cohorts = [
@@ -106,11 +106,11 @@ def seed_students(db: Session, count: int = 500):
         expected_completion = None
         actual_completion = None
 
-        if status in [StudentStatus.ENROLLED, StudentStatus.ON_LEAVE, StudentStatus.GRADUATED]:
+        if status in [StudentStatus.ENROLLED, StudentStatus.ON_LEAVE, StudentStatus.COMPLETED]:
             enrollment_date = application_date + timedelta(days=fake.random_int(min=7, max=60))
             expected_completion = enrollment_date + timedelta(days=365 * 5)  # 5 year program
 
-            if status == StudentStatus.GRADUATED:
+            if status == StudentStatus.COMPLETED:
                 actual_completion = enrollment_date + timedelta(
                     days=fake.random_int(min=365*4, max=365*6)
                 )
