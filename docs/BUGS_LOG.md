@@ -1476,4 +1476,215 @@ The fix was already pushed - just needed Railway to pull fresh code:
 
 ---
 
-*Last Updated: 2026-01-30 (Bugs #018-#019 added - Truncate savepoints and seed count caching)*
+## Bug #020: Migration INSERT Missing `is_system_role` Column
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** Critical (blocking deployment - migration fails)
+**Status:** RESOLVED
+
+### Symptoms
+- Railway deployment fails during migration `813f955b11af_fix_missing_user_roles`
+- Container starts then immediately stops
+- Railway logs show: `psycopg2.errors.NotNullViolation: null value in column "is_system_role" of relation "roles" violates not-null constraint`
+- DETAIL shows: `Failing row contains (3, admin, Administrator, Full system access, null, ...)`
+
+### Root Cause Analysis
+
+The data migration `813f955b11af_fix_missing_user_roles.py` created admin role if missing, but the INSERT statement didn't include the `is_system_role` column which has a NOT NULL constraint:
+
+```python
+# WRONG - missing is_system_role
+conn.execute(
+    sa.text("""
+        INSERT INTO roles (name, display_name, description, created_at, updated_at)
+        VALUES ('admin', 'Administrator', 'Full system access', NOW(), NOW())
+    """)
+)
+```
+
+PostgreSQL rejected the INSERT because `is_system_role` was NULL but the column has `NOT NULL` constraint.
+
+### Solution
+
+Added `is_system_role` with value `true` to the INSERT:
+
+```python
+# CORRECT - includes is_system_role
+conn.execute(
+    sa.text("""
+        INSERT INTO roles (name, display_name, description, is_system_role, created_at, updated_at)
+        VALUES ('admin', 'Administrator', 'Full system access', true, NOW(), NOW())
+    """)
+)
+```
+
+### Files Modified
+- `src/db/migrations/versions/813f955b11af_fix_missing_user_roles.py` - Added `is_system_role` to INSERT
+
+### Commit
+- `8916563 fix: add is_system_role to migration INSERT for production compatibility`
+
+### Lessons Learned
+
+1. **Check Table Constraints**: When writing data migrations with raw SQL, verify all NOT NULL columns are included in INSERT statements.
+
+2. **Test Migrations on Fresh Database**: Migration may work on dev (where role exists) but fail on fresh prod database.
+
+3. **Railway Deploy Logs**: The DETAIL line in PostgreSQL errors shows exactly which values are problematic.
+
+### Prevention
+
+1. **Migration Testing**: Test data migrations against empty database, not just populated dev database.
+
+2. **Include All Required Columns**: When inserting records, explicitly list all NOT NULL columns.
+
+---
+
+## Bug #021: MemberClassification Enum Values Mismatch
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** High (blocking /members page)
+**Status:** RESOLVED
+
+### Symptoms
+- User navigates to Members page
+- Railway logs show: `AttributeError: type object 'MemberClassification' has no attribute 'JOURNEYMAN_WIREMAN'`
+- Error traceback points to `src/services/member_frontend_service.py` line 348
+- Members page returns 500 error
+
+### Root Cause Analysis
+
+The `member_frontend_service.py` file used enum values that don't exist in `MemberClassification`:
+
+```python
+# WRONG - these enum values don't exist
+mapping = {
+    MemberClassification.JOURNEYMAN_WIREMAN: "Journeyman Wireman",
+    MemberClassification.APPRENTICE_WIREMAN: "Apprentice Wireman",
+    MemberClassification.JOURNEYMAN_TECHNICIAN: "Journeyman Technician",
+    ...
+}
+```
+
+Actual enum values in `src/db/enums/organization_enums.py`:
+
+```python
+class MemberClassification(str, enum.Enum):
+    APPRENTICE_1ST_YEAR = "apprentice_1"
+    APPRENTICE_2ND_YEAR = "apprentice_2"
+    APPRENTICE_3RD_YEAR = "apprentice_3"
+    APPRENTICE_4TH_YEAR = "apprentice_4"
+    APPRENTICE_5TH_YEAR = "apprentice_5"
+    JOURNEYMAN = "journeyman"
+    FOREMAN = "foreman"
+    RETIREE = "retiree"
+    HONORARY = "honorary"
+```
+
+The service file was created with incorrect enum values, possibly from outdated documentation or a different schema.
+
+**Same issue in `src/seed/dues_seed.py`:**
+```python
+# WRONG - APPRENTICE_1 doesn't exist, should be APPRENTICE_1ST_YEAR
+MemberClassification.APPRENTICE_1: Decimal("35.00"),
+```
+
+### Solution
+
+Updated both files to use correct enum values:
+
+**member_frontend_service.py:**
+```python
+mapping = {
+    MemberClassification.APPRENTICE_1ST_YEAR: "1st Year Apprentice",
+    MemberClassification.APPRENTICE_2ND_YEAR: "2nd Year Apprentice",
+    MemberClassification.APPRENTICE_3RD_YEAR: "3rd Year Apprentice",
+    MemberClassification.APPRENTICE_4TH_YEAR: "4th Year Apprentice",
+    MemberClassification.APPRENTICE_5TH_YEAR: "5th Year Apprentice",
+    MemberClassification.JOURNEYMAN: "Journeyman",
+    MemberClassification.FOREMAN: "Foreman",
+    MemberClassification.RETIREE: "Retiree",
+    MemberClassification.HONORARY: "Honorary",
+}
+```
+
+**dues_seed.py:**
+```python
+rate_schedule = {
+    MemberClassification.APPRENTICE_1ST_YEAR: Decimal("35.00"),
+    MemberClassification.APPRENTICE_2ND_YEAR: Decimal("40.00"),
+    ...
+}
+```
+
+### Files Modified
+- `src/services/member_frontend_service.py` - Fixed `format_classification()` and `get_classification_badge_class()` methods
+- `src/seed/dues_seed.py` - Fixed `seed_dues_rates()` function
+
+### Commit
+- `70df236 fix: correct MemberClassification enum values in frontend service and seed`
+
+### Lessons Learned
+
+1. **Verify Enum Values**: Always reference the actual enum definition when using enum values in code.
+
+2. **IDE Autocomplete**: Use IDE autocomplete to avoid typos in enum names.
+
+3. **Single Source of Truth**: Enums defined in `src/db/enums/` are the source of truth. Don't assume values from documentation.
+
+4. **Multiple Files Affected**: When an enum mismatch is found, search the entire codebase for other occurrences.
+
+### Prevention
+
+1. **Type Checking**: Use mypy or pyright to catch invalid enum attribute access at development time.
+
+2. **Enum Import Validation**: Import enums directly and let Python validate at import time:
+   ```python
+   from src.db.enums import MemberClassification
+   # Any typo would cause ImportError or AttributeError at startup
+   ```
+
+3. **Comprehensive Grep**: When fixing enum issues, search for all usages:
+   ```bash
+   grep -r "MemberClassification\." src/
+   ```
+
+---
+
+## Template for New Bugs
+
+```markdown
+## Bug #XXX: Brief Description
+
+**Date Discovered:** YYYY-MM-DD
+**Date Fixed:** YYYY-MM-DD
+**Severity:** Critical/High/Medium/Low
+**Status:** RESOLVED/IN PROGRESS/WONT FIX
+
+### Symptoms
+- What the user sees/experiences
+
+### Root Cause Analysis
+- Technical explanation of why this happened
+
+### Solution
+- What was done to fix it
+
+### Files Modified
+- List of files changed
+
+### Commit
+- Commit hash and message
+
+### Lessons Learned
+- What we learned from this bug
+
+### Prevention
+- Steps taken to prevent similar bugs
+```
+
+---
+
+*Last Updated: 2026-01-30 (Bugs #020-#021 added - Migration is_system_role, MemberClassification enum mismatch)*

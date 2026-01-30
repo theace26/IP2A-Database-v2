@@ -166,6 +166,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * jinja2 added to requirements.txt
 
 ### Fixed
+- **Migration INSERT Missing is_system_role Column** (Bug #020)
+  * Root cause: Raw SQL INSERT in `813f955b11af_fix_missing_user_roles.py` migration omitted required `is_system_role` column
+  * PostgreSQL raised `NotNullViolation: null value in column "is_system_role" of relation "roles"`
+  * Fix: Added `is_system_role` with value `true` to the INSERT statement
+  * Files modified: `src/db/migrations/versions/813f955b11af_fix_missing_user_roles.py`
+
+- **MemberClassification Enum Value Mismatch in Services** (Bug #021)
+  * Root cause: `member_frontend_service.py` and `dues_seed.py` used non-existent enum values (JOURNEYMAN_WIREMAN, APPRENTICE_1, etc.)
+  * Actual enum values are: JOURNEYMAN, APPRENTICE_1ST_YEAR, APPRENTICE_2ND_YEAR, etc.
+  * Fix: Updated all service files to use correct MemberClassification enum values
+  * Files modified: `src/services/member_frontend_service.py`, `src/seed/dues_seed.py`
+
+- **passlib/bcrypt Compatibility Issue in Production** (Bug #012, revisited)
+  * passlib 1.7.4 incompatible with bcrypt 4.1+ (`AttributeError: module 'bcrypt' has no attribute '__about__'`)
+  * Fix: Replaced passlib with direct bcrypt usage in `src/core/security.py`
+  * Removed passlib from requirements.txt
+  * Files modified: `src/core/security.py`, `requirements.txt`
+
 - **Reports Template TypeError - Dict Method Conflict** (Bug #013)
   * Root cause: Template used `category.items` which conflicted with Python dict's `.items()` method
   * Jinja2 found the method instead of the dict key, causing `TypeError: 'builtin_function_or_method' object is not iterable`

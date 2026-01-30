@@ -882,6 +882,8 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 | SQLAlchemy cartesian product warning | Count query with selectinload (Bug #014) | Fixed in `013cf92` |
 | Truncate transaction abort | Missing table aborts transaction (Bug #018) | Fixed with SAVEPOINTs in `ca54c6a` |
 | StudentStatus.GRADUATED error | Wrong enum value in seed (Bug #017) | Use COMPLETED not GRADUATED |
+| Migration is_system_role NOT NULL | Raw SQL INSERT missing column (Bug #020) | Fixed in `8916563` |
+| MemberClassification.JOURNEYMAN_WIREMAN error | Service used non-existent enum values (Bug #021) | Fixed in `70df236` |
 
 **Note:** As of commit `013cf92`, invalid JWT cookies are automatically cleared on redirect to login, preventing repeated "Signature verification failed" log spam.
 
