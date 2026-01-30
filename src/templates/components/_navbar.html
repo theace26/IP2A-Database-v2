@@ -38,12 +38,12 @@
         <div class="dropdown dropdown-end" x-data="{ open: false }">
             <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar placeholder">
                 <div class="bg-primary text-primary-content rounded-full w-10">
-                    <span class="text-sm">{{ current_user.first_name[0] if current_user else 'U' }}{{ current_user.last_name[0] if current_user else '' }}</span>
+                    <span class="text-sm">{{ current_user.get('first_name', 'U')[0] if current_user else 'U' }}{{ current_user.get('last_name', '')[0] if current_user else '' }}</span>
                 </div>
             </div>
             <ul tabindex="0" class="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
                 <li class="menu-title">
-                    <span>{{ current_user.first_name if current_user else 'User' }} {{ current_user.last_name if current_user else '' }}</span>
+                    <span>{{ current_user.get('first_name', 'User') if current_user else 'User' }} {{ current_user.get('last_name', '') if current_user else '' }}</span>
                 </li>
                 <li><a href="/profile">Profile</a></li>
                 <li><a href="/settings">Settings</a></li>
