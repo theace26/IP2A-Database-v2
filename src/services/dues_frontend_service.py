@@ -209,3 +209,245 @@ class DuesFrontendService:
             "July", "August", "September", "October", "November", "December"
         ]
         return f"{month_names[period.period_month]} {period.period_year}"
+
+    @staticmethod
+    def get_all_periods(
+        db: Session,
+        year: Optional[int] = None,
+        is_closed: Optional[bool] = None,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> tuple[list[DuesPeriod], int]:
+        """Get all periods with optional filtering."""
+        query = db.query(DuesPeriod)
+
+        if year:
+            query = query.filter(DuesPeriod.period_year == year)
+
+        if is_closed is not None:
+            query = query.filter(DuesPeriod.is_closed == is_closed)
+
+        total = query.count()
+
+        periods = (
+            query.order_by(
+                DuesPeriod.period_year.desc(),
+                DuesPeriod.period_month.desc(),
+            )
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+        return periods, total
+
+    @staticmethod
+    def get_period_with_stats(db: Session, period_id: int) -> Optional[dict]:
+        """Get period with payment statistics."""
+        period = db.query(DuesPeriod).filter(DuesPeriod.id == period_id).first()
+        if not period:
+            return None
+
+        # Get payment stats for this period
+        payments = (
+            db.query(DuesPayment)
+            .filter(DuesPayment.period_id == period_id)
+            .all()
+        )
+
+        total_due = sum(p.amount_due for p in payments) if payments else Decimal("0")
+        total_paid = sum(p.amount_paid or Decimal("0") for p in payments) if payments else Decimal("0")
+
+        status_counts = {}
+        for payment in payments:
+            status = payment.status
+            status_counts[status] = status_counts.get(status, 0) + 1
+
+        return {
+            "period": period,
+            "total_members": len(payments),
+            "total_due": total_due,
+            "total_paid": total_paid,
+            "collection_rate": (
+                (total_paid / total_due * 100) if total_due > 0 else Decimal("0")
+            ),
+            "status_counts": status_counts,
+            "payments": payments[:20],  # First 20 for display
+        }
+
+    @staticmethod
+    def get_available_years(db: Session) -> list[int]:
+        """Get list of years that have periods."""
+        years = (
+            db.query(DuesPeriod.period_year)
+            .distinct()
+            .order_by(DuesPeriod.period_year.desc())
+            .all()
+        )
+        return [y[0] for y in years]
+
+    @staticmethod
+    def get_period_status_badge_class(period: DuesPeriod) -> str:
+        """Get badge class for period status."""
+        if period.is_closed:
+            return "badge-ghost"
+
+        today = date.today()
+        if period.grace_period_end and today > period.grace_period_end:
+            return "badge-error"  # Past grace period
+        elif period.due_date and today > period.due_date:
+            return "badge-warning"  # Past due, in grace
+        else:
+            return "badge-success"  # Current/upcoming
+
+    @staticmethod
+    def get_period_status_text(period: DuesPeriod) -> str:
+        """Get status text for period."""
+        if period.is_closed:
+            return "Closed"
+
+        today = date.today()
+        if period.grace_period_end and today > period.grace_period_end:
+            return "Past Grace"
+        elif period.due_date and today > period.due_date:
+            return "In Grace Period"
+        elif period.due_date and today == period.due_date:
+            return "Due Today"
+        else:
+            return "Open"
+
+    @staticmethod
+    def get_all_payments(
+        db: Session,
+        period_id: Optional[int] = None,
+        member_id: Optional[int] = None,
+        status: Optional[DuesPaymentStatus] = None,
+        q: Optional[str] = None,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> tuple[list[DuesPayment], int]:
+        """Get all payments with optional filtering."""
+        query = db.query(DuesPayment).join(DuesPayment.member, isouter=True)
+
+        if period_id:
+            query = query.filter(DuesPayment.period_id == period_id)
+
+        if member_id:
+            query = query.filter(DuesPayment.member_id == member_id)
+
+        if status:
+            query = query.filter(DuesPayment.status == status)
+
+        if q:
+            search = f"%{q}%"
+            query = query.filter(
+                (Member.first_name.ilike(search))
+                | (Member.last_name.ilike(search))
+                | (Member.member_number.ilike(search))
+            )
+
+        total = query.count()
+
+        payments = (
+            query.order_by(DuesPayment.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+        return payments, total
+
+    @staticmethod
+    def get_member_payment_summary(db: Session, member_id: int) -> dict:
+        """Get payment summary for a member."""
+        payments = (
+            db.query(DuesPayment)
+            .filter(DuesPayment.member_id == member_id)
+            .order_by(DuesPayment.created_at.desc())
+            .all()
+        )
+
+        total_due = sum(p.amount_due for p in payments) if payments else Decimal("0")
+        total_paid = sum(p.amount_paid or Decimal("0") for p in payments) if payments else Decimal("0")
+
+        status_counts = {}
+        for payment in payments:
+            status = payment.status
+            status_counts[status] = status_counts.get(status, 0) + 1
+
+        return {
+            "payments": payments,
+            "total_due": total_due,
+            "total_paid": total_paid,
+            "balance": total_due - total_paid,
+            "status_counts": status_counts,
+            "payment_count": len(payments),
+        }
+
+    @staticmethod
+    def get_all_adjustments(
+        db: Session,
+        status: Optional[AdjustmentStatus] = None,
+        adjustment_type: Optional[DuesAdjustmentType] = None,
+        member_id: Optional[int] = None,
+        q: Optional[str] = None,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> tuple[list[DuesAdjustment], int]:
+        """Get all adjustments with optional filtering."""
+        query = db.query(DuesAdjustment).join(DuesAdjustment.member, isouter=True)
+
+        if status:
+            query = query.filter(DuesAdjustment.status == status)
+
+        if adjustment_type:
+            query = query.filter(DuesAdjustment.adjustment_type == adjustment_type)
+
+        if member_id:
+            query = query.filter(DuesAdjustment.member_id == member_id)
+
+        if q:
+            search = f"%{q}%"
+            query = query.filter(
+                (Member.first_name.ilike(search))
+                | (Member.last_name.ilike(search))
+                | (Member.member_number.ilike(search))
+                | (DuesAdjustment.reason.ilike(search))
+            )
+
+        total = query.count()
+
+        adjustments = (
+            query.order_by(DuesAdjustment.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+        return adjustments, total
+
+    @staticmethod
+    def get_adjustment_detail(db: Session, adjustment_id: int) -> Optional[DuesAdjustment]:
+        """Get adjustment with related data."""
+        return (
+            db.query(DuesAdjustment)
+            .filter(DuesAdjustment.id == adjustment_id)
+            .first()
+        )
+
+    @staticmethod
+    def get_payment_method_display(method: Optional[DuesPaymentMethod]) -> str:
+        """Get display name for payment method."""
+        if not method:
+            return "—"
+        display_names = {
+            DuesPaymentMethod.CASH: "Cash",
+            DuesPaymentMethod.CHECK: "Check",
+            DuesPaymentMethod.CREDIT_CARD: "Credit Card",
+            DuesPaymentMethod.MONEY_ORDER: "Money Order",
+            DuesPaymentMethod.ACH_TRANSFER: "ACH Transfer",
+            DuesPaymentMethod.PAYROLL_DEDUCTION: "Payroll Deduction",
+            DuesPaymentMethod.ONLINE: "Online",
+            DuesPaymentMethod.OTHER: "Other",
+        }
+        return display_names.get(method, method.value)

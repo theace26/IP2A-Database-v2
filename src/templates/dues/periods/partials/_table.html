@@ -1,0 +1,69 @@
+{% if success_message is defined and success_message %}
+<div class="alert alert-success mb-4">
+    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>{{ success_message }}</span>
+</div>
+{% endif %}
+
+{% if error_message is defined and error_message %}
+<div class="alert alert-error mb-4">
+    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>{{ error_message }}</span>
+</div>
+{% endif %}
+
+{% if periods %}
+<div class="overflow-x-auto">
+    <table class="table table-zebra">
+        <thead>
+            <tr>
+                <th>Period</th>
+                <th>Due Date</th>
+                <th>Grace Period End</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for period in periods %}
+            <tr>
+                <td>
+                    <a href="/dues/periods/{{ period.id }}" class="link link-hover font-medium">
+                        {{ format_period_name(period) }}
+                    </a>
+                </td>
+                <td>{{ period.due_date.strftime('%b %d, %Y') if period.due_date else '—' }}</td>
+                <td>{{ period.grace_period_end.strftime('%b %d, %Y') if period.grace_period_end else '—' }}</td>
+                <td>
+                    <span class="badge {{ get_status_badge(period) }}">
+                        {{ get_status_text(period) }}
+                    </span>
+                </td>
+                <td>
+                    <a href="/dues/periods/{{ period.id }}" class="btn btn-ghost btn-sm">
+                        View
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% if total is defined %}
+<div class="mt-4 text-sm text-base-content/70">
+    Showing {{ periods|length }} of {{ total }} periods
+</div>
+{% endif %}
+{% else %}
+<div class="text-center py-8 text-base-content/50">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+    <p>No periods found</p>
+    <p class="text-sm mt-2">Use "Generate Year" to create periods</p>
+</div>
+{% endif %}

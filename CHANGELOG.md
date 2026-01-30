@@ -8,17 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Phase 6 Week 10: Dues UI** (Session A Complete)
+- **Phase 6 Week 10: Dues UI** (Complete)
   * Dues landing page with current period display and days until due
   * Stats cards: MTD collected, YTD collected, overdue count, pending adjustments
   * Quick action cards linking to rates, periods, payments, adjustments
   * Rates list page with HTMX filtering by classification
   * Active only toggle for filtering current rates
   * Rates table partial with status badges (Active/Expired/Future)
+  * Periods list page with year/status filters
+  * Generate year modal for creating 12 monthly periods
+  * Period detail page with payment summary and status breakdown
+  * Close period workflow with confirmation modal
+  * Payments list page with search, period filter, status filter
+  * Record payment modal (amount, method, check number, notes)
+  * Member payment history page with balance summary
+  * Adjustments list page with status/type filters
+  * Adjustment detail page with approve/deny modal workflow
   * DuesFrontendService with stats queries and badge color helpers
   * Currency formatting and period name formatting utilities
   * Sidebar navigation updated with Dues dropdown menu
-  * 19 new dues frontend tests (149 frontend total)
+  * 37 new dues frontend tests (167 frontend total)
+  * ADR-011: Dues Frontend Patterns
 
 - **Phase 6 Week 9: Documents Frontend** (Complete)
   * Documents landing page with storage stats and recent files

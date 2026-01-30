@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}{{ format_period_name(period) }} - Dues Periods - IP2A{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/dues">Dues</a></li>
+            <li><a href="/dues/periods">Periods</a></li>
+            <li>{{ format_period_name(period) }}</li>
+        </ul>
+    </div>
+
+    <!-- Flash Messages -->
+    {% if request.query_params.get('success') %}
+    <div class="alert alert-success">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>{{ request.query_params.get('success') }}</span>
+    </div>
+    {% endif %}
+
+    {% if request.query_params.get('error') %}
+    <div class="alert alert-error">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>{{ request.query_params.get('error') }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Header -->
+    <div class="flex justify-between items-start">
+        <div>
+            <h1 class="text-2xl font-bold">{{ format_period_name(period) }}</h1>
+            <div class="flex gap-2 mt-2">
+                <span class="badge {{ get_status_badge(period) }} badge-lg">
+                    {{ get_status_text(period) }}
+                </span>
+            </div>
+        </div>
+
+        {% if not period.is_closed %}
+        <div x-data="{ showModal: false }">
+            <button class="btn btn-warning" @click="showModal = true">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Close Period
+            </button>
+
+            <!-- Close Modal -->
+            <div class="modal" :class="{ 'modal-open': showModal }">
+                <div class="modal-box">
+                    <h3 class="font-bold text-lg">Close Period</h3>
+                    <p class="py-4 text-base-content/70">
+                        Are you sure you want to close {{ format_period_name(period) }}?
+                        This action cannot be undone.
+                    </p>
+
+                    <form method="POST" action="/dues/periods/{{ period.id }}/close">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Notes (optional)</span>
+                            </label>
+                            <textarea
+                                name="notes"
+                                class="textarea textarea-bordered"
+                                rows="3"
+                                placeholder="Add closing notes..."
+                            ></textarea>
+                        </div>
+
+                        <div class="modal-action">
+                            <button type="button" class="btn" @click="showModal = false">Cancel</button>
+                            <button type="submit" class="btn btn-warning">Close Period</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-backdrop" @click="showModal = false"></div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="stat bg-base-100 rounded-box shadow">
+            <div class="stat-title">Due Date</div>
+            <div class="stat-value text-lg">{{ period.due_date.strftime('%b %d, %Y') if period.due_date else '—' }}</div>
+        </div>
+
+        <div class="stat bg-base-100 rounded-box shadow">
+            <div class="stat-title">Grace Period End</div>
+            <div class="stat-value text-lg">{{ period.grace_period_end.strftime('%b %d, %Y') if period.grace_period_end else '—' }}</div>
+        </div>
+
+        <div class="stat bg-base-100 rounded-box shadow">
+            <div class="stat-title">Total Due</div>
+            <div class="stat-value text-lg">{{ format_currency(total_due) }}</div>
+            <div class="stat-desc">{{ total_members }} members</div>
+        </div>
+
+        <div class="stat bg-base-100 rounded-box shadow">
+            <div class="stat-title">Collected</div>
+            <div class="stat-value text-lg text-success">{{ format_currency(total_paid) }}</div>
+            <div class="stat-desc">{{ "%.1f"|format(collection_rate) }}% collection rate</div>
+        </div>
+    </div>
+
+    <!-- Payment Status Breakdown -->
+    {% if status_counts %}
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Payment Status</h2>
+            <div class="flex flex-wrap gap-4">
+                {% for status, count in status_counts.items() %}
+                <div class="flex items-center gap-2">
+                    <span class="badge {{ get_payment_badge(status) }}">{{ status.value.replace('_', ' ').title() }}</span>
+                    <span class="font-semibold">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Payments -->
+    {% if payments %}
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex justify-between items-center">
+                <h2 class="card-title">Payments</h2>
+                <a href="/dues/payments?period_id={{ period.id }}" class="btn btn-ghost btn-sm">
+                    View All
+                </a>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Amount Due</th>
+                            <th>Amount Paid</th>
+                            <th>Status</th>
+                            <th>Payment Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td>
+                                {% if payment.member %}
+                                <a href="/members/{{ payment.member_id }}" class="link link-hover">
+                                    {{ payment.member.first_name }} {{ payment.member.last_name }}
+                                </a>
+                                {% else %}
+                                Member #{{ payment.member_id }}
+                                {% endif %}
+                            </td>
+                            <td class="font-mono">{{ format_currency(payment.amount_due) }}</td>
+                            <td class="font-mono">{{ format_currency(payment.amount_paid) }}</td>
+                            <td>
+                                <span class="badge {{ get_payment_badge(payment.status) }}">
+                                    {{ payment.status.value.replace('_', ' ').title() }}
+                                </span>
+                            </td>
+                            <td>{{ payment.payment_date.strftime('%b %d, %Y') if payment.payment_date else '—' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Closed Info -->
+    {% if period.is_closed %}
+    <div class="card bg-base-200 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Closure Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <span class="text-base-content/70">Closed At:</span>
+                    <span class="font-medium ml-2">{{ period.closed_at.strftime('%b %d, %Y %I:%M %p') if period.closed_at else '—' }}</span>
+                </div>
+                {% if period.close_notes %}
+                <div class="md:col-span-2">
+                    <span class="text-base-content/70">Notes:</span>
+                    <p class="mt-1">{{ period.close_notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% if adjustments %}
+<div class="overflow-x-auto">
+    <table class="table table-zebra">
+        <thead>
+            <tr>
+                <th>Member</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for adjustment in adjustments %}
+            <tr>
+                <td>
+                    {% if adjustment.member %}
+                    <a href="/members/{{ adjustment.member_id }}" class="link link-hover">
+                        {{ adjustment.member.first_name }} {{ adjustment.member.last_name }}
+                    </a>
+                    {% else %}
+                    Member #{{ adjustment.member_id }}
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="badge {{ get_type_badge(adjustment.adjustment_type) }}">
+                        {{ adjustment.adjustment_type.value.title() }}
+                    </span>
+                </td>
+                <td class="font-mono {% if adjustment.amount and adjustment.amount > 0 %}text-success{% elif adjustment.amount and adjustment.amount < 0 %}text-error{% endif %}">
+                    {{ format_currency(adjustment.amount) }}
+                </td>
+                <td class="max-w-xs truncate">{{ adjustment.reason or '—' }}</td>
+                <td>
+                    <span class="badge {{ get_status_badge(adjustment.status) }}">
+                        {{ adjustment.status.value.title() }}
+                    </span>
+                </td>
+                <td>{{ adjustment.created_at.strftime('%b %d, %Y') if adjustment.created_at else '—' }}</td>
+                <td>
+                    <a href="/dues/adjustments/{{ adjustment.id }}" class="btn btn-ghost btn-sm">
+                        View
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% if total is defined %}
+<div class="mt-4 text-sm text-base-content/70">
+    Showing {{ adjustments|length }} of {{ total }} adjustments
+</div>
+{% endif %}
+{% else %}
+<div class="text-center py-8 text-base-content/50">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    </svg>
+    <p>No adjustments found</p>
+</div>
+{% endif %}

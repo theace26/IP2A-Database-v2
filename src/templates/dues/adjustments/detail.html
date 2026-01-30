@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Adjustment #{{ adjustment.id }} - IP2A{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/dues">Dues</a></li>
+            <li><a href="/dues/adjustments">Adjustments</a></li>
+            <li>Adjustment #{{ adjustment.id }}</li>
+        </ul>
+    </div>
+
+    <!-- Flash Messages -->
+    {% if request.query_params.get('success') %}
+    <div class="alert alert-success">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>{{ request.query_params.get('success') }}</span>
+    </div>
+    {% endif %}
+
+    {% if request.query_params.get('error') %}
+    <div class="alert alert-error">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>{{ request.query_params.get('error') }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Header -->
+    <div class="flex justify-between items-start">
+        <div>
+            <h1 class="text-2xl font-bold">Adjustment #{{ adjustment.id }}</h1>
+            <div class="flex gap-2 mt-2">
+                <span class="badge {{ get_type_badge(adjustment.adjustment_type) }} badge-lg">
+                    {{ adjustment.adjustment_type.value.title() }}
+                </span>
+                <span class="badge {{ get_status_badge(adjustment.status) }} badge-lg">
+                    {{ adjustment.status.value.title() }}
+                </span>
+            </div>
+        </div>
+
+        {% if adjustment.status.value == 'pending' %}
+        <div x-data="{ showModal: false }">
+            <button class="btn btn-primary" @click="showModal = true">
+                Review Adjustment
+            </button>
+
+            <!-- Approve/Deny Modal -->
+            <div class="modal" :class="{ 'modal-open': showModal }">
+                <div class="modal-box">
+                    <h3 class="font-bold text-lg">Review Adjustment</h3>
+                    <p class="py-2 text-base-content/70">
+                        {{ adjustment.adjustment_type.value.title() }} for {{ format_currency(adjustment.amount) }}
+                    </p>
+
+                    <form method="POST" action="/dues/adjustments/{{ adjustment.id }}/approve" x-data="{ action: '' }">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Decision</span>
+                            </label>
+                            <div class="flex gap-4">
+                                <label class="label cursor-pointer gap-2">
+                                    <input type="radio" name="approved" value="true" class="radio radio-success" x-model="action" required />
+                                    <span class="label-text">Approve</span>
+                                </label>
+                                <label class="label cursor-pointer gap-2">
+                                    <input type="radio" name="approved" value="false" class="radio radio-error" x-model="action" required />
+                                    <span class="label-text">Deny</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-control mt-4">
+                            <label class="label">
+                                <span class="label-text">Notes</span>
+                            </label>
+                            <textarea
+                                name="notes"
+                                class="textarea textarea-bordered"
+                                rows="3"
+                                placeholder="Add review notes..."
+                            ></textarea>
+                        </div>
+
+                        <div class="modal-action">
+                            <button type="button" class="btn" @click="showModal = false">Cancel</button>
+                            <button
+                                type="submit"
+                                class="btn"
+                                :class="action === 'true' ? 'btn-success' : action === 'false' ? 'btn-error' : 'btn-disabled'"
+                                :disabled="!action"
+                            >
+                                <span x-text="action === 'true' ? 'Approve' : action === 'false' ? 'Deny' : 'Select Decision'"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-backdrop" @click="showModal = false"></div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Details Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Main Info -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h2 class="card-title">Adjustment Details</h2>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-base-content/70">Member:</span>
+                        {% if adjustment.member %}
+                        <a href="/members/{{ adjustment.member_id }}" class="link link-hover block font-medium">
+                            {{ adjustment.member.first_name }} {{ adjustment.member.last_name }}
+                        </a>
+                        {% else %}
+                        <span class="block font-medium">Member #{{ adjustment.member_id }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <span class="text-base-content/70">Amount:</span>
+                        <span class="block font-medium font-mono {% if adjustment.amount and adjustment.amount > 0 %}text-success{% elif adjustment.amount and adjustment.amount < 0 %}text-error{% endif %}">
+                            {{ format_currency(adjustment.amount) }}
+                        </span>
+                    </div>
+
+                    <div class="col-span-2">
+                        <span class="text-base-content/70">Reason:</span>
+                        <p class="mt-1">{{ adjustment.reason or 'No reason provided' }}</p>
+                    </div>
+
+                    <div>
+                        <span class="text-base-content/70">Created:</span>
+                        <span class="block">{{ adjustment.created_at.strftime('%b %d, %Y %I:%M %p') if adjustment.created_at else '—' }}</span>
+                    </div>
+
+                    {% if adjustment.payment_id %}
+                    <div>
+                        <span class="text-base-content/70">Related Payment:</span>
+                        <span class="block">Payment #{{ adjustment.payment_id }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Approval Info -->
+        {% if adjustment.status.value != 'pending' %}
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h2 class="card-title">Review Information</h2>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-base-content/70">Decision:</span>
+                        <span class="badge {{ get_status_badge(adjustment.status) }} mt-1">
+                            {{ adjustment.status.value.title() }}
+                        </span>
+                    </div>
+
+                    <div>
+                        <span class="text-base-content/70">Reviewed:</span>
+                        <span class="block">{{ adjustment.approved_at.strftime('%b %d, %Y %I:%M %p') if adjustment.approved_at else '—' }}</span>
+                    </div>
+
+                    {% if adjustment.approval_notes %}
+                    <div class="col-span-2">
+                        <span class="text-base-content/70">Notes:</span>
+                        <p class="mt-1">{{ adjustment.approval_notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

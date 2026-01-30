@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Dues Payments - IP2A{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/dues">Dues</a></li>
+            <li>Payments</li>
+        </ul>
+    </div>
+
+    <!-- Flash Messages -->
+    {% if request.query_params.get('success') %}
+    <div class="alert alert-success">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>{{ request.query_params.get('success') }}</span>
+    </div>
+    {% endif %}
+
+    {% if request.query_params.get('error') %}
+    <div class="alert alert-error">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>{{ request.query_params.get('error') }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Page Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold">Dues Payments</h1>
+            <p class="text-base-content/70">Track and record member dues payments</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex flex-wrap gap-4 items-end">
+                <!-- Search -->
+                <div class="form-control w-full max-w-xs">
+                    <label class="label">
+                        <span class="label-text">Search</span>
+                    </label>
+                    <input
+                        type="search"
+                        name="q"
+                        placeholder="Member name or number..."
+                        class="input input-bordered"
+                        hx-get="/dues/payments/search"
+                        hx-trigger="input changed delay:300ms"
+                        hx-target="#payments-table"
+                        hx-include="[name='period_id'], [name='status']"
+                    />
+                </div>
+
+                <!-- Period Filter -->
+                <div class="form-control w-full max-w-xs">
+                    <label class="label">
+                        <span class="label-text">Period</span>
+                    </label>
+                    <select
+                        name="period_id"
+                        class="select select-bordered"
+                        hx-get="/dues/payments/search"
+                        hx-trigger="change"
+                        hx-target="#payments-table"
+                        hx-include="[name='q'], [name='status']"
+                    >
+                        <option value="">All Periods</option>
+                        {% for period in periods %}
+                        <option value="{{ period.id }}" {% if selected_period_id == period.id %}selected{% endif %}>
+                            {{ format_period_name(period) }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="form-control w-full max-w-xs">
+                    <label class="label">
+                        <span class="label-text">Status</span>
+                    </label>
+                    <select
+                        name="status"
+                        class="select select-bordered"
+                        hx-get="/dues/payments/search"
+                        hx-trigger="change"
+                        hx-target="#payments-table"
+                        hx-include="[name='q'], [name='period_id']"
+                    >
+                        <option value="">All Statuses</option>
+                        {% for s in statuses %}
+                        <option value="{{ s.value }}">{{ s.value.replace('_', ' ').title() }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payments Table -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div id="payments-table">
+                {% include "dues/payments/partials/_table.html" %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

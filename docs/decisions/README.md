@@ -18,6 +18,9 @@ An ADR captures an important architectural decision along with its context and c
 | [ADR-006](ADR-006-background-jobs.md) | Background Jobs (TaskService Abstraction) | Accepted | 2026-01 |
 | [ADR-007](ADR-007-observability.md) | Observability Stack (Grafana + Loki) | Accepted | 2026-01 |
 | [ADR-008](ADR-008-dues-tracking-system.md) | Dues Tracking System Design | Accepted | 2026-01-28 |
+| [ADR-009](ADR-009-migration-safety.md) | Migration Safety | Accepted | 2026-01 |
+| [ADR-010](ADR-010-operations-frontend-patterns.md) | Operations Frontend Patterns | Accepted | 2026-01-29 |
+| [ADR-011](ADR-011-dues-frontend-patterns.md) | Dues Frontend Patterns | Accepted | 2026-01-30 |
 
 ## ADR Template
 

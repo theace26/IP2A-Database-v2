@@ -1,0 +1,145 @@
+{% if payments %}
+<div class="overflow-x-auto">
+    <table class="table table-zebra">
+        <thead>
+            <tr>
+                <th>Member</th>
+                <th>Period</th>
+                <th>Amount Due</th>
+                <th>Amount Paid</th>
+                <th>Status</th>
+                <th>Method</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+            <tr x-data="{ showModal: false }">
+                <td>
+                    {% if payment.member %}
+                    <a href="/members/{{ payment.member_id }}" class="link link-hover">
+                        {{ payment.member.first_name }} {{ payment.member.last_name }}
+                    </a>
+                    <div class="text-xs text-base-content/50">{{ payment.member.member_number or '' }}</div>
+                    {% else %}
+                    Member #{{ payment.member_id }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if payment.period %}
+                    {{ format_period_name(payment.period) }}
+                    {% else %}
+                    —
+                    {% endif %}
+                </td>
+                <td class="font-mono">{{ format_currency(payment.amount_due) }}</td>
+                <td class="font-mono">{{ format_currency(payment.amount_paid) }}</td>
+                <td>
+                    <span class="badge {{ get_payment_badge(payment.status) }}">
+                        {{ payment.status.value.replace('_', ' ').title() }}
+                    </span>
+                </td>
+                <td>{{ get_method_display(payment.payment_method) }}</td>
+                <td>
+                    {% if payment.status.value not in ['paid', 'waived'] %}
+                    <button class="btn btn-primary btn-sm" @click="showModal = true">
+                        Record
+                    </button>
+
+                    <!-- Record Payment Modal -->
+                    <div class="modal" :class="{ 'modal-open': showModal }">
+                        <div class="modal-box">
+                            <h3 class="font-bold text-lg">Record Payment</h3>
+                            <p class="py-2 text-base-content/70">
+                                {% if payment.member %}
+                                {{ payment.member.first_name }} {{ payment.member.last_name }}
+                                {% endif %}
+                                — {{ format_currency(payment.amount_due) }} due
+                            </p>
+
+                            <form method="POST" action="/dues/payments/{{ payment.id }}/record">
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text">Amount Paid</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="amount_paid"
+                                        step="0.01"
+                                        min="0"
+                                        value="{{ payment.amount_due }}"
+                                        class="input input-bordered"
+                                        required
+                                    />
+                                </div>
+
+                                <div class="form-control mt-4">
+                                    <label class="label">
+                                        <span class="label-text">Payment Method</span>
+                                    </label>
+                                    <select name="payment_method" class="select select-bordered">
+                                        <option value="">Select method...</option>
+                                        <option value="cash">Cash</option>
+                                        <option value="check">Check</option>
+                                        <option value="credit_card">Credit Card</option>
+                                        <option value="money_order">Money Order</option>
+                                        <option value="ach_transfer">ACH Transfer</option>
+                                        <option value="payroll_deduction">Payroll Deduction</option>
+                                        <option value="online">Online</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-control mt-4">
+                                    <label class="label">
+                                        <span class="label-text">Check Number (if applicable)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="check_number"
+                                        class="input input-bordered"
+                                        placeholder="Optional"
+                                    />
+                                </div>
+
+                                <div class="form-control mt-4">
+                                    <label class="label">
+                                        <span class="label-text">Notes (optional)</span>
+                                    </label>
+                                    <textarea
+                                        name="notes"
+                                        class="textarea textarea-bordered"
+                                        rows="2"
+                                    ></textarea>
+                                </div>
+
+                                <div class="modal-action">
+                                    <button type="button" class="btn" @click="showModal = false">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Record Payment</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-backdrop" @click="showModal = false"></div>
+                    </div>
+                    {% else %}
+                    <span class="text-base-content/50">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% if total is defined %}
+<div class="mt-4 text-sm text-base-content/70">
+    Showing {{ payments|length }} of {{ total }} payments
+</div>
+{% endif %}
+{% else %}
+<div class="text-center py-8 text-base-content/50">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+    <p>No payments found</p>
+</div>
+{% endif %}

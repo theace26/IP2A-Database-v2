@@ -297,8 +297,56 @@ The test suite covers:
 - Payment lifecycle
 - Adjustment approval workflow
 
+## Frontend Usage (Phase 6 Week 10)
+
+The dues management frontend provides a complete UI for managing all dues operations:
+
+### Accessing the Dues Module
+
+Navigate to `/dues` from the main dashboard or sidebar menu.
+
+### Landing Page (`/dues`)
+
+- Current period display with days until due
+- Stats cards: MTD collected, YTD collected, overdue count, pending adjustments
+- Quick action cards linking to submodules
+
+### Rates Management (`/dues/rates`)
+
+- List all rates by classification
+- Filter by classification type
+- Toggle to show only active rates
+- View rate history with effective dates
+
+### Periods Management (`/dues/periods`)
+
+- List all billing periods by year
+- Filter by year and status (open/closed)
+- Generate 12 periods for a year via modal
+- View period details with payment summary
+- Close periods with notes
+
+### Payments (`/dues/payments`)
+
+- Search payments by member name or number
+- Filter by period and status
+- Record payments via modal (amount, method, check number, notes)
+- View member payment history with balance summary
+
+### Adjustments (`/dues/adjustments`)
+
+- List all adjustments with status/type filters
+- View adjustment details
+- Approve or deny pending adjustments via modal
+- Add review notes
+
+### Frontend Architecture
+
+See [ADR-011: Dues Frontend Patterns](../decisions/ADR-011-dues-frontend-patterns.md) for implementation details.
+
 ## Related Documentation
 
 - [ADR-008: Dues Tracking System Design](../decisions/ADR-008-dues-tracking-system.md)
+- [ADR-011: Dues Frontend Patterns](../decisions/ADR-011-dues-frontend-patterns.md)
 - [API Reference](../reference/dues-api.md)
-- [CHANGELOG](../../CHANGELOG.md) - Phase 4 changes
+- [CHANGELOG](../../CHANGELOG.md) - Phase 4 (backend) and Phase 6 Week 10 (frontend)
