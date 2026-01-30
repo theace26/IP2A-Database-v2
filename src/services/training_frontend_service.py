@@ -3,7 +3,7 @@ Training Frontend Service - Stats and queries for training pages.
 Provides aggregated data for the training dashboard and lists.
 """
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy import select, func, or_
 from sqlalchemy.orm import selectinload
 from typing import Optional, List, Tuple
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class TrainingFrontendService:
     """Service for training frontend pages."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: Session):
         self.db = db
 
     # ============================================================
@@ -36,12 +36,12 @@ class TrainingFrontendService:
         """
         # Total students
         total_students = (
-            await self.db.execute(select(func.count(Student.id)))
+            self.db.execute(select(func.count(Student.id)))
         ).scalar() or 0
 
         # Active students (ENROLLED status)
         active_students = (
-            await self.db.execute(
+            self.db.execute(
                 select(func.count(Student.id)).where(
                     Student.status == StudentStatus.ENROLLED
                 )
@@ -51,7 +51,7 @@ class TrainingFrontendService:
         # Students enrolled this month
         first_of_month = date.today().replace(day=1)
         new_this_month = (
-            await self.db.execute(
+            self.db.execute(
                 select(func.count(Student.id)).where(
                     Student.enrollment_date >= first_of_month
                 )
@@ -60,7 +60,7 @@ class TrainingFrontendService:
 
         # Completed students (graduated)
         completed = (
-            await self.db.execute(
+            self.db.execute(
                 select(func.count(Student.id)).where(
                     Student.status == StudentStatus.COMPLETED
                 )
@@ -69,24 +69,24 @@ class TrainingFrontendService:
 
         # Total courses
         total_courses = (
-            await self.db.execute(select(func.count(Course.id)))
+            self.db.execute(select(func.count(Course.id)))
         ).scalar() or 0
 
         # Active courses
         active_courses = (
-            await self.db.execute(
+            self.db.execute(
                 select(func.count(Course.id)).where(Course.is_active.is_(True))
             )
         ).scalar() or 0
 
         # Total enrollments
         total_enrollments = (
-            await self.db.execute(select(func.count(Enrollment.id)))
+            self.db.execute(select(func.count(Enrollment.id)))
         ).scalar() or 0
 
         # Active enrollments (status = enrolled)
         active_enrollments = (
-            await self.db.execute(
+            self.db.execute(
                 select(func.count(Enrollment.id)).where(
                     Enrollment.status == CourseEnrollmentStatus.ENROLLED
                 )
@@ -95,7 +95,7 @@ class TrainingFrontendService:
 
         # Completion rate (completed / total finished)
         course_completed = (
-            await self.db.execute(
+            self.db.execute(
                 select(func.count(Enrollment.id)).where(
                     Enrollment.status == CourseEnrollmentStatus.COMPLETED
                 )
@@ -103,7 +103,7 @@ class TrainingFrontendService:
         ).scalar() or 0
 
         total_finished = (
-            await self.db.execute(
+            self.db.execute(
                 select(func.count(Enrollment.id)).where(
                     Enrollment.status.in_(
                         [
@@ -146,7 +146,7 @@ class TrainingFrontendService:
             .order_by(Student.enrollment_date.desc())
             .limit(limit)
         )
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         return list(result.scalars().all())
 
     async def search_students(
@@ -191,7 +191,7 @@ class TrainingFrontendService:
 
         # Get total count
         count_stmt = select(func.count()).select_from(stmt.subquery())
-        total = (await self.db.execute(count_stmt)).scalar() or 0
+        total = (self.db.execute(count_stmt)).scalar() or 0
 
         # Apply sorting and pagination
         # Need to re-join for ordering if we haven't already
@@ -201,7 +201,7 @@ class TrainingFrontendService:
         offset = (page - 1) * per_page
         stmt = stmt.offset(offset).limit(per_page)
 
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         students = list(result.scalars().all())
 
         total_pages = (total + per_page - 1) // per_page if total > 0 else 1
@@ -218,7 +218,7 @@ class TrainingFrontendService:
             )
             .where(Student.id == student_id)
         )
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         return result.scalar_one_or_none()
 
     # ============================================================
@@ -231,7 +231,7 @@ class TrainingFrontendService:
         courses_stmt = (
             select(Course).where(Course.is_active.is_(True)).order_by(Course.code)
         )
-        courses_result = await self.db.execute(courses_stmt)
+        courses_result = self.db.execute(courses_stmt)
         courses = list(courses_result.scalars().all())
 
         # Get enrollment counts per course
@@ -242,7 +242,7 @@ class TrainingFrontendService:
             .filter(Enrollment.status == CourseEnrollmentStatus.ENROLLED)
             .label("active"),
         ).group_by(Enrollment.course_id)
-        counts_result = await self.db.execute(counts_stmt)
+        counts_result = self.db.execute(counts_stmt)
         counts = {
             row.course_id: {"total": row.total, "active": row.active}
             for row in counts_result
@@ -269,7 +269,7 @@ class TrainingFrontendService:
             .options(selectinload(Course.enrollments).selectinload(Enrollment.student))
             .where(Course.id == course_id)
         )
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         return result.scalar_one_or_none()
 
     # ============================================================
@@ -284,7 +284,7 @@ class TrainingFrontendService:
             .distinct()
             .order_by(Student.cohort.desc())
         )
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         return [row[0] for row in result.all()]
 
     # ============================================================
@@ -318,5 +318,5 @@ class TrainingFrontendService:
 
 
 # Convenience function
-async def get_training_service(db: AsyncSession) -> TrainingFrontendService:
+async def get_training_service(db: Session) -> TrainingFrontendService:
     return TrainingFrontendService(db)

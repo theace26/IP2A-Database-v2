@@ -2,7 +2,7 @@
 Member Frontend Service - Stats and queries for member pages.
 """
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
 from typing import Optional, List, Tuple
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class MemberFrontendService:
     """Service for member frontend operations."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: Session):
         self.db = db
 
     # ============================================================
@@ -35,13 +35,13 @@ class MemberFrontendService:
         """
         # Total members (not deleted)
         total_stmt = select(func.count(Member.id)).where(Member.deleted_at.is_(None))
-        total = (await self.db.execute(total_stmt)).scalar() or 0
+        total = (self.db.execute(total_stmt)).scalar() or 0
 
         # Active members
         active_stmt = select(func.count(Member.id)).where(
             and_(Member.deleted_at.is_(None), Member.status == MemberStatus.ACTIVE)
         )
-        active = (await self.db.execute(active_stmt)).scalar() or 0
+        active = (self.db.execute(active_stmt)).scalar() or 0
 
         # New this month
         month_start = date.today().replace(day=1)
@@ -50,25 +50,25 @@ class MemberFrontendService:
                 Member.deleted_at.is_(None), func.date(Member.created_at) >= month_start
             )
         )
-        new_this_month = (await self.db.execute(new_stmt)).scalar() or 0
+        new_this_month = (self.db.execute(new_stmt)).scalar() or 0
 
         # Inactive members
         inactive_stmt = select(func.count(Member.id)).where(
             and_(Member.deleted_at.is_(None), Member.status == MemberStatus.INACTIVE)
         )
-        inactive = (await self.db.execute(inactive_stmt)).scalar() or 0
+        inactive = (self.db.execute(inactive_stmt)).scalar() or 0
 
         # Suspended members
         suspended_stmt = select(func.count(Member.id)).where(
             and_(Member.deleted_at.is_(None), Member.status == MemberStatus.SUSPENDED)
         )
-        suspended = (await self.db.execute(suspended_stmt)).scalar() or 0
+        suspended = (self.db.execute(suspended_stmt)).scalar() or 0
 
         # Retired members
         retired_stmt = select(func.count(Member.id)).where(
             and_(Member.deleted_at.is_(None), Member.status == MemberStatus.RETIRED)
         )
-        retired = (await self.db.execute(retired_stmt)).scalar() or 0
+        retired = (self.db.execute(retired_stmt)).scalar() or 0
 
         # Calculate dues current percentage (simplified - based on active with recent payment)
         # This is a simplified version - adjust based on your actual dues logic
@@ -98,7 +98,7 @@ class MemberFrontendService:
             .order_by(func.count(Member.id).desc())
         )
 
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         rows = result.fetchall()
 
         breakdown = []
@@ -126,7 +126,7 @@ class MemberFrontendService:
             .limit(limit)
         )
 
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         return list(result.scalars().all())
 
     # ============================================================
@@ -189,13 +189,13 @@ class MemberFrontendService:
 
         # Get total count
         count_stmt = select(func.count()).select_from(stmt.subquery())
-        total = (await self.db.execute(count_stmt)).scalar() or 0
+        total = (self.db.execute(count_stmt)).scalar() or 0
 
         # Apply sorting and pagination
         stmt = stmt.order_by(Member.last_name, Member.first_name)
         stmt = stmt.offset((page - 1) * per_page).limit(per_page)
 
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         members = list(result.unique().scalars().all())
 
         total_pages = (total + per_page - 1) // per_page
@@ -213,7 +213,7 @@ class MemberFrontendService:
             )
             .where(and_(Member.id == member_id, Member.deleted_at.is_(None)))
         )
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         return result.scalar_one_or_none()
 
     async def get_member_current_employer(self, member: Member) -> Optional[dict]:
@@ -242,7 +242,7 @@ class MemberFrontendService:
             .order_by(MemberEmployment.start_date.desc())
         )
 
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         employments = result.scalars().all()
 
         history = []
@@ -296,7 +296,7 @@ class MemberFrontendService:
             .limit(6)
         )
 
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         payments = list(result.scalars().all())
 
         # Determine overall status
@@ -395,5 +395,5 @@ class MemberFrontendService:
 
 
 # Convenience function
-async def get_member_frontend_service(db: AsyncSession) -> MemberFrontendService:
+async def get_member_frontend_service(db: Session) -> MemberFrontendService:
     return MemberFrontendService(db)

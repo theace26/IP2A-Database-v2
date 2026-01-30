@@ -10,7 +10,7 @@ from decimal import Decimal
 from typing import List, Optional, Tuple
 
 from sqlalchemy import func, or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy.orm import selectinload
 
 from src.db.enums import (
@@ -33,7 +33,7 @@ from src.models import (
 class OperationsFrontendService:
     """Service for operations frontend queries."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: Session):
         self.db = db
 
     # ============================================================
@@ -73,7 +73,7 @@ class OperationsFrontendService:
         stmt = select(func.count(SALTingActivity.id)).where(
             SALTingActivity.is_deleted == False  # noqa: E712
         )
-        return (await self.db.execute(stmt)).scalar() or 0
+        return (self.db.execute(stmt)).scalar() or 0
 
     async def _count_salting_this_month(self) -> int:
         first_of_month = date.today().replace(day=1)
@@ -81,7 +81,7 @@ class OperationsFrontendService:
             SALTingActivity.is_deleted == False,  # noqa: E712
             SALTingActivity.activity_date >= first_of_month,
         )
-        return (await self.db.execute(stmt)).scalar() or 0
+        return (self.db.execute(stmt)).scalar() or 0
 
     async def _count_benevolence_pending(self) -> int:
         stmt = select(func.count(BenevolenceApplication.id)).where(
@@ -93,7 +93,7 @@ class OperationsFrontendService:
                 ]
             ),
         )
-        return (await self.db.execute(stmt)).scalar() or 0
+        return (self.db.execute(stmt)).scalar() or 0
 
     async def _sum_benevolence_ytd(self) -> Decimal:
         first_of_year = date.today().replace(month=1, day=1)
@@ -102,7 +102,7 @@ class OperationsFrontendService:
             BenevolenceApplication.status == BenevolenceStatus.PAID,
             BenevolenceApplication.payment_date >= first_of_year,
         )
-        return (await self.db.execute(stmt)).scalar() or Decimal("0")
+        return (self.db.execute(stmt)).scalar() or Decimal("0")
 
     async def _count_grievances_open(self) -> int:
         stmt = select(func.count(Grievance.id)).where(
@@ -116,13 +116,13 @@ class OperationsFrontendService:
                 ]
             ),
         )
-        return (await self.db.execute(stmt)).scalar() or 0
+        return (self.db.execute(stmt)).scalar() or 0
 
     async def _count_grievances_total(self) -> int:
         stmt = select(func.count(Grievance.id)).where(
             Grievance.is_deleted == False  # noqa: E712
         )
-        return (await self.db.execute(stmt)).scalar() or 0
+        return (self.db.execute(stmt)).scalar() or 0
 
     # ============================================================
     # SALTing Methods
@@ -154,20 +154,20 @@ class OperationsFrontendService:
         stmt = select(func.sum(SALTingActivity.workers_contacted)).where(
             SALTingActivity.is_deleted == False  # noqa: E712
         )
-        return (await self.db.execute(stmt)).scalar() or 0
+        return (self.db.execute(stmt)).scalar() or 0
 
     async def _sum_cards_signed(self) -> int:
         stmt = select(func.sum(SALTingActivity.cards_signed)).where(
             SALTingActivity.is_deleted == False  # noqa: E712
         )
-        return (await self.db.execute(stmt)).scalar() or 0
+        return (self.db.execute(stmt)).scalar() or 0
 
     async def _count_salting_by_outcome(self, outcome: SALTingOutcome) -> int:
         stmt = select(func.count(SALTingActivity.id)).where(
             SALTingActivity.is_deleted == False,  # noqa: E712
             SALTingActivity.outcome == outcome,
         )
-        return (await self.db.execute(stmt)).scalar() or 0
+        return (self.db.execute(stmt)).scalar() or 0
 
     async def search_salting_activities(
         self,
@@ -223,13 +223,13 @@ class OperationsFrontendService:
 
         # Count total
         count_stmt = select(func.count()).select_from(stmt.subquery())
-        total = (await self.db.execute(count_stmt)).scalar() or 0
+        total = (self.db.execute(count_stmt)).scalar() or 0
 
         # Sort and paginate
         stmt = stmt.order_by(SALTingActivity.activity_date.desc())
         stmt = stmt.offset((page - 1) * per_page).limit(per_page)
 
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         activities = list(result.unique().scalars().all())
 
         total_pages = (total + per_page - 1) // per_page
@@ -252,7 +252,7 @@ class OperationsFrontendService:
             )
         )
 
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         return result.scalar_one_or_none()
 
     @staticmethod
@@ -308,14 +308,14 @@ class OperationsFrontendService:
         stmt = select(func.count(BenevolenceApplication.id)).where(
             BenevolenceApplication.is_deleted == False  # noqa: E712
         )
-        return (await self.db.execute(stmt)).scalar() or 0
+        return (self.db.execute(stmt)).scalar() or 0
 
     async def _count_benevolence_by_status(self, status: BenevolenceStatus) -> int:
         stmt = select(func.count(BenevolenceApplication.id)).where(
             BenevolenceApplication.is_deleted == False,  # noqa: E712
             BenevolenceApplication.status == status,
         )
-        return (await self.db.execute(stmt)).scalar() or 0
+        return (self.db.execute(stmt)).scalar() or 0
 
     async def search_benevolence_applications(
         self,
@@ -367,13 +367,13 @@ class OperationsFrontendService:
 
         # Count total
         count_stmt = select(func.count()).select_from(stmt.subquery())
-        total = (await self.db.execute(count_stmt)).scalar() or 0
+        total = (self.db.execute(count_stmt)).scalar() or 0
 
         # Sort and paginate
         stmt = stmt.order_by(BenevolenceApplication.application_date.desc())
         stmt = stmt.offset((page - 1) * per_page).limit(per_page)
 
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         applications = list(result.unique().scalars().all())
 
         total_pages = (total + per_page - 1) // per_page
@@ -396,7 +396,7 @@ class OperationsFrontendService:
             )
         )
 
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         return result.scalar_one_or_none()
 
     @staticmethod
@@ -463,14 +463,14 @@ class OperationsFrontendService:
             Grievance.is_deleted == False,  # noqa: E712
             Grievance.current_step == step,
         )
-        return (await self.db.execute(stmt)).scalar() or 0
+        return (self.db.execute(stmt)).scalar() or 0
 
     async def _count_grievances_by_status(self, status: GrievanceStatus) -> int:
         stmt = select(func.count(Grievance.id)).where(
             Grievance.is_deleted == False,  # noqa: E712
             Grievance.status == status,
         )
-        return (await self.db.execute(stmt)).scalar() or 0
+        return (self.db.execute(stmt)).scalar() or 0
 
     async def search_grievances(
         self,
@@ -525,13 +525,13 @@ class OperationsFrontendService:
 
         # Count total
         count_stmt = select(func.count()).select_from(stmt.subquery())
-        total = (await self.db.execute(count_stmt)).scalar() or 0
+        total = (self.db.execute(count_stmt)).scalar() or 0
 
         # Sort and paginate
         stmt = stmt.order_by(Grievance.filed_date.desc())
         stmt = stmt.offset((page - 1) * per_page).limit(per_page)
 
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         grievances = list(result.unique().scalars().all())
 
         total_pages = (total + per_page - 1) // per_page
@@ -553,7 +553,7 @@ class OperationsFrontendService:
             )
         )
 
-        result = await self.db.execute(stmt)
+        result = self.db.execute(stmt)
         return result.scalar_one_or_none()
 
     @staticmethod
