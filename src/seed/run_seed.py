@@ -75,4 +75,6 @@ def run(force: bool = False):
 
 
 if __name__ == "__main__":
-    run()
+    import sys
+    force = "--force" in sys.argv
+    run(force=force)
