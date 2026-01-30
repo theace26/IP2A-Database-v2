@@ -94,4 +94,5 @@ ENV PORT=8000
 EXPOSE 8000
 
 # Run with gunicorn - use shell form so $PORT expands
-CMD gunicorn src.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${PORT}
+#CMD gunicorn src.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${PORT}
+CMD gunicorn src.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${PORT:-8000}
