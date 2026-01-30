@@ -133,7 +133,7 @@ Health endpoint: 200 {"status": "healthy", "version": "0.7.9"}
 ## Version
 
 **Current:** v0.7.9 (Week 10 Dues UI Complete)
-**After Deployment:** v0.8.0 (Production Ready)
+**After Deployment:** v0.8.0-alpha1 (Deployment Active)
 
 ---
 
