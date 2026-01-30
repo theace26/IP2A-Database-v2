@@ -386,7 +386,7 @@ if (evt.detail.pathInfo.requestPath === '/login') {
 - `src/templates/auth/login.html` - Changed endpoint and removed json-enc extension
 
 ### Commit
-- `[pending] fix: add form-based login endpoint to bypass json-enc extension`
+- `439e10c fix: add form-based login endpoint to bypass json-enc extension`
 
 ### Lessons Learned
 
