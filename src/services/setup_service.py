@@ -148,18 +148,25 @@ def create_setup_user(
     db.add(user)
     db.flush()
 
-    # Get the role
+    # Get the role - this should always exist from seeding
     db_role = db.execute(
         select(Role).where(Role.name == role.lower())
     ).scalar_one_or_none()
 
-    if db_role:
-        user_role = UserRole(
-            user_id=user.id,
-            role_id=db_role.id,
-            assigned_by="system_setup",
+    if not db_role:
+        # Role not found - this is a critical error, roles should be seeded
+        db.rollback()
+        raise ValueError(
+            f"Role '{role}' not found in database. Please ensure roles are seeded. "
+            "Run: python -m src.seed.run_seed"
         )
-        db.add(user_role)
+
+    user_role = UserRole(
+        user_id=user.id,
+        role_id=db_role.id,
+        assigned_by="system_setup",
+    )
+    db.add(user_role)
 
     # Optionally disable the default admin account
     if disable_default_admin_account:
