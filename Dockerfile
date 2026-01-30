@@ -1,4 +1,4 @@
-﻿# ============================
+# ============================
 # 1) BASE - Shared dependencies
 # ============================
 FROM python:3.12-slim-bookworm AS base
@@ -93,6 +93,5 @@ ENV PORT=8000
 # Expose port
 EXPOSE 8000
 
-# Run with gunicorn - use shell form so $PORT expands
-#CMD gunicorn src.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${PORT}
+# Run with gunicorn - shell form expands $PORT from Railway/Render
 CMD gunicorn src.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${PORT:-8000}
