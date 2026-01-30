@@ -6,7 +6,7 @@
     <title>{% block title %}IP2A{% endblock %} | IBEW Local 46</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='images/favicon.ico') }}">
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
 
     <!-- DaisyUI + Tailwind CSS (CDN - no build required) -->
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.6.0/dist/full.min.css" rel="stylesheet" type="text/css">
@@ -19,7 +19,7 @@
     <script defer src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js"></script>
 
     <!-- Custom styles -->
-    <link rel="stylesheet" href="{{ url_for('static', path='css/custom.css') }}">
+    <link rel="stylesheet" href="/static/css/custom.css">
 
     {% block head %}{% endblock %}
 </head>
@@ -61,7 +61,7 @@
     {% endblock %}
 
     <!-- Custom scripts -->
-    <script src="{{ url_for('static', path='js/app.js') }}"></script>
+    <script src="/static/js/app.js"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
