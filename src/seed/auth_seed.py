@@ -9,11 +9,12 @@ from src.db.enums import RoleType
 from src.core.security import hash_password
 
 
-# Default admin user - created on every deploy if not exists
+# Default super admin user - created on every deploy if not exists
+# This is the permanent demo/admin account
 DEFAULT_ADMIN = {
-    "email": "xerxes@ibew46.com",
-    "password": "W33k3nd!",
-    "first_name": "Xerxes",
+    "email": "admin@ibew46.com",
+    "password": "4dm1nf0R1b3w!",
+    "first_name": "Super",
     "last_name": "Admin",
 }
 
@@ -101,7 +102,7 @@ def seed_admin_user(db: Session) -> User | None:
         last_name=DEFAULT_ADMIN["last_name"],
         is_active=True,
         is_verified=True,  # Pre-verified for admin
-        must_change_password=True,  # Force password change on first login
+        must_change_password=False,  # No password change required for demo admin
     )
     db.add(user)
     db.flush()  # Get the user ID
