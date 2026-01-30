@@ -103,6 +103,71 @@ if (errorText === '[object Object]') {
 
 ---
 
+## Bug #002: Dashboard 500 Error - Dict Access in Navbar
+
+**Date Discovered:** 2026-01-30
+**Date Fixed:** 2026-01-30
+**Severity:** High (blocking dashboard access)
+**Status:** RESOLVED
+
+### Symptoms
+- User logs in successfully
+- Immediately sees 500 "Something Went Wrong" error page
+- Cannot access dashboard or any protected pages
+
+### Root Cause Analysis
+
+The navbar template used dot notation to access `current_user` attributes:
+
+```html
+<!-- WRONG - treating dict as object -->
+{{ current_user.first_name[0] if current_user else 'U' }}
+```
+
+But `current_user` is passed as a Python **dict**, not an object:
+
+```python
+# From auth_cookie.py
+current_user = {
+    "id": user.id,
+    "email": user.email,
+    "first_name": user.first_name,
+    ...
+}
+```
+
+Jinja2 can access dict keys with dot notation in some cases, but when the key doesn't exist, it raises `UndefinedError` instead of returning `None`.
+
+### Solution
+
+Changed to use `.get()` method for safe dict access:
+
+```html
+<!-- CORRECT - dict-style access with fallback -->
+{{ current_user.get('first_name', 'U')[0] if current_user else 'U' }}
+```
+
+### Files Modified
+- `src/templates/components/_navbar.html` - Lines 41, 46
+
+### Commit
+- `079d274 fix: use dict access for current_user in navbar template`
+
+### Lessons Learned
+
+1. **Jinja2 Dict vs Object Access**: When passing dicts to templates, use `.get()` for safe access with fallbacks.
+
+2. **Consistency in User Data**: Consider whether `current_user` should be a dict or a proper User object/dataclass throughout the codebase.
+
+3. **Error Visibility**: Railway logs showed the full stack trace - this was essential for diagnosis. Local testing didn't catch this because the test fixtures may differ from production flow.
+
+### Prevention
+- Use `.get()` method for all dict access in templates
+- Consider creating a UserContext dataclass for type safety
+- Add template rendering tests with mock user data
+
+---
+
 ## Template for New Bugs
 
 ```markdown

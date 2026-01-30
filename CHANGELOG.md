@@ -157,6 +157,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * Fix: Improved JavaScript error handling with better fallbacks and safeguard against `[object Object]` display
   * Files modified: `src/templates/base_auth.html`, `src/templates/auth/login.html`
 
+- **Dashboard 500 error - dict access in navbar** (Bug #002)
+  * Root cause: Navbar template used dot notation `current_user.first_name` but `current_user` is a dict
+  * Jinja2 raises `UndefinedError` when accessing missing dict keys with dot notation
+  * Fix: Changed to `.get()` method for safe dict access with fallbacks
+  * Files modified: `src/templates/components/_navbar.html`
+
 ### Changed
 - Updated CLAUDE.md with Week 10 Dues UI progress
 - Updated sidebar navigation with Dues dropdown menu (Overview, Rates, Periods, Payments, Adjustments)
