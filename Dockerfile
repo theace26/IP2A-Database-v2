@@ -78,6 +78,10 @@ RUN pip install --no-cache-dir gunicorn
 # Copy application code (baked into image for production)
 COPY src ./src
 COPY alembic.ini .
+COPY scripts ./scripts
+
+# Make startup script executable
+RUN chmod +x ./scripts/start.sh
 
 # Create uploads directory
 RUN mkdir -p /app/uploads
@@ -93,5 +97,5 @@ ENV PORT=8000
 # Expose port
 EXPOSE 8000
 
-# Run with gunicorn - shell form expands $PORT from Railway/Render
-CMD gunicorn src.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${PORT:-8000}
+# Use startup script (handles migrations + optional seeding + gunicorn)
+CMD ["./scripts/start.sh"]
