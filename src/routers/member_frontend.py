@@ -71,7 +71,11 @@ async def members_stats_partial(
 ):
     """HTMX partial: Return just the stats cards."""
     if isinstance(current_user, RedirectResponse):
-        return HTMLResponse("Session expired", status_code=401)
+        return HTMLResponse(
+            "Session expired",
+            status_code=401,
+            headers={"HX-Redirect": "/auth/login?next=/members"},
+        )
 
     service = MemberFrontendService(db)
     stats = await service.get_member_stats()
@@ -105,7 +109,11 @@ async def members_search_partial(
     Used for live search without full page reload.
     """
     if isinstance(current_user, RedirectResponse):
-        return HTMLResponse("Session expired", status_code=401)
+        return HTMLResponse(
+            "Session expired",
+            status_code=401,
+            headers={"HX-Redirect": "/auth/login?next=/members"},
+        )
 
     service = MemberFrontendService(db)
 
@@ -217,7 +225,11 @@ async def member_edit_modal(
 ):
     """HTMX partial: Return the edit modal content for a member."""
     if isinstance(current_user, RedirectResponse):
-        return HTMLResponse("Session expired", status_code=401)
+        return HTMLResponse(
+            "Session expired",
+            status_code=401,
+            headers={"HX-Redirect": "/auth/login?next=/members"},
+        )
 
     service = MemberFrontendService(db)
     member = await service.get_member_by_id(member_id)
@@ -249,7 +261,11 @@ async def member_employment_partial(
 ):
     """HTMX partial: Return employment history section."""
     if isinstance(current_user, RedirectResponse):
-        return HTMLResponse("Session expired", status_code=401)
+        return HTMLResponse(
+            "Session expired",
+            status_code=401,
+            headers={"HX-Redirect": "/auth/login?next=/members"},
+        )
 
     service = MemberFrontendService(db)
     employment_history = await service.get_employment_history(member_id)
@@ -273,7 +289,11 @@ async def member_dues_partial(
 ):
     """HTMX partial: Return dues summary section."""
     if isinstance(current_user, RedirectResponse):
-        return HTMLResponse("Session expired", status_code=401)
+        return HTMLResponse(
+            "Session expired",
+            status_code=401,
+            headers={"HX-Redirect": "/auth/login?next=/members"},
+        )
 
     service = MemberFrontendService(db)
     dues_summary = await service.get_member_dues_summary(member_id)

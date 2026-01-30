@@ -15,7 +15,38 @@ document.body.addEventListener('htmx:configRequest', function(evt) {
 // Handle HTMX errors globally
 document.body.addEventListener('htmx:responseError', function(evt) {
     console.error('HTMX Error:', evt.detail);
-    showToast('An error occurred. Please try again.', 'error');
+
+    var status = evt.detail.xhr ? evt.detail.xhr.status : 0;
+
+    // Handle 401 Unauthorized - redirect to login
+    if (status === 401) {
+        showToast('Session expired. Redirecting to login...', 'warning');
+        setTimeout(function() {
+            window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
+        }, 1000);
+        return;
+    }
+
+    // Handle 404 Not Found
+    if (status === 404) {
+        showToast('Feature not implemented yet. Check back later.', 'info');
+        return;
+    }
+
+    // Handle 403 Forbidden
+    if (status === 403) {
+        showToast('Access denied (403). You don\'t have permission to view this page.', 'error');
+        return;
+    }
+
+    // Handle 500 Server Error
+    if (status >= 500) {
+        showToast('Server error (' + status + '). Please try again later.', 'error');
+        return;
+    }
+
+    // Generic error with status code
+    showToast('Request failed (' + status + '). Please try again.', 'error');
 });
 
 // Handle HTMX after swap for flash messages

@@ -106,7 +106,11 @@ async def salting_search_partial(
 ):
     """HTMX partial: SALTing activities table body."""
     if isinstance(current_user, RedirectResponse):
-        return HTMLResponse("Session expired", status_code=401)
+        return HTMLResponse(
+            "Session expired",
+            status_code=401,
+            headers={"HX-Redirect": "/auth/login?next=/operations/salting"},
+        )
 
     service = OperationsFrontendService(db)
     activities, total, total_pages = await service.search_salting_activities(
@@ -217,7 +221,11 @@ async def benevolence_search_partial(
 ):
     """HTMX partial: Benevolence applications table body."""
     if isinstance(current_user, RedirectResponse):
-        return HTMLResponse("Session expired", status_code=401)
+        return HTMLResponse(
+            "Session expired",
+            status_code=401,
+            headers={"HX-Redirect": "/auth/login?next=/operations/benevolence"},
+        )
 
     service = OperationsFrontendService(db)
     applications, total, total_pages = await service.search_benevolence_applications(
@@ -326,7 +334,12 @@ async def grievances_search_partial(
 ):
     """HTMX partial: Grievances table body."""
     if isinstance(current_user, RedirectResponse):
-        return HTMLResponse("Session expired", status_code=401)
+        # For HTMX requests, use HX-Redirect header
+        return HTMLResponse(
+            "Session expired",
+            status_code=401,
+            headers={"HX-Redirect": "/auth/login?next=/operations/grievances"},
+        )
 
     service = OperationsFrontendService(db)
     grievances, total, total_pages = await service.search_grievances(

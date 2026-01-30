@@ -81,7 +81,11 @@ async def rates_search(
 ):
     """HTMX endpoint for rates table filtering."""
     if isinstance(current_user, RedirectResponse):
-        return HTMLResponse("Session expired", status_code=401)
+        return HTMLResponse(
+            "Session expired",
+            status_code=401,
+            headers={"HX-Redirect": "/auth/login?next=/dues"},
+        )
 
     classification_enum = None
     if classification:
@@ -155,7 +159,11 @@ async def periods_search(
 ):
     """HTMX endpoint for periods table filtering."""
     if isinstance(current_user, RedirectResponse):
-        return HTMLResponse("Session expired", status_code=401)
+        return HTMLResponse(
+            "Session expired",
+            status_code=401,
+            headers={"HX-Redirect": "/auth/login?next=/dues"},
+        )
 
     # Parse status filter
     is_closed = None
@@ -353,7 +361,11 @@ async def payments_search(
 ):
     """HTMX endpoint for payments table filtering."""
     if isinstance(current_user, RedirectResponse):
-        return HTMLResponse("Session expired", status_code=401)
+        return HTMLResponse(
+            "Session expired",
+            status_code=401,
+            headers={"HX-Redirect": "/auth/login?next=/dues"},
+        )
 
     # Parse status
     status_enum = None
@@ -512,7 +524,11 @@ async def adjustments_search(
 ):
     """HTMX endpoint for adjustments table filtering."""
     if isinstance(current_user, RedirectResponse):
-        return HTMLResponse("Session expired", status_code=401)
+        return HTMLResponse(
+            "Session expired",
+            status_code=401,
+            headers={"HX-Redirect": "/auth/login?next=/dues"},
+        )
 
     # Parse enums
     status_enum = None
