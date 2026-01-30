@@ -2,7 +2,7 @@
 One-time production database seeding.
 
 This module handles seeding the production database with initial data.
-It uses a marker record to ensure seeding only happens once.
+It clears existing data and seeds fresh.
 
 Usage:
     Set RUN_PRODUCTION_SEED=true environment variable
@@ -10,11 +10,11 @@ Usage:
 """
 
 from sqlalchemy.orm import Session
-from sqlalchemy import text
 from src.db.session import get_db_session
 from src.config.settings import settings
 
 from .base_seed import init_seed
+from .truncate_all import truncate_all_tables
 from .seed_instructors import seed_instructors
 from .seed_locations import seed_locations
 from .seed_students import seed_students
@@ -32,24 +32,9 @@ from .training_seed import run_training_seed
 from .dues_seed import run_dues_seed
 
 
-def check_seed_marker(db: Session) -> bool:
-    """
-    Check if the database has already been seeded.
-    Uses a simple check: if members table has any records, consider it seeded.
-    """
-    try:
-        result = db.execute(text("SELECT COUNT(*) FROM members")).scalar()
-        return result > 0
-    except Exception:
-        return False
-
-
 def run_production_seed():
     """
-    Run production seed if not already done.
-
-    This is safe to call multiple times - it checks for existing data
-    before seeding.
+    Run production seed - clears database and seeds fresh data.
     """
     env = settings.IP2A_ENV.lower()
 
@@ -61,16 +46,15 @@ def run_production_seed():
 
     db: Session = get_db_session()
 
-    # Check if already seeded
-    if check_seed_marker(db):
-        print("Database already has data. Skipping production seed.")
-        return
-
     print("=" * 60)
-    print("RUNNING ONE-TIME PRODUCTION DATABASE SEED")
+    print("RUNNING PRODUCTION DATABASE SEED")
     print("=" * 60)
 
     try:
+        # Clear all existing data
+        print("\n[0/12] Clearing existing data...")
+        truncate_all_tables(db)
+
         init_seed(42)  # Consistent seed for reproducibility
 
         # Auth seeds FIRST (roles and default admin)
@@ -85,19 +69,19 @@ def run_production_seed():
 
         # Instructors
         print("\n[3/12] Seeding instructors...")
-        seed_instructors(db, count=25)
+        seed_instructors(db, count=50)
 
         # Organizations (employers)
         print("\n[4/12] Seeding organizations...")
-        seed_organizations(db, count=15)
+        seed_organizations(db, count=50)
 
         # Organization contacts
         print("\n[5/12] Seeding organization contacts...")
-        seed_organization_contacts(db, contacts_per_org=2)
+        seed_organization_contacts(db, contacts_per_org=3)
 
         # Members
         print("\n[6/12] Seeding members...")
-        seed_members(db, count=50)
+        seed_members(db, count=500)
 
         # Member employments
         print("\n[7/12] Seeding member employments...")
@@ -105,15 +89,15 @@ def run_production_seed():
 
         # Students (linked to members)
         print("\n[8/12] Seeding students...")
-        seed_students(db, count=30)
+        seed_students(db, count=200)
 
         # Cohorts
         print("\n[9/12] Seeding cohorts...")
-        seed_cohorts(db, count=5)
+        seed_cohorts(db, count=10)
 
         # Training system data
         print("\n[10/12] Seeding training system...")
-        run_training_seed(db, num_students=15)
+        run_training_seed(db, num_students=100)
 
         # Phase 2 - Union operations (SALTing, Benevolence, Grievances)
         print("\n[11/12] Seeding union operations...")
