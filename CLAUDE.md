@@ -2,7 +2,7 @@
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
 **Last Updated:** January 30, 2026
-**Current Version:** v0.8.0-rc1
+**Current Version:** v0.8.0-alpha1
 **Current Phase:** Deployment Active - Railway Live (with expanded seed data)
 
 ---

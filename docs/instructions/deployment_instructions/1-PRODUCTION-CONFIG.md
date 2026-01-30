@@ -486,8 +486,8 @@ git merge develop
 git push origin main
 
 # Tag the production-ready release
-git tag -a v0.8.0-rc1 -m "Release candidate: production config ready"
-git push origin v0.8.0-rc1
+git tag -a v0.8.0-alpha1 -m "Alpha release: production config ready"
+git push origin v0.8.0-alpha1
 
 # Return to develop for future work
 git checkout develop

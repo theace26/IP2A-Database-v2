@@ -573,7 +573,7 @@ The following fixes are now in `origin/main` and ready:
 
 ### Version
 
-**Current:** v0.8.0-rc1 (Deployment Active)
+**Current:** v0.8.0-alpha1 (Deployment Active)
 **Status:** Railway deployment live, production seed pending
 
 ---
