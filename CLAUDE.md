@@ -1,9 +1,9 @@
 # IP2A-Database-v2: Project Context Document
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
-**Last Updated:** January 30, 2026
-**Current Version:** v0.8.1-alpha
-**Current Phase:** Stripe Integration & Audit Infrastructure Complete
+**Last Updated:** January 31, 2026
+**Current Version:** v0.8.2-alpha
+**Current Phase:** Audit UI, Member Notes & Profile Management Complete
 
 ---
 
@@ -49,6 +49,8 @@
 | Week 8 | Reports & Export | Done |
 | Week 9 | Documents Frontend | Done |
 | Week 10 | Dues UI | Done |
+| Week 11 | Audit UI & Member Notes | Done |
+| Week 12 | Profile & Settings | Done |
 
 ### Frontend Tests: 167 tests
 
@@ -1297,6 +1299,118 @@ src/main.py                          # Registered member_notes router
 
 ---
 
+## Week 11 Session B: Audit UI & Role Permissions (January 31, 2026)
+
+**Status:** ✅ **COMPLETE** - Audit log viewer with role-based access and field redaction
+
+### Overview
+
+Implements audit log viewer UI with role-based permissions and sensitive field redaction. Staff can view audit history filtered by permission level, with automatic masking for non-admin users.
+
+**Instruction Documents:** `docs/instructions/week12_istructions/WEEK11_SESSION_B_AUDIT_UI.md`
+
+### Implementation Status
+
+**Files Created:**
+```
+src/core/permissions.py
+src/services/audit_frontend_service.py
+src/routers/audit_frontend.py
+src/templates/admin/audit_logs.html
+src/templates/admin/audit_detail.html
+src/templates/admin/partials/_audit_table.html
+src/templates/components/_audit_history.html
+src/tests/test_audit_frontend.py
+```
+
+**Files Modified:**
+```
+src/main.py                              # Registered audit_frontend router
+src/templates/components/_sidebar.html   # Added Audit Logs link (admin/officer only)
+src/routers/dependencies/auth_cookie.py  # Added get_current_user_model dependency
+src/tests/conftest.py                    # Added test_user, auth_headers, test_member fixtures
+```
+
+### Key Features
+
+- **Role-Based Permissions**: VIEW_OWN, VIEW_MEMBERS, VIEW_USERS, VIEW_ALL, EXPORT
+- **Sensitive Field Redaction**: Non-admin users see [REDACTED] for SSN, passwords, etc.
+- **HTMX Filtering**: Filter by table, action, date range, search query
+- **CSV Export**: Admin-only export of audit logs
+- **Detail View**: Before/after value comparison for updates
+
+---
+
+## Week 11 Session C: Inline History & Member Notes UI (January 31, 2026)
+
+**Status:** ✅ **COMPLETE** - Member notes and audit history inline display
+
+### Overview
+
+Adds inline audit history to entity detail pages and member notes UI. Users see recent activity directly on member pages with HTMX loading.
+
+**Instruction Documents:** `docs/instructions/week12_istructions/WEEK11_SESSION_C_INLINE_HISTORY.md`
+
+### Implementation Status
+
+**Files Created:**
+```
+src/templates/members/partials/_notes_list.html
+src/templates/members/partials/_add_note_modal.html
+```
+
+**Files Modified:**
+```
+src/templates/members/detail.html       # Added Notes and Audit History sections
+src/templates/components/_audit_history.html  # Updated to timeline style
+src/routers/member_frontend.py          # Added notes GET/POST endpoints
+```
+
+### Key Features
+
+- **Inline Audit History**: Timeline display on member detail pages
+- **Member Notes**: Add/view/delete with visibility controls
+- **HTMX Loading**: Notes and history load asynchronously
+- **Visibility Levels**: staff_only, officers, all_authorized
+- **Note Categories**: contact, dues, grievance, referral, training, general
+
+---
+
+## Week 12 Session A: User Profile & Settings (January 31, 2026)
+
+**Status:** ✅ **COMPLETE** - Profile management and password change
+
+### Overview
+
+Implements user profile view and password change functionality with audit logging.
+
+**Instruction Documents:** `docs/instructions/week12_istructions/WEEK12_SESSION_A_SETTINGS_PROFILE.md`
+
+### Implementation Status
+
+**Files Created:**
+```
+src/services/profile_service.py
+src/routers/profile_frontend.py
+src/templates/profile/index.html
+src/templates/profile/change_password.html
+```
+
+**Files Modified:**
+```
+src/main.py  # Registered profile_frontend router
+```
+
+### Key Features
+
+- **Profile View**: Display user info, roles, and activity summary
+- **Password Change**: Secure password update with current password verification
+- **Activity Tracking**: Show user's actions from audit logs (past 7 days)
+- **Password Validation**: Minimum 8 characters, must be different from current
+- **Audit Logging**: Password changes logged without exposing actual passwords
+
+---
+
 ## Phase 6 Week 4 Files Created/Modified
 
 ### New Files
@@ -1332,3 +1446,86 @@ src/templates/components/_sidebar.html  # Training nav already present
 ---
 
 *Welcome to IP2A. Let's build something that lasts.*
+
+---
+
+## Week 11 Session B: Audit UI & Role Permissions (January 31, 2026)
+
+**Status:** ✅ **COMPLETE** - Audit log viewer with role-based access and field redaction
+
+### Overview
+
+Implements audit log viewer UI with role-based permissions and sensitive field redaction. Staff can view audit history filtered by permission level, with automatic masking for non-admin users.
+
+### Key Features
+
+- **Role-Based Permissions**: VIEW_OWN, VIEW_MEMBERS, VIEW_USERS, VIEW_ALL, EXPORT
+- **Sensitive Field Redaction**: Non-admin users see [REDACTED] for SSN, passwords, etc.
+- **HTMX Filtering**: Filter by table, action, date range, search query
+- **CSV Export**: Admin-only export of audit logs
+
+### Files Created
+
+```
+src/core/permissions.py
+src/services/audit_frontend_service.py
+src/routers/audit_frontend.py
+src/templates/admin/{audit_logs.html,audit_detail.html}
+src/templates/admin/partials/_audit_table.html
+src/tests/test_audit_frontend.py
+```
+
+---
+
+## Week 11 Session C: Inline History & Member Notes UI (January 31, 2026)
+
+**Status:** ✅ **COMPLETE** - Member notes and audit history inline display
+
+### Overview
+
+Adds inline audit history to entity detail pages and member notes UI. Users see recent activity directly on member pages.
+
+### Key Features
+
+- **Inline Audit History**: Timeline display on member detail pages
+- **Member Notes**: Add/view/delete with visibility controls  
+- **HTMX Loading**: Notes and history load asynchronously
+- **Visibility Levels**: staff_only, officers, all_authorized
+
+### Files Created
+
+```
+src/templates/members/partials/{_notes_list.html,_add_note_modal.html}
+```
+
+---
+
+## Week 12 Session A: User Profile & Settings (January 31, 2026)
+
+**Status:** ✅ **COMPLETE** - Profile management and password change
+
+### Overview
+
+Implements user profile view and password change functionality with audit logging.
+
+### Key Features
+
+- **Profile View**: Display user info, roles, and activity summary
+- **Password Change**: Secure password update with validation
+- **Activity Tracking**: Show user's actions from audit logs
+- **Audit Logging**: Password changes logged without exposing passwords
+
+### Files Created
+
+```
+src/services/profile_service.py
+src/routers/profile_frontend.py
+src/templates/profile/{index.html,change_password.html}
+```
+
+---
+
+**Version:** v0.8.2-alpha
+
+**Sessions Complete Today:** Week 11 B, C + Week 12 A
+

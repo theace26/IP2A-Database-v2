@@ -101,6 +101,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * Updated docs/decisions/README.md with ADR-012 and ADR-013
   * Implementation components defined (PaymentService, webhook router, migrations)
 
+- **Week 11 Session B: Audit UI & Role Permissions** (January 31, 2026)
+  * Created src/core/permissions.py with AuditPermission enum and role-based permission mapping
+  * Defined audit permissions: VIEW_OWN, VIEW_MEMBERS, VIEW_USERS, VIEW_ALL, EXPORT
+  * Role mappings: staff (view own), officer (view members/users), admin (view all + export)
+  * Implemented redact_sensitive_fields() for non-admin users (SSN, passwords, etc.)
+  * Created src/services/audit_frontend_service.py with role-based audit log queries
+  * Service determines user's primary role (highest privilege) for filtering
+  * Filtering by table, action, date range, search query
+  * Created src/routers/audit_frontend.py with audit log frontend routes
+  * GET /admin/audit-logs - main audit viewer page with stats and filters
+  * GET /admin/audit-logs/search - HTMX endpoint for filtered/paginated results
+  * GET /admin/audit-logs/detail/{log_id} - detailed view with before/after comparison
+  * GET /admin/audit-logs/export - CSV export (admin only)
+  * GET /admin/audit-logs/entity/{table_name}/{record_id} - inline entity history
+  * Created src/templates/admin/audit_logs.html - main audit page with stats cards and filters
+  * Stats: total logs, logs this week, logs today
+  * HTMX-powered filters with live search (300ms debounce)
+  * Created src/templates/admin/audit_detail.html - log detail page with JSON diff view
+  * Created src/templates/admin/partials/_audit_table.html - paginated table with action badges
+  * Created src/templates/components/_audit_history.html - reusable timeline component
+  * DaisyUI timeline-vertical layout with color-coded action indicators
+  * Updated src/templates/components/_sidebar.html with Audit Logs link (admin/officer only)
+  * Created src/tests/test_audit_frontend.py with 20 comprehensive tests
+  * Tests cover role permissions, redaction, filtering, CSV export, inline history
+  * Fixed import error in member_notes.py (get_current_active_user → get_current_user)
+  * Added missing test fixtures to conftest.py (auth_headers, test_user, test_member)
+  * Created get_current_user_model() dependency in auth_cookie.py for full User object access
+  * Total new tests: 20 (audit frontend)
+
+- **Week 11 Session C: Inline History & Member Notes UI** (January 31, 2026)
+  * Created src/templates/members/partials/_notes_list.html - member notes display with visibility badges
+  * Notes filtered by role: staff sees own, officers see all staff+officer, admin sees all
+  * Visibility badges: staff_only (warning), officers (info), all_authorized (success)
+  * Role-based delete button (creator or admin only)
+  * Empty state with helpful message
+  * Created src/templates/members/partials/_add_note_modal.html - modal for creating notes
+  * Visibility selector: staff_only, officers, all_authorized
+  * Category selector: contact, dues, grievance, referral, training, general
+  * HTMX post with automatic refresh via custom event
+  * Updated src/templates/members/detail.html with Notes and Audit History sections
+  * Notes section with HTMX loading on page load and notes-updated event
+  * Audit History section with DaisyUI timeline component
+  * Add Note modal integrated into detail page
+  * Updated src/templates/components/_audit_history.html to use DaisyUI timeline-vertical
+  * Color-coded timeline entries: CREATE (success), UPDATE (warning), DELETE (error)
+  * Shows changed fields and notes for each audit entry
+  * Link to full audit log history for the entity
+  * Added notes endpoints to src/routers/member_frontend.py
+  * GET /members/{member_id}/notes-list - HTMX endpoint returning notes list
+  * POST /members/{member_id}/notes - HTMX endpoint creating new note
+  * Both endpoints use SyncSession for notes service compatibility
+  * Format notes for template display (convert model to dict)
+  * Handle RedirectResponse for expired sessions with HX-Redirect header
+  * Total new functionality: Notes UI, inline audit timeline, enhanced member detail page
+
+- **Week 12 Session A: User Profile & Settings** (January 31, 2026)
+  * Created src/services/profile_service.py with ProfileService class
+  * change_password() method with validation: current password verification, minimum 8 chars, different from old
+  * Password changes trigger must_change_password = False
+  * get_user_activity_summary() queries audit logs for past 7 days
+  * Returns action counts and recent activity for profile display
+  * Created src/routers/profile_frontend.py with profile management routes
+  * GET /profile - user profile view page
+  * GET /profile/change-password - change password form
+  * POST /profile/change-password - process password change with validation
+  * Uses get_current_user_model() dependency for full User object access
+  * Flash messages for success/error feedback
+  * Created src/templates/profile/index.html - profile information display
+  * Account info card: email, name, roles
+  * Account security card with password change link
+  * Activity summary card showing actions this week from audit log
+  * User roles display with badges
+  * Created src/templates/profile/change_password.html - password change form
+  * Three fields: current password, new password, confirm password
+  * Password requirements alert (minimum 8 characters, must be different)
+  * Error message display for validation failures
+  * Form validation with minlength=8
+  * Registered profile_frontend_router in src/main.py at /profile route
+  * Password changes automatically logged via audit system
+  * Total new functionality: User profile page, password change flow, activity tracking
+
 - **Project Documentation Updates** (January 30, 2026)
   * Updated CLAUDE.md with documentation standardization and Stripe planning sections
   * Updated CONTINUITY.md with Recent Updates section and latest status
