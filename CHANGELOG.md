@@ -8,6 +8,106 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Branching Strategy Established** (January 30, 2026)
+  * Created `develop` branch for ongoing development
+  * Frozen `main` branch at v0.8.0-alpha1 for Railway demo stability
+  * All development now occurs on `develop` branch
+  * `main` branch only updated when ready to deploy to Railway
+  * Updated CLAUDE.md and CONTINUITY.md with branching workflow
+  * Session workflow documentation updated to reflect new branch strategy
+
+- **Stripe Payment Integration - Phase 1 Backend** (January 30, 2026)
+  * Implemented PaymentService for creating Stripe Checkout Sessions
+  * Created Stripe webhook handler at /webhooks/stripe endpoint
+  * Webhook handles: checkout.session.completed, checkout.session.expired, payment_intent.succeeded, payment_intent.payment_failed, charge.refunded
+  * Added Stripe configuration to src/config/settings.py (STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY, STRIPE_WEBHOOK_SECRET)
+  * Added stripe>=8.0.0 to requirements.txt
+  * Updated .env.example with Stripe environment variables
+  * Registered Stripe webhook router in src/main.py
+  * Created src/services/payment_service.py with Checkout Session creation, session retrieval, customer ID management, webhook event verification
+  * Created src/routers/webhooks/ directory structure
+  * Created src/routers/webhooks/stripe_webhook.py with full webhook event handling
+  * Webhook verifies signature for security (no authentication needed)
+  * Payment records automatically created in DuesPayment table on successful payment
+  * Supports credit/debit cards and ACH bank transfers via Stripe
+  * Next phase: Database migrations (stripe_customer_id field), frontend integration, success/cancel pages
+
+- **Documentation Standardization** (January 30, 2026)
+  * Standardized "End-of-Session Documentation" reminder added to all 55 instruction documents
+  * Updated 10 MASTER instruction files with mandatory documentation checklist
+  * Updated 32 session-specific instruction files
+  * Updated 6 Week 1 instruction files
+  * Updated 6 deployment instruction files
+  * Updated INSTRUCTION_TEMPLATE.md for future instruction documents
+  * All instruction docs now include reminder to update CHANGELOG, ADRs, session logs, etc.
+  * Ensures historical record-keeping and "bus factor" protection
+
+- **Stripe Payment Integration Planning** (January 30, 2026)
+  * ADR-013: Stripe Payment Integration architecture decision
+  * Decision: Use Stripe Checkout Sessions for online dues payment
+  * Payment methods: Credit/debit cards (2.9% + $0.30), ACH bank transfers (0.8%, $5 cap)
+  * Webhook verification strategy for payment confirmation
+  * Test mode setup documented (Stripe CLI, test cards, test bank accounts)
+
+- **Stripe Payment Integration - Phase 2 Database** (January 30, 2026)
+  * Created migration f1a2b3c4d5e6 to add stripe_customer_id to members table
+  * Added stripe_customer_id column (VARCHAR(100), unique, indexed)
+  * Updated Member model with stripe_customer_id field
+  * Updated Member schema to include stripe_customer_id in read operations
+  * Created migration g2b3c4d5e6f7 to add Stripe payment methods to DuesPaymentMethod enum
+  * Added STRIPE_CARD, STRIPE_ACH, STRIPE_OTHER enum values
+  * Fixed webhook handler bug: changed DuesPaymentStatus.COMPLETED to PAID
+  * Created src/tests/test_stripe_integration.py with 11 integration tests
+  * Tests cover PaymentService, webhook handling, model updates, enum validation
+  * Database ready for Stripe customer tracking and payment method classification
+
+- **Stripe Payment Integration - Phase 3 Frontend** (January 30, 2026)
+  * Added payment initiation endpoint POST /dues/payments/initiate/{member_id}/{period_id}
+  * Endpoint creates Stripe Checkout Session and redirects to Stripe hosted page
+  * Added success page GET /dues/payments/success with optional session retrieval
+  * Added cancel page GET /dues/payments/cancel for abandoned checkouts
+  * Created src/templates/dues/payments/success.html with payment confirmation UI
+  * Created src/templates/dues/payments/cancel.html with retry options
+  * Added "Pay Now Online" button to member payment history page (when balance > 0)
+  * Button triggers Stripe Checkout flow with member's current dues rate
+  * Added get_rate_for_member() method to DuesFrontendService
+  * Updated payment method display names to include "Stripe (Card)", "Stripe (ACH)", "Stripe (Other)"
+  * Created src/tests/test_stripe_frontend.py with 14 frontend tests
+  * Tests cover payment initiation, success/cancel pages, rate lookup, display formatting
+  * Complete end-to-end payment flow: Member → Pay button → Stripe → Webhook → Database
+
+- **Week 11 Session A: Audit Infrastructure** (January 30, 2026)
+  * Created migration h3c4d5e6f7g8 to add immutability triggers to audit_logs table
+  * Implemented prevent_audit_modification() PostgreSQL trigger function
+  * Added BEFORE UPDATE and BEFORE DELETE triggers to audit_logs (NLRA compliance)
+  * Triggers prevent any modification or deletion of audit records (7-year retention)
+  * Created src/tests/test_audit_immutability.py with 4 tests verifying trigger enforcement
+  * Created MemberNote model for staff documentation about members
+  * Implemented NoteVisibility levels: staff_only, officers, all_authorized
+  * Created migration i4d5e6f7g8h9 to add member_notes table
+  * Table includes: id, member_id, created_by_id, note_text, visibility, category, soft delete fields
+  * Created src/schemas/member_note.py with Pydantic schemas
+  * Created src/services/member_note_service.py with full CRUD operations
+  * Service implements role-based visibility filtering (Admin/Officer/Staff permissions)
+  * All member note operations automatically logged via audit_service
+  * Created src/routers/member_notes.py with REST API endpoints
+  * Registered router at /api/v1/member-notes
+  * Added member_notes to AUDITED_TABLES in audit_service.py
+  * Updated Member model with notes relationship
+  * Created src/tests/test_member_notes.py with 15 comprehensive tests
+  * Tests cover model, service, API endpoints, visibility filtering, soft delete
+  * Total new tests: 19 (4 immutability + 15 member notes)
+  * Future phases planned: Subscriptions, payment plans, customer portal, QuickBooks sync
+  * Updated docs/decisions/README.md with ADR-012 and ADR-013
+  * Implementation components defined (PaymentService, webhook router, migrations)
+
+- **Project Documentation Updates** (January 30, 2026)
+  * Updated CLAUDE.md with documentation standardization and Stripe planning sections
+  * Updated CONTINUITY.md with Recent Updates section and latest status
+  * Updated CONTINUITY.md Last Updated date to 2026-01-30
+  * Updated ADR count from 11 to 13 in CLAUDE.md status line
+  * Created comprehensive session log: 2026-01-30-documentation-standardization.md
+
 - **Production Database Seeding Expansion** (January 30, 2026)
   * Increased seed counts: 1000 members, 500 students, 100 organizations, 75 instructors
   * Added `seed_grants.py` - 10 grant/funding source records

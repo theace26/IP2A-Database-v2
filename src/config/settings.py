@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     S3_BUCKET_NAME: str = "ip2a-documents"
     S3_REGION: str = "us-east-1"
 
+    # Stripe Payment Processing
+    STRIPE_SECRET_KEY: Optional[str] = None
+    STRIPE_PUBLISHABLE_KEY: Optional[str] = None
+    STRIPE_WEBHOOK_SECRET: Optional[str] = None
+
     # Feature flags
     ENABLE_DOCS: bool = True  # Swagger UI
 

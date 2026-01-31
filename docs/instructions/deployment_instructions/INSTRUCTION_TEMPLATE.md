@@ -33,38 +33,19 @@
 ```markdown
 ---
 
-## Documentation Update (End of Session)
+## 📝 End-of-Session Documentation (REQUIRED)
 
-**CRITICAL:** Before committing, update *ANY* and *ALL* relevant documents to capture progress made this session.
+> ⚠️ **DO NOT skip this step.** Update *ANY* and *ALL* relevant documents to capture progress made this session.
 
-### Scan and Update
+### Before Ending This Session:
 
-1. **Scan `/docs/*`** for any documents that need updates:
-   - `/docs/guides/` - Update if workflow changed
-   - `/docs/reference/` - Update if API/CLI changed
-   - `/docs/architecture/` - Update if design changed
-   - `/docs/decisions/` - Create or update ADRs if architectural decisions were made
+1. **Scan `/docs/*`** - Review all documentation files
+2. **Update existing docs** - Reflect changes, progress, and decisions
+3. **Create new docs** - If needed for new components or concepts
+4. **ADR Review** - Update or create Architecture Decision Records as necessary
+5. **Session log entry** - Record what was accomplished
 
-2. **Required Updates:**
-   - [ ] `CHANGELOG.md` - Add entry for this session
-   - [ ] `CLAUDE.md` - Update version, test count, current state
-   - [ ] `docs/IP2A_MILESTONE_CHECKLIST.md` - Mark tasks complete
-   - [ ] Session log in `docs/reports/session-logs/`
-
-3. **ADR Check:**
-   - Did you make an architectural decision? → Create/update ADR
-   - Did you change an existing pattern? → Update related ADR
-   - Did you reject an alternative approach? → Document in ADR
-
-### Documentation Checklist
-
-Before committing:
-- [ ] CHANGELOG.md updated
-- [ ] CLAUDE.md version and stats current
-- [ ] Milestone checklist reflects completed tasks
-- [ ] Any new ADRs created (if needed)
-- [ ] Session log created
-- [ ] Relevant guide/reference docs updated
+This ensures historical record-keeping and project continuity ("bus factor" protection).
 ```
 
 ---
@@ -140,30 +121,19 @@ git checkout develop
 
 ---
 
-## Documentation Update (End of Session)
+## 📝 End-of-Session Documentation (REQUIRED)
 
-**CRITICAL:** Before committing, update *ANY* and *ALL* relevant documents.
+> ⚠️ **DO NOT skip this step.** Update *ANY* and *ALL* relevant documents to capture progress made this session.
 
-### Scan and Update
+### Before Ending This Session:
 
-1. **Scan `/docs/*`** for documents needing updates
-2. **Required Updates:**
-   - [ ] `CHANGELOG.md` - Add Week 11 Session A entry
-   - [ ] `CLAUDE.md` - Update to v0.7.10, ~345 tests
-   - [ ] `docs/IP2A_MILESTONE_CHECKLIST.md` - Mark Session A tasks done
-   - [ ] `docs/reports/session-logs/2026-XX-XX-week11-session-a.md` - Create log
+1. **Scan `/docs/*`** - Review all documentation files
+2. **Update existing docs** - Reflect changes, progress, and decisions
+3. **Create new docs** - If needed for new components or concepts
+4. **ADR Review** - Update or create Architecture Decision Records as necessary
+5. **Session log entry** - Record what was accomplished
 
-3. **ADR Check:**
-   - Audit patterns documented in ADR-008? → Verify still accurate
-   - New pattern introduced? → Update ADR-008 or create new ADR
-
-### Documentation Checklist
-
-Before committing:
-- [ ] CHANGELOG.md updated
-- [ ] CLAUDE.md version and stats current
-- [ ] Milestone checklist reflects completed tasks
-- [ ] Session log created
+This ensures historical record-keeping and project continuity ("bus factor" protection).
 ```
 
 ---

@@ -7,15 +7,19 @@
 
 ---
 
-## Important: Documentation Updates
+## 📝 End-of-Session Documentation (REQUIRED)
 
-**Add this instruction to ALL future instruction documents:**
+> ⚠️ **DO NOT skip this step.** Update *ANY* and *ALL* relevant documents to capture progress made this session.
 
-> **Documentation Maintenance (End of Every Session):**
-> Update *ANY* and *ALL* relevant documents to capture progress made this session.
-> Scan `/docs/*` and make or create any relevant updates/documents to keep a
-> historical record as the project progresses. Do not forget about ADRs—update
-> as necessary.
+### Before Ending This Session:
+
+1. **Scan `/docs/*`** - Review all documentation files
+2. **Update existing docs** - Reflect changes, progress, and decisions
+3. **Create new docs** - If needed for new components or concepts
+4. **ADR Review** - Update or create Architecture Decision Records as necessary
+5. **Session log entry** - Record what was accomplished
+
+This ensures historical record-keeping and project continuity ("bus factor" protection).
 
 ---
 

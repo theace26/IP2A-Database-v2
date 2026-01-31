@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Logs - Admin{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold">Audit Logs</h1>
+            <p class="text-gray-600">View system activity and change history</p>
+        </div>
+        {% if can_export %}
+        <a href="/admin/audit-logs/export?table_name={{ selected_table or '' }}&action={{ selected_action or '' }}&date_from={{ selected_date_from or '' }}&date_to={{ selected_date_to or '' }}"
+           class="btn btn-outline btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Export CSV
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats stats-vertical lg:stats-horizontal shadow w-full">
+        <div class="stat">
+            <div class="stat-title">Total Logs</div>
+            <div class="stat-value">{{ "{:,}".format(stats.total_logs) }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">This Week</div>
+            <div class="stat-value text-primary">{{ "{:,}".format(stats.logs_this_week) }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-title">Today</div>
+            <div class="stat-value text-secondary">{{ "{:,}".format(stats.logs_today) }}</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title text-lg">Filters</h2>
+            <form class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+                  hx-get="/admin/audit-logs/search"
+                  hx-target="#audit-table-container"
+                  hx-trigger="change, input delay:300ms from:input[name='search']">
+
+                <!-- Table Filter -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Table</span></label>
+                    <select name="table_name" class="select select-bordered">
+                        <option value="">All Tables</option>
+                        {% for table in available_tables %}
+                        <option value="{{ table }}" {% if table == selected_table %}selected{% endif %}>
+                            {{ table }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Action Filter -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Action</span></label>
+                    <select name="action" class="select select-bordered">
+                        <option value="">All Actions</option>
+                        {% for action in action_types %}
+                        <option value="{{ action }}" {% if action == selected_action %}selected{% endif %}>
+                            {{ action }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Date From -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text">From Date</span></label>
+                    <input type="date" name="date_from" class="input input-bordered"
+                           value="{{ selected_date_from or '' }}">
+                </div>
+
+                <!-- Date To -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text">To Date</span></label>
+                    <input type="date" name="date_to" class="input input-bordered"
+                           value="{{ selected_date_to or '' }}">
+                </div>
+
+                <!-- Search -->
+                <div class="form-control md:col-span-2">
+                    <label class="label"><span class="label-text">Search</span></label>
+                    <input type="text" name="search" placeholder="Search by user, table, or notes..."
+                           class="input input-bordered" value="{{ search_query or '' }}">
+                </div>
+
+                <!-- Clear Button -->
+                <div class="form-control justify-end">
+                    <a href="/admin/audit-logs" class="btn btn-ghost">Clear Filters</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Audit Log Table -->
+    <div id="audit-table-container">
+        {% include "admin/partials/_audit_table.html" %}
+    </div>
+</div>
+{% endblock %}

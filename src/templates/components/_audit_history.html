@@ -1,0 +1,64 @@
+<!-- Audit History Component - Can be loaded via HTMX -->
+<div class="space-y-3">
+    {% if logs %}
+        {% for log in logs %}
+        <div class="card bg-base-200 shadow-sm">
+            <div class="card-body p-4">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            {% if log.action == 'CREATE' %}
+                            <span class="badge badge-success badge-sm">{{ log.action }}</span>
+                            {% elif log.action == 'UPDATE' %}
+                            <span class="badge badge-warning badge-sm">{{ log.action }}</span>
+                            {% elif log.action == 'DELETE' %}
+                            <span class="badge badge-error badge-sm">{{ log.action }}</span>
+                            {% else %}
+                            <span class="badge badge-sm">{{ log.action }}</span>
+                            {% endif %}
+                            <span class="text-sm text-gray-600">
+                                by {{ log.changed_by or 'System' }}
+                            </span>
+                        </div>
+
+                        {% if log.changed_fields and log.changed_fields|length > 0 %}
+                        <div class="text-sm">
+                            <span class="font-medium">Changed:</span>
+                            {% for field in log.changed_fields[:5] %}
+                                <span class="badge badge-outline badge-xs">{{ field }}</span>
+                            {% endfor %}
+                            {% if log.changed_fields|length > 5 %}
+                                <span class="text-xs text-gray-500">+{{ log.changed_fields|length - 5 }} more</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        {% if log.notes %}
+                        <div class="text-sm text-gray-600 mt-1">
+                            {{ log.notes }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="text-right text-sm text-gray-500">
+                        {{ log.changed_at[:19].replace('T', ' ') if log.changed_at else 'N/A' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if logs|length >= 10 %}
+        <div class="text-center">
+            <a href="/admin/audit-logs?table_name={{ table_name }}&record_id={{ record_id }}"
+               class="btn btn-sm btn-ghost">
+                View All History →
+            </a>
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="text-center text-gray-500 py-4">
+            No audit history available
+        </div>
+    {% endif %}
+</div>

@@ -20,6 +20,7 @@ class AuditAction:
 # Tables that should be audited (user-related data)
 AUDITED_TABLES = {
     "members",
+    "member_notes",        # Staff notes about members (Week 11)
     "students",
     "instructors",
     "users",

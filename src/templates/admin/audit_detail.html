@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} - Admin{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/admin/audit-logs">Audit Logs</a></li>
+            <li>Log #{{ log.id }}</li>
+        </ul>
+    </div>
+
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold">Audit Log #{{ log.id }}</h1>
+        <a href="/admin/audit-logs" class="btn btn-ghost">← Back to Logs</a>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Summary</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                    <div class="text-sm text-gray-500">Table</div>
+                    <div class="font-medium">{{ log.table_name }}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-500">Record ID</div>
+                    <div class="font-mono">{{ log.record_id }}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-500">Action</div>
+                    <div>
+                        {% if log.action == 'CREATE' %}
+                        <span class="badge badge-success badge-lg">{{ log.action }}</span>
+                        {% elif log.action == 'UPDATE' %}
+                        <span class="badge badge-warning badge-lg">{{ log.action }}</span>
+                        {% elif log.action == 'DELETE' %}
+                        <span class="badge badge-error badge-lg">{{ log.action }}</span>
+                        {% else %}
+                        <span class="badge badge-lg">{{ log.action }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-500">Changed By</div>
+                    <div class="font-medium">{{ log.changed_by or 'System' }}</div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-500">Timestamp</div>
+                    <div>{{ log.changed_at[:19].replace('T', ' ') if log.changed_at else 'N/A' }}</div>
+                </div>
+                {% if log.ip_address %}
+                <div>
+                    <div class="text-sm text-gray-500">IP Address</div>
+                    <div class="font-mono text-sm">{{ log.ip_address }}</div>
+                </div>
+                {% endif %}
+                {% if log.notes %}
+                <div class="col-span-2">
+                    <div class="text-sm text-gray-500">Notes</div>
+                    <div>{{ log.notes }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Values Comparison -->
+    {% if log.action == 'UPDATE' %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Old Values -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h2 class="card-title text-error">Before (Old Values)</h2>
+                <pre class="bg-base-200 p-4 rounded-lg overflow-x-auto text-sm">{{ log.old_values | tojson(indent=2) if log.old_values else 'N/A' }}</pre>
+            </div>
+        </div>
+
+        <!-- New Values -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h2 class="card-title text-success">After (New Values)</h2>
+                <pre class="bg-base-200 p-4 rounded-lg overflow-x-auto text-sm">{{ log.new_values | tojson(indent=2) if log.new_values else 'N/A' }}</pre>
+            </div>
+        </div>
+    </div>
+    {% elif log.action == 'CREATE' %}
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title text-success">Created Values</h2>
+            <pre class="bg-base-200 p-4 rounded-lg overflow-x-auto text-sm">{{ log.new_values | tojson(indent=2) if log.new_values else 'N/A' }}</pre>
+        </div>
+    </div>
+    {% elif log.action == 'DELETE' %}
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title text-error">Deleted Values</h2>
+            <pre class="bg-base-200 p-4 rounded-lg overflow-x-auto text-sm">{{ log.old_values | tojson(indent=2) if log.old_values else 'N/A' }}</pre>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Changed Fields -->
+    {% if log.changed_fields %}
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Changed Fields</h2>
+            <div class="flex flex-wrap gap-2">
+                {% for field in log.changed_fields %}
+                <span class="badge badge-outline">{{ field }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

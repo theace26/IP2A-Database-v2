@@ -1,0 +1,92 @@
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        <div class="flex justify-between items-center mb-4">
+            <span class="text-sm text-gray-600">
+                Showing {{ logs|length }} of {{ "{:,}".format(total) }} logs
+            </span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="table table-zebra">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Table</th>
+                        <th>Record</th>
+                        <th>Action</th>
+                        <th>Changed By</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="text-sm">
+                            {{ log.changed_at[:19].replace('T', ' ') if log.changed_at else 'N/A' }}
+                        </td>
+                        <td>
+                            <span class="badge badge-ghost">{{ log.table_name }}</span>
+                        </td>
+                        <td class="font-mono text-sm">{{ log.record_id }}</td>
+                        <td>
+                            {% if log.action == 'CREATE' %}
+                            <span class="badge badge-success">{{ log.action }}</span>
+                            {% elif log.action == 'UPDATE' %}
+                            <span class="badge badge-warning">{{ log.action }}</span>
+                            {% elif log.action == 'DELETE' %}
+                            <span class="badge badge-error">{{ log.action }}</span>
+                            {% elif log.action == 'READ' %}
+                            <span class="badge badge-info">{{ log.action }}</span>
+                            {% else %}
+                            <span class="badge">{{ log.action }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ log.changed_by or 'System' }}</td>
+                        <td>
+                            <a href="/admin/audit-logs/detail/{{ log.id }}"
+                               class="btn btn-xs btn-ghost">
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-gray-500 py-8">
+                            No audit logs found matching your criteria
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if pages > 1 %}
+        <div class="flex justify-center mt-4">
+            <div class="join">
+                {% if page > 1 %}
+                <button class="join-item btn btn-sm"
+                        hx-get="/admin/audit-logs/search?page={{ page - 1 }}"
+                        hx-target="#audit-table-container"
+                        hx-include="form">
+                    «
+                </button>
+                {% endif %}
+
+                <button class="join-item btn btn-sm btn-active">
+                    Page {{ page }} of {{ pages }}
+                </button>
+
+                {% if page < pages %}
+                <button class="join-item btn btn-sm"
+                        hx-get="/admin/audit-logs/search?page={{ page + 1 }}"
+                        hx-target="#audit-table-container"
+                        hx-include="form">
+                    »
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>

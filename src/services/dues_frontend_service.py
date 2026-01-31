@@ -448,6 +448,48 @@ class DuesFrontendService:
             DuesPaymentMethod.ACH_TRANSFER: "ACH Transfer",
             DuesPaymentMethod.PAYROLL_DEDUCTION: "Payroll Deduction",
             DuesPaymentMethod.ONLINE: "Online",
+            # Stripe payment methods
+            DuesPaymentMethod.STRIPE_CARD: "Stripe (Card)",
+            DuesPaymentMethod.STRIPE_ACH: "Stripe (ACH)",
+            DuesPaymentMethod.STRIPE_OTHER: "Stripe (Other)",
             DuesPaymentMethod.OTHER: "Other",
         }
         return display_names.get(method, method.value)
+
+    @staticmethod
+    def get_rate_for_member(db: Session, member_id: int) -> Optional[DuesRate]:
+        """
+        Get the active dues rate for a member's classification.
+
+        Args:
+            db: Database session
+            member_id: Member ID
+
+        Returns:
+            DuesRate object for the member's classification, or None if not found
+        """
+        # Get member
+        member = db.query(Member).filter(Member.id == member_id).first()
+        if not member:
+            return None
+
+        # Get active rate for member's classification
+        today = date.today()
+
+        rate = (
+            db.query(DuesRate)
+            .filter(
+                and_(
+                    DuesRate.classification == member.classification,
+                    DuesRate.effective_date <= today,
+                    or_(
+                        DuesRate.end_date.is_(None),
+                        DuesRate.end_date >= today
+                    )
+                )
+            )
+            .order_by(DuesRate.effective_date.desc())
+            .first()
+        )
+
+        return rate

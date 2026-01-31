@@ -1359,4 +1359,22 @@ git commit -m "feat(dues-ui): add payments and adjustments management
 - `src/routers/dues_frontend.py` (payment/adjustment routes)
 - `src/tests/test_dues_frontend.py` (payment/adjustment tests)
 
+---
+
+## 📝 End-of-Session Documentation (REQUIRED)
+
+> ⚠️ **DO NOT skip this step.** Update *ANY* and *ALL* relevant documents to capture progress made this session.
+
+### Before Ending This Session:
+
+1. **Scan `/docs/*`** - Review all documentation files
+2. **Update existing docs** - Reflect changes, progress, and decisions
+3. **Create new docs** - If needed for new components or concepts
+4. **ADR Review** - Update or create Architecture Decision Records as necessary
+5. **Session log entry** - Record what was accomplished
+
+This ensures historical record-keeping and project continuity ("bus factor" protection).
+
+---
+
 **Next:** Session D - Tests + Documentation

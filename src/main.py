@@ -70,6 +70,11 @@ from src.routers.operations_frontend import router as operations_frontend_router
 from src.routers.reports import router as reports_router
 from src.routers.documents_frontend import router as documents_frontend_router
 from src.routers.dues_frontend import router as dues_frontend_router
+from src.routers.member_notes import router as member_notes_router
+from src.routers.audit_frontend import router as audit_frontend_router
+
+# Webhooks
+from src.routers.webhooks.stripe_webhook import router as stripe_webhook_router
 
 # ------------------------------------------------------------
 # Initialize FastAPI
@@ -190,6 +195,13 @@ app.include_router(documents_frontend_router)
 
 # Phase 6 Dues Frontend router
 app.include_router(dues_frontend_router)
+
+# Week 11: Member notes (audit infrastructure)
+app.include_router(member_notes_router, prefix="/api/v1")
+app.include_router(audit_frontend_router)  # Frontend audit log viewer
+
+# Webhooks (NO authentication - signature verified)
+app.include_router(stripe_webhook_router)
 
 # Frontend routes (HTML pages) - include LAST to not interfere with API routes
 app.include_router(frontend.router)

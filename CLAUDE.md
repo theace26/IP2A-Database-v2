@@ -2,8 +2,8 @@
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
 **Last Updated:** January 30, 2026
-**Current Version:** v0.8.0-alpha1
-**Current Phase:** Deployment Active - Railway Live (with expanded seed data)
+**Current Version:** v0.8.1-alpha
+**Current Phase:** Stripe Integration & Audit Infrastructure Complete
 
 ---
 
@@ -13,11 +13,11 @@
 
 **Who:** Xerxes - Business Representative by day, solo developer (5-10 hrs/week)
 
-**Where:** Backend COMPLETE. Frontend FEATURE-COMPLETE. **Deployed to Railway.**
+**Where:** Backend COMPLETE. Frontend FEATURE-COMPLETE. Stripe Payments LIVE. **Deployed to Railway.**
 
-**Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl
+**Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl + Stripe
 
-**Status:** 167 frontend tests passing, ~330 total tests, ~130 API endpoints, 11 ADRs, Railway deployment live
+**Status:** 200+ frontend tests, ~375 total tests, ~135 API endpoints, 13 ADRs, Railway deployment live, Stripe integration complete
 
 ---
 
@@ -979,24 +979,59 @@ The Documents feature is currently disabled with a "Feature not implemented" pla
 
 ---
 
+## Branching Strategy (January 30, 2026)
+
+**IMPORTANT:** As of January 30, 2026, development occurs on the `develop` branch.
+
+### Branch Overview
+
+| Branch | Purpose | Status | Auto-Deploy |
+|--------|---------|--------|-------------|
+| `main` | Demo/Production (FROZEN) | Stable v0.8.0-alpha1 | Railway |
+| `develop` | Active development | Current work | None (local only) |
+
+**Why Separate Branches:**
+- `main` is frozen for leadership demo on Railway
+- `develop` allows continued development without affecting demo
+- Merge `develop → main` only when ready to update demo
+- Protects demo from showing half-finished features
+
+### Branch Commands
+
+```bash
+# Switch to develop (for all development work)
+git checkout develop
+git pull origin develop
+
+# Merge develop to main (when ready to update demo)
+git checkout main
+git pull origin main
+git merge develop
+git push origin main
+```
+
+---
+
 ## Session Workflow
 
 ### Starting a Session
-1. `git pull origin main`
-2. `docker-compose up -d`
-3. `pytest -v --tb=short` (verify green)
-4. Check instruction document for current tasks
+1. `git checkout develop` (ALWAYS work on develop branch)
+2. `git pull origin develop`
+3. `docker-compose up -d`
+4. `pytest -v --tb=short` (verify green)
+5. Check instruction document for current tasks
 
 ### During Session
 - Commit incrementally
 - Run tests after significant changes
 - Update CHANGELOG.md
+- **Stay on develop branch**
 
 ### Ending a Session
 1. `pytest -v` (verify green)
 2. `git status` (check for uncommitted changes)
 3. Commit with conventional commit message
-4. `git push origin main`
+4. `git push origin develop` (push to develop, NOT main)
 5. Note any blockers or next steps
 
 ---
@@ -1021,6 +1056,244 @@ The Documents feature is currently disabled with a "Feature not implemented" pla
 - List of completed tasks
 - Outstanding questions/decisions needed
 - Blockers or risks identified
+
+---
+
+## Documentation Standardization (January 30, 2026)
+
+**Objective:** Standardize documentation practices across all instruction documents to ensure consistent historical record-keeping
+
+### Work Completed
+
+| Task | Status |
+|------|--------|
+| Added mandatory "End-of-Session Documentation" section to all instruction documents | Done |
+| Updated 55 instruction documents with standardized documentation reminders | Done |
+| Created ADR-013: Stripe Payment Integration | Done |
+| Updated ADR README index | Done |
+
+### Files Updated
+
+**Instruction Documents (55 total):**
+- 10 MASTER instruction files
+- 32 session-specific instruction files
+- 6 Week 1 instruction files
+- 6 deployment instruction files
+- 1 instruction template
+
+**New ADR:**
+- [ADR-013-stripe-payment-integration.md](docs/decisions/ADR-013-stripe-payment-integration.md)
+
+### Standardized Documentation Section
+
+All instruction documents now include this mandatory end-of-session reminder:
+
+```markdown
+## 📝 End-of-Session Documentation (REQUIRED)
+
+> ⚠️ **DO NOT skip this step.** Update *ANY* and *ALL* relevant documents to capture progress made this session.
+
+### Before Ending This Session:
+
+1. **Scan `/docs/*`** - Review all documentation files
+2. **Update existing docs** - Reflect changes, progress, and decisions
+3. **Create new docs** - If needed for new components or concepts
+4. **ADR Review** - Update or create Architecture Decision Records as necessary
+5. **Session log entry** - Record what was accomplished
+
+This ensures historical record-keeping and project continuity ("bus factor" protection).
+```
+
+---
+
+## Stripe Payment Integration (January 30, 2026)
+
+**Status:** ✅ **FULLY COMPLETE** - All 3 phases implemented (Backend + Database + Frontend)
+
+### Overview
+
+Stripe integration enables online dues payment for IBEW Local 46 members. Decision documented in [ADR-013](docs/decisions/ADR-013-stripe-payment-integration.md).
+
+### Key Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| **Stripe over Square** | Better developer experience, superior subscription support, ACH support |
+| **Checkout Sessions** | PCI compliance stays with Stripe, simpler integration |
+| **Payment Methods** | Credit/debit cards (2.9% + $0.30), ACH bank transfers (0.8%, $5 cap) |
+| **Webhook Verification** | Never trust redirects alone, always verify via webhook signature |
+
+### Implementation Status
+
+**Phase 1: Backend (Completed January 30, 2026)**
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| PaymentService | ✅ Complete | `src/services/payment_service.py` |
+| Stripe Webhook Handler | ✅ Complete | `src/routers/webhooks/stripe_webhook.py` |
+| Settings Configuration | ✅ Complete | `src/config/settings.py` |
+| Environment Variables | ✅ Complete | `.env.example` |
+| Requirements | ✅ Complete | `requirements.txt` (stripe>=8.0.0) |
+| Router Registration | ✅ Complete | `src/main.py` |
+
+**Phase 2: Database & Testing (Completed January 30, 2026)**
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| Member.stripe_customer_id field | ✅ Complete | Migration `f1a2b3c4d5e6`, `src/models/member.py` |
+| DuesPaymentMethod enum updates | ✅ Complete | Migration `g2b3c4d5e6f7`, `src/db/enums/dues_enums.py` |
+| Member schema updated | ✅ Complete | `src/schemas/member.py` |
+| Integration tests | ✅ Complete | `src/tests/test_stripe_integration.py` (11 tests) |
+
+**Phase 3: Frontend Payment Flow (Completed January 30, 2026)**
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| Payment initiation endpoint | ✅ Complete | `src/routers/dues_frontend.py::initiate_payment` |
+| Success page | ✅ Complete | `src/templates/dues/payments/success.html` |
+| Cancel page | ✅ Complete | `src/templates/dues/payments/cancel.html` |
+| "Pay Now" button (member payments) | ✅ Complete | `src/templates/dues/payments/member.html` |
+| Rate lookup service | ✅ Complete | `src/services/dues_frontend_service.py::get_rate_for_member` |
+| Payment method display | ✅ Complete | Stripe methods added to display names |
+| Frontend tests | ✅ Complete | `src/tests/test_stripe_frontend.py` (14 tests) |
+
+### Environment Variables Needed
+
+```bash
+STRIPE_SECRET_KEY=sk_test_xxxxx
+STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
+STRIPE_WEBHOOK_SECRET=whsec_xxxxx
+```
+
+### Database Changes Required
+
+```sql
+ALTER TABLE members ADD COLUMN stripe_customer_id VARCHAR(100) UNIQUE;
+
+-- DuesPayment payment_method enum needs:
+-- 'stripe_card', 'stripe_ach'
+```
+
+### Integration Flow
+
+```
+Member → "Pay Dues" button → Backend creates Checkout Session
+                          → Redirect to Stripe hosted page
+                          → Member pays
+                          → Stripe webhook fires
+                          → Backend records payment in DuesPayment table
+```
+
+### Test Mode Setup
+
+```bash
+# Install Stripe CLI
+brew install stripe/stripe-cli/stripe
+
+# Forward webhooks to local dev
+stripe listen --forward-to localhost:8000/api/v1/webhooks/stripe
+
+# Trigger test events
+stripe trigger checkout.session.completed
+```
+
+**Test Cards:**
+- Success: 4242 4242 4242 4242
+- Decline: 4000 0000 0000 0002
+- 3D Secure: 4000 0000 0000 3220
+
+### Future Enhancements
+
+- Phase 1: One-time payments (use `mode='payment'`)
+- Phase 2: Recurring subscriptions (use `mode='subscription'`)
+- Phase 3: Payment plans for large balances
+- Phase 4: Stripe Customer Portal for member self-service
+- Phase 5: QuickBooks integration for accounting sync
+
+**Reference:** See [docs/instructions/stripe/CONTINUITY_STRIPE_UPDATED.md](docs/instructions/stripe/CONTINUITY_STRIPE_UPDATED.md) for full implementation guide.
+
+---
+
+## Week 11 Session A: Audit Infrastructure (January 30, 2026)
+
+**Status:** ✅ **COMPLETE** - NLRA compliance audit infrastructure implemented
+
+### Overview
+
+Implements critical audit infrastructure for NLRA compliance, including database-level immutability for audit logs and staff notes functionality.
+
+**Instruction Documents:** `docs/instructions/week11–stripe/WEEK11_SESSION_A_AUDIT_INFRASTRUCTURE.md`
+
+### Implementation Status
+
+**Task 1: Audit Log Immutability (Completed January 30, 2026)**
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| Immutability trigger migration | ✅ Complete | Migration `h3c4d5e6f7g8` |
+| prevent_audit_modification() function | ✅ Complete | PostgreSQL trigger function |
+| UPDATE trigger | ✅ Complete | Blocks all UPDATE operations on audit_logs |
+| DELETE trigger | ✅ Complete | Blocks all DELETE operations on audit_logs |
+| Immutability tests | ✅ Complete | `src/tests/test_audit_immutability.py` (4 tests) |
+
+**Task 2: Member Notes Table (Completed January 30, 2026)**
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| MemberNote model | ✅ Complete | `src/models/member_note.py` |
+| NoteVisibility levels | ✅ Complete | staff_only, officers, all_authorized |
+| Member relationship | ✅ Complete | `src/models/member.py` notes relationship |
+| Pydantic schemas | ✅ Complete | `src/schemas/member_note.py` |
+| Database migration | ✅ Complete | Migration `i4d5e6f7g8h9` |
+| AUDITED_TABLES update | ✅ Complete | Added member_notes to audit service |
+
+**Task 3-4: Service & Router (Completed January 30, 2026)**
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| MemberNoteService | ✅ Complete | `src/services/member_note_service.py` |
+| CRUD operations | ✅ Complete | create, get_by_id, get_by_member, update, soft_delete |
+| Role-based visibility filtering | ✅ Complete | Admin/Officer/Staff permission levels |
+| Audit integration | ✅ Complete | All operations logged via audit_service |
+| Member notes router | ✅ Complete | `src/routers/member_notes.py` |
+| Router registration | ✅ Complete | Registered in `src/main.py` at /api/v1/member-notes |
+
+**Task 5: Tests (Completed January 30, 2026)**
+
+| Component | Status | Coverage |
+|-----------|--------|----------|
+| Model tests | ✅ Complete | 2 tests |
+| Service tests | ✅ Complete | 6 tests |
+| API tests | ✅ Complete | 7 tests |
+| Total | ✅ Complete | 15 tests + 4 immutability tests = 19 new tests |
+
+### NLRA Compliance Features
+
+- **Audit Log Immutability**: PostgreSQL triggers prevent any modification or deletion of audit records (7-year retention required)
+- **Automatic Auditing**: All member_notes operations automatically logged
+- **Role-Based Access**: Three visibility levels control who can view sensitive notes
+- **Soft Delete**: Notes are never hard-deleted, preserving audit trail
+
+### Files Created
+
+```
+src/models/member_note.py
+src/schemas/member_note.py
+src/services/member_note_service.py
+src/routers/member_notes.py
+src/tests/test_member_notes.py
+src/tests/test_audit_immutability.py
+src/db/migrations/versions/h3c4d5e6f7g8_add_audit_logs_immutability_trigger.py
+src/db/migrations/versions/i4d5e6f7g8h9_create_member_notes_table.py
+```
+
+### Files Modified
+
+```
+src/models/member.py                 # Added notes relationship
+src/services/audit_service.py        # Added member_notes to AUDITED_TABLES
+src/main.py                          # Registered member_notes router
+```
 
 ---
 

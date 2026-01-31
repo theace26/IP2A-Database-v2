@@ -139,3 +139,74 @@ async def get_current_user_from_cookie(
         return None
     except Exception:
         return None
+
+
+async def get_current_user_model(
+    request: Request,
+    access_token: Optional[str] = Cookie(default=None),
+    db: Session = None,
+):
+    """
+    Get the full User model from database using cookie authentication.
+    Returns User model instance or raises RedirectResponse/HTTPException.
+
+    Usage:
+        @router.get("/page")
+        async def page(
+            current_user: User = Depends(get_current_user_model),
+            db: Session = Depends(get_db),
+        ):
+            ...
+    """
+    from src.models.user import User
+    from src.routers.dependencies.auth import get_current_user
+
+    # First verify the cookie
+    if not access_token:
+        response = RedirectResponse(
+            url=f"/login?next={request.url.path}",
+            status_code=status.HTTP_302_FOUND,
+        )
+        response.delete_cookie("access_token", path="/")
+        response.delete_cookie("refresh_token", path="/")
+        return response
+
+    try:
+        payload = verify_access_token(access_token)
+        if not payload:
+            raise TokenInvalidError("Invalid token")
+
+        user_id = int(payload.get("sub"))
+
+        # Get database session if not provided
+        if db is None:
+            db = next(get_db())
+
+        # Fetch actual User model from database
+        user = db.query(User).filter(User.id == user_id).first()
+
+        if not user or not user.is_active:
+            response = RedirectResponse(
+                url="/login?message=User+not+found+or+inactive",
+                status_code=status.HTTP_302_FOUND,
+            )
+            response.delete_cookie("access_token", path="/")
+            response.delete_cookie("refresh_token", path="/")
+            return response
+
+        return user
+
+    except (TokenExpiredError, TokenInvalidError):
+        response = RedirectResponse(
+            url=f"/login?next={request.url.path}",
+            status_code=status.HTTP_302_FOUND,
+        )
+        response.delete_cookie("access_token", path="/")
+        response.delete_cookie("refresh_token", path="/")
+        return response
+    except Exception as e:
+        logger.error(f"Error fetching user model: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error fetching user information"
+        )

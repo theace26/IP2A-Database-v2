@@ -11,6 +11,10 @@ class DuesPaymentMethod(str, Enum):
     CREDIT_CARD = "credit_card"
     ACH_TRANSFER = "ach_transfer"
     ONLINE = "online"
+    # Stripe payment methods (added Phase 2)
+    STRIPE_CARD = "stripe_card"          # Credit/debit via Stripe Checkout
+    STRIPE_ACH = "stripe_ach"            # ACH bank transfer via Stripe
+    STRIPE_OTHER = "stripe_other"        # Future Stripe methods (Apple Pay, etc.)
     OTHER = "other"
 
 

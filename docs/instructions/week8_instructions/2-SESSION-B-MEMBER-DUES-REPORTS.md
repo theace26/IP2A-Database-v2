@@ -668,4 +668,22 @@ git commit -m "feat(reports): add member and dues reports
 - `src/routers/reports.py` (member/dues routes)
 - `src/tests/test_reports.py` (member/dues tests)
 
+---
+
+## 📝 End-of-Session Documentation (REQUIRED)
+
+> ⚠️ **DO NOT skip this step.** Update *ANY* and *ALL* relevant documents to capture progress made this session.
+
+### Before Ending This Session:
+
+1. **Scan `/docs/*`** - Review all documentation files
+2. **Update existing docs** - Reflect changes, progress, and decisions
+3. **Create new docs** - If needed for new components or concepts
+4. **ADR Review** - Update or create Architecture Decision Records as necessary
+5. **Session log entry** - Record what was accomplished
+
+This ensures historical record-keeping and project continuity ("bus factor" protection).
+
+---
+
 **Next:** Session C - Training & Operations Reports

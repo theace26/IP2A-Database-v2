@@ -2,7 +2,7 @@
 
 **Purpose:** Copy and paste this document into a new Claude Code thread to provide full project context.
 
-**Last Updated:** 2026-01-27
+**Last Updated:** 2026-01-30
 
 ---
 
@@ -10,11 +10,11 @@
 
 **Repository:** IP2A-Database-v2
 **Location:** `/app` (Docker container) or `~/Projects/IP2A-Database-v2` (local)
-**Purpose:** Production-grade data platform for pre-apprenticeship program data + union member management
-**Status:** Phase 1 complete - Building services layer
-**Current Branch:** `feature/phase1-services`
-**Main Branch:** `main`
-**Latest Tag:** `v0.1.1`
+**Purpose:** Production-grade union operations management system for IBEW Local 46
+**Status:** Phase 6 complete, Railway deployment live, Stripe backend implemented
+**Current Version:** v0.8.0-alpha1 (develop branch active)
+**Current Branch:** `develop` (main frozen for demo)
+**Latest Tag:** v0.8.0-alpha1
 
 ### Tech Stack
 - **Backend:** Python 3.12, FastAPI
@@ -23,6 +23,66 @@
 - **Testing:** pytest, httpx
 - **Code Quality:** Ruff, pre-commit hooks
 - **Environment:** Docker + Devcontainer
+- **Deployment:** Railway (production), Docker + PostgreSQL
+
+---
+
+## Branching Strategy (January 30, 2026)
+
+**IMPORTANT:** As of January 30, 2026, all development occurs on the `develop` branch.
+
+| Branch | Purpose | Status |
+|--------|---------|--------|
+| `main` | Demo/Production (FROZEN) | v0.8.0-alpha1, deployed to Railway |
+| `develop` | Active development | Current work branch |
+
+**Why:** Main branch is frozen to keep the Railway demo stable for leadership. All new development happens on develop.
+
+**Workflow:**
+```bash
+# Work on develop branch
+git checkout develop
+git pull origin develop
+
+# When ready to update demo
+git checkout main
+git merge develop
+git push origin main  # This triggers Railway auto-deploy
+```
+
+---
+
+## Recent Updates (January 30, 2026)
+
+### Branching Strategy Established
+- **Created:** `develop` branch for ongoing development
+- **Frozen:** `main` branch at v0.8.0-alpha1 for Railway demo
+- **Updated:** All session workflow documentation with new branching model
+
+### Documentation Standardization
+- **Completed:** Standardized documentation practices across all 55 instruction documents
+- **Added:** Mandatory "End-of-Session Documentation" reminder to all instruction files
+- **Created:** ADR-013 for Stripe Payment Integration decision
+- **Updated:** CLAUDE.md, CONTINUITY.md, ADR README index
+
+### Stripe Integration - Phase 1 Backend (Completed)
+- **✅ Implemented:** PaymentService for creating Stripe Checkout Sessions
+- **✅ Implemented:** Webhook handler for payment events (checkout.session.completed, etc.)
+- **✅ Added:** Stripe configuration to settings.py (STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY, STRIPE_WEBHOOK_SECRET)
+- **✅ Updated:** requirements.txt with stripe>=8.0.0
+- **✅ Updated:** .env.example with Stripe environment variables
+- **✅ Registered:** Stripe webhook router in main.py
+- **Decision:** Use Stripe Checkout Sessions (PCI compliance stays with Stripe)
+- **Payment Methods:** Credit/debit cards (2.9% + $0.30), ACH bank transfers (0.8%, $5 cap)
+- **ADR:** [ADR-013-stripe-payment-integration.md](docs/decisions/ADR-013-stripe-payment-integration.md)
+
+### Stripe Integration - Phase 2 Database & Frontend (Next Steps)
+- [ ] Create migration to add stripe_customer_id field to Member model
+- [ ] Update DuesPayment payment_method enum (add stripe_card, stripe_ach)
+- [ ] Add "Pay Dues" button to dues frontend
+- [ ] Create success/cancel redirect pages
+- [ ] Set up Stripe test mode with CLI for local development
+- [ ] Add frontend payment flow integration
 
 ---
 
@@ -711,6 +771,22 @@ pytest --cov=src                       # Test with coverage
 - **FastAPI:** Latest
 - **SQLAlchemy:** 2.x (sync)
 - **Pydantic:** v2
+
+---
+
+## 📝 End-of-Session Documentation (REQUIRED)
+
+> ⚠️ **DO NOT skip this step.** Update *ANY* and *ALL* relevant documents to capture progress made this session.
+
+### Before Ending This Session:
+
+1. **Scan `/docs/*`** - Review all documentation files
+2. **Update existing docs** - Reflect changes, progress, and decisions
+3. **Create new docs** - If needed for new components or concepts
+4. **ADR Review** - Update or create Architecture Decision Records as necessary
+5. **Session log entry** - Record what was accomplished
+
+This ensures historical record-keeping and project continuity ("bus factor" protection).
 
 ---
 

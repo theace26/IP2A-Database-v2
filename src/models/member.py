@@ -44,8 +44,17 @@ class Member(Base, TimestampMixin, SoftDeleteMixin):
     status = Column(SAEnum(MemberStatus), default=MemberStatus.ACTIVE, nullable=False)
     classification = Column(SAEnum(MemberClassification), nullable=False)
 
-    # Notes
-    notes = Column(Text)
+    # General notes (deprecated - use MemberNote relationship for staff notes)
+    general_notes = Column(Text)
+
+    # Stripe Integration
+    stripe_customer_id = Column(
+        String(100),
+        unique=True,
+        nullable=True,
+        index=True,
+        comment="Stripe customer ID for payment processing"
+    )
 
     # Relationships
     student = relationship("Student", back_populates="member", uselist=False)
@@ -53,6 +62,12 @@ class Member(Base, TimestampMixin, SoftDeleteMixin):
     user = relationship("User", back_populates="member", uselist=False)
     dues_payments = relationship("DuesPayment", back_populates="member")
     dues_adjustments = relationship("DuesAdjustment", back_populates="member")
+    notes = relationship(
+        "MemberNote",
+        back_populates="member",
+        cascade="all, delete-orphan",
+        order_by="desc(MemberNote.created_at)"
+    )
 
     def __repr__(self):
         return f"<Member(id={self.id}, number='{self.member_number}', name='{self.first_name} {self.last_name}')>"

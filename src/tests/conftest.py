@@ -11,10 +11,17 @@ from fastapi.testclient import TestClient
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from datetime import datetime
 
 from src.main import app
 from src.db.session import get_db
 from src.config.settings import settings
+from src.models.user import User
+from src.models.role import Role
+from src.models.user_role import UserRole
+from src.models.member import Member
+from src.core.jwt import create_access_token
+from src.core.security import hash_password
 
 
 # Create engine once, reuse across tests
@@ -116,3 +123,67 @@ async def async_client_with_db():
         session.close()
         transaction.rollback()
         connection.close()
+
+
+@pytest.fixture(scope="function")
+def test_user(db_session):
+    """
+    Create a test user with admin role for authentication tests.
+    """
+    # Check if admin role exists
+    admin_role = db_session.query(Role).filter(Role.name == "admin").first()
+    if not admin_role:
+        admin_role = Role(name="admin", description="Administrator")
+        db_session.add(admin_role)
+        db_session.flush()
+
+    # Create test user
+    user = User(
+        email="test@example.com",
+        password_hash=hash_password("testpassword"),
+        first_name="Test",
+        last_name="User",
+        is_active=True,
+        is_verified=True,
+    )
+    db_session.add(user)
+    db_session.flush()
+
+    # Assign admin role
+    user_role = UserRole(user_id=user.id, role_id=admin_role.id)
+    db_session.add(user_role)
+    db_session.commit()
+
+    return user
+
+
+@pytest.fixture(scope="function")
+def auth_headers(test_user):
+    """
+    Create authentication headers with Bearer token for the test user.
+    """
+    token = create_access_token(
+        subject=test_user.id,
+        additional_claims={
+            "email": test_user.email,
+            "roles": ["admin"],
+        },
+    )
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture(scope="function")
+def test_member(db_session):
+    """
+    Create a test member for member-related tests.
+    """
+    member = Member(
+        member_number="TEST001",
+        first_name="Test",
+        last_name="Member",
+        classification="journeyman_wireman",
+        status="active",
+    )
+    db_session.add(member)
+    db_session.commit()
+    return member

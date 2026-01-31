@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Successful - Dues{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Success Card -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body items-center text-center">
+            <!-- Success Icon -->
+            <div class="text-success mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+
+            <h1 class="card-title text-3xl text-success">Payment Successful!</h1>
+
+            <p class="text-lg mt-2">
+                Thank you for your dues payment. Your transaction has been processed successfully.
+            </p>
+
+            {% if payment_info %}
+            <div class="stats stats-vertical lg:stats-horizontal shadow mt-6">
+                <div class="stat">
+                    <div class="stat-title">Amount Paid</div>
+                    <div class="stat-value text-primary">${{ "%.2f"|format(payment_info.amount) }}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title">Status</div>
+                    <div class="stat-value text-success text-lg">{{ payment_info.payment_status|title }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="alert alert-info mt-6">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>A receipt has been sent to your email address. You can also view your payment history in the Dues section.</span>
+            </div>
+
+            <div class="card-actions mt-6">
+                <a href="/dues/payments" class="btn btn-primary">
+                    View Payment History
+                </a>
+                <a href="/dues" class="btn btn-ghost">
+                    Back to Dues Overview
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

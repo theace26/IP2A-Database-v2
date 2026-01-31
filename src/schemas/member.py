@@ -57,6 +57,7 @@ class MemberRead(MemberBase):
     """Schema for reading a member."""
 
     id: int
+    stripe_customer_id: Optional[str] = None  # Stripe payment integration
     created_at: datetime
     updated_at: Optional[datetime] = None
     deleted_at: Optional[datetime] = None
