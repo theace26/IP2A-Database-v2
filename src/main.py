@@ -72,6 +72,7 @@ from src.routers.documents_frontend import router as documents_frontend_router
 from src.routers.dues_frontend import router as dues_frontend_router
 from src.routers.member_notes import router as member_notes_router
 from src.routers.audit_frontend import router as audit_frontend_router
+from src.routers.profile_frontend import router as profile_frontend_router
 
 # Webhooks
 from src.routers.webhooks.stripe_webhook import router as stripe_webhook_router
@@ -199,6 +200,7 @@ app.include_router(dues_frontend_router)
 # Week 11: Member notes (audit infrastructure)
 app.include_router(member_notes_router, prefix="/api/v1")
 app.include_router(audit_frontend_router)  # Frontend audit log viewer
+app.include_router(profile_frontend_router)  # User profile management
 
 # Webhooks (NO authentication - signature verified)
 app.include_router(stripe_webhook_router)

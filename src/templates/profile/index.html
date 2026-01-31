@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - IP2A{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li>My Profile</li>
+        </ul>
+    </div>
+
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-bold">My Profile</h1>
+        <p class="text-gray-600">Manage your account settings and preferences</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Profile Information -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <div class="flex justify-between items-center">
+                        <h2 class="card-title">Profile Information</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label class="text-sm text-gray-500">First Name</label>
+                            <p class="font-medium">{{ current_user.first_name }}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-500">Last Name</label>
+                            <p class="font-medium">{{ current_user.last_name }}</p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="text-sm text-gray-500">Email</label>
+                            <p class="font-medium">{{ current_user.email }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Security -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title">Account Security</h2>
+
+                    <div class="space-y-4 mt-4">
+                        <div class="flex justify-between items-center p-4 bg-base-200 rounded-lg">
+                            <div>
+                                <h3 class="font-medium">Password</h3>
+                                <p class="text-sm text-gray-500">Last changed recently</p>
+                            </div>
+                            <a href="/profile/change-password" class="btn btn-outline btn-sm">
+                                Change Password
+                            </a>
+                        </div>
+
+                        <div class="flex justify-between items-center p-4 bg-base-200 rounded-lg">
+                            <div>
+                                <h3 class="font-medium">Account Status</h3>
+                                <p class="text-sm">
+                                    {% if current_user.is_active %}
+                                    <span class="badge badge-success">Active</span>
+                                    {% else %}
+                                    <span class="badge badge-error">Inactive</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Activity Summary -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-lg">Activity This Week</h2>
+
+                    <div class="stats stats-vertical shadow-sm mt-4">
+                        <div class="stat">
+                            <div class="stat-title">Total Actions</div>
+                            <div class="stat-value text-primary">{{ activity.total_actions_this_week }}</div>
+                        </div>
+                    </div>
+
+                    {% if activity.actions_this_week %}
+                    <div class="mt-4 space-y-2">
+                        {% for action, count in activity.actions_this_week.items() %}
+                        <div class="flex justify-between text-sm">
+                            <span class="badge badge-sm badge-ghost">{{ action }}</span>
+                            <span class="font-medium">{{ count }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- User Roles -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-lg">Roles</h2>
+
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        {% for role in current_user.role_names %}
+                        <span class="badge badge-primary">{{ role | title }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
