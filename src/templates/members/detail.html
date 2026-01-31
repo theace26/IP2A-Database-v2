@@ -233,6 +233,43 @@
                 </div>
             </div>
 
+            <!-- Notes Section -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="card-title text-lg">Notes</h2>
+                        <button class="btn btn-sm btn-primary"
+                                onclick="document.getElementById('add-note-modal').showModal()">
+                            + Add
+                        </button>
+                    </div>
+
+                    <div
+                        hx-get="/members/{{ member.id }}/notes-list"
+                        hx-trigger="load, notes-updated from:body"
+                        hx-swap="innerHTML"
+                    >
+                        <div class="flex justify-center py-4">
+                            <span class="loading loading-spinner loading-sm"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit History Section -->
+            <div class="card bg-base-100 shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-lg">Recent Activity</h2>
+                    <div hx-get="/admin/audit-logs/entity/members/{{ member.id }}"
+                         hx-trigger="load"
+                         hx-swap="innerHTML">
+                        <div class="flex justify-center py-4">
+                            <span class="loading loading-spinner loading-sm"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Quick Actions -->
             <div class="card bg-base-100 shadow">
                 <div class="card-body">
@@ -263,4 +300,8 @@
         </div>
     </div>
 </div>
+
+<!-- Add Note Modal -->
+{% include "members/partials/_add_note_modal.html" %}
+
 {% endblock %}

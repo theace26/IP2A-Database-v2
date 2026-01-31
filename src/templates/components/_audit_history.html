@@ -1,64 +1,99 @@
-<!-- Audit History Component - Can be loaded via HTMX -->
-<div class="space-y-3">
-    {% if logs %}
-        {% for log in logs %}
-        <div class="card bg-base-200 shadow-sm">
-            <div class="card-body p-4">
-                <div class="flex justify-between items-start">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-2">
-                            {% if log.action == 'CREATE' %}
-                            <span class="badge badge-success badge-sm">{{ log.action }}</span>
-                            {% elif log.action == 'UPDATE' %}
-                            <span class="badge badge-warning badge-sm">{{ log.action }}</span>
-                            {% elif log.action == 'DELETE' %}
-                            <span class="badge badge-error badge-sm">{{ log.action }}</span>
-                            {% else %}
-                            <span class="badge badge-sm">{{ log.action }}</span>
-                            {% endif %}
-                            <span class="text-sm text-gray-600">
-                                by {{ log.changed_by or 'System' }}
-                            </span>
-                        </div>
+{#
+  Reusable audit history partial for inline display on entity pages.
 
-                        {% if log.changed_fields and log.changed_fields|length > 0 %}
-                        <div class="text-sm">
-                            <span class="font-medium">Changed:</span>
-                            {% for field in log.changed_fields[:5] %}
-                                <span class="badge badge-outline badge-xs">{{ field }}</span>
-                            {% endfor %}
-                            {% if log.changed_fields|length > 5 %}
-                                <span class="text-xs text-gray-500">+{{ log.changed_fields|length - 5 }} more</span>
-                            {% endif %}
-                        </div>
-                        {% endif %}
+  Required variables:
+    - logs: List of audit log entries
+    - table_name: Name of the table (e.g., "members")
+    - record_id: ID of the record
 
-                        {% if log.notes %}
-                        <div class="text-sm text-gray-600 mt-1">
-                            {{ log.notes }}
-                        </div>
-                        {% endif %}
-                    </div>
+  Optional variables:
+    - show_header: Whether to show "Recent Activity" header (default: true)
+    - show_view_all: Whether to show "View Full History" link (default: true)
+    - max_display: Max items to display before "show more" (default: 5)
+#}
 
-                    <div class="text-right text-sm text-gray-500">
-                        {{ log.changed_at[:19].replace('T', ' ') if log.changed_at else 'N/A' }}
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
+{% set show_header = show_header | default(true) %}
+{% set show_view_all = show_view_all | default(true) %}
+{% set max_display = max_display | default(5) %}
 
-        {% if logs|length >= 10 %}
-        <div class="text-center">
-            <a href="/admin/audit-logs?table_name={{ table_name }}&record_id={{ record_id }}"
-               class="btn btn-sm btn-ghost">
-                View All History →
-            </a>
-        </div>
+<div class="audit-history-widget">
+    {% if show_header %}
+    <div class="flex justify-between items-center mb-3">
+        <h3 class="text-lg font-semibold">Recent Activity</h3>
+        {% if show_view_all %}
+        <a href="/admin/audit-logs?table_name={{ table_name }}&record_id={{ record_id }}"
+           class="link link-primary text-sm">
+            View Full History →
+        </a>
         {% endif %}
+    </div>
+    {% endif %}
+
+    {% if logs and logs|length > 0 %}
+    <ul class="timeline timeline-vertical timeline-compact">
+        {% for log in logs[:max_display] %}
+        <li>
+            {% if not loop.first %}<hr>{% endif %}
+            <div class="timeline-start text-xs text-gray-500">
+                {{ log.changed_at[:16].replace('T', ' ') if log.changed_at else '' }}
+            </div>
+            <div class="timeline-middle">
+                {% if log.action == 'CREATE' %}
+                <span class="text-success">●</span>
+                {% elif log.action == 'UPDATE' %}
+                <span class="text-warning">●</span>
+                {% elif log.action == 'DELETE' %}
+                <span class="text-error">●</span>
+                {% elif log.action == 'READ' %}
+                <span class="text-info">●</span>
+                {% else %}
+                <span class="text-gray-400">●</span>
+                {% endif %}
+            </div>
+            <div class="timeline-end timeline-box py-2 px-3">
+                <div class="text-sm">
+                    <span class="font-medium">{{ log.changed_by or 'System' }}</span>
+                    {% if log.action == 'CREATE' %}
+                    <span class="text-success">created</span> record
+                    {% elif log.action == 'UPDATE' %}
+                    <span class="text-warning">updated</span>
+                    {% if log.changed_fields %}
+                    <span class="text-gray-600">{{ log.changed_fields | join(', ') }}</span>
+                    {% else %}
+                    record
+                    {% endif %}
+                    {% elif log.action == 'DELETE' %}
+                    <span class="text-error">deleted</span> record
+                    {% elif log.action == 'READ' %}
+                    <span class="text-info">viewed</span> record
+                    {% else %}
+                    performed {{ log.action }}
+                    {% endif %}
+                </div>
+                {% if log.notes %}
+                <div class="text-xs text-gray-500 mt-1">{{ log.notes }}</div>
+                {% endif %}
+            </div>
+            {% if not loop.last %}<hr>{% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+
+    {% if logs|length > max_display %}
+    <div class="text-center mt-3">
+        <a href="/admin/audit-logs?table_name={{ table_name }}&record_id={{ record_id }}"
+           class="btn btn-sm btn-ghost">
+            Show {{ logs|length - max_display }} more...
+        </a>
+    </div>
+    {% endif %}
+
     {% else %}
-        <div class="text-center text-gray-500 py-4">
-            No audit history available
-        </div>
+    <div class="text-center text-gray-500 py-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p class="text-sm">No activity recorded yet</p>
+    </div>
     {% endif %}
 </div>

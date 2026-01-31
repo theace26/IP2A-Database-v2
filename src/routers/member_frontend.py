@@ -2,15 +2,16 @@
 Member Frontend Router - HTML pages for member management.
 """
 
-from fastapi import APIRouter, Depends, Request, Query
+from fastapi import APIRouter, Depends, Request, Query, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session as SyncSession
 from typing import Optional
 
 from src.db.session import get_db
 from src.services.member_frontend_service import MemberFrontendService
-from src.routers.dependencies.auth_cookie import require_auth
+from src.routers.dependencies.auth_cookie import require_auth, get_current_user_model
 from src.db.enums import MemberStatus, MemberClassification
 
 router = APIRouter(prefix="/members", tags=["members-frontend"])
@@ -304,5 +305,119 @@ async def member_dues_partial(
             "request": request,
             "member_id": member_id,
             "dues_summary": dues_summary,
+        },
+    )
+
+
+# ============================================================
+# Member Notes Endpoints (Sync - uses sync session for notes service)
+# ============================================================
+
+
+@router.get("/{member_id}/notes-list", response_class=HTMLResponse)
+def member_notes_list(
+    request: Request,
+    member_id: int,
+    db: SyncSession = Depends(get_db),
+    current_user=Depends(get_current_user_model),
+):
+    """HTMX endpoint: Return member notes list."""
+    from src.services.member_note_service import member_note_service
+    from src.models.user import User
+
+    # Handle redirect response
+    if isinstance(current_user, RedirectResponse):
+        return HTMLResponse(
+            "Session expired",
+            status_code=401,
+            headers={"HX-Redirect": f"/login?next=/members/{member_id}"},
+        )
+
+    # Get notes with visibility filtering
+    notes_models = member_note_service.get_by_member(db, member_id, current_user)
+
+    # Format notes for template
+    notes = []
+    for note in notes_models:
+        notes.append({
+            "id": note.id,
+            "note_text": note.note_text,
+            "visibility": note.visibility,
+            "category": note.category,
+            "created_by_id": note.created_by_id,
+            "created_by_name": note.created_by.email if note.created_by else "Unknown",
+            "created_at": note.created_at,
+        })
+
+    return templates.TemplateResponse(
+        "members/partials/_notes_list.html",
+        {
+            "request": request,
+            "current_user": {
+                "id": current_user.id,
+                "roles": [r.lower() for r in current_user.role_names],
+            },
+            "notes": notes,
+        },
+    )
+
+
+@router.post("/{member_id}/notes", response_class=HTMLResponse)
+def add_member_note(
+    request: Request,
+    member_id: int,
+    note_text: str = Form(...),
+    visibility: str = Form("staff_only"),
+    category: Optional[str] = Form(None),
+    db: SyncSession = Depends(get_db),
+    current_user=Depends(get_current_user_model),
+):
+    """HTMX endpoint: Add a note to a member."""
+    from src.services.member_note_service import member_note_service
+    from src.schemas.member_note import MemberNoteCreate
+
+    # Handle redirect response
+    if isinstance(current_user, RedirectResponse):
+        return HTMLResponse(
+            "Session expired",
+            status_code=401,
+            headers={"HX-Redirect": f"/login?next=/members/{member_id}"},
+        )
+
+    # Create the note
+    note_data = MemberNoteCreate(
+        member_id=member_id,
+        note_text=note_text,
+        visibility=visibility,
+        category=category if category else None,
+    )
+
+    member_note_service.create(db, note_data, current_user)
+
+    # Return updated notes list
+    notes_models = member_note_service.get_by_member(db, member_id, current_user)
+
+    # Format notes for template
+    notes = []
+    for note in notes_models:
+        notes.append({
+            "id": note.id,
+            "note_text": note.note_text,
+            "visibility": note.visibility,
+            "category": note.category,
+            "created_by_id": note.created_by_id,
+            "created_by_name": note.created_by.email if note.created_by else "Unknown",
+            "created_at": note.created_at,
+        })
+
+    return templates.TemplateResponse(
+        "members/partials/_notes_list.html",
+        {
+            "request": request,
+            "current_user": {
+                "id": current_user.id,
+                "roles": [r.lower() for r in current_user.role_names],
+            },
+            "notes": notes,
         },
     )

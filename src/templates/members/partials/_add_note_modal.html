@@ -1,0 +1,74 @@
+{# Add Note Modal #}
+<dialog id="add-note-modal" class="modal">
+    <div class="modal-box">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+
+        <h3 class="font-bold text-lg mb-4">Add Note</h3>
+
+        <form hx-post="/members/{{ member.id }}/notes"
+              hx-target="#notes-list"
+              hx-swap="outerHTML"
+              hx-on::after-request="if(event.detail.successful) { document.getElementById('add-note-modal').close(); this.reset(); }">
+
+            <!-- Note Text -->
+            <div class="form-control mb-4">
+                <label class="label">
+                    <span class="label-text">Note</span>
+                </label>
+                <textarea
+                    name="note_text"
+                    class="textarea textarea-bordered h-24"
+                    placeholder="Enter your note..."
+                    required
+                    minlength="1"
+                    maxlength="10000"></textarea>
+            </div>
+
+            <!-- Visibility -->
+            <div class="form-control mb-4">
+                <label class="label">
+                    <span class="label-text">Visibility</span>
+                </label>
+                <select name="visibility" class="select select-bordered">
+                    <option value="staff_only">Staff Only - Only you and admins can see</option>
+                    <option value="officers">Officers - Officers and above can see</option>
+                    <option value="all_authorized">All Authorized - Anyone with member access</option>
+                </select>
+                <label class="label">
+                    <span class="label-text-alt text-gray-500">Controls who can view this note</span>
+                </label>
+            </div>
+
+            <!-- Category (optional) -->
+            <div class="form-control mb-4">
+                <label class="label">
+                    <span class="label-text">Category (optional)</span>
+                </label>
+                <select name="category" class="select select-bordered">
+                    <option value="">No Category</option>
+                    <option value="contact">Contact/Communication</option>
+                    <option value="dues">Dues Related</option>
+                    <option value="grievance">Grievance Related</option>
+                    <option value="referral">Referral/Dispatch</option>
+                    <option value="training">Training Related</option>
+                    <option value="general">General</option>
+                </select>
+            </div>
+
+            <!-- Submit -->
+            <div class="modal-action">
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('add-note-modal').close()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Save Note
+                </button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>

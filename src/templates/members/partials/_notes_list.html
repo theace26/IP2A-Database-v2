@@ -1,0 +1,56 @@
+{# Member notes list partial #}
+
+{% if notes and notes|length > 0 %}
+<div class="space-y-3" id="notes-list">
+    {% for note in notes %}
+    <div class="border-l-4 pl-3 py-2 {% if note.visibility == 'staff_only' %}border-warning{% elif note.visibility == 'officers' %}border-info{% else %}border-success{% endif %}">
+        <div class="flex justify-between items-start">
+            <div class="flex-1">
+                <p class="text-sm">{{ note.note_text }}</p>
+                <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                    <span>{{ note.created_by_name or 'Unknown' }}</span>
+                    <span>•</span>
+                    <span>{{ note.created_at.strftime('%b %d, %Y %I:%M %p') if note.created_at else '' }}</span>
+                    <span>•</span>
+                    <span class="badge badge-xs {% if note.visibility == 'staff_only' %}badge-warning{% elif note.visibility == 'officers' %}badge-info{% else %}badge-success{% endif %}">
+                        {{ note.visibility | replace('_', ' ') | title }}
+                    </span>
+                    {% if note.category %}
+                    <span class="badge badge-xs badge-ghost">{{ note.category }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if current_user and (current_user.get('id') == note.created_by_id or 'admin' in (current_user.get('roles', []) | map('lower') | list)) %}
+            <div class="dropdown dropdown-end">
+                <label tabindex="0" class="btn btn-ghost btn-xs">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                    </svg>
+                </label>
+                <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-32">
+                    <li>
+                        <button hx-delete="/api/v1/member-notes/{{ note.id }}"
+                                hx-target="#notes-list"
+                                hx-swap="outerHTML"
+                                hx-confirm="Are you sure you want to delete this note?"
+                                class="text-error">
+                            Delete
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center text-gray-500 py-4" id="notes-list">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+    </svg>
+    <p class="text-sm">No notes yet</p>
+    <p class="text-xs mt-1">Add a note to track interactions with this member</p>
+</div>
+{% endif %}
