@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}All Grants - IP2A{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/grants">Grants</a></li>
+            <li>All Grants</li>
+        </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold">All Grants</h1>
+            <p class="text-base-content/70">Complete list of grants</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex flex-wrap gap-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Status</span>
+                    </label>
+                    <select
+                        class="select select-bordered"
+                        onchange="window.location.href='/grants/list?status=' + this.value"
+                    >
+                        <option value="">All Statuses</option>
+                        {% for status in statuses %}
+                        <option value="{{ status }}" {% if selected_status == status %}selected{% endif %}>{{ status|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grants Table -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            {% if grants %}
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
+                        <tr>
+                            <th>Grant</th>
+                            <th>Funder</th>
+                            <th>Status</th>
+                            <th>Enrolled</th>
+                            <th>Budget</th>
+                            <th>Period</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for grant in grants %}
+                        <tr>
+                            <td>
+                                <div class="font-medium">{{ grant.name }}</div>
+                                {% if grant.grant_number %}
+                                <div class="text-sm text-base-content/60">#{{ grant.grant_number }}</div>
+                                {% endif %}
+                            </td>
+                            <td>{{ grant.funding_source or 'N/A' }}</td>
+                            <td>
+                                <span class="badge {{ status_badge(grant.status) }}">
+                                    {{ grant.status.value if grant.status else 'Unknown' }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ grant.current_enrollment }}
+                                {% if grant.target_enrollment %}
+                                <span class="text-base-content/60">/ {{ grant.target_enrollment }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div>${{ "{:,.0f}".format(grant.total_amount) }}</div>
+                                <div class="text-sm text-base-content/60">
+                                    ${{ "{:,.0f}".format(grant.spent_amount) }} spent
+                                </div>
+                            </td>
+                            <td>
+                                <div>{{ grant.start_date.strftime('%b %Y') if grant.start_date else 'N/A' }}</div>
+                                <div class="text-sm text-base-content/60">
+                                    {% if grant.end_date %}
+                                    to {{ grant.end_date.strftime('%b %Y') }}
+                                    {% else %}
+                                    Ongoing
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <a href="/grants/{{ grant.id }}" class="btn btn-ghost btn-sm">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-base-content/60">
+                <p>No grants found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

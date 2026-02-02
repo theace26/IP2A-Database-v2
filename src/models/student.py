@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from src.models.grade import Grade
     from src.models.certification import Certification
     from src.models.attendance import Attendance
+    from src.models.grant_enrollment import GrantEnrollment
 
 
 class Student(Base, TimestampMixin, SoftDeleteMixin):
@@ -103,6 +104,13 @@ class Student(Base, TimestampMixin, SoftDeleteMixin):
 
     attendances: Mapped[list["Attendance"]] = relationship(
         "Attendance",
+        back_populates="student",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+    )
+
+    grant_enrollments: Mapped[list["GrantEnrollment"]] = relationship(
+        "GrantEnrollment",
         back_populates="student",
         lazy="selectin",
         cascade="all, delete-orphan",

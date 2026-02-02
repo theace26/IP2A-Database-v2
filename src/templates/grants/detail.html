@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}{{ summary.grant_name }} - Grant Details{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/grants">Grants</a></li>
+            <li>{{ summary.grant_name }}</li>
+        </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold">{{ summary.grant_name }}</h1>
+            <p class="text-base-content/70">
+                {% if summary.grant_number %}#{{ summary.grant_number }} &bull; {% endif %}
+                {{ summary.funder or 'Unknown Funder' }}
+            </p>
+        </div>
+        <div class="flex gap-2">
+            <span class="badge {{ status_badge(summary.status) }} badge-lg">
+                {{ summary.status.value if summary.status else 'Unknown' }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Period and Reporting Info -->
+    <div class="card bg-primary text-primary-content">
+        <div class="card-body">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                    <p class="text-sm opacity-80">Start Date</p>
+                    <p class="text-lg font-semibold">{{ summary.period.start.strftime('%b %d, %Y') if summary.period.start else 'N/A' }}</p>
+                </div>
+                <div>
+                    <p class="text-sm opacity-80">End Date</p>
+                    <p class="text-lg font-semibold">{{ summary.period.end.strftime('%b %d, %Y') if summary.period.end else 'Ongoing' }}</p>
+                </div>
+                <div>
+                    <p class="text-sm opacity-80">Reporting</p>
+                    <p class="text-lg font-semibold">{{ summary.reporting.frequency|capitalize if summary.reporting.frequency else 'N/A' }}</p>
+                </div>
+                <div>
+                    <p class="text-sm opacity-80">Next Report</p>
+                    <p class="text-lg font-semibold">{{ summary.reporting.next_due.strftime('%b %d, %Y') if summary.reporting.next_due else 'N/A' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metrics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Total Enrolled -->
+        <div class="stat bg-base-100 rounded-box shadow">
+            <div class="stat-title">Total Enrolled</div>
+            <div class="stat-value text-info">{{ summary.enrollment.total_enrolled }}</div>
+            {% if summary.targets.enrollment %}
+            <div class="stat-desc">Target: {{ summary.targets.enrollment }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Currently Active -->
+        <div class="stat bg-base-100 rounded-box shadow">
+            <div class="stat-title">Currently Active</div>
+            <div class="stat-value text-success">{{ summary.enrollment.currently_active }}</div>
+            <div class="stat-desc">{{ summary.enrollment.retention_rate }}% retention</div>
+        </div>
+
+        <!-- Completed -->
+        <div class="stat bg-base-100 rounded-box shadow">
+            <div class="stat-title">Completed</div>
+            <div class="stat-value text-primary">{{ summary.enrollment.completed }}</div>
+            {% if summary.targets.completion %}
+            <div class="stat-desc">Target: {{ summary.targets.completion }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Placements -->
+        <div class="stat bg-base-100 rounded-box shadow">
+            <div class="stat-title">Placements</div>
+            <div class="stat-value text-accent">{{ summary.outcomes.placement_count }}</div>
+            {% if summary.targets.placement %}
+            <div class="stat-desc">Target: {{ summary.targets.placement }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Financial Overview -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Financial Overview</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div class="text-center">
+                    <p class="text-sm text-base-content/60">Total Budget</p>
+                    <p class="text-2xl font-bold">${{ "{:,.2f}".format(summary.financials.total_budget) }}</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-base-content/60">Spent</p>
+                    <p class="text-2xl font-bold text-warning">${{ "{:,.2f}".format(summary.financials.total_spent) }}</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-base-content/60">Remaining</p>
+                    <p class="text-2xl font-bold text-success">${{ "{:,.2f}".format(summary.financials.remaining) }}</p>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="flex justify-between text-sm mb-1">
+                    <span>Budget Utilization</span>
+                    <span>{{ summary.financials.utilization_rate }}%</span>
+                </div>
+                <progress class="progress progress-primary w-full" value="{{ summary.financials.utilization_rate }}" max="100"></progress>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Toward Targets -->
+    {% if summary.progress %}
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Progress Toward Targets</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                {% if summary.progress.enrollment is defined %}
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>Enrollment</span>
+                        <span>{{ summary.progress.enrollment }}%</span>
+                    </div>
+                    <progress class="progress progress-info w-full" value="{{ summary.progress.enrollment }}" max="100"></progress>
+                </div>
+                {% endif %}
+                {% if summary.progress.completion is defined %}
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>Completion</span>
+                        <span>{{ summary.progress.completion }}%</span>
+                    </div>
+                    <progress class="progress progress-success w-full" value="{{ summary.progress.completion }}" max="100"></progress>
+                </div>
+                {% endif %}
+                {% if summary.progress.placement is defined %}
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>Placement</span>
+                        <span>{{ summary.progress.placement }}%</span>
+                    </div>
+                    <progress class="progress progress-accent w-full" value="{{ summary.progress.placement }}" max="100"></progress>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Quick Actions</h2>
+            <div class="flex flex-wrap gap-2 mt-4">
+                <a href="/grants/{{ summary.grant_id }}/enrollments" class="btn btn-outline">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Manage Enrollments
+                </a>
+                <a href="/grants/{{ summary.grant_id }}/expenses" class="btn btn-outline">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                    View Expenses
+                </a>
+                <a href="/grants/{{ summary.grant_id }}/reports" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Generate Reports
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

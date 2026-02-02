@@ -2,7 +2,7 @@
 
 **Purpose:** Copy and paste this document into a new Claude Code thread to provide full project context.
 
-**Last Updated:** 2026-01-30
+**Last Updated:** 2026-02-02
 
 ---
 
@@ -11,10 +11,10 @@
 **Repository:** IP2A-Database-v2
 **Location:** `/app` (Docker container) or `~/Projects/IP2A-Database-v2` (local)
 **Purpose:** Production-grade union operations management system for IBEW Local 46
-**Status:** Phase 6 complete, Railway deployment live, Stripe backend implemented
-**Current Version:** v0.8.0-alpha1 (develop branch active)
+**Status:** Phase 6 FEATURE-COMPLETE, Railway deployment live, Stripe integration complete, Grant compliance reporting complete
+**Current Version:** v0.9.0-alpha (develop branch active)
 **Current Branch:** `develop` (main frozen for demo)
-**Latest Tag:** v0.8.0-alpha1
+**Latest Tag:** v0.9.0-alpha
 
 ### Tech Stack
 - **Backend:** Python 3.12, FastAPI
@@ -34,7 +34,7 @@
 | Branch | Purpose | Status |
 |--------|---------|--------|
 | `main` | Demo/Production (FROZEN) | v0.8.0-alpha1, deployed to Railway |
-| `develop` | Active development | Current work branch |
+| `develop` | Active development | v0.9.0-alpha, current work branch |
 
 **Why:** Main branch is frozen to keep the Railway demo stable for leadership. All new development happens on develop.
 
@@ -52,37 +52,41 @@ git push origin main  # This triggers Railway auto-deploy
 
 ---
 
-## Recent Updates (January 30, 2026)
+## Recent Updates (February 2, 2026)
 
-### Branching Strategy Established
-- **Created:** `develop` branch for ongoing development
-- **Frozen:** `main` branch at v0.8.0-alpha1 for Railway demo
-- **Updated:** All session workflow documentation with new branching model
+### Week 14: Grant Compliance Reporting (Completed)
+- **✅ Created:** GrantEnrollment model linking students to grants with outcome tracking
+- **✅ Implemented:** GrantMetricsService for compliance metrics calculation
+- **✅ Implemented:** GrantReportService for summary, detailed, and funder reports
+- **✅ Created:** Grant frontend routes and templates (list, detail, enrollments, expenses, reports)
+- **✅ Added:** Excel export for grant compliance data
+- **✅ Created:** ADR-014 for Grant Compliance Reporting System
 
-### Documentation Standardization
-- **Completed:** Standardized documentation practices across all 55 instruction documents
-- **Added:** Mandatory "End-of-Session Documentation" reminder to all instruction files
-- **Created:** ADR-013 for Stripe Payment Integration decision
-- **Updated:** CLAUDE.md, CONTINUITY.md, ADR README index
+### Week 13: IP2A Entity Completion Audit (Completed)
+- **✅ Verified:** All IP2A-specific entities already exist in codebase
+- **✅ Confirmed:** Location, InstructorHours, ToolsIssued, Expense models complete
+- **No new models required** - original IP2A design fully covered
 
-### Stripe Integration - Phase 1 Backend (Completed)
-- **✅ Implemented:** PaymentService for creating Stripe Checkout Sessions
-- **✅ Implemented:** Webhook handler for payment events (checkout.session.completed, etc.)
-- **✅ Added:** Stripe configuration to settings.py (STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY, STRIPE_WEBHOOK_SECRET)
-- **✅ Updated:** requirements.txt with stripe>=8.0.0
-- **✅ Updated:** .env.example with Stripe environment variables
-- **✅ Registered:** Stripe webhook router in main.py
-- **Decision:** Use Stripe Checkout Sessions (PCI compliance stays with Stripe)
-- **Payment Methods:** Credit/debit cards (2.9% + $0.30), ACH bank transfers (0.8%, $5 cap)
+### Week 12: User Profile & Settings (Completed)
+- **✅ Implemented:** Profile view page with user info and activity summary
+- **✅ Implemented:** Password change flow with validation and audit logging
+
+### Week 11: Audit Infrastructure (Completed)
+- **✅ Implemented:** Audit log immutability via PostgreSQL triggers (NLRA compliance)
+- **✅ Created:** MemberNote model with visibility levels (staff_only, officers, all_authorized)
+- **✅ Implemented:** Audit UI with role-based permissions and sensitive field redaction
+- **✅ Created:** Inline audit history timeline on entity detail pages
+
+### Stripe Integration (All 3 Phases Complete)
+- **Phase 1:** PaymentService, webhook handler, Stripe configuration
+- **Phase 2:** Database migrations (stripe_customer_id, payment methods)
+- **Phase 3:** Frontend payment flow (Pay Now button, success/cancel pages)
 - **ADR:** [ADR-013-stripe-payment-integration.md](docs/decisions/ADR-013-stripe-payment-integration.md)
 
-### Stripe Integration - Phase 2 Database & Frontend (Next Steps)
-- [ ] Create migration to add stripe_customer_id field to Member model
-- [ ] Update DuesPayment payment_method enum (add stripe_card, stripe_ach)
-- [ ] Add "Pay Dues" button to dues frontend
-- [ ] Create success/cancel redirect pages
-- [ ] Set up Stripe test mode with CLI for local development
-- [ ] Add frontend payment flow integration
+### Branching Strategy
+- **Created:** `develop` branch for ongoing development
+- **Frozen:** `main` branch at v0.8.0-alpha1 for Railway demo
+- **Workflow:** Merge develop → main when ready to update demo
 
 ---
 
@@ -714,18 +718,38 @@ docker-compose down && docker-compose up -d --build
 ## Next Steps / TODO
 
 ### Immediate Tasks
-- [ ] Run integrity check to identify any issues
-- [ ] Run load test to establish performance baseline
-- [ ] Add database indexes for performance
-- [ ] Implement caching for frequently accessed data
+- [ ] Merge develop to main for production deployment
+- [ ] Run full test suite on production data
+- [ ] Configure production Stripe keys
+- [ ] Set up production S3/MinIO for documents
 
-### Future Phases
-- [ ] Phase 2: SALTing activities
-- [ ] Phase 3: Benevolence, Grievances
-- [ ] Phase 4: Document management, S3
-- [ ] Phase 5: Dues tracking
-- [ ] Phase 6: TradeSchool integration
-- [ ] Phase 7: Web portal, deployment
+### Future Enhancements
+- [ ] Stripe recurring subscriptions
+- [ ] QuickBooks integration
+- [ ] Mobile-responsive UI improvements
+- [ ] Advanced reporting dashboards
+- [ ] Member self-service portal
+
+### Completed Backend Phases
+- [x] Phase 1: Core Models + Auth (JWT, RBAC)
+- [x] Phase 2a: Union Ops (SALT, Benevolence, Grievance)
+- [x] Phase 2b: Training (Students, Courses, Grades)
+- [x] Phase 3: Document Management (S3)
+- [x] Phase 4: Dues Tracking
+
+### Completed Frontend (Phase 6)
+- [x] Week 1-2: Auth + Dashboard
+- [x] Week 3: Staff Management
+- [x] Week 4: Training Landing
+- [x] Week 5: Members Landing
+- [x] Week 6: Union Operations
+- [x] Week 8: Reports & Export
+- [x] Week 9: Documents Frontend
+- [x] Week 10: Dues UI
+- [x] Week 11: Audit Infrastructure + UI
+- [x] Week 12: User Profile & Settings
+- [x] Week 13: Entity Completion Audit
+- [x] Week 14: Grant Compliance Reporting
 
 ---
 
@@ -765,12 +789,14 @@ pytest --cov=src                       # Test with coverage
 
 ## Version Info
 
-- **Project Version:** v0.1.1
+- **Project Version:** v0.9.0-alpha
 - **Python:** 3.12.12
 - **PostgreSQL:** 16.11
 - **FastAPI:** Latest
 - **SQLAlchemy:** 2.x (sync)
 - **Pydantic:** v2
+- **Tests:** ~390 total (165 backend + 200+ frontend)
+- **ADRs:** 14
 
 ---
 

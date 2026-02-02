@@ -156,6 +156,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * Handle RedirectResponse for expired sessions with HX-Redirect header
   * Total new functionality: Notes UI, inline audit timeline, enhanced member detail page
 
+- **Week 13: IP2A Entity Completion Audit** (February 2, 2026)
+  * Completed entity audit verifying existing IP2A-specific models
+  * Confirmed Location model exists with full address, capacity, contacts, LocationType enum
+  * Confirmed InstructorHours model exists with hours tracking, prep_hours, payroll support
+  * Confirmed ToolsIssued model exists with checkout/return tracking, condition, value
+  * Confirmed Expense model already has grant_id FK (acts as GrantExpense)
+  * All Week 13 entities verified as fully implemented in current codebase
+  * No new models required - original IP2A design already covered by existing infrastructure
+
+- **Week 14: Grant Module Expansion** (February 2, 2026)
+  * Created src/db/enums/grant_enums.py with GrantStatus, GrantEnrollmentStatus, GrantOutcome
+  * GrantStatus: pending, active, completed, closed, suspended
+  * GrantEnrollmentStatus: enrolled, active, completed, withdrawn, dropped
+  * GrantOutcome: completed_program, obtained_credential, entered_apprenticeship, obtained_employment, continued_education, withdrawn, other
+  * Enhanced Grant model with status field and target fields (target_enrollment, target_completion, target_placement)
+  * Created src/models/grant_enrollment.py - links students to grants with outcome tracking
+  * Tracks enrollment_date, status, completion_date, outcome, outcome_date
+  * Includes placement tracking: employer, date, wage, job_title
+  * Created migration j5e6f7g8h9i0 for grant_enrollments table and Grant enhancements
+  * Created src/schemas/grant.py with GrantBase, GrantCreate, GrantUpdate, GrantRead, GrantSummary, GrantMetrics
+  * Created src/schemas/grant_enrollment.py with full schema set including RecordOutcome
+  * Created src/services/grant_metrics_service.py for calculating compliance metrics
+  * Metrics: enrollment stats, financial stats, outcome stats, progress toward targets
+  * Badge helper methods for status, enrollment status, and outcome colors
+  * Created src/services/grant_report_service.py for compliance reporting
+  * Report types: summary (executive), detailed (student-level), funder (formatted for submission)
+  * Excel export with Summary, Enrollments, Expenses sheets (via openpyxl)
+  * Created src/routers/grants_frontend.py with full grant management routes
+  * Routes: landing, list, detail, enrollments, expenses, reports, report views, excel download
+  * Created src/templates/grants/ with index.html, list.html, detail.html
+  * Created enrollments.html, expenses.html, reports.html, report_summary.html
+  * Created grants/partials/_enrollments_table.html for HTMX filtering
+  * Added Grants link to sidebar navigation (Training section)
+  * Registered grants_frontend_router in src/main.py
+  * Created src/tests/test_grant_enrollment.py with enum, model, schema tests
+  * Created src/tests/test_grant_services.py with service and router tests
+  * Created ADR-014: Grant Compliance Reporting System
+  * Updated reconciliation checklist with completion status
+
 - **Week 12 Session A: User Profile & Settings** (January 31, 2026)
   * Created src/services/profile_service.py with ProfileService class
   * change_password() method with validation: current password verification, minimum 8 chars, different from old

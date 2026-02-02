@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Summary Report - {{ report.grant.name }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/grants">Grants</a></li>
+            <li><a href="/grants/{{ report.grant.id }}">{{ report.grant.name }}</a></li>
+            <li><a href="/grants/{{ report.grant.id }}/reports">Reports</a></li>
+            <li>Summary</li>
+        </ul>
+    </div>
+
+    <!-- Report Header -->
+    <div class="card bg-primary text-primary-content">
+        <div class="card-body">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-2xl font-bold">Grant Summary Report</h1>
+                    <p class="text-lg opacity-90">{{ report.grant.name }}</p>
+                    {% if report.grant.grant_number %}
+                    <p class="text-sm opacity-70">Grant #{{ report.grant.grant_number }}</p>
+                    {% endif %}
+                </div>
+                <div class="text-right">
+                    <p class="text-sm opacity-70">Generated</p>
+                    <p class="font-medium">{{ report.generated_at[:10] }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grant Info -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Grant Information</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                <div>
+                    <p class="text-sm text-base-content/60">Funder</p>
+                    <p class="font-medium">{{ report.grant.funder or 'N/A' }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-base-content/60">Status</p>
+                    <p class="font-medium">{{ report.grant.status|title if report.grant.status else 'N/A' }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-base-content/60">Start Date</p>
+                    <p class="font-medium">{{ report.grant.period.start if report.grant.period.start else 'N/A' }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-base-content/60">End Date</p>
+                    <p class="font-medium">{{ report.grant.period.end if report.grant.period.end else 'Ongoing' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Highlights -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Key Highlights</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-6 mt-4">
+                <div class="stat">
+                    <div class="stat-title">Total Enrolled</div>
+                    <div class="stat-value text-primary">{{ report.highlights.total_enrolled }}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title">Currently Active</div>
+                    <div class="stat-value text-success">{{ report.highlights.currently_active }}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title">Completed</div>
+                    <div class="stat-value text-info">{{ report.highlights.completed }}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title">Retention Rate</div>
+                    <div class="stat-value text-accent">{{ report.highlights.retention_rate }}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title">Budget Utilization</div>
+                    <div class="stat-value text-warning">{{ report.highlights.budget_utilization }}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title">Placements</div>
+                    <div class="stat-value text-secondary">{{ report.highlights.placements }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Targets -->
+    {% if report.targets.enrollment or report.targets.completion or report.targets.placement %}
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Targets</h2>
+            <div class="overflow-x-auto mt-4">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Target</th>
+                            <th>Actual</th>
+                            <th>Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if report.targets.enrollment %}
+                        <tr>
+                            <td>Enrollment</td>
+                            <td>{{ report.targets.enrollment }}</td>
+                            <td>{{ report.highlights.total_enrolled }}</td>
+                            <td>
+                                {% if report.progress_toward_targets.enrollment %}
+                                <progress class="progress progress-primary w-20" value="{{ report.progress_toward_targets.enrollment }}" max="100"></progress>
+                                <span class="ml-2">{{ report.progress_toward_targets.enrollment }}%</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% if report.targets.completion %}
+                        <tr>
+                            <td>Completion</td>
+                            <td>{{ report.targets.completion }}</td>
+                            <td>{{ report.highlights.completed }}</td>
+                            <td>
+                                {% if report.progress_toward_targets.completion %}
+                                <progress class="progress progress-success w-20" value="{{ report.progress_toward_targets.completion }}" max="100"></progress>
+                                <span class="ml-2">{{ report.progress_toward_targets.completion }}%</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% if report.targets.placement %}
+                        <tr>
+                            <td>Placement</td>
+                            <td>{{ report.targets.placement }}</td>
+                            <td>{{ report.highlights.placements }}</td>
+                            <td>
+                                {% if report.progress_toward_targets.placement %}
+                                <progress class="progress progress-accent w-20" value="{{ report.progress_toward_targets.placement }}" max="100"></progress>
+                                <span class="ml-2">{{ report.progress_toward_targets.placement }}%</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="flex justify-end gap-2">
+        <a href="/grants/{{ report.grant.id }}/reports" class="btn btn-ghost">Back to Reports</a>
+        <button onclick="window.print()" class="btn btn-primary">Print Report</button>
+    </div>
+</div>
+{% endblock %}

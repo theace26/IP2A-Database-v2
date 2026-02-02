@@ -23,6 +23,7 @@ An ADR captures an important architectural decision along with its context and c
 | [ADR-011](ADR-011-dues-frontend-patterns.md) | Dues Frontend Patterns | Accepted | 2026-01-30 |
 | [ADR-012](ADR-012-audit-logging.md) | Audit Logging Architecture | Accepted | 2026-01-29 |
 | [ADR-013](ADR-013-stripe-payment-integration.md) | Stripe Payment Integration | Accepted | 2026-01-30 |
+| [ADR-014](ADR-014-grant-compliance-reporting.md) | Grant Compliance Reporting | Accepted | 2026-02-02 |
 
 ## ADR Template
 
@@ -74,4 +75,4 @@ Create an ADR when making decisions about:
 
 ---
 
-*Last Updated: January 30, 2026*
+*Last Updated: February 2, 2026*

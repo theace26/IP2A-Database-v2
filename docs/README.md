@@ -66,7 +66,11 @@ Coding standards and conventions for contributors.
 
 ### `/instructions`
 Claude Code instruction documents for development sessions.
-- [Week 10 Instructions](instructions/dues_ui_session_a.md) - Dues UI (Current)
+- [Week 14 Instructions](instructions/week12_overlooked/) - Grant Compliance (Complete)
+- [Week 13 Instructions](instructions/week12_overlooked/) - Entity Audit (Complete)
+- [Week 12 Instructions](instructions/week12_istructions/) - Profile & Settings (Complete)
+- [Week 11 Instructions](instructions/week11–stripe/) - Audit Infrastructure (Complete)
+- [Week 10 Instructions](instructions/dues/) - Dues UI (Complete)
 - [Week 9 Instructions](instructions/week9_instructions/) - Documents Frontend
 - [Week 8 Instructions](instructions/week8_instructions/) - Reports & Export
 - [Week 7 Instructions](instructions/week7_instructions/) - Dues (Skipped)
@@ -81,15 +85,24 @@ Claude Code instruction documents for development sessions.
 
 ## Current Status
 
-**Version:** v0.7.8 (Phase 6 Week 10 Session A Complete)
+**Version:** v0.9.0-alpha (Phase 6 FEATURE-COMPLETE + Grant Compliance)
 
 | Component | Status | Tests |
 |-----------|--------|-------|
 | Backend API | Complete | 165 |
-| Frontend (Auth + Dashboard + Staff + Training + Members + Operations + Reports + Documents + Dues) | In Progress | 149 |
-| **Total** | **In Progress** | **312** |
+| Frontend (All modules complete) | Complete | 200+ |
+| Stripe Payment Integration | Complete | 25 |
+| Audit Infrastructure | Complete | 19 |
+| Grant Compliance | Complete | ~20 |
+| **Total** | **Feature Complete** | **~390** |
 
 See [Milestone Checklist](IP2A_MILESTONE_CHECKLIST.md) for detailed progress.
+
+### Recent Additions (Week 11-14)
+- **Week 11:** Audit log immutability, Member notes, Audit UI with role permissions
+- **Week 12:** User profile page, Password change flow
+- **Week 13:** IP2A entity completion audit (verified all entities exist)
+- **Week 14:** Grant compliance reporting with metrics and Excel export
 
 ---
 
@@ -101,4 +114,4 @@ See [Milestone Checklist](IP2A_MILESTONE_CHECKLIST.md) for detailed progress.
 
 ---
 
-*Last Updated: January 29, 2026*
+*Last Updated: February 2, 2026*

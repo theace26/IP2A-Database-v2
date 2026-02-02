@@ -12,12 +12,14 @@ from sqlalchemy import (
     Text,
     JSON,
     Index,
+    Enum,
 )
 
 from sqlalchemy.orm import relationship
 
 from src.db.base import Base
 from src.db.mixins import TimestampMixin, SoftDeleteMixin
+from src.db.enums import GrantStatus
 
 
 class Grant(TimestampMixin, SoftDeleteMixin, Base):
@@ -59,12 +61,32 @@ class Grant(TimestampMixin, SoftDeleteMixin, Base):
 
     notes = Column(Text, nullable=True)
 
+    # Grant status
+    status = Column(
+        Enum(GrantStatus, name="grant_status", create_constraint=True),
+        nullable=False,
+        default=GrantStatus.PENDING,
+        index=True,
+    )
+
+    # Target metrics (for compliance tracking)
+    target_enrollment = Column(Integer, nullable=True)  # Target number of students
+    target_completion = Column(Integer, nullable=True)  # Target completions
+    target_placement = Column(Integer, nullable=True)   # Target job placements
+
     # Status (note: is_deleted from mixin handles soft delete separately)
     is_active = Column(Boolean, default=True, nullable=False, index=True)
 
     # Relationship: all expenses linked to this grant
     expenses = relationship(
         "Expense",
+        back_populates="grant",
+        cascade="all, delete-orphan",
+    )
+
+    # Relationship: student enrollments for compliance tracking
+    enrollments = relationship(
+        "GrantEnrollment",
         back_populates="grant",
         cascade="all, delete-orphan",
     )

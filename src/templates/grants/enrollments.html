@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}{{ grant.name }} - Enrollments{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/grants">Grants</a></li>
+            <li><a href="/grants/{{ grant.id }}">{{ grant.name }}</a></li>
+            <li>Enrollments</li>
+        </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold">Grant Enrollments</h1>
+            <p class="text-base-content/70">{{ grant.name }}</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex flex-wrap gap-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Status</span>
+                    </label>
+                    <select
+                        class="select select-bordered"
+                        hx-get="/grants/partials/enrollments-table?grant_id={{ grant.id }}"
+                        hx-target="#enrollments-table"
+                        hx-trigger="change"
+                        hx-include="[name='status']"
+                        name="status"
+                    >
+                        <option value="">All Statuses</option>
+                        {% for status in statuses %}
+                        <option value="{{ status }}" {% if selected_status == status %}selected{% endif %}>{{ status|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enrollments Table -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div id="enrollments-table">
+                {% include "grants/partials/_enrollments_table.html" %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

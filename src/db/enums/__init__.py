@@ -58,6 +58,12 @@ from src.db.enums.dues_enums import (
     AdjustmentStatus,
 )
 
+from src.db.enums.grant_enums import (
+    GrantStatus,
+    GrantEnrollmentStatus,
+    GrantOutcome,
+)
+
 __all__ = [
     # Base enums (education/training)
     "LocationType",
@@ -100,4 +106,8 @@ __all__ = [
     "DuesPaymentStatus",
     "DuesAdjustmentType",
     "AdjustmentStatus",
+    # Grant enums
+    "GrantStatus",
+    "GrantEnrollmentStatus",
+    "GrantOutcome",
 ]

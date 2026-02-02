@@ -72,6 +72,25 @@ from src.schemas.auth import (
     CurrentUserResponse,
 )
 
+# Grant schemas
+from src.schemas.grant import (
+    GrantBase,
+    GrantCreate,
+    GrantUpdate,
+    GrantRead,
+    GrantSummary,
+    GrantMetrics,
+)
+from src.schemas.grant_enrollment import (
+    GrantEnrollmentBase,
+    GrantEnrollmentCreate,
+    GrantEnrollmentUpdate,
+    GrantEnrollmentRead,
+    GrantEnrollmentWithStudent,
+    GrantEnrollmentWithGrant,
+    RecordOutcome,
+)
+
 __all__ = [
     "StudentBase",
     "StudentCreate",
@@ -121,4 +140,18 @@ __all__ = [
     "PasswordResetConfirm",
     "UserRegistrationRequest",
     "CurrentUserResponse",
+    # Grant schemas
+    "GrantBase",
+    "GrantCreate",
+    "GrantUpdate",
+    "GrantRead",
+    "GrantSummary",
+    "GrantMetrics",
+    "GrantEnrollmentBase",
+    "GrantEnrollmentCreate",
+    "GrantEnrollmentUpdate",
+    "GrantEnrollmentRead",
+    "GrantEnrollmentWithStudent",
+    "GrantEnrollmentWithGrant",
+    "RecordOutcome",
 ]

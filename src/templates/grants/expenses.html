@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}{{ grant.name }} - Expenses{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/grants">Grants</a></li>
+            <li><a href="/grants/{{ grant.id }}">{{ grant.name }}</a></li>
+            <li>Expenses</li>
+        </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold">Grant Expenses</h1>
+            <p class="text-base-content/70">{{ grant.name }}</p>
+        </div>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="card bg-primary text-primary-content">
+        <div class="card-body">
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-center">
+                    <p class="text-sm opacity-80">Total Budget</p>
+                    <p class="text-2xl font-bold">${{ "{:,.2f}".format(grant.total_amount) }}</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm opacity-80">Total Spent</p>
+                    <p class="text-2xl font-bold">${{ "{:,.2f}".format(total_spent) }}</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm opacity-80">Remaining</p>
+                    <p class="text-2xl font-bold">${{ "{:,.2f}".format(remaining) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expenses Table -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Expense History</h2>
+            {% if expenses %}
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Item</th>
+                            <th>Category</th>
+                            <th>Vendor</th>
+                            <th class="text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exp in expenses %}
+                        <tr>
+                            <td>{{ exp.purchased_at }}</td>
+                            <td>
+                                <div class="font-medium">{{ exp.item }}</div>
+                                {% if exp.description %}
+                                <div class="text-sm text-base-content/60">{{ exp.description[:50] }}{% if exp.description|length > 50 %}...{% endif %}</div>
+                                {% endif %}
+                            </td>
+                            <td>{{ exp.category or 'Uncategorized' }}</td>
+                            <td>{{ exp.vendor or 'N/A' }}</td>
+                            <td class="text-right font-medium">${{ "{:,.2f}".format(exp.total_price) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" class="text-right font-bold">Total:</td>
+                            <td class="text-right font-bold">${{ "{:,.2f}".format(total_spent) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-base-content/60">
+                <p>No expenses recorded for this grant.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

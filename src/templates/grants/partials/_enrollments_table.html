@@ -1,0 +1,60 @@
+{% if enrollments %}
+<div class="overflow-x-auto">
+    <table class="table table-zebra">
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Enrolled</th>
+                <th>Status</th>
+                <th>Outcome</th>
+                <th>Placement</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in enrollments %}
+            <tr>
+                <td>
+                    <div class="font-medium">{{ e.student_name }}</div>
+                    <div class="text-sm text-base-content/60">#{{ e.student_number or 'N/A' }}</div>
+                </td>
+                <td>{{ e.enrollment_date }}</td>
+                <td>
+                    <span class="badge {{ enrollment_badge(e.status)|default('badge-ghost') if e.status else 'badge-ghost' }}">
+                        {{ e.status|title if e.status else 'Unknown' }}
+                    </span>
+                </td>
+                <td>
+                    {% if e.outcome %}
+                    <span class="badge {{ outcome_badge(e.outcome)|default('badge-ghost') if e.outcome else 'badge-ghost' }}">
+                        {{ e.outcome.replace('_', ' ')|title }}
+                    </span>
+                    {% if e.outcome_date %}
+                    <div class="text-xs text-base-content/60">{{ e.outcome_date }}</div>
+                    {% endif %}
+                    {% else %}
+                    <span class="text-base-content/40">-</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if e.placement_employer %}
+                    <div class="font-medium">{{ e.placement_employer }}</div>
+                    {% if e.placement_job_title %}
+                    <div class="text-sm text-base-content/60">{{ e.placement_job_title }}</div>
+                    {% endif %}
+                    {% if e.placement_wage %}
+                    <div class="text-sm text-success">{{ e.placement_wage }}</div>
+                    {% endif %}
+                    {% else %}
+                    <span class="text-base-content/40">-</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center py-8 text-base-content/60">
+    <p>No enrollments found.</p>
+</div>
+{% endif %}

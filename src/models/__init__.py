@@ -14,6 +14,7 @@ from .location import Location
 from .expense import Expense
 from .instructor_hours import InstructorHours
 from .grant import Grant
+from .grant_enrollment import GrantEnrollment
 from .class_session import ClassSession
 from .attendance import Attendance
 from .tools_issued import ToolsIssued
@@ -52,6 +53,7 @@ __all__ = [
     "Expense",
     "InstructorHours",
     "Grant",
+    "GrantEnrollment",
     "ClassSession",
     "Attendance",
     "ToolsIssued",

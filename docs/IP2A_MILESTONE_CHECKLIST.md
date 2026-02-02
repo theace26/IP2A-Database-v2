@@ -1,11 +1,11 @@
 # IP2A Milestone Checklist (Quick Reference)
 
 > **Print this or keep it open during sessions**
-> Last Updated: January 29, 2026
+> Last Updated: February 2, 2026
 
 ---
 
-## Current Focus: Phase 6 Frontend (Week 10 - Dues UI)
+## Current Focus: Phase 6 FEATURE-COMPLETE (v0.9.0-alpha)
 
 ### Legend: Done | In Progress | Pending
 
@@ -181,7 +181,7 @@
 
 **Version:** v0.7.7 (Week 9 Complete)
 
-### Week 10: Dues UI (IN PROGRESS)
+### Week 10: Dues UI (COMPLETE)
 
 | Task | Status |
 |------|--------|
@@ -192,14 +192,85 @@
 | Rates list page with HTMX filtering | Done |
 | Rates table partial with status badges | Done |
 | Sidebar navigation with Dues dropdown | Done |
-| 19 new dues frontend tests (149 frontend total) | Done |
-| Periods management page | Pending |
-| Payments list and recording | Pending |
-| Adjustments workflow | Pending |
+| Periods management page | Done |
+| Generate year modal | Done |
+| Period detail with payment summary | Done |
+| Close period workflow | Done |
+| Payments list with search and filters | Done |
+| Record payment modal | Done |
+| Member payment history page | Done |
+| Adjustments list with status/type filters | Done |
+| Adjustment detail with approve/deny | Done |
+| 37 new dues frontend tests | Done |
+| ADR-011: Dues Frontend Patterns | Done |
 
-**Commit:** `8bb7eba` - feat(dues-ui): add dues landing and rates management
+**Version:** v0.7.9 (Week 10 Complete)
 
-**Version:** v0.7.8 (Week 10 Session A Complete)
+### Week 11: Audit Infrastructure + Stripe (COMPLETE)
+
+| Task | Status |
+|------|--------|
+| Stripe Phase 1: PaymentService, webhook handler | Done |
+| Stripe Phase 2: Database migrations (stripe_customer_id) | Done |
+| Stripe Phase 3: Frontend payment flow (Pay Now button) | Done |
+| Success/cancel pages for Stripe payments | Done |
+| Audit log immutability (PostgreSQL triggers) | Done |
+| MemberNote model with visibility levels | Done |
+| MemberNoteService with role-based filtering | Done |
+| Member notes API endpoints | Done |
+| Audit UI with role-based permissions | Done |
+| Sensitive field redaction for non-admins | Done |
+| HTMX filtering for audit logs | Done |
+| CSV export (admin only) | Done |
+| Inline audit history on member detail pages | Done |
+| Notes UI with add/view/delete | Done |
+| ADR-012: Audit Logging, ADR-013: Stripe Integration | Done |
+
+**Version:** v0.8.0-alpha1 (Week 11 Complete)
+
+### Week 12: User Profile & Settings (COMPLETE)
+
+| Task | Status |
+|------|--------|
+| ProfileService with password change validation | Done |
+| User activity summary from audit logs | Done |
+| Profile view page with account info | Done |
+| Password change form with validation | Done |
+| Password changes logged via audit system | Done |
+
+**Version:** v0.8.1-alpha (Week 12 Complete)
+
+### Week 13: IP2A Entity Completion Audit (COMPLETE)
+
+| Task | Status |
+|------|--------|
+| Audit existing models vs IP2A design requirements | Done |
+| Location model verification (full address, capacity, contacts) | Done |
+| InstructorHours model verification (hours tracking, payroll) | Done |
+| ToolsIssued model verification (checkout/return, condition) | Done |
+| Expense model verification (grant_id FK exists) | Done |
+| **No new models required** - all entities already exist | Done |
+
+**Version:** v0.8.2-alpha (Week 13 Complete)
+
+### Week 14: Grant Compliance Reporting (COMPLETE)
+
+| Task | Status |
+|------|--------|
+| GrantStatus, GrantEnrollmentStatus, GrantOutcome enums | Done |
+| Grant model enhancements (status, targets) | Done |
+| GrantEnrollment model (student-grant association) | Done |
+| Outcome tracking (credential, apprenticeship, employment) | Done |
+| Placement tracking (employer, wage, job title) | Done |
+| GrantMetricsService for compliance metrics | Done |
+| GrantReportService (summary, detailed, funder reports) | Done |
+| Excel export with openpyxl | Done |
+| Grant frontend routes (list, detail, enrollments, expenses) | Done |
+| Reports page with generation options | Done |
+| Grants link added to sidebar | Done |
+| ADR-014: Grant Compliance Reporting System | Done |
+
+**Version:** v0.9.0-alpha (Week 14 Complete)
 
 ---
 
@@ -207,13 +278,14 @@
 
 | Metric | Current |
 |--------|---------|
-| Total Tests | ~312 |
+| Total Tests | ~390 |
 | Backend Tests | 165 |
-| Frontend Tests | 149 |
-| API Endpoints | ~130 |
-| ORM Models | 25 |
-| ADRs | 10 |
-| Version | v0.7.8 |
+| Frontend Tests | 200+ |
+| Stripe Tests | 25 |
+| API Endpoints | ~140 |
+| ORM Models | 26 |
+| ADRs | 14 |
+| Version | v0.9.0-alpha |
 
 ---
 
@@ -221,6 +293,11 @@
 
 | Version | Date | Milestone |
 |---------|------|-----------|
+| v0.9.0-alpha | 2026-02-02 | Phase 6 Week 14 - Grant Compliance (FEATURE COMPLETE) |
+| v0.8.2-alpha | 2026-02-02 | Phase 6 Week 13 - Entity Completion Audit |
+| v0.8.1-alpha | 2026-01-31 | Phase 6 Week 12 - User Profile & Settings |
+| v0.8.0-alpha1 | 2026-01-30 | Phase 6 Week 11 - Audit Infrastructure + Stripe |
+| v0.7.9 | 2026-01-30 | Phase 6 Week 10 - Dues UI (Complete) |
 | v0.7.8 | 2026-01-29 | Phase 6 Week 10 - Dues UI (Session A) |
 | v0.7.7 | 2026-01-29 | Phase 6 Week 9 - Documents Frontend |
 | v0.7.6 | 2026-01-29 | Phase 6 Week 8 - Reports & Export |
@@ -284,17 +361,24 @@ open http://localhost:9001
 ## Session Workflow
 
 ### Starting a Session
-1. `git pull origin main`
-2. `docker-compose up -d`
-3. `pytest -v --tb=short` (verify green)
-4. Check CLAUDE.md for current tasks
+1. `git checkout develop` (ALWAYS work on develop branch)
+2. `git pull origin develop`
+3. `docker-compose up -d`
+4. `pytest -v --tb=short` (verify green)
+5. Check CLAUDE.md for current tasks
 
 ### Ending a Session
 1. `pytest -v` (verify green)
 2. `git status` (check for uncommitted changes)
 3. Commit with conventional commit message
-4. `git push origin main`
+4. `git push origin develop` (push to develop, NOT main)
 5. Update CLAUDE.md with session summary
+
+### Merging to Main (for deployment)
+1. `git checkout main`
+2. `git pull origin main`
+3. `git merge develop`
+4. `git push origin main` (triggers Railway auto-deploy)
 
 ---
 

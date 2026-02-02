@@ -1,9 +1,9 @@
 # IP2A-Database-v2: Project Context Document
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
-**Last Updated:** January 31, 2026
-**Current Version:** v0.8.2-alpha
-**Current Phase:** Audit UI, Member Notes & Profile Management Complete
+**Last Updated:** February 2, 2026
+**Current Version:** v0.9.0-alpha
+**Current Phase:** Grant Compliance Reporting Complete
 
 ---
 
@@ -17,7 +17,7 @@
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl + Stripe
 
-**Status:** 200+ frontend tests, ~375 total tests, ~135 API endpoints, 13 ADRs, Railway deployment live, Stripe integration complete
+**Status:** 200+ frontend tests, ~390 total tests, ~140 API endpoints, 14 ADRs, Railway deployment live, Stripe integration complete, Grant compliance complete
 
 ---
 
@@ -51,6 +51,8 @@
 | Week 10 | Dues UI | Done |
 | Week 11 | Audit UI & Member Notes | Done |
 | Week 12 | Profile & Settings | Done |
+| Week 13 | Entity Audit (verified existing) | Done |
+| Week 14 | Grant Compliance Reporting | Done |
 
 ### Frontend Tests: 167 tests
 
@@ -1525,7 +1527,83 @@ src/templates/profile/{index.html,change_password.html}
 
 ---
 
-**Version:** v0.8.2-alpha
+## Week 13: IP2A Entity Completion Audit (February 2, 2026)
 
-**Sessions Complete Today:** Week 11 B, C + Week 12 A
+**Status:** ✅ **COMPLETE** - All IP2A entities verified as existing
+
+### Overview
+
+Audited existing models against original IP2A design requirements. All entities already implemented:
+
+| Entity | Status | Notes |
+|--------|--------|-------|
+| Location | ✅ Exists | Full address, capacity, contacts, LocationType enum |
+| InstructorHours | ✅ Exists | Hours tracking, prep_hours, payroll support |
+| ToolsIssued | ✅ Exists | Checkout/return tracking, condition, value |
+| Expense | ✅ Exists | Has grant_id FK - serves as GrantExpense |
+
+No new models required. Week 13 instruction document verified feature parity.
+
+---
+
+## Week 14: Grant Module Expansion (February 2, 2026)
+
+**Status:** ✅ **COMPLETE** - Full grant compliance reporting implemented
+
+### Overview
+
+Implements comprehensive grant tracking and compliance reporting for IP2A program funding sources.
+
+### Files Created
+
+```
+src/db/enums/grant_enums.py                    # GrantStatus, GrantEnrollmentStatus, GrantOutcome
+src/models/grant_enrollment.py                  # Student-to-grant association with outcomes
+src/schemas/grant.py                            # Grant-related Pydantic schemas
+src/schemas/grant_enrollment.py                 # Enrollment schemas with outcome recording
+src/services/grant_metrics_service.py           # Metrics calculation for compliance
+src/services/grant_report_service.py            # Report generation (summary, detailed, funder, Excel)
+src/routers/grants_frontend.py                  # Frontend routes for grant management
+src/templates/grants/index.html                 # Grant dashboard landing page
+src/templates/grants/list.html                  # All grants list
+src/templates/grants/detail.html                # Grant detail with metrics
+src/templates/grants/enrollments.html           # Enrollment management
+src/templates/grants/expenses.html              # Expense tracking
+src/templates/grants/reports.html               # Report generation page
+src/templates/grants/report_summary.html        # Summary report view
+src/templates/grants/partials/_enrollments_table.html
+src/tests/test_grant_enrollment.py              # Enum, model, schema tests
+src/tests/test_grant_services.py                # Service and router tests
+src/db/migrations/versions/j5e6f7g8h9i0_*.py    # Migration for grant enhancements
+docs/decisions/ADR-014-grant-compliance-reporting.md
+```
+
+### Files Modified
+
+```
+src/db/enums/__init__.py                        # Export new grant enums
+src/models/grant.py                             # Added status, targets, enrollments relationship
+src/models/student.py                           # Added grant_enrollments relationship
+src/models/__init__.py                          # Export GrantEnrollment
+src/schemas/__init__.py                         # Export grant schemas
+src/main.py                                     # Register grants_frontend router
+src/templates/components/_sidebar.html          # Added Grants nav link
+```
+
+### Key Features
+
+- **Grant Status Tracking**: Lifecycle states (pending, active, completed, closed, suspended)
+- **Target Metrics**: enrollment, completion, placement targets
+- **Enrollment Tracking**: Students linked to grants with outcome recording
+- **Outcome Types**: Program completion, credential, apprenticeship, employment, education
+- **Placement Tracking**: Employer, date, wage, job title
+- **Metrics Calculation**: Retention rate, utilization rate, progress toward targets
+- **Report Generation**: Summary, detailed, funder-formatted, Excel export
+- **Dashboard UI**: Grant list, detail views, enrollment/expense management
+
+---
+
+**Version:** v0.9.0-alpha
+
+**Sessions Complete Today:** Week 13 + Week 14
 
