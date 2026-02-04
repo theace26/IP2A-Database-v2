@@ -2,8 +2,8 @@
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
 **Last Updated:** February 4, 2026
-**Current Version:** v0.9.6-alpha
-**Current Phase:** Phase 7 (Referral & Dispatch) IN PROGRESS — Weeks 20-25 Complete (Services + API) | Spoke 2
+**Current Version:** v0.9.8-alpha
+**Current Phase:** Phase 7 (Referral & Dispatch) IN PROGRESS — Weeks 20-27 Complete (Backend + Frontend UI) | Spoke 2
 
 ---
 
@@ -17,9 +17,9 @@
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl + Stripe
 
-**Status:** 542 total tests (200+ frontend, 185+ backend, 78 production, 25 Stripe), ~200+ API endpoints, 32 models (26 existing + 6 Phase 7), 15 ADRs, Railway deployment live, Stripe integration complete, Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
+**Status:** 593 total tests (250+ frontend, 185+ backend, 78 production, 25 Stripe, 51 Phase 7), ~228+ API endpoints, 32 models (26 existing + 6 Phase 7), 15 ADRs, Railway deployment live, Stripe integration complete, Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
-**Current:** Phase 7 — Referral & Dispatch System (~78 LaborPower reports to build). **Weeks 20-25 complete:** models, enums, schemas, 7 services, 5 API routers (~50 new endpoints). See `docs/phase7/`
+**Current:** Phase 7 — Referral & Dispatch System (~78 LaborPower reports to build). **Weeks 20-27 complete:** models, enums, schemas, 7 services, 5 API routers, 2 frontend services, 2 frontend routers, 13 pages, 15 HTMX partials. See `docs/phase7/`
 
 ---
 
@@ -1820,7 +1820,7 @@ src/templates/components/_sidebar.html  # Added Analytics nav link
 
 ## Phase 7: Referral & Dispatch System (IN PROGRESS)
 
-**Status:** 🚧 **WEEKS 20-25 COMPLETE** — Models, Enums, Schemas, 7 Services, 5 API Routers (~50 endpoints)
+**Status:** 🚧 **WEEKS 20-27 COMPLETE** — Backend + Frontend Books & Dispatch UI (Models, Services, API, Frontend)
 **Effort Estimate:** 100-150 hours across 7 sub-phases (7a–7g)
 **Documentation:** `docs/phase7/` — 8+ planning documents
 
@@ -1903,6 +1903,111 @@ src/routers/
 ```
 src/main.py                          # Registered 5 Phase 7 API routers, version 0.9.6-alpha
 ```
+
+### Weeks 26-27 Implementation (February 4, 2026)
+
+**Week 26: Books & Registration UI**
+
+| Task | Status |
+|------|--------|
+| ReferralFrontendService | ✅ Complete |
+| Referral landing page with stats | ✅ Complete |
+| Books list with HTMX filtering | ✅ Complete |
+| Book detail with queue table | ✅ Complete |
+| Registration list (cross-book) | ✅ Complete |
+| Registration detail with history | ✅ Complete |
+| 8 HTMX partials | ✅ Complete |
+| Register/re-sign/resign modals | ✅ Complete |
+| 22 frontend tests | ✅ Complete |
+
+**Week 27: Dispatch Workflow UI**
+
+| Task | Status |
+|------|--------|
+| DispatchFrontendService (time-aware) | ✅ Complete |
+| Dispatch dashboard with live stats | ✅ Complete |
+| Labor request list | ✅ Complete |
+| Morning referral page | ✅ Complete |
+| Active dispatches page | ✅ Complete |
+| Queue management with book tabs | ✅ Complete |
+| Enforcement dashboard | ✅ Complete |
+| 7 HTMX partials | ✅ Complete |
+| 29 frontend tests | ✅ Complete |
+
+### Files Created (Weeks 26-27)
+
+```
+src/services/
+├── referral_frontend_service.py         # Frontend wrapper for book/registration data
+└── dispatch_frontend_service.py         # Time-aware dispatch workflow service
+
+src/routers/
+├── referral_frontend.py                 # 17 routes (books, registrations, partials)
+└── dispatch_frontend.py                 # 11 routes (dashboard, requests, queue, enforcement)
+
+src/templates/referral/
+├── landing.html                         # Overview with stats cards
+├── books.html                           # Books list with filters
+├── book_detail.html                     # Book detail with queue
+├── registrations.html                   # Cross-book registration list
+└── registration_detail.html             # Single registration view
+
+src/templates/dispatch/
+├── dashboard.html                       # Daily dispatch operations dashboard
+├── requests.html                        # Labor request list
+├── morning_referral.html                # Bid queue processing (critical daily page)
+├── active.html                          # Active dispatches with short call tracking
+├── queue.html                           # Queue positions by book
+└── enforcement.html                     # Suspensions and violations
+
+src/templates/partials/referral/
+├── _stats.html                          # Stats cards
+├── _books_overview.html                 # Books grid
+├── _books_table.html                    # Filterable books table
+├── _queue_table.html                    # Members on book
+├── _registrations_table.html            # Registration list
+├── _register_modal.html                 # Register form
+├── _re_sign_modal.html                  # Re-sign confirmation
+└── _resign_modal.html                   # Resign confirmation
+
+src/templates/partials/dispatch/
+├── _stats_cards.html                    # Dashboard stats (auto-refresh 60s)
+├── _activity_feed.html                  # Today's activity (auto-refresh 30s)
+├── _pending_requests.html               # Unfilled requests cards
+├── _bid_queue.html                      # Morning referral bids
+├── _queue_table.html                    # Queue by book
+├── _request_table.html                  # Request list with pagination
+└── _dispatch_table.html                 # Active/completed dispatches
+
+src/tests/
+├── test_referral_frontend.py            # 22 tests (Week 26)
+└── test_dispatch_frontend.py            # 29 tests (Week 27)
+
+docs/phase7/
+├── week26_api_discovery.md              # Backend API documentation
+└── week27_api_discovery.md              # Dispatch API documentation
+```
+
+### Files Modified (Weeks 26-27)
+
+```
+src/main.py                              # Registered referral_frontend + dispatch_frontend routers
+src/templates/components/_sidebar.html   # Added Referral & Dispatch section
+CHANGELOG.md                             # Added v0.9.7-alpha and v0.9.8-alpha entries
+```
+
+### Business Rules Surfaced in UI (Weeks 26-27)
+
+| Rule | UI Location | Visual Indicator |
+|------|-------------|------------------|
+| Rule 2 | Morning Referral page | Bid queue sorted by position |
+| Rule 3 | Dashboard + Morning Referral | Warning banner after 3 PM |
+| Rule 4 | Request Detail → Candidates | Agreement type badge |
+| Rule 8 | Dashboard | Bidding window status badge |
+| Rule 9 | Active Dispatches | "Short Call" badge + day counter |
+| Rule 11 | Request Detail → Candidates | Check mark icons |
+| Rule 12 | Enforcement Dashboard | Blackout section |
+| Rule 13 | Request Detail | By-name warning banner |
 
 ### Business Rules Implemented (Weeks 23-25)
 
