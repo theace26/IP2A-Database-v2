@@ -1,15 +1,27 @@
 # Dues Tracking Guide
 
-This guide covers the implementation and usage of the Phase 4 Dues Tracking System.
+> **Document Created:** January 27, 2026
+> **Last Updated:** February 3, 2026
+> **Version:** 1.1
+> **Status:** Active — Implementation Guide
+> **Project Version:** v0.9.4-alpha (Feature-Complete Weeks 1–19)
+
+---
 
 ## Overview
 
-The dues tracking system manages member financial obligations through four interconnected components:
+The dues tracking system manages member financial obligations through four interconnected components. This module was implemented as Phase 4 (backend, Weeks 10–11) with the frontend delivered in Phase 6 Week 10. Payment processing via Stripe was integrated in Week 16.
 
-1. **Dues Rates** - Classification-based pricing
-2. **Dues Periods** - Monthly billing cycles
-3. **Dues Payments** - Payment records and tracking
-4. **Dues Adjustments** - Waivers, credits, and corrections
+| Component | Status | Phase |
+|-----------|--------|-------|
+| **Dues Rates** — Classification-based pricing | ✅ Complete | Phase 4 |
+| **Dues Periods** — Monthly billing cycles | ✅ Complete | Phase 4 |
+| **Dues Payments** — Payment records and tracking | ✅ Complete | Phase 4 |
+| **Dues Adjustments** — Waivers, credits, corrections | ✅ Complete | Phase 4 |
+| **Stripe Integration** — Online payment processing | ✅ Complete | Phase 6 Week 16 |
+| **Frontend UI** — Full management interface | ✅ Complete | Phase 6 Week 10 |
+
+---
 
 ## Quick Start
 
@@ -32,6 +44,7 @@ POST /dues-rates/
 ```
 
 **Default Rate Schedule:**
+
 | Classification | Monthly Amount |
 |---------------|----------------|
 | apprentice_1  | $35.00 |
@@ -84,6 +97,8 @@ POST /dues-payments/{payment_id}/record
 }
 ```
 
+Online payments are processed via Stripe Checkout Sessions. When a member pays online, the Stripe webhook automatically records the payment and updates the status. See [ADR-009](../decisions/ADR-009-payment-processing.md) for the Stripe integration architecture.
+
 ### 4. Handle Adjustments
 
 Process waivers and credits:
@@ -106,6 +121,8 @@ POST /dues-adjustments/{id}/approve
 }
 ```
 
+---
+
 ## Data Models
 
 ### DuesRate
@@ -123,6 +140,7 @@ class DuesRate:
 ```
 
 **Key Features:**
+
 - Unique constraint on (classification, effective_date)
 - Historical rates preserved with end_date
 - Get current rate: `GET /dues-rates/current/{classification}`
@@ -145,6 +163,7 @@ class DuesPeriod:
 ```
 
 **Key Features:**
+
 - Unique constraint on (period_year, period_month)
 - Generate entire year: `POST /dues-periods/generate/{year}`
 - Close period: `POST /dues-periods/{id}/close`
@@ -169,6 +188,7 @@ class DuesPayment:
 ```
 
 **Payment Statuses:**
+
 | Status | Description |
 |--------|-------------|
 | pending | Payment not yet received |
@@ -178,6 +198,7 @@ class DuesPayment:
 | waived | Payment waived via adjustment |
 
 **Key Features:**
+
 - Unique constraint on (member_id, period_id)
 - Record payment: `POST /dues-payments/{id}/record`
 - Update overdue: `POST /dues-payments/update-overdue`
@@ -202,6 +223,7 @@ class DuesAdjustment:
 ```
 
 **Adjustment Types:**
+
 | Type | Description |
 |------|-------------|
 | waiver | Full or partial dues waiver |
@@ -211,10 +233,13 @@ class DuesAdjustment:
 | other | Other adjustment |
 
 **Approval Workflow:**
+
 1. Create adjustment (status = `pending`)
 2. Review pending: `GET /dues-adjustments/pending`
 3. Approve: `POST /dues-adjustments/{id}/approve` with `{"approved": true}`
 4. Or deny: `POST /dues-adjustments/{id}/approve` with `{"approved": false}`
+
+---
 
 ## Common Workflows
 
@@ -279,9 +304,13 @@ PUT /dues-rates/{current_rate_id}
 }
 ```
 
+---
+
 ## API Reference
 
 See [docs/reference/dues-api.md](../reference/dues-api.md) for complete API documentation.
+
+---
 
 ## Testing
 
@@ -292,14 +321,18 @@ pytest src/tests/test_dues.py -v
 ```
 
 The test suite covers:
+
 - Rate CRUD with unique date handling
 - Period management with year/month uniqueness
-- Payment lifecycle
+- Payment lifecycle (pending → paid/partial/overdue/waived)
 - Adjustment approval workflow
+- Stripe webhook processing
+
+---
 
 ## Frontend Usage (Phase 6 Week 10)
 
-The dues management frontend provides a complete UI for managing all dues operations:
+The dues management frontend provides a complete UI for managing all dues operations, built with Jinja2 + HTMX + Alpine.js + DaisyUI.
 
 ### Accessing the Dues Module
 
@@ -332,6 +365,7 @@ Navigate to `/dues` from the main dashboard or sidebar menu.
 - Filter by period and status
 - Record payments via modal (amount, method, check number, notes)
 - View member payment history with balance summary
+- Online payments processed via Stripe Checkout Sessions
 
 ### Adjustments (`/dues/adjustments`)
 
@@ -342,11 +376,26 @@ Navigate to `/dues` from the main dashboard or sidebar menu.
 
 ### Frontend Architecture
 
-See [ADR-011: Dues Frontend Patterns](../decisions/ADR-011-dues-frontend-patterns.md) for implementation details.
+See [ADR-011: Dues Frontend Patterns](../decisions/ADR-011-dues-frontend-patterns.md) for implementation details. The frontend follows the project-wide patterns established in [ADR-010: Frontend Architecture](../decisions/ADR-010-frontend-architecture.md).
+
+---
 
 ## Related Documentation
 
-- [ADR-008: Dues Tracking System Design](../decisions/ADR-008-dues-tracking-system.md)
-- [ADR-011: Dues Frontend Patterns](../decisions/ADR-011-dues-frontend-patterns.md)
-- [API Reference](../reference/dues-api.md)
-- [CHANGELOG](../../CHANGELOG.md) - Phase 4 (backend) and Phase 6 Week 10 (frontend)
+| Document | Location |
+|----------|----------|
+| ADR-008: Dues Tracking System Design | `/docs/decisions/ADR-008-dues-tracking-system.md` |
+| ADR-009: Payment Processing (Stripe) | `/docs/decisions/ADR-009-payment-processing.md` |
+| ADR-011: Dues Frontend Patterns | `/docs/decisions/ADR-011-dues-frontend-patterns.md` |
+| API Reference | `/docs/reference/dues-api.md` |
+| CHANGELOG | `/CHANGELOG.md` — Phase 4 (backend) and Phase 6 Week 10 (frontend) |
+| Coding Standards | `/docs/standards/coding-standards.md` |
+
+---
+
+> **End-of-Session Rule:** Update *ANY* and *ALL* relevant documents to capture progress made this session. Scan `/docs/*` and make or create any relevant updates/documents to keep a historical record as the project progresses. Do not forget about ADRs — update as necessary.
+
+---
+
+*Document Version: 1.1*
+*Last Updated: February 3, 2026*

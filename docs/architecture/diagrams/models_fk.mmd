@@ -1,3 +1,240 @@
 ```mermaid
-graph LR
+%% IP2A-Database-v2 — Model Foreign Key Relationships
+%% 26 ORM Models as of v0.9.4-alpha
+%% Last Updated: February 3, 2026
+%%
+%% Regenerate from codebase if models change:
+%%   grep -rn "ForeignKey" src/models/ | sort
+
+erDiagram
+    %% ===== AUTH & IDENTITY =====
+    users ||--o{ user_roles : "has roles"
+    roles ||--o{ user_roles : "assigned to users"
+    users ||--o{ refresh_tokens : "has sessions"
+    users ||--o| members : "linked to member"
+    users ||--o| students : "linked to student"
+    users ||--o| instructors : "linked to instructor"
+
+    %% ===== MEMBERS & EMPLOYMENT =====
+    members ||--o{ member_employments : "employment history"
+    members ||--o{ member_notes : "staff notes"
+    organizations ||--o{ member_employments : "employer"
+
+    %% ===== TRAINING PROGRAM =====
+    members ||--o| students : "may become student"
+    courses ||--o{ cohorts : "has cohorts"
+    cohorts ||--o{ enrollments : "has enrollments"
+    students ||--o{ enrollments : "enrolled in"
+    students ||--o{ grades : "has grades"
+    cohorts ||--o{ grades : "grades for"
+    instructors ||--o{ instructor_cohorts : "teaches"
+    cohorts ||--o{ instructor_cohorts : "taught by"
+
+    %% ===== UNION OPERATIONS =====
+    organizations ||--o{ salt_activities : "target employer"
+    members ||--o{ benevolence_applications : "applicant"
+    members ||--o{ grievances : "filed by"
+    organizations ||--o{ grievances : "against employer"
+
+    %% ===== DOCUMENTS =====
+    documents }o--|| users : "uploaded by"
+
+    %% ===== DUES & PAYMENTS =====
+    dues_rates ||--o{ dues_payments : "rate applied"
+    dues_periods ||--o{ dues_payments : "billing period"
+    members ||--o{ dues_payments : "paid by"
+    dues_payments ||--o{ dues_adjustments : "adjusted"
+
+    %% ===== GRANTS =====
+    students ||--o{ grant_enrollments : "grant participant"
+
+    %% ===== AUDIT =====
+    audit_logs }o--|| users : "changed by"
+
+    %% ===== TABLE DEFINITIONS =====
+    users {
+        uuid id PK
+        string email UK
+        string password_hash
+        timestamp locked_until
+        int failed_login_attempts
+        int member_id FK
+        int student_id FK
+        int instructor_id FK
+    }
+
+    roles {
+        int id PK
+        string name UK
+        int level
+        jsonb permissions
+        bool is_system
+    }
+
+    user_roles {
+        int id PK
+        uuid user_id FK
+        int role_id FK
+        uuid granted_by FK
+        timestamp expires_at
+    }
+
+    refresh_tokens {
+        uuid id PK
+        uuid user_id FK
+        string token_hash
+        timestamp expires_at
+        timestamp revoked_at
+    }
+
+    members {
+        int id PK
+        string member_number UK
+        string first_name
+        string last_name
+        string classification
+    }
+
+    member_employments {
+        int id PK
+        int member_id FK
+        int organization_id FK
+        date start_date
+        date end_date
+    }
+
+    member_notes {
+        int id PK
+        int member_id FK
+        uuid created_by FK
+        string visibility
+        text content
+    }
+
+    students {
+        int id PK
+        int member_id FK
+        string student_number UK
+        string status
+    }
+
+    courses {
+        int id PK
+        string name
+        string code UK
+    }
+
+    cohorts {
+        int id PK
+        int course_id FK
+        string name
+        date start_date
+    }
+
+    enrollments {
+        int id PK
+        int student_id FK
+        int cohort_id FK
+        string status
+    }
+
+    grades {
+        int id PK
+        int student_id FK
+        int cohort_id FK
+        float score
+    }
+
+    instructors {
+        int id PK
+        string first_name
+        string last_name
+    }
+
+    instructor_cohorts {
+        int id PK
+        int instructor_id FK
+        int cohort_id FK
+        string role
+    }
+
+    organizations {
+        int id PK
+        string name
+        string org_type
+    }
+
+    salt_activities {
+        int id PK
+        int organization_id FK
+        int salting_score
+        string status
+    }
+
+    benevolence_applications {
+        int id PK
+        int member_id FK
+        string status
+        decimal amount_requested
+    }
+
+    grievances {
+        int id PK
+        int member_id FK
+        int organization_id FK
+        string status
+        string step
+    }
+
+    documents {
+        uuid id PK
+        uuid uploaded_by FK
+        string entity_type
+        string entity_id
+        string storage_path
+    }
+
+    dues_rates {
+        int id PK
+        string classification
+        decimal amount
+    }
+
+    dues_periods {
+        int id PK
+        date start_date
+        date end_date
+    }
+
+    dues_payments {
+        int id PK
+        int member_id FK
+        int dues_rate_id FK
+        int dues_period_id FK
+        decimal amount
+        string stripe_session_id
+    }
+
+    dues_adjustments {
+        int id PK
+        int dues_payment_id FK
+        string adjustment_type
+        decimal amount
+    }
+
+    grant_enrollments {
+        int id PK
+        int student_id FK
+        string grant_name
+        string outcome
+    }
+
+    audit_logs {
+        uuid id PK
+        uuid user_id FK
+        string table_name
+        string action
+        jsonb old_values
+        jsonb new_values
+    }
 ```

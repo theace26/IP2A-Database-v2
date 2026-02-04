@@ -6,7 +6,7 @@
     "dockerfileTarget": "production"
   },
   "deploy": {
-    "preDeployCommand": "alembic upgrade head && python -m src.seed.run_seed --force",
+    "preDeployCommand": "alembic upgrade head && python -c \"from src.seed.auth_seed import run_auth_seed; from src.db.session import get_db_session; db=get_db_session(); run_auth_seed(db); print('Auth seed complete')\"",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 30,
     "restartPolicyType": "ON_FAILURE",

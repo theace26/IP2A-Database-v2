@@ -1,634 +1,568 @@
-# Audit Logging Implementation Guide
+# Audit Logging Industry Standards & Best Practices
+
+> **Document Created:** January 27, 2026
+> **Last Updated:** February 3, 2026
+> **Version:** 1.1
+> **Status:** Active — Reference Guide
+> **Project Version:** v0.9.4-alpha (Feature-Complete Weeks 1–19)
+
+---
 
 ## Overview
 
-The IP2A Database v2 includes comprehensive audit logging that tracks **ALL** access and modifications to user-related data, including:
+This document outlines industry standards for audit logging and provides recommendations for the IP2A Database v2 (UnionCore) implementation. The audit logging foundation is fully implemented ([ADR-012](../decisions/ADR-012-audit-logging.md)); this guide covers best practices for retention, compression, archiving, and compliance as the system scales.
 
-- **READ**: Viewing individual records
-- **BULK_READ**: Listing/searching records
-- **CREATE**: Creating new records
-- **UPDATE**: Modifying existing records
-- **DELETE**: Deleting/soft-deleting records
+### Implementation Status
 
-This provides a complete audit trail for compliance, security, and debugging.
-
----
-
-## Architecture
-
-### Components
-
-1. **AuditLog Model** ([src/models/audit_log.py](src/models/audit_log.py))
-   - Immutable database table storing all audit events
-   - Captures: table_name, record_id, action, old/new values, who, when, where
-
-2. **Audit Service** ([src/services/audit_service.py](src/services/audit_service.py))
-   - Functions for logging each action type
-   - Automatic serialization and change detection
-   - Configurable table filtering
-
-3. **Audit Context Middleware** ([src/middleware/audit_context.py](src/middleware/audit_context.py))
-   - Captures user, IP address, user-agent from requests
-   - Stores in context variables for audit logging
-   - Automatically clears after each request
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Audit log table + schema | ✅ Complete | Full 5 W's coverage |
+| Basic indexing | ✅ Complete | Table name, record ID indexes |
+| Middleware for context capture | ✅ Complete | IP address, user-agent, session info |
+| Audit service functions | ✅ Complete | CREATE, READ, UPDATE, DELETE tracking |
+| Sentry integration | ✅ Complete | Error tracking + performance ([ADR-007](../decisions/ADR-007-monitoring-strategy.md)) |
+| GIN indexes for JSONB | 🔜 Future | Add when query volume warrants it |
+| Table partitioning | 🔜 Future | Add when table exceeds ~10M rows |
+| S3 archival pipeline | 🔜 Future | Add when retention window requires it |
+| Automated retention enforcement | 🔜 Future | Add alongside archival pipeline |
 
 ---
 
-## Quick Start
+## 1. What to Log (The "5 W's")
 
-### 1. Enable Middleware (Already Done)
+### Industry Standard: The "5 W's" of Audit Logging
 
-The `AuditContextMiddleware` is registered in [src/main.py](src/main.py):
+| Element | Description | Our Implementation |
+|---------|-------------|-------------------|
+| **Who** | User/system performing action | ✅ `changed_by` field |
+| **What** | Action performed + data changed | ✅ `action`, `old_values`, `new_values`, `changed_fields` |
+| **When** | Timestamp of action | ✅ `changed_at` with server-side timestamp |
+| **Where** | Source IP address | ✅ `ip_address` field |
+| **Why** | Business reason/context | ✅ `notes` field (optional) |
 
-```python
-from src.middleware import AuditContextMiddleware
+**Additional Best Practices:**
 
-app.add_middleware(AuditContextMiddleware)
-```
-
-### 2. Add Audit Logging to a Router
-
-See [src/routers/members_audited.py](src/routers/members_audited.py) for a complete example.
-
-**Pattern:**
-
-```python
-from src.services import audit_service
-from src.middleware import get_audit_context
-
-# In your endpoint:
-@router.get("/{id}")
-def read_record(id: int, db: Session = Depends(get_db)):
-    record = get_record(db, id)
-    if not record:
-        raise HTTPException(status_code=404)
-
-    # Convert to dict for logging
-    record_dict = {
-        "id": record.id,
-        "name": record.name,
-        # ... other fields
-    }
-
-    # Log READ action
-    audit_context = get_audit_context()
-    audit_service.log_read(
-        db=db,
-        table_name="your_table",
-        record_id=record.id,
-        record_data=record_dict,
-        **audit_context
-    )
-
-    return record
-```
+- ✅ User-Agent (device/browser identification)
+- ✅ Table and record identification
+- ✅ Full before/after state for compliance
 
 ---
 
-## Logging Actions
+## 2. Retention Periods
 
-### 1. Log READ (View Single Record)
+### Industry Standards by Compliance Framework
 
-```python
-from src.services import audit_service
-from src.middleware import get_audit_context
+| Framework | Minimum Retention | Typical Retention |
+|-----------|-------------------|-------------------|
+| **SOX (Sarbanes-Oxley)** | 7 years | 7 years |
+| **HIPAA** | 6 years | 6 years |
+| **GDPR** | Varies | 1–7 years |
+| **PCI DSS** | 3 months (1 year recommended) | 1 year |
+| **SOC 2** | 1 year | 3–7 years |
+| **NLRA (Union Records)** | 7 years | 7 years |
+| **General Best Practice** | 2 years | 3–5 years |
 
-# After retrieving record
-audit_context = get_audit_context()
-audit_service.log_read(
-    db=db,
-    table_name="members",
-    record_id=member.id,
-    record_data=member_to_dict(member),  # Optional
-    **audit_context
-)
-```
+**Recommendation for UnionCore:**
 
-**When to Use:**
-- GET `/resource/{id}` endpoints
-- Any time a single record is viewed
-- Includes: user profile views, detail pages, API lookups
-
-### 2. Log BULK_READ (List/Search Records)
-
-```python
-# After retrieving list
-members = list_members(db, skip, limit)
-
-audit_context = get_audit_context()
-audit_service.log_bulk_read(
-    db=db,
-    table_name="members",
-    record_count=len(members),
-    filters={"skip": skip, "limit": limit, "status": "active"},
-    **audit_context
-)
-```
-
-**When to Use:**
-- GET `/resource/` list endpoints
-- Search/filter operations
-- Export/report generation
-
-### 3. Log CREATE (New Record)
-
-```python
-# After creating record
-member = create_member(db, data)
-
-audit_context = get_audit_context()
-audit_service.log_create(
-    db=db,
-    table_name="members",
-    record_id=member.id,
-    new_values=member_to_dict(member),
-    **audit_context
-)
-```
-
-**When to Use:**
-- POST endpoints creating new records
-- Bulk imports
-- API integrations creating data
-
-### 4. Log UPDATE (Modify Record)
-
-```python
-# Get old state BEFORE update
-old_member = get_member(db, member_id)
-old_values = member_to_dict(old_member)
-
-# Perform update
-updated_member = update_member(db, member_id, data)
-new_values = member_to_dict(updated_member)
-
-# Log UPDATE
-audit_context = get_audit_context()
-audit_service.log_update(
-    db=db,
-    table_name="members",
-    record_id=member_id,
-    old_values=old_values,
-    new_values=new_values,
-    **audit_context
-)
-```
-
-**When to Use:**
-- PUT/PATCH endpoints modifying records
-- Status changes
-- Profile updates
-- Batch updates
-
-**Important:** The service automatically detects which fields changed!
-
-### 5. Log DELETE (Remove Record)
-
-```python
-# Get current state BEFORE deletion
-member = get_member(db, member_id)
-old_values = member_to_dict(member)
-
-# Perform deletion
-delete_member(db, member_id)
-
-# Log DELETE
-audit_context = get_audit_context()
-audit_service.log_delete(
-    db=db,
-    table_name="members",
-    record_id=member_id,
-    old_values=old_values,
-    **audit_context
-)
-```
-
-**When to Use:**
-- DELETE endpoints
-- Soft deletes (setting is_deleted=true)
-- Hard deletes
-- Bulk deletions
+- **Hot storage:** 1 year (active PostgreSQL table on Railway)
+- **Warm storage:** 2–6 years (compressed/partitioned)
+- **Cold storage:** 7+ years (S3/Glacier archive)
+- **Delete after:** 7 years (unless legal hold — NLRA compliance)
 
 ---
 
-## Helper Functions
+## 3. Compression & Archiving Strategies
 
-### Converting Models to Dicts
+### Tier 1: Hot Storage (0–12 months)
 
-Create a helper function for each audited model:
+**Storage:** PostgreSQL on Railway (current deployment)
+**Compression:** JSONB native compression (~50–70% compression ratio)
+**Access:** Real-time queries (<100ms)
+**Cost:** Included in Railway plan
 
-```python
-def member_to_dict(member) -> dict:
-    """Convert Member object to dict for audit logging."""
-    return {
-        "id": member.id,
-        "member_number": member.member_number,
-        "first_name": member.first_name,
-        "last_name": member.last_name,
-        # ... all relevant fields
-        "status": member.status.value if member.status else None,
-        "created_at": member.created_at,
-        "updated_at": member.updated_at,
-    }
+```sql
+-- Current implementation (no changes needed)
+SELECT * FROM audit_logs
+WHERE changed_at > NOW() - INTERVAL '1 year';
 ```
 
-**Tips:**
-- Include all fields you want in the audit trail
-- Handle enums by calling `.value`
-- Handle None values gracefully
-- Include timestamps for context
+### Tier 2: Warm Storage (1–3 years)
 
----
+**Storage:** Partitioned PostgreSQL tables
+**Compression:** Table-level compression + JSONB
+**Access:** Fast queries (<1s)
 
-## Audited Tables
+```sql
+-- Create monthly partitions (implement when table exceeds ~10M rows)
+CREATE TABLE audit_logs_2026_01 PARTITION OF audit_logs
+FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
 
-The following tables are automatically audited (configured in `audit_service.py`):
-
-- `members` - Union members
-- `students` - Training program students
-- `instructors` - Training instructors
-- `users` - System users
-- `organization_contacts` - Organization contacts
-- `organizations` - Employers, unions, training partners
-- `member_employments` - Employment history
-- `credentials` - Certifications
-- `jatc_applications` - Apprenticeship applications
-
-**To Add a Table:**
-
-Edit [src/services/audit_service.py](src/services/audit_service.py):
-
-```python
-AUDITED_TABLES = {
-    "members",
-    "students",
-    # ... existing tables ...
-    "your_new_table",  # Add here
-}
+CREATE TABLE audit_logs_2026_02 PARTITION OF audit_logs
+FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');
 ```
 
----
+### Tier 3: Cold Storage (3–7 years)
 
-## Retrieving Audit Trail
-
-### Query Audit Logs
+**Storage:** S3 Standard or Glacier
+**Compression:** gzip or zstd (~80–90% compression ratio)
+**Access:** Slow (minutes to hours)
 
 ```python
-from src.services.audit_service import get_audit_trail
+# Monthly archival job (implement when retention window requires it)
+import gzip
+import boto3
 from datetime import datetime, timedelta
 
-# Get all changes to a specific record
-logs = get_audit_trail(
-    db=db,
-    table_name="members",
-    record_id=123,
-    limit=50
-)
-
-# Get all actions by a user
-logs = get_audit_trail(
-    db=db,
-    changed_by="user@example.com",
-    start_date=datetime.now() - timedelta(days=7),
-    limit=100
-)
-
-# Get all READ operations
-logs = get_audit_trail(
-    db=db,
-    action="READ",
-    start_date=datetime.now() - timedelta(hours=24),
-    limit=100
-)
-```
-
-### Audit Log API
-
-See [src/routers/audit_logs.py](src/routers/audit_logs.py) for API endpoints:
-
-- `GET /audit-logs/` - List all audit logs
-- `GET /audit-logs/{id}` - Get specific audit log
-- `GET /audit-logs/table/{table_name}` - Logs for a table
-- `GET /audit-logs/record/{table}/{record_id}` - Logs for a specific record
-
----
-
-## Authentication Integration
-
-### Current Implementation
-
-The middleware extracts user from:
-1. `X-User-ID` header (recommended for authenticated requests)
-2. `Authorization` header (JWT bearer tokens)
-3. Session cookies (if implemented)
-4. Falls back to "anonymous"
-
-### Integration with Your Auth System
-
-Edit [src/middleware/audit_context.py](src/middleware/audit_context.py):
-
-```python
-def _extract_user_from_request(request: Request) -> str:
-    """Extract user identifier from request."""
-
-    # Your auth integration here
-    if hasattr(request.state, "user"):
-        return request.state.user.email  # or user.id
-
-    # JWT decoding
-    if "authorization" in request.headers:
-        token = request.headers["authorization"].replace("Bearer ", "")
-        payload = decode_jwt(token)  # Your JWT decode function
-        return payload.get("sub") or payload.get("email")
-
-    return "anonymous"
-```
-
-### Setting User Manually
-
-For testing or special cases:
-
-```python
-from src.middleware.audit_context import _audit_user
-
-# Set user for this request
-_audit_user.set("admin@example.com")
-
-# Your audit logging here
-audit_service.log_create(...)
-```
-
----
-
-## Best Practices
-
-### 1. Always Log After Success
-
-Only log audit events AFTER the operation succeeds:
-
-```python
-# ✅ CORRECT
-member = create_member(db, data)  # Create first
-audit_service.log_create(...)      # Then log
-
-# ❌ WRONG
-audit_service.log_create(...)      # Don't log before operation
-member = create_member(db, data)  # Operation might fail!
-```
-
-### 2. Capture Old State for Updates/Deletes
-
-Always retrieve the old state BEFORE modifying:
-
-```python
-# ✅ CORRECT
-old_member = get_member(db, id)   # Get old state first
-old_values = member_to_dict(old_member)
-updated_member = update_member(db, id, data)  # Then update
-new_values = member_to_dict(updated_member)
-audit_service.log_update(..., old_values=old_values, new_values=new_values)
-```
-
-### 3. Don't Log System Operations
-
-Avoid logging automated system operations (backups, cleanup, etc.):
-
-```python
-# For system operations, set changed_by explicitly
-audit_service.log_delete(
-    ...,
-    changed_by="SYSTEM",
-    notes="Automated cleanup job"
-)
-```
-
-### 4. Use Meaningful Notes
-
-Add context when helpful:
-
-```python
-audit_service.log_update(
-    ...,
-    notes=f"Status changed from {old_status} to {new_status} via bulk operation"
-)
-```
-
-### 5. Handle Sensitive Data
-
-Don't log passwords or sensitive fields:
-
-```python
-def user_to_dict(user) -> dict:
-    return {
-        "id": user.id,
-        "email": user.email,
-        # "password": user.password,  # ❌ Don't log passwords!
-        "name": user.name,
-    }
-```
-
----
-
-## Performance Considerations
-
-### Audit Log Volume
-
-With READ tracking enabled, audit logs grow quickly:
-
-| Activity | Logs per Day | Estimate |
-|----------|--------------|----------|
-| 100 users viewing 50 records each | 5,000 | ~150K/month |
-| 10 users making 20 changes each | 200 | ~6K/month |
-| API integrations | Variable | ~50K/month |
-
-**Total:** Expect 200K-500K audit logs per month for active system.
-
-### Optimization Tips
-
-1. **Partition the audit_logs table** by month (PostgreSQL 12+):
-   ```sql
-   CREATE TABLE audit_logs_2026_01 PARTITION OF audit_logs
-   FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
-   ```
-
-2. **Add retention policy** (delete old logs):
-   ```sql
-   DELETE FROM audit_logs
-   WHERE changed_at < NOW() - INTERVAL '2 years';
-   ```
-
-3. **Archive old logs** to cold storage (S3, etc.)
-
-4. **Index optimization**:
-   ```sql
-   CREATE INDEX idx_audit_logs_changed_at
-   ON audit_logs(changed_at DESC);
-
-   CREATE INDEX idx_audit_logs_table_record
-   ON audit_logs(table_name, record_id);
-   ```
-
----
-
-## Compliance & Security
-
-### GDPR / Data Privacy
-
-Audit logs may contain personal data. Ensure:
-
-- Logs are encrypted at rest
-- Access is restricted to authorized personnel
-- Retention policies comply with regulations
-- Right to erasure requests handled properly
-
-### Immutability
-
-The AuditLog table should be **append-only**:
-
-```sql
--- Revoke UPDATE and DELETE permissions
-REVOKE UPDATE, DELETE ON audit_logs FROM your_app_user;
-GRANT INSERT, SELECT ON audit_logs TO your_app_user;
-```
-
-### Security Monitoring
-
-Monitor for suspicious patterns:
-
-```sql
--- Excessive READ operations by a user
-SELECT changed_by, COUNT(*) as read_count
-FROM audit_logs
-WHERE action = 'READ'
-  AND changed_at > NOW() - INTERVAL '1 hour'
-GROUP BY changed_by
-HAVING COUNT(*) > 100;
-
--- Bulk deletions
-SELECT changed_by, table_name, COUNT(*) as delete_count
-FROM audit_logs
-WHERE action = 'DELETE'
-  AND changed_at > NOW() - INTERVAL '1 hour'
-GROUP BY changed_by, table_name
-HAVING COUNT(*) > 10;
-```
-
----
-
-## Testing
-
-### Manual Testing
-
-```bash
-# Start API server
-./ip2adb run
-
-# Make some requests with user header
-curl -H "X-User-ID: testuser@example.com" \
-     http://localhost:8000/members/1
-
-# Check audit logs
-./ip2adb audit-logs --table members --limit 10
-```
-
-### Automated Testing
-
-```python
-def test_audit_logging(client, db):
-    # Create a member
-    response = client.post(
-        "/members/",
-        json={"member_number": "12345", "first_name": "John", "last_name": "Doe"},
-        headers={"X-User-ID": "testuser@example.com"}
+def archive_old_logs():
+    """Archive logs older than 3 years to S3."""
+    cutoff_date = datetime.now() - timedelta(days=3*365)
+
+    logs = db.query(AuditLog).filter(
+        AuditLog.changed_at < cutoff_date
+    ).all()
+
+    s3 = boto3.client('s3')
+    data = json.dumps([log.to_dict() for log in logs])
+    compressed = gzip.compress(data.encode())
+
+    filename = f"audit_logs_{cutoff_date.strftime('%Y-%m')}.json.gz"
+    s3.put_object(
+        Bucket='ip2a-audit-archive',
+        Key=f'audit_logs/{filename}',
+        Body=compressed,
+        StorageClass='GLACIER'
     )
 
-    # Verify audit log was created
-    logs = get_audit_trail(db, table_name="members", action="CREATE")
-    assert len(logs) > 0
-    assert logs[0].changed_by == "testuser@example.com"
-    assert logs[0].record_id == str(response.json()["id"])
+    # Delete from PostgreSQL after successful upload
+    db.query(AuditLog).filter(
+        AuditLog.changed_at < cutoff_date
+    ).delete()
+    db.commit()
 ```
 
 ---
 
-## Troubleshooting
+## 4. Compression Ratios & Storage Estimates
 
-### Audit Logs Not Being Created
+### Typical Audit Log Sizes
 
-1. **Check middleware is registered**:
-   ```python
-   # In src/main.py
-   app.add_middleware(AuditContextMiddleware)
-   ```
+| Component | Uncompressed | JSONB | gzip | zstd |
+|-----------|--------------|-------|------|------|
+| **Per Record** | ~2 KB | ~1 KB | ~200–400 bytes | ~150–300 bytes |
+| **100K records** | 200 MB | 100 MB | 20–40 MB | 15–30 MB |
+| **1M records** | 2 GB | 1 GB | 200–400 MB | 150–300 MB |
+| **10M records** | 20 GB | 10 GB | 2–4 GB | 1.5–3 GB |
 
-2. **Verify table is in AUDITED_TABLES**:
-   ```python
-   # In src/services/audit_service.py
-   AUDITED_TABLES = {"members", ...}
-   ```
+**Compression Ratio Summary:**
 
-3. **Check database connection**:
-   ```python
-   # Audit logs require a separate db.commit()
-   audit_service.log_create(db, ...)  # Commits internally
-   ```
+- **JSONB (PostgreSQL native):** 50–70% compression
+- **gzip:** 80–90% compression
+- **zstd:** 85–92% compression (faster than gzip)
 
-### User Always Shows as "anonymous"
+### Storage Cost Estimates (AWS US-East-1, for reference)
 
-1. **Add X-User-ID header** to requests:
-   ```bash
-   curl -H "X-User-ID: user@example.com" ...
-   ```
+| Tier | Storage Type | Cost/GB/Month | 10M Records/Month | Annual Cost |
+|------|--------------|---------------|-------------------|-------------|
+| Hot | RDS PostgreSQL (SSD) | $0.115 | $1.15 | $13.80 |
+| Warm | RDS PostgreSQL (gp3) | $0.08 | $0.80 | $9.60 |
+| Cold | S3 Standard | $0.023 | $0.05 | $0.60 |
+| Archive | S3 Glacier Deep | $0.00099 | $0.002 | $0.02 |
 
-2. **Integrate with auth system** (see Authentication Integration above)
-
-3. **Check middleware order** (AuditContextMiddleware should be first):
-   ```python
-   app.add_middleware(AuditContextMiddleware)  # Must be before auth
-   app.add_middleware(AuthMiddleware)
-   ```
-
-### Performance Issues
-
-1. **Add indexes** (see Performance Considerations)
-2. **Implement partitioning**
-3. **Review query patterns** (avoid full table scans)
-4. **Consider async logging** for high-volume systems
+> **Note:** UnionCore currently deploys on Railway, not AWS. These estimates are for reference if/when a tiered archival strategy is implemented. Railway PostgreSQL costs are bundled into the plan.
 
 ---
 
-## Migration Plan
+## 5. Performance Optimization
 
-To roll out audit logging across all routers:
+### Indexes (Current Implementation ✅)
 
-1. **Phase 1:** Test on a single router (members_audited.py)
-2. **Phase 2:** Update high-priority routers (members, students, organizations)
-3. **Phase 3:** Update remaining user-related routers
-4. **Phase 4:** Monitor log volume and performance
-5. **Phase 5:** Implement partitioning/archiving if needed
+```sql
+-- Primary indexes (from migration — already deployed)
+CREATE INDEX ix_audit_logs_table_name ON audit_logs(table_name);
+CREATE INDEX ix_audit_logs_record_id ON audit_logs(record_id);
+```
 
-**Estimated Effort:** 30-60 minutes per router (with helper functions)
+### Recommended Future Indexes
+
+```sql
+-- Add when query patterns warrant (monitor via Sentry performance)
+CREATE INDEX idx_audit_logs_changed_at_desc
+ON audit_logs(changed_at DESC);
+
+CREATE INDEX idx_audit_logs_changed_by
+ON audit_logs(changed_by)
+WHERE changed_by != 'anonymous';
+
+CREATE INDEX idx_audit_logs_action
+ON audit_logs(action);
+
+-- Composite indexes for common queries
+CREATE INDEX idx_audit_logs_table_record
+ON audit_logs(table_name, record_id, changed_at DESC);
+
+CREATE INDEX idx_audit_logs_user_date
+ON audit_logs(changed_by, changed_at DESC);
+```
+
+### Partitioning Strategy (Future)
+
+**Recommended: Monthly partitions by `changed_at`** — implement when table exceeds ~10M rows.
+
+```sql
+-- Convert to partitioned table (requires maintenance window)
+CREATE TABLE audit_logs (
+    id SERIAL,
+    table_name VARCHAR(100) NOT NULL,
+    record_id VARCHAR(50) NOT NULL,
+    action VARCHAR(10) NOT NULL,
+    old_values JSONB,
+    new_values JSONB,
+    changed_fields JSONB,
+    changed_by VARCHAR(100),
+    changed_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    ip_address VARCHAR(45),
+    user_agent VARCHAR(500),
+    notes TEXT,
+    PRIMARY KEY (id, changed_at)
+) PARTITION BY RANGE (changed_at);
+```
+
+**Benefits:** Fast queries on recent data (partition pruning), easy to drop/archive old partitions, better compression on old partitions, parallel query execution.
 
 ---
 
-## Future Enhancements
+## 6. Security & Access Control
 
-- **Dashboard:** Web UI for viewing/searching audit logs
-- **Alerts:** Real-time notifications for suspicious activity
-- **Export:** CSV/JSON export for compliance reports
-- **Integration:** Webhook notifications to SIEM systems
-- **ML:** Anomaly detection for security monitoring
+### Industry Standards
+
+| Requirement | Implementation |
+|-------------|----------------|
+| **Immutability** | Revoke UPDATE/DELETE permissions |
+| **Access Control** | Read-only for most users (RBAC enforced) |
+| **Encryption at Rest** | Railway PostgreSQL encryption |
+| **Encryption in Transit** | SSL connections (Railway default) |
+| **Audit the Auditors** | Log access to audit logs |
+| **Tamper Detection** | Cryptographic signatures (optional, future) |
+
+### Implementation
+
+```sql
+-- Revoke write permissions on production
+REVOKE UPDATE, DELETE ON audit_logs FROM app_user;
+GRANT INSERT, SELECT ON audit_logs TO app_user;
+
+-- Read-only audit viewer role
+CREATE ROLE audit_viewer;
+GRANT SELECT ON audit_logs TO audit_viewer;
+
+-- Audit admin role (for retention/archival)
+CREATE ROLE audit_admin;
+GRANT SELECT, DELETE ON audit_logs TO audit_admin;
+```
 
 ---
 
-## Support
+## 7. Automated Retention & Archival (Future)
 
-For questions or issues:
-- Review this guide and [src/routers/members_audited.py](src/routers/members_audited.py) example
-- Check [src/services/audit_service.py](src/services/audit_service.py) for available functions
-- Test with curl or Postman to verify behavior
+### Recommended Automation Strategy
+
+```python
+# /scripts/audit_maintenance.py
+"""
+Automated audit log maintenance job.
+Implement when archival pipeline is needed.
+
+Run via cron or Railway scheduled job:
+0 2 * * * cd /app && python scripts/audit_maintenance.py
+"""
+
+from datetime import datetime, timedelta
+from sqlalchemy import text
+from src.db.session import get_db
+import gzip
+import json
+import boto3
+
+def archive_old_logs(db, days_old=1095):  # 3 years
+    """Archive logs older than N days to S3."""
+    cutoff = datetime.now() - timedelta(days=days_old)
+
+    result = db.execute(text("""
+        SELECT * FROM audit_logs
+        WHERE changed_at < :cutoff
+        ORDER BY changed_at
+    """), {"cutoff": cutoff})
+
+    logs = result.fetchall()
+    if not logs:
+        print("No logs to archive")
+        return
+
+    data = [dict(row) for row in logs]
+    json_data = json.dumps(data, default=str)
+    compressed = gzip.compress(json_data.encode())
+
+    s3 = boto3.client('s3')
+    filename = f"audit_logs_{cutoff.strftime('%Y%m')}.json.gz"
+    s3.put_object(
+        Bucket='ip2a-audit-archive',
+        Key=f'audit_logs/{filename}',
+        Body=compressed,
+        StorageClass='GLACIER_IR'
+    )
+
+    db.execute(text("""
+        DELETE FROM audit_logs WHERE changed_at < :cutoff
+    """), {"cutoff": cutoff})
+    db.commit()
+    print(f"Archived {len(logs)} logs to {filename}")
+
+def delete_expired_logs(db, days_old=2555):  # 7 years (NLRA compliance)
+    """Delete logs older than 7 years (past retention period)."""
+    cutoff = datetime.now() - timedelta(days=days_old)
+    result = db.execute(text("""
+        DELETE FROM audit_logs WHERE changed_at < :cutoff RETURNING id
+    """), {"cutoff": cutoff})
+    deleted = result.rowcount
+    db.commit()
+    print(f"Deleted {deleted} expired logs (older than 7 years)")
+
+def vacuum_and_analyze(db):
+    """Reclaim space and update statistics."""
+    db.execute(text("VACUUM ANALYZE audit_logs"))
+    print("Vacuumed and analyzed audit_logs table")
+
+if __name__ == "__main__":
+    db = next(get_db())
+    print(f"Running audit maintenance at {datetime.now()}")
+    archive_old_logs(db, days_old=1095)
+    delete_expired_logs(db, days_old=2555)
+    vacuum_and_analyze(db)
+    print("Audit maintenance complete")
+```
 
 ---
 
-**Last Updated:** 2026-01-27
-**Version:** 1.0
+## 8. Monitoring & Alerting
+
+> **Current monitoring:** Sentry ([ADR-007](../decisions/ADR-007-monitoring-strategy.md)) handles error tracking and performance monitoring. The metrics below describe future enhancements for audit-specific alerting.
+
+### Key Metrics to Monitor
+
+| Metric | Threshold | Alert Level |
+|--------|-----------|-------------|
+| **Table size** | > 100 GB | Warning |
+| **Growth rate** | > 10 GB/day | Warning |
+| **Query time** | > 5 seconds | Critical |
+| **Failed archival** | Any failure | Critical |
+| **Suspicious patterns** | > 1000 reads/hour by user | Warning |
+| **Bulk deletes** | > 100 deletes/hour | Critical |
+
+### Implementation (Future Enhancement)
+
+```python
+def check_audit_health(db):
+    """Check audit log health metrics. Report to Sentry if thresholds exceeded."""
+
+    # Table size
+    result = db.execute(text("""
+        SELECT pg_size_pretty(pg_total_relation_size('audit_logs')) as size,
+               pg_total_relation_size('audit_logs') as size_bytes
+    """))
+    size_pretty, size_bytes = result.fetchone()
+
+    if size_bytes > 100_000_000_000:  # 100 GB
+        sentry_sdk.capture_message(f"Audit logs table is large: {size_pretty}")
+
+    # Growth rate (logs in last 24 hours)
+    result = db.execute(text("""
+        SELECT COUNT(*) FROM audit_logs
+        WHERE changed_at > NOW() - INTERVAL '24 hours'
+    """))
+    daily_count = result.scalar()
+
+    if daily_count > 1_000_000:
+        sentry_sdk.capture_message(f"High audit log volume: {daily_count:,} logs in 24h")
+
+    # Suspicious read patterns
+    result = db.execute(text("""
+        SELECT changed_by, COUNT(*) as read_count
+        FROM audit_logs
+        WHERE action = 'READ'
+          AND changed_at > NOW() - INTERVAL '1 hour'
+        GROUP BY changed_by
+        HAVING COUNT(*) > 1000
+    """))
+
+    for user, count in result:
+        sentry_sdk.capture_message(
+            f"Suspicious read pattern: {user} made {count} reads in 1 hour"
+        )
+```
+
+---
+
+## 9. Query Performance Best Practices
+
+### Fast Queries
+
+```sql
+-- ✅ GOOD: Uses indexes
+SELECT * FROM audit_logs
+WHERE table_name = 'members'
+  AND record_id = '123'
+  AND changed_at > NOW() - INTERVAL '30 days'
+ORDER BY changed_at DESC
+LIMIT 100;
+
+-- ✅ GOOD: Uses partition pruning (if partitioned)
+SELECT * FROM audit_logs
+WHERE changed_at BETWEEN '2026-01-01' AND '2026-01-31'
+  AND changed_by = 'user@example.com';
+
+-- ✅ GOOD: Counts with filters
+SELECT COUNT(*) FROM audit_logs
+WHERE changed_at > NOW() - INTERVAL '7 days';
+```
+
+### Slow Queries (Avoid)
+
+```sql
+-- ❌ BAD: Full table scan
+SELECT * FROM audit_logs
+WHERE notes LIKE '%keyword%';
+
+-- ❌ BAD: Unfiltered count
+SELECT COUNT(*) FROM audit_logs;  -- Scans entire table
+
+-- ❌ BAD: JSONB queries without indexes
+SELECT * FROM audit_logs
+WHERE new_values->>'status' = 'ACTIVE';  -- Slow without GIN index
+```
+
+### Optimization: JSONB GIN Indexes (Future)
+
+```sql
+-- Add when JSONB query patterns emerge
+CREATE INDEX idx_audit_logs_old_values_gin ON audit_logs USING GIN (old_values);
+CREATE INDEX idx_audit_logs_new_values_gin ON audit_logs USING GIN (new_values);
+
+-- Then this query becomes fast:
+SELECT * FROM audit_logs
+WHERE new_values @> '{"status": "ACTIVE"}';
+```
+
+---
+
+## 10. Compliance Checklists
+
+### NLRA / Union Record Requirements (Primary)
+
+- [x] Log all access to member records (READ tracking)
+- [x] Log all modifications (CREATE, UPDATE, DELETE)
+- [x] Immutable logs (application-level enforcement)
+- [x] 7-year retention capability (schema supports archival)
+- [ ] Automated 7-year retention enforcement (future)
+- [ ] Annual audit trail review procedures
+
+### SOC 2 Type II Requirements
+
+- [x] Log all access to sensitive data (READ tracking)
+- [x] Log all modifications (CREATE, UPDATE, DELETE)
+- [x] Immutable logs (no updates/deletes at app level)
+- [x] Retention for 1+ years
+- [ ] Annual attestation report
+- [ ] Log review procedures documented
+
+### GDPR Requirements
+
+- [x] Right to access (query audit logs for data subject)
+- [x] Right to erasure (archive then delete)
+- [x] Data breach notification (Sentry monitors for anomalies)
+- [ ] Data processing agreement with cloud provider
+- [ ] Privacy impact assessment
+
+---
+
+## 11. Disaster Recovery
+
+### Backup Strategy
+
+| Frequency | Scope | Retention | Notes |
+|-----------|-------|-----------|-------|
+| **Continuous** | Railway PostgreSQL backups | Per plan | Automatic |
+| **Daily** | Full database backup | 30 days | Railway managed |
+| **Weekly** | Audit log archive to S3 | 7 years | Future implementation |
+| **Monthly** | Cold storage snapshot | Permanent | Future implementation |
+
+### Recovery Procedures
+
+```bash
+# Railway provides point-in-time recovery for PostgreSQL
+# For S3 archives (when implemented):
+aws s3 cp s3://ip2a-audit-archive/audit_logs/2026_01.json.gz .
+gunzip 2026_01.json.gz
+# Import back to PostgreSQL via application import script
+```
+
+---
+
+## 12. Implementation Timeline
+
+### Phase 1: Foundation — ✅ Complete
+
+- [x] Audit log table created
+- [x] Basic indexing (table_name, record_id)
+- [x] Middleware for context capture (IP, user-agent, session)
+- [x] Audit service functions (all CRUD operations)
+- [x] Sentry integration for monitoring ([ADR-007](../decisions/ADR-007-monitoring-strategy.md))
+
+### Phase 2: Optimization — 🔜 When Needed
+
+- [ ] Add recommended indexes (composite, GIN for JSONB)
+- [ ] Implement table partitioning (when > ~10M rows)
+- [ ] Set up S3 bucket for archives
+- [ ] Create maintenance scripts
+
+### Phase 3: Automation — 🔜 When Needed
+
+- [ ] Automated archival (Railway scheduled job or cron)
+- [ ] Audit-specific alerting via Sentry
+- [ ] Dashboard for audit log viewing (may be part of admin UI)
+- [ ] Retention policy enforcement
+
+### Phase 4: Compliance — 🔜 Ongoing
+
+- [ ] Document retention policies formally
+- [ ] Implement database-level access controls
+- [ ] Annual audit trail review process
+- [ ] NLRA compliance attestation
+
+---
+
+## References
+
+- **NIST SP 800-92:** Guide to Computer Security Log Management
+- **ISO 27001:** Information Security Management
+- **PCI DSS 3.2.1:** Requirement 10 (Track and monitor all access)
+- **GDPR Article 30:** Records of processing activities
+- **SOC 2:** Trust Services Criteria (Security)
+- **NLRA:** National Labor Relations Act (7-year record retention)
+
+---
+
+> **End-of-Session Rule:** Update *ANY* and *ALL* relevant documents to capture progress made this session. Scan `/docs/*` and make or create any relevant updates/documents to keep a historical record as the project progresses. Do not forget about ADRs — update as necessary.
+
+---
+
+| Cross-Reference | Location |
+|----------------|----------|
+| ADR-007: Monitoring Strategy (Sentry) | `/docs/decisions/ADR-007-monitoring-strategy.md` |
+| ADR-012: Audit Logging | `/docs/decisions/ADR-012-audit-logging.md` |
+| Coding Standards | `/docs/standards/coding-standards.md` |
+| End-of-Session Documentation | `/docs/guides/END_OF_SESSION_DOCUMENTATION.md` |
+
+---
+
+*Document Version: 1.1*
+*Last Updated: February 3, 2026*

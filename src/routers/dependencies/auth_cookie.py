@@ -144,7 +144,7 @@ async def get_current_user_from_cookie(
 async def get_current_user_model(
     request: Request,
     access_token: Optional[str] = Cookie(default=None),
-    db: Session = None,
+    db=None,
 ):
     """
     Get the full User model from database using cookie authentication.

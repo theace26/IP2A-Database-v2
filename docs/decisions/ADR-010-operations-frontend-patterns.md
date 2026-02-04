@@ -1,7 +1,12 @@
 # ADR-010: Union Operations Frontend Patterns
 
+> **Document Created:** 2026-01-29
+> **Last Updated:** February 3, 2026
+> **Version:** 2.0
+> **Status:** Implemented — Operations UI patterns established and in production
+
 ## Status
-Accepted
+Implemented
 
 ## Date
 January 29, 2026
@@ -88,11 +93,30 @@ HTMX filters use `hx-include` to maintain filter state:
 />
 ```
 
+## Implementation Status
+
+| Component | Status | Week | Notes |
+|-----------|--------|------|-------|
+| OperationsFrontendService | ✅ | 7 | Combined service for all 3 modules |
+| SALTing list + detail + search | ✅ | 7 | With outcome badges and salting score (1–5 scale) |
+| Benevolence list + detail + workflow | ✅ | 7 | Linear status progression |
+| Grievances list + detail + steps | ✅ | 7 | Step-based progression visualization |
+| Badge helper methods | ✅ | 7 | Reused in Dues (ADR-011) and Grant modules |
+| HTMX filter/search pattern | ✅ | 7 | `hx-include` pattern adopted project-wide |
+| 21 operations frontend tests | ✅ | 7 | Full coverage of list/detail/search |
+| Operations landing page | ✅ | 7 | Stats cards + quick actions |
+
+### Pattern Reuse
+These patterns were subsequently adopted by:
+- **Dues module** (Week 10) — ADR-011
+- **Grant compliance module** (Week 14) — ADR-014
+- **Analytics dashboard** (Week 19) — Card-based layout
+
 ## Consequences
 
 ### Benefits
 - Consistent UX across all operations modules
-- Reusable patterns for future modules
+- Reusable patterns for future modules (confirmed by ADR-011, ADR-014)
 - Reduced code duplication
 - Clear visual status indicators
 - Users can quickly understand status at a glance
@@ -103,15 +127,17 @@ HTMX filters use `hx-include` to maintain filter state:
 - More templates to maintain (14 total for operations)
 
 ### Alternatives Considered
-1. **Separate services per module** - Rejected due to code duplication
-2. **Generic status component** - Rejected, workflows are too different
-3. **Client-side status rendering** - Rejected, adds JS complexity
+1. **Separate services per module** — Rejected due to code duplication
+2. **Generic status component** — Rejected, workflows are too different
+3. **Client-side status rendering** — Rejected, adds JS complexity
 
 ## Related ADRs
 - ADR-002: Frontend Stack (HTMX + DaisyUI)
-- ADR-009: Migration Safety Strategy
+- ADR-005: CSS Framework (DaisyUI components)
+- ADR-011: Dues Frontend Patterns (adopted same approach)
 
-## Files Created
+## Files
+
 ```
 src/services/operations_frontend_service.py
 src/routers/operations_frontend.py
@@ -131,3 +157,15 @@ src/templates/operations/
     └── partials/_table.html
 src/tests/test_operations_frontend.py (21 tests)
 ```
+
+---
+
+## 🔄 End-of-Session Documentation (REQUIRED)
+
+> ⚠️ **DO NOT skip this step.** Update *ANY* and *ALL* relevant documents to capture progress made this session. Scan `/docs/*` and make or create any relevant updates/documents to keep a historical record as the project progresses. Do not forget about ADRs, update as necessary.
+
+---
+
+Document Version: 2.0
+Last Updated: February 3, 2026
+Previous Version: 1.0 (2026-01-29 — original decision record)

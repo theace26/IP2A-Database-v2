@@ -76,6 +76,12 @@ def _format_time_ago(dt: datetime) -> str:
 # ============================================================================
 
 
+@router.get("/offline", response_class=HTMLResponse)
+async def offline_page(request: Request):
+    """Offline page for PWA - shown when device has no internet connection."""
+    return templates.TemplateResponse("offline.html", {"request": request})
+
+
 @router.get("/", response_class=HTMLResponse)
 async def root(
     request: Request,

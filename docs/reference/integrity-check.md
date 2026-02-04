@@ -1,4 +1,10 @@
-# Database Integrity Check & Repair - Reference Guide
+# Database Integrity Check & Repair — Reference Guide
+
+> **Document Created:** January 28, 2026
+> **Last Updated:** February 3, 2026
+> **Version:** 2.1
+> **Status:** Active
+> **Project Version:** v0.9.4-alpha (Feature-Complete Weeks 1–19)
 
 ---
 
@@ -6,43 +12,46 @@
 
 ### Common Commands
 
+> **Note:** All integrity operations are now accessed through the unified `ip2adb` CLI tool.
+> See [ip2adb CLI Reference](ip2adb-cli.md) for full tool documentation.
+
 #### Daily Operations
 
 ```bash
 # Quick health check (2-5 minutes)
-python run_integrity_check.py --no-files
+./ip2adb integrity --no-files
 
 # Full check with files (10-30 minutes)
-python run_integrity_check.py
+./ip2adb integrity
 
 # Export report
-python run_integrity_check.py --export report_$(date +%Y%m%d).txt
+./ip2adb integrity --export report_$(date +%Y%m%d).txt
 ```
 
 #### Repair Operations
 
 ```bash
 # Preview repairs (safe)
-python run_integrity_check.py --repair --dry-run
+./ip2adb integrity --repair --dry-run
 
 # Auto-repair (commits changes)
-python run_integrity_check.py --repair
+./ip2adb integrity --repair
 
 # Interactive repair for complex issues
-python run_integrity_check.py --interactive
+./ip2adb integrity --interactive
 
 # Combined: auto + interactive
-python run_integrity_check.py --repair --interactive
+./ip2adb integrity --repair --interactive
 ```
 
 #### Production
 
 ```bash
 # Force run in production (use with caution)
-python run_integrity_check.py --force
+./ip2adb integrity --force
 
 # Dry run in production (safe)
-python run_integrity_check.py --force --repair --dry-run
+./ip2adb integrity --force --repair --dry-run
 ```
 
 ### What Gets Checked
@@ -64,27 +73,27 @@ python run_integrity_check.py --force --repair --dry-run
 
 #### Fix All Auto-Fixable Issues
 ```bash
-python run_integrity_check.py --repair
+./ip2adb integrity --repair
 ```
 
 #### Fix Orphaned Records Only
 ```bash
 # Check first
-python run_integrity_check.py | grep "orphaned"
+./ip2adb integrity | grep "orphaned"
 
 # Auto-fix
-python run_integrity_check.py --repair
+./ip2adb integrity --repair
 ```
 
 #### Handle Missing Files
 ```bash
 # Interactive mode lets you decide per file
-python run_integrity_check.py --interactive
+./ip2adb integrity --interactive
 ```
 
 #### Fix Duplicate Primary Contacts
 ```bash
-python run_integrity_check.py --repair
+./ip2adb integrity --repair
 # Keeps most recent contact as primary
 ```
 
@@ -93,44 +102,44 @@ python run_integrity_check.py --repair
 #### Weekly Maintenance
 ```bash
 # 1. Check current state
-python run_integrity_check.py --no-files
+./ip2adb integrity --no-files
 
 # 2. Preview repairs
-python run_integrity_check.py --repair --dry-run
+./ip2adb integrity --repair --dry-run
 
 # 3. Execute repairs
-python run_integrity_check.py --repair
+./ip2adb integrity --repair
 
 # 4. Verify
-python run_integrity_check.py --no-files
+./ip2adb integrity --no-files
 ```
 
 #### After Data Import
 ```bash
 # 1. Full check with files
-python run_integrity_check.py
+./ip2adb integrity
 
 # 2. Auto-fix common issues
-python run_integrity_check.py --repair
+./ip2adb integrity --repair
 
 # 3. Handle duplicates manually
 # Review report for duplicates, deduplicate manually
 
 # 4. Final check
-python run_integrity_check.py
+./ip2adb integrity
 ```
 
 #### Emergency Fix
 ```bash
 # Production database has issues
 # 1. Check severity
-python run_integrity_check.py --force --no-files
+./ip2adb integrity --force --no-files
 
 # 2. Test fix
-python run_integrity_check.py --force --repair --dry-run
+./ip2adb integrity --force --repair --dry-run
 
 # 3. Execute if safe
-python run_integrity_check.py --force --repair
+./ip2adb integrity --force --repair
 ```
 
 ### Time Estimates
@@ -147,7 +156,7 @@ python run_integrity_check.py --force --repair
 
 | Code | Meaning |
 |------|---------|
-| 0 | Success - no critical issues |
+| 0 | Success — no critical issues |
 | 1 | Critical issues remain |
 | 130 | Interrupted by user (Ctrl+C) |
 
@@ -158,6 +167,8 @@ python run_integrity_check.py --force --repair
 ### Overview
 
 The integrity check system validates database consistency, detects issues, and provides automated or interactive repair capabilities. Designed for multi-user production environments where data integrity is critical.
+
+**Deployment Context:** The IP2A application runs on Railway (cloud PaaS) with PostgreSQL 16. Integrity checks can be run via Railway shell or scheduled via Railway cron jobs.
 
 ### Key Features
 
@@ -180,7 +191,7 @@ The integrity check system validates database consistency, detects issues, and p
 
 4. **File System Integrity**
    - File path validation
-   - File existence verification
+   - File existence verification (S3 storage)
    - File size validation
    - Missing file detection
 
@@ -188,21 +199,21 @@ The integrity check system validates database consistency, detects issues, and p
 
 | Issue Type | Auto-Repair | Interactive | Manual |
 |------------|-------------|-------------|--------|
-| Orphaned records | ✅ | - | - |
-| Invalid enums | ✅ | - | - |
-| Date logic errors | ✅ | - | - |
-| Multiple primary contacts | ✅ | - | - |
-| Missing files | - | ✅ | - |
-| Duplicates | - | - | ✅ |
-| Missing required fields | - | - | ✅ |
+| Orphaned records | ✅ | — | — |
+| Invalid enums | ✅ | — | — |
+| Date logic errors | ✅ | — | — |
+| Multiple primary contacts | ✅ | — | — |
+| Missing files | — | ✅ | — |
+| Duplicates | — | — | ✅ |
+| Missing required fields | — | — | ✅ |
 
 #### 🛡️ Safety Features
 
-- ✅ **Dry run mode** - Preview changes before committing
-- ✅ **Production protection** - Requires --force flag in production
-- ✅ **Transaction rollback** - All changes rolled back on error
-- ✅ **Detailed logging** - Full audit trail of all changes
-- ✅ **Interactive prompts** - User confirmation for destructive actions
+- ✅ **Dry run mode** — Preview changes before committing
+- ✅ **Production protection** — Requires `--force` flag in production
+- ✅ **Transaction rollback** — All changes rolled back on error
+- ✅ **Detailed logging** — Full audit trail of all changes (Sentry integration)
+- ✅ **Interactive prompts** — User confirmation for destructive actions
 
 ---
 
@@ -212,13 +223,13 @@ The integrity check system validates database consistency, detects issues, and p
 
 ```bash
 # Run all checks, no repairs
-python run_integrity_check.py
+./ip2adb integrity
 
 # Skip file system checks (faster)
-python run_integrity_check.py --no-files
+./ip2adb integrity --no-files
 
 # Export report to file
-python run_integrity_check.py --export integrity_report.txt
+./ip2adb integrity --export integrity_report.txt
 ```
 
 **Output:**
@@ -249,10 +260,10 @@ python run_integrity_check.py --export integrity_report.txt
 
 ```bash
 # Dry run - preview repairs without making changes
-python run_integrity_check.py --repair --dry-run
+./ip2adb integrity --repair --dry-run
 
 # Execute auto-repairs
-python run_integrity_check.py --repair
+./ip2adb integrity --repair
 ```
 
 **Auto-repairs include:**
@@ -266,7 +277,7 @@ python run_integrity_check.py --repair
 
 ```bash
 # Interactively handle complex issues
-python run_integrity_check.py --interactive
+./ip2adb integrity --interactive
 ```
 
 **Example interactive session:**
@@ -299,10 +310,10 @@ Choice (1-6): 2
 
 ```bash
 # Auto-repair fixable issues, then interactive for complex ones
-python run_integrity_check.py --repair --interactive
+./ip2adb integrity --repair --interactive
 
 # Dry run both
-python run_integrity_check.py --repair --interactive --dry-run
+./ip2adb integrity --repair --interactive --dry-run
 ```
 
 ---
@@ -384,7 +395,7 @@ Validates employment-specific business rules.
 
 **Checks:**
 - Members should have 0 or 1 current employment (not multiple)
-- Hourly rates in reasonable range ($10-$150)
+- Hourly rates in reasonable range ($10–$150)
 - Employment history makes sense
 
 **Auto-fix:** ❌ Requires manual review
@@ -444,11 +455,11 @@ Identifies unusual patterns that may indicate issues.
 ### 4. File System Integrity
 
 #### File Attachments
-Validates file attachment records and file system.
+Validates file attachment records and storage.
 
 **Checks:**
 - File path exists and is not NULL
-- Referenced files exist on disk (local storage)
+- Referenced files exist in S3 storage
 - File sizes are reasonable (<100 MB)
 - File extensions match MIME types
 
@@ -470,28 +481,28 @@ Validates file attachment records and file system.
 
 ### Auto-Repair Flow
 
-1. **Identify Issues** - Run all integrity checks
-2. **Filter Auto-Fixable** - Select issues with automated fixes
-3. **Group by Category** - Organize repairs logically
-4. **Execute Repairs** - Apply fixes in order
-5. **Commit Changes** - Save all changes in single transaction
-6. **Generate Report** - Summarize actions taken
+1. **Identify Issues** — Run all integrity checks
+2. **Filter Auto-Fixable** — Select issues with automated fixes
+3. **Group by Category** — Organize repairs logically
+4. **Execute Repairs** — Apply fixes in order
+5. **Commit Changes** — Save all changes in single transaction
+6. **Generate Report** — Summarize actions taken
 
 ### Interactive Repair Flow
 
-1. **Identify Complex Issues** - Filter issues requiring user input
-2. **Present Options** - Show details and available actions
-3. **User Decides** - Choose: delete, keep, skip, or batch action
-4. **Execute Action** - Apply user's choice
-5. **Repeat** - Continue until all issues resolved or user aborts
-6. **Commit Changes** - Save all interactive decisions
+1. **Identify Complex Issues** — Filter issues requiring user input
+2. **Present Options** — Show details and available actions
+3. **User Decides** — Choose: delete, keep, skip, or batch action
+4. **Execute Action** — Apply user's choice
+5. **Repeat** — Continue until all issues resolved or user aborts
+6. **Commit Changes** — Save all interactive decisions
 
 ### Dry Run Mode
 
 Dry run mode allows you to preview repairs without making changes:
 
 ```bash
-python run_integrity_check.py --repair --dry-run
+./ip2adb integrity --repair --dry-run
 ```
 
 **Behavior:**
@@ -519,17 +530,18 @@ python run_integrity_check.py --repair --dry-run
 
 ### Recommended Schedule
 
-For multi-user production environments:
+For the Railway production environment:
 
 ```bash
 # Daily integrity check (read-only, no repairs)
-0 2 * * * cd /app && python run_integrity_check.py --export /var/log/integrity_daily.txt
+# Configure as Railway cron job or external scheduler
+./ip2adb integrity --no-files --export /tmp/integrity_daily.txt
 
 # Weekly auto-repair during maintenance window
-0 3 * * 0 cd /app && python run_integrity_check.py --repair --no-files
+./ip2adb integrity --repair --no-files
 
 # Monthly full check with file system (slower)
-0 4 1 * * cd /app && python run_integrity_check.py --repair
+./ip2adb integrity --repair
 ```
 
 ### Pre-Deployment Checklist
@@ -538,21 +550,21 @@ Before deploying to production:
 
 1. ✅ Run integrity check on staging data
 2. ✅ Review and fix all critical issues
-3. ✅ Test auto-repair with --dry-run
+3. ✅ Test auto-repair with `--dry-run`
 4. ✅ Document any manual fixes needed
 5. ✅ Schedule downtime for repairs if needed
 
 ### Post-Import Validation
 
-After importing large datasets:
+After importing large datasets (e.g., LaborPower migration data for Phase 7):
 
 ```bash
 # Check data quality immediately
-python run_integrity_check.py
+./ip2adb integrity
 
 # Auto-repair common import issues
-python run_integrity_check.py --repair --dry-run
-python run_integrity_check.py --repair
+./ip2adb integrity --repair --dry-run
+./ip2adb integrity --repair
 ```
 
 ---
@@ -561,11 +573,11 @@ python run_integrity_check.py --repair
 
 ### Concurrent Access
 
-The integrity checker is designed for multi-user environments:
+The integrity checker is designed for multi-user environments (~40 staff + ~4,000 members):
 
-- **Read operations** - Safe to run while users are active
-- **Repair operations** - Require exclusive access or maintenance window
-- **Interactive repairs** - Best during low-activity periods
+- **Read operations** — Safe to run while users are active
+- **Repair operations** — Require exclusive access or maintenance window
+- **Interactive repairs** — Best during low-activity periods
 
 ### Locking Strategy
 
@@ -579,7 +591,7 @@ During repairs:
 
 1. **Run checks frequently** (daily read-only)
 2. **Schedule repairs during maintenance** (weekly/monthly)
-3. **Monitor critical issues** (alert if count increases)
+3. **Monitor critical issues** (alert via Sentry if count increases)
 4. **Keep audit logs** (export reports to files)
 5. **Test repairs on staging** (before production)
 
@@ -594,10 +606,11 @@ During repairs:
 # daily_health_check.sh
 
 DATE=$(date +%Y%m%d)
-REPORT_DIR="/var/log/integrity_reports"
+REPORT_DIR="/tmp/integrity_reports"
+mkdir -p "$REPORT_DIR"
 
 # Run check and export report
-python run_integrity_check.py \
+./ip2adb integrity \
     --no-files \
     --export "$REPORT_DIR/integrity_$DATE.txt"
 
@@ -607,7 +620,7 @@ CRITICAL=$(grep "🔴 Critical Issues:" "$REPORT_DIR/integrity_$DATE.txt" | awk 
 # Alert if critical issues found
 if [ "$CRITICAL" -gt 0 ]; then
     echo "⚠️  Found $CRITICAL critical integrity issues"
-    # Send alert (email, Slack, etc.)
+    # Send alert (email, Slack, Sentry, etc.)
 fi
 ```
 
@@ -618,13 +631,13 @@ fi
 # weekly_repair.sh
 
 # Test repairs first
-python run_integrity_check.py --repair --dry-run --no-files
+./ip2adb integrity --repair --dry-run --no-files
 
 # If dry run looks good, execute
 read -p "Execute repairs? (yes/no): " CONFIRM
 
 if [ "$CONFIRM" = "yes" ]; then
-    python run_integrity_check.py --repair --no-files
+    ./ip2adb integrity --repair --no-files
     echo "✅ Weekly repair complete"
 else
     echo "❌ Repair cancelled"
@@ -638,16 +651,16 @@ fi
 # validate_import.sh
 
 # After data import, check integrity
-python run_integrity_check.py --export import_validation.txt
+./ip2adb integrity --export import_validation.txt
 
 # Review report
 cat import_validation.txt
 
 # Fix auto-fixable issues
-python run_integrity_check.py --repair
+./ip2adb integrity --repair
 
 # Check again to confirm
-python run_integrity_check.py
+./ip2adb integrity
 ```
 
 ---
@@ -661,7 +674,7 @@ python run_integrity_check.py
 **Solution:**
 ```bash
 # Skip file checks
-python run_integrity_check.py --no-files
+./ip2adb integrity --no-files
 ```
 
 ### Issue: Too many orphaned records
@@ -671,7 +684,7 @@ python run_integrity_check.py --no-files
 **Solution:**
 ```bash
 # Auto-delete orphaned records
-python run_integrity_check.py --repair
+./ip2adb integrity --repair
 ```
 
 ### Issue: Repairs fail with database locked
@@ -699,7 +712,7 @@ Manual deduplication required:
 - Check for long-running queries: `SELECT * FROM pg_stat_activity;`
 
 ### Issue: "Permission denied"
-- Make script executable: `chmod +x run_integrity_check.py`
+- Make script executable: `chmod +x /app/ip2adb`
 - Check database permissions
 
 ### Issue: "Blocked in production"
@@ -732,19 +745,27 @@ report = checker.generate_report()
 print(report)
 ```
 
-### Monitoring Integration
+### Monitoring Integration (Sentry)
 
 ```python
+import sentry_sdk
 from src.db.integrity_check import IntegrityChecker
 
 def check_database_health():
-    """Check database health and return metrics."""
+    """Check database health and return metrics for Sentry."""
     db = get_db_session()
     checker = IntegrityChecker(db)
     issues = checker.run_all_checks(check_files=False)
 
     critical = len([i for i in issues if i.severity == "critical"])
     warnings = len([i for i in issues if i.severity == "warning"])
+
+    # Report to Sentry if critical issues found
+    if critical > 0:
+        sentry_sdk.capture_message(
+            f"Database integrity: {critical} critical issues found",
+            level="warning"
+        )
 
     return {
         "status": "healthy" if critical == 0 else "degraded",
@@ -756,16 +777,33 @@ def check_database_health():
 
 ---
 
+## Legacy Command Reference
+
+> **Note:** The standalone script `run_integrity_check.py` has been superseded by the
+> unified `ip2adb` CLI tool. The mapping is straightforward:
+
+| Legacy Command | Current Command |
+|----------------|-----------------|
+| `python run_integrity_check.py` | `./ip2adb integrity` |
+| `python run_integrity_check.py --repair` | `./ip2adb integrity --repair` |
+| `python run_integrity_check.py --interactive` | `./ip2adb integrity --interactive` |
+| `python run_integrity_check.py --no-files` | `./ip2adb integrity --no-files` |
+| `python run_integrity_check.py --export FILE` | `./ip2adb integrity --export FILE` |
+| `python run_integrity_check.py --force` | `./ip2adb integrity --force` |
+| `python run_integrity_check.py --repair --dry-run` | `./ip2adb integrity --repair --dry-run` |
+
+---
+
 ## Safety Checklist
 
 Before running repairs in production:
 
-- [ ] Backup database first
-- [ ] Run with --dry-run to preview changes
+- [ ] Backup database first (see [Backup & Restore Runbook](../runbooks/backup-restore.md))
+- [ ] Run with `--dry-run` to preview changes
 - [ ] Review all auto-fix actions
 - [ ] Schedule during maintenance window
 - [ ] Notify users of downtime (if needed)
-- [ ] Monitor database logs during repair
+- [ ] Monitor database logs during repair (Sentry)
 - [ ] Verify repair results with follow-up check
 - [ ] Keep repair reports for audit trail
 
@@ -775,13 +813,35 @@ Before running repairs in production:
 
 | File | Purpose |
 |------|---------|
-| `run_integrity_check.py` | CLI runner (root level) |
+| `/app/ip2adb` | Unified CLI tool (current) |
+| `run_integrity_check.py` | Legacy CLI runner (root level) |
 | `src/db/integrity_check.py` | Checker implementation |
 | `src/db/integrity_repair.py` | Repair implementation |
 | `docs/reference/integrity-check.md` | This documentation |
 
 ---
 
-*Last Updated: January 28, 2026*
-*Version: 2.0*
-*Status: Production Ready*
+## Cross-References
+
+| Document | Location |
+|----------|----------|
+| ip2adb CLI Reference | `/docs/reference/ip2adb-cli.md` |
+| Audit Maintenance Runbook | `/docs/runbooks/audit-maintenance.md` |
+| Backup & Restore Runbook | `/docs/runbooks/backup-restore.md` |
+| Deployment Runbook | `/docs/runbooks/deployment.md` |
+| ADR-012: Audit Logging Strategy | `/docs/decisions/ADR-012-audit-logging-strategy.md` |
+| Testing Strategy | `/docs/standards/testing-strategy.md` |
+
+---
+
+## 📄 End-of-Session Documentation (MANDATORY)
+
+> ⚠️ **DO NOT skip this step.** Update *ANY* and *ALL* relevant documents to capture
+> progress made this session. Scan `/docs/*` and make or create any relevant
+> updates/documents to keep a historical record as the project progresses.
+> Do not forget about ADRs — update as necessary.
+
+---
+
+*Document Version: 2.1*
+*Last Updated: February 3, 2026*

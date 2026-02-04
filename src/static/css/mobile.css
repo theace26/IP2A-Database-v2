@@ -1,0 +1,305 @@
+/* IP2A Database - Mobile Optimizations */
+
+/* ============================================
+   Touch Target Sizes (48x48px minimum)
+   ============================================ */
+
+@media (max-width: 768px) {
+    /* Buttons */
+    .btn {
+        min-height: 48px;
+        min-width: 48px;
+    }
+
+    .btn-sm {
+        min-height: 44px;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .btn-xs {
+        min-height: 40px;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    /* Form inputs - prevent iOS zoom on focus */
+    input,
+    select,
+    textarea {
+        font-size: 16px !important;
+        min-height: 48px;
+    }
+
+    .input,
+    .select,
+    .textarea {
+        min-height: 48px;
+    }
+
+    /* Checkboxes and radios */
+    .checkbox,
+    .radio {
+        width: 24px;
+        height: 24px;
+    }
+
+    /* Table touch improvements */
+    .table td,
+    .table th {
+        padding: 0.75rem 0.5rem;
+    }
+
+    /* Card spacing */
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    /* Dropdown menus */
+    .dropdown-content {
+        min-width: 200px;
+    }
+
+    .dropdown-content li > a {
+        padding: 0.75rem 1rem;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Menu items */
+    .menu li > a {
+        padding: 0.75rem 1rem;
+        min-height: 44px;
+    }
+}
+
+/* ============================================
+   Mobile Navigation
+   ============================================ */
+
+/* Bottom navigation bar */
+.btm-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background-color: hsl(var(--b1));
+    border-top: 1px solid hsl(var(--b3));
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.btm-nav button {
+    min-height: 56px;
+    padding: 0.5rem;
+}
+
+.btm-nav-label {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* Add padding to main content when bottom nav is present */
+@media (max-width: 1023px) {
+    .has-btm-nav main {
+        padding-bottom: 80px;
+    }
+}
+
+/* ============================================
+   Mobile Drawer
+   ============================================ */
+
+@media (max-width: 1023px) {
+    .drawer-side {
+        position: fixed;
+        z-index: 100;
+    }
+
+    .drawer-content {
+        min-height: 100vh;
+    }
+}
+
+/* ============================================
+   Responsive Grid Adjustments
+   ============================================ */
+
+@media (max-width: 640px) {
+    /* Single column on mobile */
+    .grid-cols-2,
+    .md\:grid-cols-2 {
+        grid-template-columns: 1fr;
+    }
+
+    /* Stack stats cards */
+    .stats {
+        flex-direction: column;
+    }
+
+    .stat {
+        width: 100%;
+        padding: 1rem;
+    }
+
+    /* Reduce stat value size on mobile */
+    .stat-value {
+        font-size: 1.5rem;
+    }
+}
+
+/* ============================================
+   Mobile Typography
+   ============================================ */
+
+@media (max-width: 768px) {
+    h1,
+    .text-2xl {
+        font-size: 1.5rem;
+    }
+
+    h2,
+    .text-xl {
+        font-size: 1.25rem;
+    }
+
+    /* Truncate long text */
+    .truncate-mobile {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 200px;
+    }
+}
+
+/* ============================================
+   FAB (Floating Action Button)
+   ============================================ */
+
+.fab {
+    position: fixed;
+    bottom: 80px; /* Above bottom nav */
+    right: 1rem;
+    z-index: 40;
+}
+
+.fab .btn-circle {
+    width: 56px;
+    height: 56px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+@media (min-width: 1024px) {
+    .fab {
+        bottom: 2rem;
+    }
+}
+
+/* ============================================
+   Pull to Refresh Indicator
+   ============================================ */
+
+.ptr-indicator {
+    position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: top 0.2s ease;
+}
+
+.ptr-indicator.active {
+    top: 10px;
+}
+
+/* ============================================
+   Mobile Table Scroll
+   ============================================ */
+
+@media (max-width: 768px) {
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-container::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb {
+        background-color: hsl(var(--b3));
+        border-radius: 2px;
+    }
+}
+
+/* ============================================
+   Swipe Actions
+   ============================================ */
+
+.swipe-container {
+    overflow: hidden;
+    position: relative;
+}
+
+.swipe-content {
+    transition: transform 0.2s ease;
+}
+
+.swipe-actions {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+/* ============================================
+   Safe Area Insets (iOS)
+   ============================================ */
+
+@supports (padding: env(safe-area-inset-bottom)) {
+    .safe-area-bottom {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .safe-area-top {
+        padding-top: env(safe-area-inset-top);
+    }
+}
+
+/* ============================================
+   Dark Mode Adjustments
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+    .btm-nav {
+        background-color: hsl(var(--b1));
+        border-top-color: hsl(var(--b3));
+    }
+}
+
+/* ============================================
+   Performance Optimizations
+   ============================================ */
+
+/* Hardware acceleration for smooth scrolling */
+.scroll-smooth {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+/* Reduce animations for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

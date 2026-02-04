@@ -1,10 +1,20 @@
-# ip2adb - IP2A Database Management Tool
+# ip2adb — IP2A Database Management Tool
+
+> **Document Created:** January 28, 2026
+> **Last Updated:** February 3, 2026
+> **Version:** 1.1
+> **Status:** Active
+> **Project Version:** v0.9.4-alpha (Feature-Complete Weeks 1–19)
+
+---
 
 ## Overview
 
 `ip2adb` is a unified command-line tool for all IP2A database operations. It consolidates seeding, integrity checking, load testing, and data management into a single, easy-to-use interface.
 
-**One tool to rule them all** - instead of remembering multiple scripts, just use `ip2adb`.
+**One tool to rule them all** — instead of remembering multiple scripts, just use `ip2adb`.
+
+**Deployment Context:** The IP2A application runs on Railway (cloud PaaS) with PostgreSQL 16. The `ip2adb` CLI can be invoked via Railway shell (`railway shell`) or locally during development.
 
 ---
 
@@ -67,7 +77,7 @@ echo 'alias ip2adb="/app/ip2adb"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-### Windows
+### Windows (Local Development)
 
 ```bash
 # Use full path or add to PATH
@@ -114,8 +124,8 @@ python /app/ip2adb seed
 
 | Mode | Members | Students | Instructors | Locations | Organizations | Employments | Files |
 |------|---------|----------|-------------|-----------|---------------|-------------|-------|
-| **Normal** | 50 | 510 | 54 | 20 | 20 | ~150 | - |
-| **Quick** | 10 | 100 | 10 | 5 | 5 | ~30 | - |
+| **Normal** | 50 | 510 | 54 | 20 | 20 | ~150 | — |
+| **Quick** | 10 | 100 | 10 | 5 | 5 | ~30 | — |
 | **Stress** | 10,000 | 1,000 | 500 | 250 | 200 | 250,000+ | 150,000+ |
 
 ### Options
@@ -131,8 +141,8 @@ python /app/ip2adb seed
 | Mode | Duration | Use Case |
 |------|----------|----------|
 | Quick | 30 seconds | Fast iteration |
-| Normal | 2-5 minutes | Daily development |
-| Stress | 15-45 minutes | Performance testing |
+| Normal | 2–5 minutes | Daily development |
+| Stress | 15–45 minutes | Performance testing |
 
 ---
 
@@ -186,7 +196,7 @@ python /app/ip2adb seed
 
 | Code | Meaning |
 |------|---------|
-| 0 | Success - no critical issues |
+| 0 | Success — no critical issues |
 | 1 | Critical issues found |
 | 130 | Interrupted by user |
 
@@ -237,18 +247,18 @@ python /app/ip2adb seed
 | `--think-time MS` | 100 | Delay between operations (ms) | `--think-time 200` |
 | `--ramp-up SEC` | 10 | Ramp-up time (seconds) | `--ramp-up 20` |
 | `--pattern TYPE` | distributed | User behavior pattern | `--pattern read_heavy` |
-| `--quick` | - | Quick test: 10 users, 20 ops | `--quick` |
-| `--stress` | - | Stress test: 200 users, 100 ops | `--stress` |
-| `--export FILE` | - | Export report to file | `--export report.txt` |
-| `--force` | - | Force run in production | `--force` |
+| `--quick` | — | Quick test: 10 users, 20 ops | `--quick` |
+| `--stress` | — | Stress test: 200 users, 100 ops | `--stress` |
+| `--export FILE` | — | Export report to file | `--export report.txt` |
+| `--force` | — | Force run in production | `--force` |
 
 ### Time Estimates
 
 | Configuration | Duration | Use Case |
 |---------------|----------|----------|
-| Quick (10 users, 20 ops) | 1-2 minutes | Development testing |
-| Standard (50 users, 50 ops) | 5-10 minutes | Weekly monitoring |
-| Stress (200 users, 100 ops) | 20-30 minutes | Capacity planning |
+| Quick (10 users, 20 ops) | 1–2 minutes | Development testing |
+| Standard (50 users, 50 ops) | 5–10 minutes | Weekly monitoring |
+| Stress (200 users, 100 ops) | 20–30 minutes | Capacity planning |
 
 ### Performance Targets
 
@@ -284,9 +294,9 @@ python /app/ip2adb seed
 
 The `all` command runs three operations in sequence:
 
-1. **Seed** - Populate database with test data
-2. **Integrity** - Check data quality and auto-repair
-3. **Load** - Test performance under concurrent load
+1. **Seed** — Populate database with test data
+2. **Integrity** — Check data quality and auto-repair
+3. **Load** — Test performance under concurrent load
 
 If any step fails, the suite stops and reports the failure.
 
@@ -294,9 +304,9 @@ If any step fails, the suite stops and reports the failure.
 
 | Mode | Duration | Use Case |
 |------|----------|----------|
-| Quick | 5-10 minutes | Development validation |
-| Standard | 15-30 minutes | Weekly testing |
-| Stress | 45-90 minutes | Pre-production validation |
+| Quick | 5–10 minutes | Development validation |
+| Standard | 15–30 minutes | Weekly testing |
+| Stress | 45–90 minutes | Pre-production validation |
 
 ### Exit Codes
 
@@ -518,15 +528,36 @@ python run_load_test.py --users 50
 
 ### Benefits
 
-✅ **Easier to remember** - One command for everything
-✅ **Consistent interface** - All commands work the same way
-✅ **Better help** - Built-in documentation
-✅ **Safer** - Production protections built-in
-✅ **Faster** - Optimized workflows
-✅ **Scriptable** - Clean exit codes
+- ✅ **Easier to remember** — One command for everything
+- ✅ **Consistent interface** — All commands work the same way
+- ✅ **Better help** — Built-in documentation
+- ✅ **Safer** — Production protections built-in
+- ✅ **Faster** — Optimized workflows
+- ✅ **Scriptable** — Clean exit codes
 
 ---
 
-*Last Updated: January 28, 2026*
-*Version: 1.0*
-*Status: Production Ready*
+## Cross-References
+
+| Document | Location |
+|----------|----------|
+| Integrity Check Reference | `/docs/reference/integrity-check.md` |
+| Load Testing Reference | `/docs/reference/load-testing.md` |
+| Stress Testing Reference | `/docs/reference/stress-testing.md` |
+| Deployment Runbook | `/docs/runbooks/deployment.md` |
+| Backup & Restore Runbook | `/docs/runbooks/backup-restore.md` |
+| Testing Strategy | `/docs/standards/testing-strategy.md` |
+
+---
+
+## 📄 End-of-Session Documentation (MANDATORY)
+
+> ⚠️ **DO NOT skip this step.** Update *ANY* and *ALL* relevant documents to capture
+> progress made this session. Scan `/docs/*` and make or create any relevant
+> updates/documents to keep a historical record as the project progresses.
+> Do not forget about ADRs — update as necessary.
+
+---
+
+*Document Version: 1.1*
+*Last Updated: February 3, 2026*

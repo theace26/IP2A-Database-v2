@@ -91,6 +91,33 @@ from src.schemas.grant_enrollment import (
     RecordOutcome,
 )
 
+# Phase 7 - Referral & Dispatch schemas
+from src.schemas.referral_book import (
+    ReferralBookBase,
+    ReferralBookCreate,
+    ReferralBookUpdate,
+    ReferralBookRead,
+    ReferralBookStats,
+    ReferralBookSummary,
+)
+from src.schemas.book_registration import (
+    BookRegistrationBase,
+    BookRegistrationCreate,
+    BookRegistrationUpdate,
+    BookRegistrationRead,
+    BookRegistrationWithMember,
+    QueuePosition,
+    ReSignRequest,
+    ExemptRequest,
+    RolloffRequest,
+)
+from src.schemas.registration_activity import (
+    RegistrationActivityBase,
+    RegistrationActivityCreate,
+    RegistrationActivityRead,
+    RegistrationActivityWithDetails,
+)
+
 __all__ = [
     "StudentBase",
     "StudentCreate",
@@ -154,4 +181,24 @@ __all__ = [
     "GrantEnrollmentWithStudent",
     "GrantEnrollmentWithGrant",
     "RecordOutcome",
+    # Phase 7 - Referral & Dispatch
+    "ReferralBookBase",
+    "ReferralBookCreate",
+    "ReferralBookUpdate",
+    "ReferralBookRead",
+    "ReferralBookStats",
+    "ReferralBookSummary",
+    "BookRegistrationBase",
+    "BookRegistrationCreate",
+    "BookRegistrationUpdate",
+    "BookRegistrationRead",
+    "BookRegistrationWithMember",
+    "QueuePosition",
+    "ReSignRequest",
+    "ExemptRequest",
+    "RolloffRequest",
+    "RegistrationActivityBase",
+    "RegistrationActivityCreate",
+    "RegistrationActivityRead",
+    "RegistrationActivityWithDetails",
 ]

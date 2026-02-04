@@ -1,7 +1,12 @@
 # ADR-009: Migration Safety Strategy
 
+> **Document Created:** 2026-01-29
+> **Last Updated:** February 3, 2026
+> **Version:** 2.0
+> **Status:** Implemented — Multi-layer migration safety active since adoption
+
 ## Status
-Accepted
+Implemented
 
 ## Date
 January 29, 2026
@@ -64,8 +69,25 @@ python scripts/migration_validator.py check --strict
 
 ### 4. Pre-commit Enforcement
 Two hooks run automatically:
-1. `migration-naming` - Validates timestamp format
-2. `migration-destructive` - Scans for dangerous operations
+1. `migration-naming` — Validates timestamp format
+2. `migration-destructive` — Scans for dangerous operations
+
+## Implementation Status
+
+| Component | Status | Week | Notes |
+|-----------|--------|------|-------|
+| Timestamped migration naming | ✅ | 9 | `YYYYMMDD_HHMMSS_description.py` format |
+| Alembic wrapper script | ✅ | 9 | `scripts/alembic_wrapper.py` |
+| FK dependency analyzer | ✅ | 9 | `scripts/migration_graph.py` |
+| Destructive operation scanner | ✅ | 9 | `scripts/migration_validator.py` |
+| Pre-commit hooks | ✅ | 9 | naming + destructive checks |
+| Mermaid migration diagram | ✅ | Batch 2 | `docs/architecture/diagrams/migrations.mmd` |
+| Railway deploy migrations | ✅ | 16 | Auto-run on deploy |
+
+### Current Scale
+- **26 ORM models** with complex FK relationships
+- Multiple migration files from Weeks 1–19
+- Zero migration-related incidents since adoption
 
 ## Consequences
 
@@ -82,14 +104,31 @@ Two hooks run automatically:
 - Legacy migrations require manual review
 
 ### Alternatives Considered
-1. **Sequential numbering** - Rejected due to conflict risk
-2. **UUID-based names** - Rejected, not human-readable
-3. **Branch-based prefixes** - Rejected, too complex
+1. **Sequential numbering** — Rejected due to conflict risk
+2. **UUID-based names** — Rejected, not human-readable
+3. **Branch-based prefixes** — Rejected, too complex
 
 ## Related ADRs
 - ADR-001: Database Choice (PostgreSQL)
 - ADR-003: Authentication (migrations for auth tables)
+- ADR-012: Audit Logging (immutability trigger migration)
 
 ## References
 - [Alembic Documentation](https://alembic.sqlalchemy.org/)
-- [Django Migration Naming](https://docs.djangoproject.com/en/4.0/topics/migrations/)
+- `scripts/alembic_wrapper.py` — Timestamped migration generator
+- `scripts/migration_graph.py` — FK dependency analysis
+- `scripts/migration_validator.py` — Destructive operation detection
+- `docs/architecture/diagrams/migrations.mmd` — Migration phase diagram (updated Batch 2)
+- `docs/architecture/diagrams/models_fk.mmd` — Full ER diagram with 26 models (Batch 2)
+
+---
+
+## 🔄 End-of-Session Documentation (REQUIRED)
+
+> ⚠️ **DO NOT skip this step.** Update *ANY* and *ALL* relevant documents to capture progress made this session. Scan `/docs/*` and make or create any relevant updates/documents to keep a historical record as the project progresses. Do not forget about ADRs, update as necessary.
+
+---
+
+Document Version: 2.0
+Last Updated: February 3, 2026
+Previous Version: 1.0 (2026-01-29 — original decision record)

@@ -1,0 +1,21 @@
+# UnionCore Scheduled Tasks
+# Install with: crontab scripts/crontab.example
+#
+# Environment variables should be set in /etc/environment or via
+# Docker environment configuration.
+
+# Database backup - Daily at 2 AM
+0 2 * * * /app/scripts/backup_database.sh >> /var/log/unioncore/backup.log 2>&1
+
+# Audit log archival - Weekly on Sunday at 3 AM
+0 3 * * 0 /app/scripts/archive_audit_logs.sh >> /var/log/unioncore/audit_archive.log 2>&1
+
+# Session cleanup - Daily at 4 AM
+0 4 * * * /app/scripts/cleanup_sessions.sh >> /var/log/unioncore/cleanup.log 2>&1
+
+# Health check - Every 5 minutes
+*/5 * * * * curl -sf http://localhost:8000/health/ready > /dev/null || echo "Health check failed at $(date)" >> /var/log/unioncore/health.log
+
+# Backup verification - Weekly on Saturday at 3 AM (optional)
+# Verifies the most recent backup can be restored
+# 0 3 * * 6 LATEST=$(ls -t /var/backups/unioncore/*.sql.gz | head -1) && /app/scripts/verify_backup.sh "$LATEST" >> /var/log/unioncore/backup_verify.log 2>&1

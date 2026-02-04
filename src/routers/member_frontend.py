@@ -314,11 +314,11 @@ async def member_dues_partial(
 # ============================================================
 
 
-@router.get("/{member_id}/notes-list", response_class=HTMLResponse)
+@router.get("/{member_id}/notes-list", response_class=HTMLResponse, response_model=None)
 def member_notes_list(
     request: Request,
     member_id: int,
-    db: SyncSession = Depends(get_db),
+    db=Depends(get_db),
     current_user=Depends(get_current_user_model),
 ):
     """HTMX endpoint: Return member notes list."""
@@ -362,14 +362,14 @@ def member_notes_list(
     )
 
 
-@router.post("/{member_id}/notes", response_class=HTMLResponse)
+@router.post("/{member_id}/notes", response_class=HTMLResponse, response_model=None)
 def add_member_note(
     request: Request,
     member_id: int,
     note_text: str = Form(...),
     visibility: str = Form("staff_only"),
     category: Optional[str] = Form(None),
-    db: SyncSession = Depends(get_db),
+    db=Depends(get_db),
     current_user=Depends(get_current_user_model),
 ):
     """HTMX endpoint: Add a note to a member."""

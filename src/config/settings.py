@@ -39,8 +39,23 @@ class Settings(BaseSettings):
     STRIPE_PUBLISHABLE_KEY: Optional[str] = None
     STRIPE_WEBHOOK_SECRET: Optional[str] = None
 
+    # Database Pool Settings
+    DB_POOL_SIZE: int = 10
+    DB_MAX_OVERFLOW: int = 20
+    DB_POOL_TIMEOUT: int = 30
+    DB_POOL_RECYCLE: int = 1800  # 30 minutes
+    DB_ECHO: bool = False
+
+    # Monitoring & Error Tracking
+    SENTRY_DSN: Optional[str] = None
+    APP_VERSION: str = "0.9.1-alpha"
+
+    # CORS (production)
+    ALLOWED_ORIGINS: Optional[str] = None
+
     # Feature flags
     ENABLE_DOCS: bool = True  # Swagger UI
+    JSON_LOGS: bool = True  # Structured JSON logging in production
 
     class Config:
         env_file = ".env"

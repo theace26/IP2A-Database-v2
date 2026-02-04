@@ -1,15 +1,60 @@
 ```mermaid
+%% IP2A-Database-v2 — Seed Dependency Graph
+%% Registry-based ordering — seeds run in dependency-aware sequence
+%% Last Updated: February 3, 2026
+%%
+%% Regenerate from seed_registry.py if seeds change:
+%%   python -m src.db.seed --dry-run
+
 graph TD
-  locations["seed_locations"]
-  cohorts["seed_cohorts"]
-  locations --> cohorts
-  instructors["seed_instructors"]
-  students["seed_students"]
-  cohorts --> students
-  tools_issued["seed_tools_issued"]
-  students --> tools_issued
-  credentials["seed_credentials"]
-  students --> credentials
-  jatc_applications["seed_jatc_applications"]
-  students --> jatc_applications
+    %% ===== FOUNDATION SEEDS (no dependencies) =====
+    roles["seed_roles<br/><i>7 system roles</i>"]
+    orgs["seed_organizations<br/><i>employers, unions, JATCs</i>"]
+    courses["seed_courses<br/><i>training course definitions</i>"]
+    dues_rates["seed_dues_rates<br/><i>classification-based pricing</i>"]
+
+    %% ===== IDENTITY SEEDS (depend on roles) =====
+    roles --> admin_user["seed_admin_user<br/><i>default admin account</i>"]
+
+    %% ===== MEMBER SEEDS (depend on orgs) =====
+    orgs --> members["seed_members<br/><i>union member records</i>"]
+    members --> member_employments["seed_member_employments<br/><i>employment history</i>"]
+
+    %% ===== TRAINING SEEDS (depend on courses, members) =====
+    courses --> cohorts["seed_cohorts<br/><i>course cohorts/sections</i>"]
+    members --> students["seed_students<br/><i>training program students</i>"]
+    cohorts --> enrollments["seed_enrollments<br/><i>student-cohort links</i>"]
+    students --> enrollments
+    cohorts --> instructors["seed_instructors<br/><i>instructor-cohort assignments</i>"]
+
+    %% ===== OPERATIONS SEEDS (depend on members, orgs) =====
+    members --> benevolence["seed_benevolence<br/><i>benevolence applications</i>"]
+    members --> grievances["seed_grievances<br/><i>grievance records</i>"]
+    orgs --> grievances
+    orgs --> salt["seed_salt_activities<br/><i>organizing campaigns</i>"]
+
+    %% ===== DUES SEEDS (depend on members, rates) =====
+    dues_rates --> dues_periods["seed_dues_periods<br/><i>billing periods</i>"]
+    dues_periods --> dues_payments["seed_dues_payments<br/><i>payment records</i>"]
+    members --> dues_payments
+
+    %% ===== GRANT SEEDS (depend on students) =====
+    students --> grant_enrollments["seed_grant_enrollments<br/><i>grant compliance tracking</i>"]
+
+    %% ===== STYLING =====
+    classDef foundation fill:#4ade80,stroke:#16a34a,color:#000
+    classDef identity fill:#60a5fa,stroke:#2563eb,color:#000
+    classDef member fill:#f97316,stroke:#ea580c,color:#000
+    classDef training fill:#a78bfa,stroke:#7c3aed,color:#000
+    classDef ops fill:#fb923c,stroke:#ea580c,color:#000
+    classDef dues fill:#34d399,stroke:#059669,color:#000
+    classDef grants fill:#fbbf24,stroke:#d97706,color:#000
+
+    class roles,orgs,courses,dues_rates foundation
+    class admin_user identity
+    class members,member_employments member
+    class cohorts,students,enrollments,instructors training
+    class benevolence,grievances,salt ops
+    class dues_periods,dues_payments dues
+    class grant_enrollments grants
 ```

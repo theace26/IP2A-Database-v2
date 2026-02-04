@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Executive Dashboard</h1>
+        <span class="text-sm text-gray-500">
+            Data as of {{ now.strftime('%b %d, %Y %H:%M') }} UTC
+        </span>
+    </div>
+
+    <!-- Key Metrics Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <!-- Membership -->
+        <div class="stat bg-base-100 rounded-lg shadow">
+            <div class="stat-figure text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+            </div>
+            <div class="stat-title">Active Members</div>
+            <div class="stat-value text-primary">{{ membership.active }}</div>
+            <div class="stat-desc">{{ membership.retention_rate }}% retention rate</div>
+        </div>
+
+        <!-- Dues Collected -->
+        <div class="stat bg-base-100 rounded-lg shadow">
+            <div class="stat-figure text-success">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                </svg>
+            </div>
+            <div class="stat-title">Dues Collected</div>
+            <div class="stat-value text-success">${{ "%.2f"|format(dues.total_collected) }}</div>
+            <div class="stat-desc">{{ dues.payment_count }} payments</div>
+        </div>
+
+        <!-- Training -->
+        <div class="stat bg-base-100 rounded-lg shadow">
+            <div class="stat-figure text-info">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6"></path>
+                </svg>
+            </div>
+            <div class="stat-title">Active Students</div>
+            <div class="stat-value text-info">{{ training.active }}</div>
+            <div class="stat-desc">{{ training.completion_rate }}% completion rate</div>
+        </div>
+
+        <!-- Activity -->
+        <div class="stat bg-base-100 rounded-lg shadow">
+            <div class="stat-figure text-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+            </div>
+            <div class="stat-title">Actions (30d)</div>
+            <div class="stat-value text-secondary">{{ activity.total_actions }}</div>
+            <div class="stat-desc">System activity</div>
+        </div>
+    </div>
+
+    <!-- Additional Stats Row -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="stat bg-base-100 rounded-lg shadow">
+            <div class="stat-title">New This Month</div>
+            <div class="stat-value text-accent">{{ membership.new_this_month }}</div>
+            <div class="stat-desc">New members</div>
+        </div>
+
+        <div class="stat bg-base-100 rounded-lg shadow">
+            <div class="stat-title">Total Members</div>
+            <div class="stat-value">{{ membership.total }}</div>
+            <div class="stat-desc">{{ membership.inactive }} inactive</div>
+        </div>
+
+        <div class="stat bg-base-100 rounded-lg shadow">
+            <div class="stat-title">Training Completed</div>
+            <div class="stat-value text-success">{{ training.completed }}</div>
+            <div class="stat-desc">{{ training.withdrawn }} withdrawn</div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Membership Trend Chart -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h2 class="card-title">Membership Trend (12 Months)</h2>
+                <div class="h-64">
+                    <canvas id="membershipCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Methods Breakdown -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h2 class="card-title">Payment Methods</h2>
+                <div class="h-64">
+                    {% if dues.payment_methods %}
+                    <canvas id="paymentCanvas"></canvas>
+                    {% else %}
+                    <div class="flex items-center justify-center h-full text-gray-500">
+                        No payment data available
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Breakdown -->
+    <div class="card bg-base-100 shadow mb-8">
+        <div class="card-body">
+            <h2 class="card-title">Activity Breakdown (30 Days)</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
+                {% for action, count in activity.action_breakdown.items() %}
+                <div class="text-center p-3 rounded-lg bg-base-200">
+                    <div class="text-2xl font-bold">{{ count }}</div>
+                    <div class="text-sm text-gray-500">{{ action }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="/analytics/membership" class="card bg-base-100 shadow hover:shadow-lg transition-shadow">
+            <div class="card-body">
+                <h3 class="card-title text-sm">Membership Analytics</h3>
+                <p class="text-sm text-gray-500">Trends, demographics, retention</p>
+            </div>
+        </a>
+        <a href="/analytics/dues" class="card bg-base-100 shadow hover:shadow-lg transition-shadow">
+            <div class="card-body">
+                <h3 class="card-title text-sm">Dues Analytics</h3>
+                <p class="text-sm text-gray-500">Collection, delinquency, trends</p>
+            </div>
+        </a>
+        <a href="/analytics/builder" class="card bg-base-100 shadow hover:shadow-lg transition-shadow">
+            <div class="card-body">
+                <h3 class="card-title text-sm">Report Builder</h3>
+                <p class="text-sm text-gray-500">Custom reports and exports</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Chart.js Integration -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Membership trend chart
+    const membershipCtx = document.getElementById('membershipCanvas');
+    if (membershipCtx) {
+        new Chart(membershipCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: {{ membership_trend | map(attribute='label') | list | tojson }},
+                datasets: [{
+                    label: 'Members',
+                    data: {{ membership_trend | map(attribute='count') | list | tojson }},
+                    borderColor: 'rgb(99, 102, 241)',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: false } }
+            }
+        });
+    }
+
+    // Payment methods chart
+    const paymentCtx = document.getElementById('paymentCanvas');
+    if (paymentCtx) {
+        const paymentMethods = {{ dues.payment_methods | tojson }};
+        if (paymentMethods && paymentMethods.length > 0) {
+            new Chart(paymentCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: paymentMethods.map(m => m.method),
+                    datasets: [{
+                        data: paymentMethods.map(m => m.total),
+                        backgroundColor: [
+                            'rgb(99, 102, 241)',
+                            'rgb(34, 197, 94)',
+                            'rgb(251, 146, 60)',
+                            'rgb(236, 72, 153)',
+                            'rgb(139, 92, 246)',
+                            'rgb(14, 165, 233)',
+                        ],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                }
+            });
+        }
+    }
+});
+</script>
+{% endblock %}

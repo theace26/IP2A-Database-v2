@@ -36,6 +36,16 @@ from src.models.dues_period import DuesPeriod
 from src.models.dues_payment import DuesPayment
 from src.models.dues_adjustment import DuesAdjustment
 
+# Phase 7 - Referral & Dispatch models (Week 20)
+from src.models.referral_book import ReferralBook
+from src.models.book_registration import BookRegistration
+from src.models.registration_activity import RegistrationActivity
+
+# Phase 7 - Referral & Dispatch models (Week 21)
+from src.models.labor_request import LaborRequest
+from src.models.job_bid import JobBid
+from src.models.dispatch import Dispatch
+
 __all__ = [
     "User",
     "Role",
@@ -75,4 +85,11 @@ __all__ = [
     "DuesPeriod",
     "DuesPayment",
     "DuesAdjustment",
+    # Phase 7 - Referral & Dispatch
+    "ReferralBook",
+    "BookRegistration",
+    "RegistrationActivity",
+    "LaborRequest",
+    "JobBid",
+    "Dispatch",
 ]

@@ -1,7 +1,12 @@
 # ADR-011: Dues Frontend Patterns
 
+> **Document Created:** 2026-01-30
+> **Last Updated:** February 3, 2026
+> **Version:** 2.0
+> **Status:** Implemented — Dues UI patterns established and in production
+
 ## Status
-Accepted
+Implemented
 
 ## Date
 January 2026
@@ -13,7 +18,7 @@ The dues management module required consistent UI patterns across four related a
 - Payments tracking (transactions)
 - Adjustments workflow (approvals)
 
-Each area has different interaction patterns but needed visual consistency with the rest of the application.
+Each area has different interaction patterns but needed visual consistency with the rest of the application, particularly the Operations module patterns established in ADR-010.
 
 ## Decision
 We established the following patterns for the dues frontend:
@@ -68,6 +73,23 @@ All monetary values:
 - Display with `font-mono` class for alignment
 - Color-coded: green for credits, red for debits
 
+## Implementation Status
+
+| Component | Status | Week | Notes |
+|-----------|--------|------|-------|
+| DuesFrontendService | ✅ | 10 | ~400 lines, 4 submodule support |
+| Dues landing page dashboard | ✅ | 10 | Stats cards + quick actions |
+| Rates management UI | ✅ | 10 | List with classification display |
+| Periods management UI | ✅ | 10 | Detail page, close period modal |
+| Payments tracking UI | ✅ | 10 | Record payment modal, member view |
+| Adjustments workflow UI | ✅ | 10 | Approve/deny modal, detail page |
+| HTMX filter/search (all pages) | ✅ | 10 | Consistent `hx-include` pattern |
+| Badge helper methods | ✅ | 10 | Semantic color mapping |
+| Currency formatting helpers | ✅ | 10 | `format_currency()` + `font-mono` |
+| Stripe "Pay Dues" button | ✅ | 11 | Initiates Checkout Session (ADR-013) |
+| Dues analytics charts | ✅ | 19 | Chart.js integration on dashboard |
+| 37 dues frontend tests | ✅ | 10 | Full page + partial + modal coverage |
+
 ## Consequences
 
 ### Benefits
@@ -75,6 +97,7 @@ All monetary values:
 - Modal workflows reduce page loads
 - Clear visual status indicators
 - Reusable badge and formatting helpers
+- Pattern consistency with Operations module (ADR-010)
 
 ### Tradeoffs
 - Service file is large (~400 lines)
@@ -82,16 +105,19 @@ All monetary values:
 - More complex template partials
 
 ### Alternatives Considered
-1. **Separate pages for each action** - Rejected, too many page loads
-2. **Client-side only modals** - Rejected, need server validation
-3. **Inline editing** - Rejected, too complex for financial data
+1. **Separate pages for each action** — Rejected, too many page loads
+2. **Client-side only modals** — Rejected, need server validation
+3. **Inline editing** — Rejected, too complex for financial data
 
 ## Related ADRs
 - ADR-002: Frontend Stack (HTMX + DaisyUI)
-- ADR-008: Dues Tracking System Design
-- ADR-010: Operations Frontend Patterns
+- ADR-005: CSS Framework (Tailwind + DaisyUI components)
+- ADR-008: Dues Tracking System Design (data model)
+- ADR-010: Operations Frontend Patterns (established the combined service pattern)
+- ADR-013: Stripe Payment Integration (online payment flow)
 
-## Files Created
+## Files
+
 ```
 src/services/dues_frontend_service.py
 src/routers/dues_frontend.py
@@ -114,3 +140,15 @@ src/templates/dues/
     └── partials/_table.html
 src/tests/test_dues_frontend.py
 ```
+
+---
+
+## 🔄 End-of-Session Documentation (REQUIRED)
+
+> ⚠️ **DO NOT skip this step.** Update *ANY* and *ALL* relevant documents to capture progress made this session. Scan `/docs/*` and make or create any relevant updates/documents to keep a historical record as the project progresses. Do not forget about ADRs, update as necessary.
+
+---
+
+Document Version: 2.0
+Last Updated: February 3, 2026
+Previous Version: 1.0 (2026-01-30 — original decision record)

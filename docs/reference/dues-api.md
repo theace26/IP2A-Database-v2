@@ -1,6 +1,19 @@
 # Dues Tracking API Reference
 
+> **Document Created:** January 28, 2026
+> **Last Updated:** February 3, 2026
+> **Version:** 1.1
+> **Status:** Active — Implemented (Phase 4)
+> **Project Version:** v0.9.4-alpha (Feature-Complete Weeks 1–19)
+> **Related ADRs:** [ADR-009](../decisions/ADR-009-dues-tracking-system.md)
+
 Quick reference for Phase 4 Dues Tracking API endpoints.
+
+> **Context:** All endpoints are served via Flask Blueprints. The dues system integrates
+> with Stripe for payment processing (Checkout Sessions + Webhooks). See the
+> [Dues Tracking Guide](../guides/dues-tracking.md) for business logic and workflows.
+
+---
 
 ## Dues Rates
 
@@ -122,6 +135,10 @@ Content-Type: application/json
 }
 ```
 
+> **Stripe Integration:** Online payments processed via Stripe Checkout Sessions
+> create payment records automatically via webhook callbacks. Manual payment recording
+> (above) is for in-person transactions (cash, check, etc.).
+
 ### Payment Statuses
 | Status | Description |
 |--------|-------------|
@@ -205,18 +222,39 @@ Content-Type: application/json
 
 ### List Endpoints
 Most list endpoints support:
-- `skip`: Offset for pagination (default: 0)
-- `limit`: Max results (default: 100)
+- `skip` — Offset for pagination (default: 0)
+- `limit` — Max results (default: 100)
 
 ### Rates List
-- `classification`: Filter by classification
-- `active_only`: If true, only current rates
+- `classification` — Filter by classification
+- `active_only` — If true, only current rates
 
 ### Periods List
-- `year`: Filter by year
-- `is_closed`: Filter by closed status
+- `year` — Filter by year
+- `is_closed` — Filter by closed status
 
-## Related Documentation
+---
 
-- [Dues Tracking Guide](../guides/dues-tracking.md)
-- [ADR-008: Dues Tracking Design](../decisions/ADR-008-dues-tracking-system.md)
+## Cross-References
+
+| Document | Location |
+|----------|----------|
+| Dues Tracking Guide | `/docs/guides/dues-tracking.md` |
+| ADR-009: Dues Tracking System | `/docs/decisions/ADR-009-dues-tracking-system.md` |
+| Audit API Reference | `/docs/reference/audit-api.md` |
+| Phase 2 Quick Reference | `/docs/reference/phase2-quick-reference.md` |
+| Stripe Integration | See ADR-009 for webhook flow |
+
+---
+
+## 📄 End-of-Session Documentation (MANDATORY)
+
+> ⚠️ **DO NOT skip this step.** Update *ANY* and *ALL* relevant documents to capture
+> progress made this session. Scan `/docs/*` and make or create any relevant
+> updates/documents to keep a historical record as the project progresses.
+> Do not forget about ADRs — update as necessary.
+
+---
+
+*Document Version: 1.1*
+*Last Updated: February 3, 2026*

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Membership Analytics{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="flex items-center gap-2 mb-6">
+        <a href="/analytics" class="btn btn-ghost btn-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+        </a>
+        <h1 class="text-2xl font-bold">Membership Analytics</h1>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div class="stat bg-base-100 rounded-lg shadow">
+            <div class="stat-title">Total Members</div>
+            <div class="stat-value text-primary">{{ stats.total }}</div>
+        </div>
+        <div class="stat bg-base-100 rounded-lg shadow">
+            <div class="stat-title">Active</div>
+            <div class="stat-value text-success">{{ stats.active }}</div>
+        </div>
+        <div class="stat bg-base-100 rounded-lg shadow">
+            <div class="stat-title">Inactive</div>
+            <div class="stat-value text-warning">{{ stats.inactive }}</div>
+        </div>
+        <div class="stat bg-base-100 rounded-lg shadow">
+            <div class="stat-title">New This Month</div>
+            <div class="stat-value text-info">{{ stats.new_this_month }}</div>
+        </div>
+        <div class="stat bg-base-100 rounded-lg shadow">
+            <div class="stat-title">Retention Rate</div>
+            <div class="stat-value">{{ stats.retention_rate }}%</div>
+        </div>
+    </div>
+
+    <!-- 24-Month Trend Chart -->
+    <div class="card bg-base-100 shadow mb-8">
+        <div class="card-body">
+            <h2 class="card-title">Membership Trend (24 Months)</h2>
+            <div class="h-80">
+                <canvas id="trendCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trend Data Table -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Monthly Data</h2>
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th class="text-right">Members</th>
+                            <th class="text-right">Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in trend %}
+                        <tr>
+                            <td>{{ item.label }}</td>
+                            <td class="text-right">{{ item.count }}</td>
+                            <td class="text-right">
+                                {% if loop.index0 > 0 %}
+                                    {% set prev = trend[loop.index0 - 1].count %}
+                                    {% set diff = item.count - prev %}
+                                    {% if diff > 0 %}
+                                    <span class="text-success">+{{ diff }}</span>
+                                    {% elif diff < 0 %}
+                                    <span class="text-error">{{ diff }}</span>
+                                    {% else %}
+                                    <span class="text-gray-500">0</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-gray-500">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('trendCanvas').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ trend | map(attribute='label') | list | tojson }},
+            datasets: [{
+                label: 'Total Members',
+                data: {{ trend | map(attribute='count') | list | tojson }},
+                borderColor: 'rgb(99, 102, 241)',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                fill: true,
+                tension: 0.3,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true, position: 'top' }
+            },
+            scales: {
+                y: { beginAtZero: false }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

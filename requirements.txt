@@ -45,6 +45,9 @@ stripe>=8.0.0              # Stripe payment integration
 # --- Production Server ---
 gunicorn>=21.2.0
 
+# --- Monitoring & Error Tracking ---
+sentry-sdk[fastapi]>=1.40.0
+
 # --- Dev Tools ---
 ipython>=8.0
 ipdb>=0.13

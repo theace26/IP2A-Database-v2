@@ -64,6 +64,32 @@ from src.db.enums.grant_enums import (
     GrantOutcome,
 )
 
+from src.db.enums.phase7_enums import (
+    # Book/Registration enums
+    BookClassification,
+    BookRegion,
+    RegistrationStatus,
+    RegistrationAction,
+    ExemptReason,
+    RolloffReason,
+    NoCheckMarkReason,
+    # Labor request/dispatch enums
+    LaborRequestStatus,
+    BidStatus,
+    DispatchMethod,
+    DispatchStatus,
+    DispatchType,
+    TermReason,
+    JobClass,
+    AgreementType,
+    # Member enums
+    MemberType,
+    ReferralStatus,
+    # Transaction enums
+    ActivityCode,
+    PaymentSource,
+)
+
 __all__ = [
     # Base enums (education/training)
     "LocationType",
@@ -110,4 +136,24 @@ __all__ = [
     "GrantStatus",
     "GrantEnrollmentStatus",
     "GrantOutcome",
+    # Phase 7 - Referral & Dispatch enums
+    "BookClassification",
+    "BookRegion",
+    "RegistrationStatus",
+    "RegistrationAction",
+    "ExemptReason",
+    "RolloffReason",
+    "NoCheckMarkReason",
+    "LaborRequestStatus",
+    "BidStatus",
+    "DispatchMethod",
+    "DispatchStatus",
+    "DispatchType",
+    "TermReason",
+    "JobClass",
+    "AgreementType",
+    "MemberType",
+    "ReferralStatus",
+    "ActivityCode",
+    "PaymentSource",
 ]

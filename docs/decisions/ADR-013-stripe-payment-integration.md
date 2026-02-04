@@ -1,7 +1,12 @@
 # ADR-013: Stripe Payment Integration for Dues Collection
 
+> **Document Created:** 2026-01-30
+> **Last Updated:** February 3, 2026
+> **Version:** 2.0
+> **Status:** Implemented — Stripe Checkout Sessions live in production since Week 11
+
 ## Status
-Accepted
+Implemented
 
 ## Date
 2026-01-30
@@ -80,56 +85,72 @@ Member redirected to Stripe's hosted payment page
    - Webhook handler creates DuesPayment record linked to member
 
 5. **Payment Modes**
-   - Phase 1: One-time payments (`mode='payment'`)
+   - Phase 1 (✅ implemented): One-time payments (`mode='payment'`)
    - Phase 2 (future): Recurring subscriptions (`mode='subscription'`)
+
+## Implementation Status
+
+| Component | Status | Week | Notes |
+|-----------|--------|------|-------|
+| PaymentService | ✅ | 11 | `src/services/payment_service.py` |
+| Stripe webhook router | ✅ | 11 | `src/routers/webhooks/stripe_webhook.py` |
+| stripe_customer_id on Member | ✅ | 11 | Migration added to members table |
+| "Pay Dues" frontend button | ✅ | 11 | Checkout Session redirect |
+| Webhook signature verification | ✅ | 11 | Stripe secret-based verification |
+| DuesPayment auto-creation | ✅ | 11 | Webhook handler creates payment records |
+| Environment config (Railway) | ✅ | 11 | STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET |
+| 25 Stripe-specific tests | ✅ | 11 | Checkout, webhooks, error handling |
+| Dues analytics (Stripe data) | ✅ | 19 | Chart.js payment method breakdown |
+| Recurring subscriptions | 🔜 | — | Phase 2 future enhancement |
+| Stripe Customer Portal | 🔜 | — | Phase 4 future enhancement |
+| QuickBooks sync | 🔜 | — | Phase 5 future enhancement |
 
 ### Environment Configuration
 
-Required environment variables:
-- `STRIPE_SECRET_KEY` - Server-side API key
-- `STRIPE_PUBLISHABLE_KEY` - Client-side key (future, if using Stripe.js)
-- `STRIPE_WEBHOOK_SECRET` - Webhook signature verification
+Required environment variables (set in Railway):
+- `STRIPE_SECRET_KEY` — Server-side API key
+- `STRIPE_PUBLISHABLE_KEY` — Client-side key (future, if using Stripe.js)
+- `STRIPE_WEBHOOK_SECRET` — Webhook signature verification
 
 ### Stripe Dashboard Setup
 
-1. **API Keys**: Dashboard → Developers → API Keys
-2. **Webhook Endpoint**: Dashboard → Developers → Webhooks
+1. **API Keys:** Dashboard → Developers → API Keys
+2. **Webhook Endpoint:** Dashboard → Developers → Webhooks
    - URL: `https://unioncore.domain.com/api/v1/webhooks/stripe`
-   - Events to subscribe:
-     - `checkout.session.completed` - Payment succeeded
-     - `checkout.session.expired` - Session timed out
-     - `payment_intent.succeeded` - Alternate success event
-     - `payment_intent.payment_failed` - Payment failed
-     - `charge.refunded` - Refund processed
+   - Events subscribed:
+     - `checkout.session.completed` — Payment succeeded
+     - `checkout.session.expired` — Session timed out
+     - `payment_intent.succeeded` — Alternate success event
+     - `payment_intent.payment_failed` — Payment failed
+     - `charge.refunded` — Refund processed
 
 ## Consequences
 
 ### Positive
 
-- **Member Convenience** - Pay dues online 24/7 from any device
-- **Reduced Staff Work** - No manual payment entry, automatic reconciliation
-- **PCI Compliance** - Stripe handles all card data, we never touch it
-- **Cost-Effective ACH** - 0.8% ACH fees vs 2.9% card (big savings for large payments)
-- **Instant Confirmation** - Members get email receipt from Stripe immediately
-- **Audit Trail** - All payments logged in both Stripe dashboard and our database
-- **Fraud Protection** - Stripe's built-in fraud detection and 3D Secure
-- **Future-Ready** - Easy to add recurring subscriptions later
+- **Member Convenience** — Pay dues online 24/7 from any device (including PWA)
+- **Reduced Staff Work** — No manual payment entry, automatic reconciliation
+- **PCI Compliance** — Stripe handles all card data, we never touch it
+- **Cost-Effective ACH** — 0.8% ACH fees vs 2.9% card (big savings for large payments)
+- **Instant Confirmation** — Members get email receipt from Stripe immediately
+- **Audit Trail** — All payments logged in both Stripe dashboard and our database (ADR-012)
+- **Fraud Protection** — Stripe's built-in fraud detection and 3D Secure
+- **Future-Ready** — Easy to add recurring subscriptions later
 
 ### Negative
 
-- **Transaction Fees** - 2.9% + $0.30 per card, 0.8% per ACH
-- **Vendor Lock-In** - Switching payment processors later requires code changes
-- **External Dependency** - Downtime at Stripe affects our payment capability
-- **Webhook Delays** - Webhook processing is async (5-30 second delay typical)
-- **Test Mode Limitations** - Must use production mode for real payments (test cards don't work in prod)
+- **Transaction Fees** — 2.9% + $0.30 per card, 0.8% per ACH
+- **Vendor Lock-In** — Switching payment processors later requires code changes
+- **External Dependency** — Downtime at Stripe affects our payment capability
+- **Webhook Delays** — Webhook processing is async (5–30 second delay typical)
 
 ### Mitigations
 
-- **Fee Transparency** - Show members ACH option for lower fees
-- **Webhook Retry Logic** - Stripe retries failed webhooks up to 3 days
-- **Fallback Payment Methods** - Keep cash/check option for members without cards
-- **Monitoring** - Alert on webhook failures or processing delays
-- **Reconciliation Job** - Nightly job to verify Stripe payments match our database
+- **Fee Transparency** — Show members ACH option for lower fees
+- **Webhook Retry Logic** — Stripe retries failed webhooks up to 3 days
+- **Fallback Payment Methods** — Keep cash/check option for members without cards
+- **Monitoring** — Sentry alerts on webhook failures or processing delays (Week 16)
+- **Reconciliation Job** — Nightly job to verify Stripe payments match our database
 
 ## Implementation Components
 
@@ -137,18 +158,18 @@ Required environment variables:
 |-----------|----------|---------|
 | PaymentService | `src/services/payment_service.py` | Create Checkout Sessions, retrieve payment details |
 | Stripe webhook router | `src/routers/webhooks/stripe_webhook.py` | Handle Stripe events |
-| stripe_customer_id field | Migration to add to `members` table | Link member to Stripe customer |
+| stripe_customer_id field | Migration on `members` table | Link member to Stripe customer |
 | Frontend "Pay Dues" button | `src/templates/dues/payments/` | Initiate payment flow |
 | Environment config | `src/config/settings.py` | Load Stripe API keys |
 
-### New Database Fields
+### Database Fields
 
 ```sql
+-- Added to members table
 ALTER TABLE members ADD COLUMN stripe_customer_id VARCHAR(100) UNIQUE;
 
--- DuesPayment already has these fields (from existing schema):
--- - payment_method (add 'stripe_card', 'stripe_ach' to enum)
--- - notes (store Stripe session ID for reference)
+-- DuesPaymentMethod enum extended with:
+-- stripe_card, stripe_ach
 ```
 
 ## Alternatives Considered
@@ -156,27 +177,27 @@ ALTER TABLE members ADD COLUMN stripe_customer_id VARCHAR(100) UNIQUE;
 ### Option A: Square Payments
 - **Pros:** Same pricing as Stripe (2.9% + $0.30), well-known brand
 - **Cons:** Weaker developer docs, less robust subscription support, fewer ACH options
-- **Verdict:** Rejected - Stripe has better developer experience
+- **Verdict:** Rejected — Stripe has better developer experience
 
 ### Option B: PayPal Business
 - **Pros:** Familiar to users, no merchant account needed
 - **Cons:** Higher fees (3.49% + $0.49), worse developer experience, poor subscription API
-- **Verdict:** Rejected - More expensive, harder to integrate
+- **Verdict:** Rejected — More expensive, harder to integrate
 
 ### Option C: Direct Merchant Account + Authorize.net
 - **Pros:** Lower per-transaction fees (~2.5%), more control
 - **Cons:** Complex PCI compliance, must handle card data, higher fixed monthly costs
-- **Verdict:** Rejected - PCI burden not worth 0.4% savings
+- **Verdict:** Rejected — PCI burden not worth 0.4% savings
 
 ### Option D: Build Custom ACH Integration (Plaid + Dwolla)
 - **Pros:** Lowest fees (0.25% via Dwolla), full control
 - **Cons:** Complex integration, bank account verification delays, higher development cost
-- **Verdict:** Rejected - Over-engineering for v1, can add later if needed
+- **Verdict:** Rejected — Over-engineering for v1, can add later if needed
 
 ### Option E: Stripe Elements (custom UI)
 - **Pros:** More control over payment form design
 - **Cons:** More complex integration, we handle more PCI scope
-- **Verdict:** Rejected for v1 - Checkout Sessions are simpler, can upgrade to Elements later
+- **Verdict:** Rejected for v1 — Checkout Sessions are simpler, can upgrade to Elements later
 
 ## Testing Strategy
 
@@ -238,23 +259,18 @@ stripe trigger checkout.session.completed
 - [Stripe Test Cards](https://stripe.com/docs/testing#cards)
 - [Stripe ACH Direct Debit](https://stripe.com/docs/payments/ach-debit)
 - [PCI Compliance Levels](https://www.pcisecuritystandards.org/)
+- ADR-008: Dues Tracking System Design (data model)
+- ADR-011: Dues Frontend Patterns (UI integration)
+- ADR-012: Audit Logging (payment audit trail)
 
 ---
 
-*This ADR documents the decision to use Stripe Checkout Sessions for online dues payment processing, chosen for its superior developer experience, PCI compliance handling, and cost-effective ACH support.*
+## 🔄 End-of-Session Documentation (REQUIRED)
+
+> ⚠️ **DO NOT skip this step.** Update *ANY* and *ALL* relevant documents to capture progress made this session. Scan `/docs/*` and make or create any relevant updates/documents to keep a historical record as the project progresses. Do not forget about ADRs, update as necessary.
 
 ---
 
-## 📝 End-of-Session Documentation (REQUIRED)
-
-> ⚠️ **DO NOT skip this step.** Update *ANY* and *ALL* relevant documents to capture progress made this session.
-
-### Before Ending This Session:
-
-1. **Scan `/docs/*`** - Review all documentation files
-2. **Update existing docs** - Reflect changes, progress, and decisions
-3. **Create new docs** - If needed for new components or concepts
-4. **ADR Review** - Update or create Architecture Decision Records as necessary
-5. **Session log entry** - Record what was accomplished
-
-This ensures historical record-keeping and project continuity ("bus factor" protection).
+Document Version: 2.0
+Last Updated: February 3, 2026
+Previous Version: 1.0 (2026-01-30 — original decision with implementation details and session rule)

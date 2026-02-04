@@ -1,9 +1,17 @@
-# Phase 2 Quick Reference
+# Phase 2 Quick Reference — Union Operations
 
-**Version:** v0.3.0
-**Release:** January 28, 2026
+> **Document Created:** January 28, 2026
+> **Last Updated:** February 3, 2026
+> **Version:** 1.1
+> **Status:** Active — Implemented (Phase 2, v0.3.0)
+> **Project Version:** v0.9.4-alpha (Feature-Complete Weeks 1–19)
+> **Related ADRs:** [ADR-005](../decisions/ADR-005-phase2-union-operations.md)
 
 Quick reference for Phase 2 Union Operations models, endpoints, and usage.
+
+> **Context:** Phase 2 models were introduced at v0.3.0 and remain stable through v0.9.4-alpha.
+> The project now uses Flask Blueprints (not FastAPI APIRouter). All endpoints below are served
+> via Flask and rendered with Jinja2 + HTMX + Alpine.js + DaisyUI where applicable.
 
 ---
 
@@ -13,34 +21,34 @@ Quick reference for Phase 2 Union Operations models, endpoints, and usage.
 Track organizing campaigns at non-union employers.
 
 **Fields:**
-- `id` - Primary key
-- `member_id` - Organizer (FK to members)
-- `organization_id` - Target employer (FK to organizations)
-- `activity_type` - Type of activity (enum)
-- `activity_date` - When activity occurred
-- `outcome` - Result (enum, nullable)
-- `location` - Where activity took place
-- `workers_contacted` - Number of workers contacted
-- `cards_signed` - Number of authorization cards signed
-- `description` - Activity description
-- `notes` - Additional notes
+- `id` — Primary key
+- `member_id` — Organizer (FK to members)
+- `organization_id` — Target employer (FK to organizations)
+- `activity_type` — Type of activity (enum)
+- `activity_date` — When activity occurred
+- `outcome` — Result (enum, nullable)
+- `location` — Where activity took place
+- `workers_contacted` — Number of workers contacted
+- `cards_signed` — Number of authorization cards signed
+- `description` — Activity description
+- `notes` — Additional notes
 
 **Activity Types:**
-- `outreach` - Initial contact
-- `site_visit` - Facility visit
-- `leafleting` - Literature distribution
-- `one_on_one` - Personal meetings
-- `meeting` - Group meetings
-- `petition_drive` - Petition collection
-- `card_signing` - Authorization cards
-- `information_session` - Educational sessions
-- `other` - Other activities
+- `outreach` — Initial contact
+- `site_visit` — Facility visit
+- `leafleting` — Literature distribution
+- `one_on_one` — Personal meetings
+- `meeting` — Group meetings
+- `petition_drive` — Petition collection
+- `card_signing` — Authorization cards
+- `information_session` — Educational sessions
+- `other` — Other activities
 
 **Outcomes:**
-- `positive` - Favorable response
-- `neutral` - Neutral response
-- `negative` - Unfavorable response
-- `no_contact` - No contact made
+- `positive` — Favorable response
+- `neutral` — Neutral response
+- `negative` — Unfavorable response
+- `no_contact` — No contact made
 
 **Endpoints:**
 ```
@@ -57,32 +65,32 @@ DELETE /salting-activities/{id}
 Financial assistance requests from members.
 
 **Fields:**
-- `id` - Primary key
-- `member_id` - Applicant (FK to members)
-- `application_date` - Submission date
-- `reason` - Assistance reason (enum)
-- `description` - Detailed explanation
-- `amount_requested` - Amount requested (Decimal)
-- `status` - Application status (enum)
-- `approved_amount` - Amount approved (Decimal, nullable)
-- `payment_date` - Payment date (nullable)
-- `payment_method` - Payment method (nullable)
-- `notes` - Additional notes
+- `id` — Primary key
+- `member_id` — Applicant (FK to members)
+- `application_date` — Submission date
+- `reason` — Assistance reason (enum)
+- `description` — Detailed explanation
+- `amount_requested` — Amount requested (Decimal)
+- `status` — Application status (enum)
+- `approved_amount` — Amount approved (Decimal, nullable)
+- `payment_date` — Payment date (nullable)
+- `payment_method` — Payment method (nullable)
+- `notes` — Additional notes
 
 **Reasons:**
-- `medical` - Medical expenses ($500-$5,000)
-- `death_in_family` - Funeral expenses ($1,000-$3,000)
-- `disaster` - Natural disaster ($1,000-$7,500)
-- `hardship` - Financial hardship ($200-$2,000)
-- `other` - Other needs ($100-$1,000)
+- `medical` — Medical expenses ($500–$5,000)
+- `death_in_family` — Funeral expenses ($1,000–$3,000)
+- `disaster` — Natural disaster ($1,000–$7,500)
+- `hardship` — Financial hardship ($200–$2,000)
+- `other` — Other needs ($100–$1,000)
 
 **Statuses:**
-- `draft` - Being prepared
-- `submitted` - Awaiting review
-- `under_review` - Currently being reviewed
-- `approved` - Approved for payment
-- `paid` - Payment issued
-- `denied` - Application denied
+- `draft` — Being prepared
+- `submitted` — Awaiting review
+- `under_review` — Currently being reviewed
+- `approved` — Approved for payment
+- `paid` — Payment issued
+- `denied` — Application denied
 
 **Endpoints:**
 ```
@@ -99,25 +107,25 @@ DELETE /benevolence-applications/{id}
 Review steps in approval workflow.
 
 **Fields:**
-- `id` - Primary key
-- `application_id` - Application being reviewed (FK)
-- `reviewer_name` - Reviewer name (Text)
-- `review_level` - Level of review (enum)
-- `decision` - Review decision (enum)
-- `review_date` - Date of review
-- `comments` - Reviewer comments
+- `id` — Primary key
+- `application_id` — Application being reviewed (FK)
+- `reviewer_name` — Reviewer name (Text)
+- `review_level` — Level of review (enum)
+- `decision` — Review decision (enum)
+- `review_date` — Date of review
+- `comments` — Reviewer comments
 
 **Review Levels:**
-- `vp` - Vice President
-- `admin` - Administrator
-- `manager` - Manager
-- `president` - President
+- `vp` — Vice President
+- `admin` — Administrator
+- `manager` — Manager
+- `president` — President
 
 **Decisions:**
-- `approved` - Approved at this level
-- `denied` - Denied at this level
-- `needs_info` - More information needed
-- `deferred` - Escalated to next level
+- `approved` — Approved at this level
+- `denied` — Denied at this level
+- `needs_info` — More information needed
+- `deferred` — Escalated to next level
 
 **Endpoints:**
 ```
@@ -135,37 +143,37 @@ DELETE /benevolence-reviews/{id}
 Formal complaints against employers.
 
 **Fields:**
-- `id` - Primary key
-- `grievance_number` - Unique identifier (e.g., GR-2026-0001)
-- `member_id` - Grievant (FK to members)
-- `employer_id` - Employer (FK to organizations)
-- `filed_date` - Filing date
-- `incident_date` - When incident occurred
-- `contract_article` - Contract provision violated
-- `violation_description` - What happened
-- `remedy_sought` - Requested remedy
-- `current_step` - Current grievance step (enum)
-- `status` - Grievance status (enum)
-- `assigned_rep` - Assigned representative
-- `resolution` - Resolution description (nullable)
-- `resolution_date` - Resolution date (nullable)
-- `settlement_amount` - Settlement amount (Decimal, nullable)
-- `notes` - Additional notes
+- `id` — Primary key
+- `grievance_number` — Unique identifier (e.g., GR-2026-0001)
+- `member_id` — Grievant (FK to members)
+- `employer_id` — Employer (FK to organizations)
+- `filed_date` — Filing date
+- `incident_date` — When incident occurred
+- `contract_article` — Contract provision violated
+- `violation_description` — What happened
+- `remedy_sought` — Requested remedy
+- `current_step` — Current grievance step (enum)
+- `status` — Grievance status (enum)
+- `assigned_rep` — Assigned representative
+- `resolution` — Resolution description (nullable)
+- `resolution_date` — Resolution date (nullable)
+- `settlement_amount` — Settlement amount (Decimal, nullable)
+- `notes` — Additional notes
 
 **Steps:**
-- `step_1` - Initial meeting
-- `step_2` - Second level
-- `step_3` - Third level
-- `arbitration` - Arbitration hearing
+- `step_1` — Initial meeting
+- `step_2` — Second level
+- `step_3` — Third level
+- `arbitration` — Arbitration hearing
 
 **Statuses:**
-- `open` - Just filed
-- `investigation` - Under investigation
-- `hearing` - In hearing process
-- `settled` - Settled
-- `withdrawn` - Withdrawn
-- `arbitration` - In arbitration
-- `closed` - Closed
+- `open` — Just filed
+- `investigation` — Under investigation
+- `hearing` — In hearing process
+- `settled` — Settled
+- `withdrawn` — Withdrawn
+- `arbitration` — In arbitration
+- `closed` — Closed
 
 **Common Violation Types:**
 - Overtime distribution
@@ -197,19 +205,19 @@ DELETE /grievances/{id}
 Record of meetings at each grievance step.
 
 **Fields:**
-- `id` - Primary key
-- `grievance_id` - Grievance (FK)
-- `step_number` - Step number (1-4)
-- `meeting_date` - Meeting date
-- `union_attendees` - Union representatives
-- `employer_attendees` - Employer representatives
-- `outcome` - Step outcome (enum)
-- `notes` - Meeting notes
+- `id` — Primary key
+- `grievance_id` — Grievance (FK)
+- `step_number` — Step number (1–4)
+- `meeting_date` — Meeting date
+- `union_attendees` — Union representatives
+- `employer_attendees` — Employer representatives
+- `outcome` — Step outcome (enum)
+- `notes` — Meeting notes
 
 **Outcomes:**
-- `denied` - Denied at this step
-- `settled` - Settled at this step
-- `advanced` - Advanced to next step
+- `denied` — Denied at this step
+- `settled` — Settled at this step
+- `advanced` — Advanced to next step
 
 **Typical Attendees by Step:**
 
@@ -235,7 +243,12 @@ Record of meetings at each grievance step.
 
 ### Generate Phase 2 Test Data
 
-**Standalone:**
+**Using ip2adb CLI (preferred):**
+```bash
+./ip2adb seed
+```
+
+**Standalone (legacy):**
 ```bash
 python -m src.seed.phase2_seed
 ```
@@ -335,8 +348,8 @@ alembic upgrade head
 ```
 
 **Phase 2 migration IDs:**
-- `bc1f99c730dc` - Add Phase 2 union operations models
-- `6f77d764d2c3` - Add file_category to file_attachments
+- `bc1f99c730dc` — Add Phase 2 union operations models
+- `6f77d764d2c3` — Add file_category to file_attachments
 
 ---
 
@@ -350,20 +363,34 @@ pytest src/tests/test_benevolence_reviews.py -v
 pytest src/tests/test_grievances.py -v
 ```
 
-**All tests:**
+**All tests (~470 total across all phases):**
 ```bash
 pytest -v
 ```
 
 ---
 
-## Links
+## Cross-References
 
-- [Full Documentation](../README.md)
-- [Session Summary](../reports/session-logs/2026-01-28.md)
-- [Release Notes](../../RELEASE_NOTES_v0.3.0.md)
-- [Seed Code](../../src/seed/phase2_seed.py)
+| Document | Location |
+|----------|----------|
+| Project README | `/README.md` |
+| Audit API Reference | `/docs/reference/audit-api.md` |
+| Dues Tracking API | `/docs/reference/dues-api.md` |
+| Phase 7 Planning | `/docs/planning/PHASE_7_MASTER_PLAN.md` |
+| ADR-005: Phase 2 Union Operations | `/docs/decisions/ADR-005-phase2-union-operations.md` |
+| Seed Code | `/src/seed/phase2_seed.py` |
 
 ---
 
-*Last Updated: January 28, 2026*
+## 📄 End-of-Session Documentation (MANDATORY)
+
+> ⚠️ **DO NOT skip this step.** Update *ANY* and *ALL* relevant documents to capture
+> progress made this session. Scan `/docs/*` and make or create any relevant
+> updates/documents to keep a historical record as the project progresses.
+> Do not forget about ADRs — update as necessary.
+
+---
+
+*Document Version: 1.1*
+*Last Updated: February 3, 2026*

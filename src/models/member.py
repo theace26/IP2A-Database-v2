@@ -69,5 +69,13 @@ class Member(Base, TimestampMixin, SoftDeleteMixin):
         order_by="desc(MemberNote.created_at)"
     )
 
+    # Phase 7 - Referral & Dispatch relationships
+    book_registrations = relationship(
+        "BookRegistration",
+        back_populates="member",
+        cascade="all, delete-orphan",
+        order_by="desc(BookRegistration.registration_date)"
+    )
+
     def __repr__(self):
         return f"<Member(id={self.id}, number='{self.member_number}', name='{self.first_name} {self.last_name}')>"

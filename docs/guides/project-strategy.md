@@ -1,20 +1,19 @@
-# IP2A Database v2 - Project Strategy & Game Plan
+# IP2A Database v2 (UnionCore) — Project Strategy & Game Plan
 
-**Document Created:** January 27, 2026
-**Project Owner:** Xerxes (Union Business Rep, IBEW Local 46)
-**Purpose:** Strategic roadmap for building a modular union data platform
+> **Document Created:** January 27, 2026
+> **Last Updated:** February 3, 2026
+> **Version:** 2.0
+> **Status:** Active — Strategic Planning (Updated to Reflect Current State)
+> **Project Version:** v0.9.4-alpha (Feature-Complete Weeks 1–19)
 
 ---
 
-## Executive Summary
+## Purpose
 
-This document outlines the strategy for building IP2A Database v2, a modular database platform that will:
+This document outlines the strategy for building IP2A Database v2 (UnionCore), a modular union data platform. It covers the project vision, phased approach, existing system integrations, technical architecture, and long-term roadmap.
 
-1. **Immediately:** Serve as a pre-apprenticeship program management system
-2. **Over time:** Expand to replace/supplement existing union management systems
-3. **Long-term:** Potentially become a competitive alternative to commercial union software (LaborPower, UnionWare, etc.)
-
-The approach is deliberately incremental—start small, prove value, expand methodically.
+**Project Owner:** Xerxes (Union Business Rep, IBEW Local 46)
+**Repository:** <https://github.com/theace26/IP2A-Database-v2>
 
 ---
 
@@ -37,22 +36,35 @@ The approach is deliberately incremental—start small, prove value, expand meth
 
 ## 1. Current State
 
-### What's Been Built
+### What's Been Built (v0.9.4-alpha — Feature-Complete)
 
-The IP2A Database v2 project has a solid foundation:
+After 19 weeks of intensive development, UnionCore has reached feature-complete status. The platform is deployed on Railway and actively serving its intended purpose.
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| **Database Schema** | ✅ Complete | PostgreSQL 16, well-normalized |
+| **Database Schema** | ✅ Complete | PostgreSQL 16, 26 ORM models, well-normalized |
 | **Core Tables** | ✅ Complete | Members, Organizations, Students, Instructors, Locations, Cohorts |
 | **File Attachments** | ✅ Complete | Document storage with metadata |
-| **Audit Logging** | ✅ Complete | Full trail: READ, CREATE, UPDATE, DELETE |
+| **Audit Logging** | ✅ Complete | Full trail: READ, CREATE, UPDATE, DELETE ([ADR-012](../decisions/ADR-012-audit-logging.md)) |
 | **Auto-Healing** | ✅ Complete | Self-repairing data integrity system |
 | **CLI Tools** | ✅ Complete | `ip2adb` for seeding, integrity checks, load testing |
-| **API Layer** | ✅ Partial | FastAPI backend, basic endpoints |
-| **Authentication** | ❌ Not Started | JWT + roles needed |
-| **Web UI** | ❌ Not Started | Required for staff/member access |
-| **Payment Processing** | ❌ Not Started | Will integrate with Stripe/Square |
+| **API Layer** | ✅ Complete | Flask + SQLAlchemy, ~150 endpoints |
+| **Authentication** | ✅ Complete | Session-based auth with RBAC (Phase 3) |
+| **Web UI** | ✅ Complete | Jinja2 + HTMX + Alpine.js + DaisyUI (Phases 5–6) |
+| **Dues Tracking** | ✅ Complete | Full lifecycle: rates, periods, payments, adjustments (Phase 4 backend, Phase 6 Week 10 frontend) |
+| **Payment Processing** | ✅ Complete | Stripe Checkout Sessions + Webhooks (Week 16) |
+| **PWA** | ✅ Complete | Offline support, service worker (Week 18) |
+| **Analytics Dashboards** | ✅ Complete | Chart.js visualizations (Week 19) |
+| **Monitoring** | ✅ Complete | Sentry error tracking ([ADR-007](../decisions/ADR-007-monitoring-strategy.md)) |
+| **PDF/Excel Export** | ✅ Complete | WeasyPrint PDFs, openpyxl Excel exports |
+| **Deployment** | ✅ Complete | Railway (production) |
+
+**Key Metrics:**
+- ~470 tests (pytest)
+- 26 ORM models
+- ~150 API endpoints
+- 14 Architecture Decision Records
+- 19 weeks of development
 
 ### Stress Test Results (Validates Scalability)
 
@@ -64,11 +76,31 @@ The IP2A Database v2 project has a solid foundation:
 
 ### Repository & Technical Stack
 
-- **Repository:** https://github.com/theace26/IP2A-Database-v2
+- **Repository:** <https://github.com/theace26/IP2A-Database-v2>
 - **Database:** PostgreSQL 16
-- **Backend:** Python 3.12, FastAPI, SQLAlchemy 2.x
-- **Environment:** Docker containers, VS Code Dev Containers
-- **Current Version:** v0.2.0
+- **Backend:** Python 3.12, Flask, SQLAlchemy 2.x
+- **Frontend:** Jinja2 templates, HTMX, Alpine.js, DaisyUI (Tailwind CSS)
+- **Deployment:** Railway (cloud PaaS)
+- **Payments:** Stripe (Checkout Sessions + Webhooks)
+- **Monitoring:** Sentry
+- **PDF Generation:** WeasyPrint
+- **Excel Export:** openpyxl
+- **Testing:** pytest (~470 tests)
+- **Current Version:** v0.9.4-alpha
+
+### What's Next: Phase 7 — Referral & Dispatch
+
+Phase 7 will implement the referral and dispatch system, replacing LaborPower. Extensive analysis has been completed:
+
+- 78 de-duplicated reports (from 91 raw LaborPower files)
+- 12 new database tables planned
+- 14 business rules identified
+- 11 books (out-of-work lists)
+- ~843 employers across 8 contract codes
+- Sub-phases 7a–7g, estimated 100–150 hours
+- 3 Priority 1 data gaps must be resolved before Phase 7a begins
+
+See [Phase 7 Planning Documents](../phase7/) for full details.
 
 ---
 
@@ -81,8 +113,8 @@ Currently operating with fragmented data across multiple systems:
 ```
 ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
 │   LaborPower    │  │   LaborPower    │  │   Access DB     │  │   QuickBooks    │
-│   (Referral/    │  │   (Dues         │  │   (Market       │  │   (Accounting)  │
-│    Dispatch)    │  │    Collection)  │  │    Recovery)    │  │                 │
+│   (Referral/    │  │   (Dues         │  │   (Member       │  │   (Accounting)  │
+│    Dispatch)    │  │    Collection)  │  │    Records)     │  │                 │
 └─────────────────┘  └─────────────────┘  └─────────────────┘  └─────────────────┘
         │                    │                    │                    │
         └────────────────────┴────────────────────┴────────────────────┘
@@ -93,37 +125,38 @@ Currently operating with fragmented data across multiple systems:
 
 ### The Solution
 
-One modular database platform with pluggable modules:
+One modular database platform (UnionCore) with pluggable modules:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         IP2A DATABASE v2                                     │
-│                      (Unified Data Platform)                                 │
+│                     UNIONCORE (IP2A DATABASE v2)                            │
+│                      (Unified Data Platform)                                │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
-│   │    CORE     │  │   PRE-APP   │  │    UNION    │  │  EXTERNAL   │        │
-│   │   TABLES    │  │   MODULE    │  │   MODULES   │  │   SYNC      │        │
-│   ├─────────────┤  ├─────────────┤  ├─────────────┤  ├─────────────┤        │
-│   │ Users       │  │ Grants      │  │ Dues        │  │ QuickBooks  │        │
-│   │ Orgs        │  │ Students    │  │ Referrals   │  │ (export)    │        │
-│   │ Audit Logs  │  │ Cohorts     │  │ Market Rec  │  │             │        │
-│   │ Files       │  │ Certs       │  │ Grievances  │  │             │        │
-│   │             │  │ Placements  │  │ Benevolence │  │             │        │
-│   └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘        │
-│         │                │                │                │                 │
-│         └────────────────┴────────────────┴────────────────┘                 │
-│                                 │                                            │
-│                    Single source of truth                                    │
-│                    Cross-module reporting                                    │
-│                    Unified member journey                                    │
+│                                                                             │
+│   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │
+│   │    CORE     │  │   PRE-APP   │  │    UNION    │  │  EXTERNAL   │      │
+│   │   TABLES    │  │   MODULE    │  │   MODULES   │  │   SYNC      │      │
+│   ├─────────────┤  ├─────────────┤  ├─────────────┤  ├─────────────┤      │
+│   │ Users/Auth  │  │ Grants      │  │ Dues ✅     │  │ QuickBooks  │      │
+│   │ Orgs        │  │ Students    │  │ Referrals 🔜│  │ (sync)      │      │
+│   │ Audit Logs  │  │ Cohorts     │  │ Market Rec  │  │ Stripe ✅   │      │
+│   │ Files       │  │ Certs       │  │ Grievances  │  │             │      │
+│   │ Members     │  │ Placements  │  │ Benevolence │  │             │      │
+│   └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘      │
+│         │                │                │                │                │
+│         └────────────────┴────────────────┴────────────────┘                │
+│                                 │                                           │
+│                    Single source of truth                                   │
+│                    Cross-module reporting                                   │
+│                    Unified member journey                                   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Long-Term Potential
 
 If the system proves successful:
-1. Use internally at Local 46
+
+1. Use internally at Local 46 (replacing 3 legacy systems)
 2. Offer to other IBEW locals as alternative to LaborPower
 3. Potentially commercialize as competing union management platform
 
@@ -131,7 +164,9 @@ If the system proves successful:
 
 ## 3. Phase 1: Pre-Apprenticeship System
 
-### Why Start Here
+> **Status:** ✅ Complete — Phases 1–6 delivered the pre-apprenticeship foundation and full web UI.
+
+### Why We Started Here
 
 | Reason | Explanation |
 |--------|-------------|
@@ -141,358 +176,91 @@ If the system proves successful:
 | **Proves concept** | Success here validates the approach |
 | **Foundation** | Students become members—data follows them |
 
-### Features Required
+### Features Delivered
 
-#### Student Management
-- Application/intake tracking
-- Demographics (required for grant reporting)
-- Contact information
-- Eligibility verification
-- Status tracking (APPLICANT → ENROLLED → ACTIVE → COMPLETED → PLACED)
+The following capabilities are implemented and tested:
 
-#### Grant Management
-- Grant sources (DOL, state, foundation, etc.)
-- Funding amounts and periods
-- Reporting requirements and deadlines
-- Per-student cost tracking
-- Enrollment caps
+- **Student Management** — Application/intake, demographics, contact info, eligibility, status tracking (APPLICANT → ENROLLED → ACTIVE → COMPLETED → PLACED)
+- **Grant Management** — Sources, funding amounts/periods, reporting requirements, per-student cost tracking, enrollment caps
+- **Cohort Management** — Class/session groupings, instructor/location assignments, schedule tracking, capacity management
+- **Progress Tracking** — Curriculum completion, attendance, assessment scores, competency sign-offs
+- **Certification Tracking** — OSHA 10/30, First Aid/CPR, Forklift, other industry certs, expiration tracking
+- **Placement Tracking** — Apprenticeship applications, acceptance/rejection, employer placement, follow-up surveys
+- **Reporting** — Demographics breakdown, completion rates, certification attainment, placement rates, cost per student, date range filtering, Excel/PDF export
 
-#### Cohort Management
-- Class/session groupings
-- Instructor assignments
-- Location assignments
-- Schedule tracking
-- Capacity management
+### Schema (Implemented)
 
-#### Progress Tracking
-- Curriculum completion
-- Attendance tracking
-- Assessment scores
-- Competency sign-offs
+The following tables support the pre-apprenticeship module:
 
-#### Certification Tracking
-- OSHA 10/30
-- First Aid/CPR
-- Forklift
-- Other industry certifications
-- Expiration tracking and alerts
-
-#### Placement Tracking
-- Apprenticeship applications
-- Acceptance/rejection tracking
-- Employer placement
-- Follow-up surveys (30/60/90 day)
-
-#### Reporting (Critical for Grants)
-- Demographics breakdown
-- Completion rates
-- Certification attainment
-- Placement rates
-- Cost per student
-- Custom date range filtering
-- Export to Excel/PDF
-
-### Schema Additions for Phase 1
-
-```sql
--- Grant Management
-CREATE TABLE grants (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(200) NOT NULL,
-    source VARCHAR(100),  -- DOL, State, Foundation, etc.
-    grant_number VARCHAR(50),
-    total_amount DECIMAL(12,2),
-    start_date DATE,
-    end_date DATE,
-    reporting_frequency VARCHAR(20),  -- MONTHLY, QUARTERLY, ANNUALLY
-    max_students INTEGER,
-    cost_per_student DECIMAL(10,2),
-    status VARCHAR(20) DEFAULT 'ACTIVE',
-    notes TEXT,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Link students to grants
-CREATE TABLE grant_enrollments (
-    id SERIAL PRIMARY KEY,
-    grant_id INTEGER REFERENCES grants(id),
-    student_id INTEGER REFERENCES students(id),
-    enrolled_date DATE,
-    funding_amount DECIMAL(10,2),
-    status VARCHAR(20) DEFAULT 'ACTIVE',
-    notes TEXT,
-    UNIQUE(grant_id, student_id)
-);
-
--- Student Progress Tracking
-CREATE TABLE student_progress (
-    id SERIAL PRIMARY KEY,
-    student_id INTEGER REFERENCES students(id),
-    cohort_id INTEGER REFERENCES cohorts(id),
-    enrollment_date DATE,
-    expected_completion DATE,
-    actual_completion DATE,
-    status VARCHAR(30),  -- ENROLLED, ACTIVE, ON_HOLD, COMPLETED, DROPPED
-    attendance_percentage DECIMAL(5,2),
-    grade_average DECIMAL(5,2),
-    notes TEXT,
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Certifications
-CREATE TABLE certifications (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    issuing_body VARCHAR(100),
-    validity_period_months INTEGER,  -- NULL if doesn't expire
-    is_required BOOLEAN DEFAULT FALSE,
-    description TEXT
-);
-
-CREATE TABLE student_certifications (
-    id SERIAL PRIMARY KEY,
-    student_id INTEGER REFERENCES students(id),
-    certification_id INTEGER REFERENCES certifications(id),
-    earned_date DATE,
-    expiration_date DATE,
-    certificate_number VARCHAR(50),
-    file_attachment_id INTEGER REFERENCES file_attachments(id),
-    verified_by VARCHAR(100),
-    verified_date DATE,
-    UNIQUE(student_id, certification_id, earned_date)
-);
-
--- Placements
-CREATE TABLE placements (
-    id SERIAL PRIMARY KEY,
-    student_id INTEGER REFERENCES students(id),
-    employer_id INTEGER REFERENCES organizations(id),
-    placement_type VARCHAR(30),  -- APPRENTICESHIP, DIRECT_HIRE, CONTINUING_ED
-    application_date DATE,
-    start_date DATE,
-    starting_wage DECIMAL(8,2),
-    status VARCHAR(20),  -- APPLIED, ACCEPTED, DECLINED, STARTED, RETAINED
-    followup_30_day DATE,
-    followup_60_day DATE,
-    followup_90_day DATE,
-    still_employed_30 BOOLEAN,
-    still_employed_60 BOOLEAN,
-    still_employed_90 BOOLEAN,
-    notes TEXT
-);
-
--- Attendance (simple version)
-CREATE TABLE attendance (
-    id SERIAL PRIMARY KEY,
-    student_id INTEGER REFERENCES students(id),
-    cohort_id INTEGER REFERENCES cohorts(id),
-    class_date DATE,
-    status VARCHAR(20),  -- PRESENT, ABSENT, EXCUSED, TARDY
-    notes TEXT,
-    UNIQUE(student_id, cohort_id, class_date)
-);
-```
-
-### Phase 1 Timeline
-
-| Month | Focus | Deliverable |
-|-------|-------|-------------|
-| **1** | Schema + Auth | Grants table, JWT authentication, basic roles |
-| **2** | Core tracking | Student progress, cohort enrollment, attendance |
-| **3** | Certifications | Cert tracking, expiration alerts |
-| **4** | Basic UI | Staff can enter/view data via web interface |
-| **5** | Reporting | Grant reports, demographics, placements |
-| **6** | Polish + Deploy | Production deployment, training materials |
+- `grants` — Grant source, funding, caps, reporting frequency
+- `grant_enrollments` — Student-to-grant linkage with funding amounts
+- `student_progress` — Enrollment, completion, attendance, grades
+- `certifications` / `student_certifications` — Cert catalog and student cert records
+- `placements` — Post-program employment tracking with follow-up
+- `attendance` — Per-session attendance records
 
 ---
 
 ## 4. Phase 2+: Union Management Modules
 
-These modules will be added after Phase 1 is stable and proven:
+These modules expand beyond pre-apprenticeship into full union operations:
 
-### Module: Members (Foundation for Everything)
+### Module: Members (Foundation for Everything) — ✅ Complete
 
-Extends the current `members` table to become the single source of truth.
+The `members` table is the single source of truth. Students link to members when they graduate to apprenticeship via `former_student_id`.
 
-**Key addition:** Link students to members when they graduate to apprenticeship:
-```sql
-ALTER TABLE members ADD COLUMN former_student_id INTEGER REFERENCES students(id);
-```
+### Module: Dues Collection — ✅ Complete (Phase 4 + Phase 6 Week 10)
 
-### Module: Dues Collection
+Full dues lifecycle implemented:
 
-```sql
-CREATE TABLE dues_rates (
-    id SERIAL PRIMARY KEY,
-    classification VARCHAR(50),  -- JOURNEYMAN, APPRENTICE, RETIRED
-    effective_date DATE,
-    monthly_amount DECIMAL(8,2),
-    io_per_capita DECIMAL(8,2),  -- International Office portion
-    local_portion DECIMAL(8,2),
-    building_fund DECIMAL(8,2),
-    is_active BOOLEAN DEFAULT TRUE
-);
+- **DuesRate** — Classification-based pricing with historical tracking
+- **DuesPeriod** — Monthly billing cycles with close/open management
+- **DuesPayment** — Payment records with status tracking (pending, paid, partial, overdue, waived)
+- **DuesAdjustment** — Waivers, credits, hardship, corrections with approval workflow
 
-CREATE TABLE dues_payments (
-    id SERIAL PRIMARY KEY,
-    member_id INTEGER REFERENCES members(id),
-    payment_date TIMESTAMP,
-    amount DECIMAL(10,2),
-    period_start DATE,  -- What period this covers
-    period_end DATE,
-    payment_method VARCHAR(20),  -- CHECK, CASH, PAYROLL_DEDUCT, ONLINE
-    reference_number VARCHAR(50),
-    stripe_payment_id VARCHAR(100),  -- For online payments
-    quickbooks_sync_id VARCHAR(100),
-    status VARCHAR(20),  -- PENDING, COMPLETED, FAILED, REFUNDED
-    notes TEXT
-);
-```
+Payment processing integrated via Stripe Checkout Sessions + Webhooks (Week 16).
 
-**Payment Processing Strategy:**
-- Integrate with Stripe or Square (don't build payment processing)
-- They handle PCI compliance, fraud, disputes
-- We generate payment links, receive webhooks when paid
-- Record transaction in our system, sync to QuickBooks
+See [Dues Tracking Guide](../guides/dues-tracking.md) and [ADR-008](../decisions/ADR-008-dues-tracking-system.md).
 
-### Module: Referral/Dispatch
+### Module: Referral/Dispatch — 🔜 Phase 7 (Next)
 
-```sql
-CREATE TABLE out_of_work_list (
-    id SERIAL PRIMARY KEY,
-    member_id INTEGER REFERENCES members(id),
-    sign_in_date TIMESTAMP,
-    book_number INTEGER,  -- Book 1, Book 2, etc.
-    classification VARCHAR(50),
-    position_on_list INTEGER,
-    status VARCHAR(20),  -- ACTIVE, REFERRED, REMOVED, EXPIRED
-    removed_date TIMESTAMP,
-    removed_reason VARCHAR(100)
-);
+This is the next major module, replacing LaborPower's core referral/dispatch functionality:
 
-CREATE TABLE referrals (
-    id SERIAL PRIMARY KEY,
-    member_id INTEGER REFERENCES members(id),
-    employer_id INTEGER REFERENCES organizations(id),
-    dispatch_date TIMESTAMP,
-    job_type VARCHAR(30),  -- SHORT_CALL, LONG_CALL, EMERGENCY
-    job_location TEXT,
-    foreman VARCHAR(100),
-    expected_duration VARCHAR(50),
-    status VARCHAR(20),  -- DISPATCHED, WORKING, COMPLETED, QUIT, TERMINATED
-    start_date DATE,
-    end_date DATE,
-    termination_reason TEXT,
-    hours_worked DECIMAL(10,2),
-    notes TEXT
-);
-```
+- 12 new database tables designed
+- 14 business rules documented from LaborPower analysis
+- 11 out-of-work books across 8 contract codes
+- ~843 employers to import
+- Sub-phases 7a–7g planned, 100–150 hours estimated
 
-### Module: Market Recovery
+Key tables: `out_of_work_list`, `referrals`, `job_calls`, `dispatch_records`, plus supporting tables for contract codes, classifications, and employer agreements.
 
-Replaces the Access database:
+See [Phase 7 Planning Documents](../phase7/) for complete specifications.
 
-```sql
-CREATE TABLE market_recovery_programs (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100),
-    effective_date DATE,
-    end_date DATE,
-    subsidy_rate DECIMAL(8,2),  -- Per hour subsidy
-    max_hours_per_member INTEGER,
-    total_budget DECIMAL(12,2),
-    funding_source TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
-    notes TEXT
-);
+### Module: Market Recovery — 🔜 Future
 
-CREATE TABLE market_recovery_assignments (
-    id SERIAL PRIMARY KEY,
-    member_id INTEGER REFERENCES members(id),
-    employer_id INTEGER REFERENCES organizations(id),
-    program_id INTEGER REFERENCES market_recovery_programs(id),
-    project_name VARCHAR(200),
-    project_address TEXT,
-    start_date DATE,
-    end_date DATE,
-    status VARCHAR(20),  -- ACTIVE, COMPLETED, TERMINATED
-    notes TEXT
-);
+Replaces the Access database for market recovery program tracking:
 
-CREATE TABLE market_recovery_hours (
-    id SERIAL PRIMARY KEY,
-    assignment_id INTEGER REFERENCES market_recovery_assignments(id),
-    week_ending DATE,
-    hours_worked DECIMAL(6,2),
-    regular_rate DECIMAL(8,2),
-    subsidy_amount DECIMAL(10,2),  -- Calculated: hours × subsidy_rate
-    submitted_by INTEGER REFERENCES users(id),
-    submitted_date TIMESTAMP,
-    approved_by INTEGER REFERENCES users(id),
-    approved_date TIMESTAMP,
-    status VARCHAR(20),  -- SUBMITTED, APPROVED, REJECTED, PAID
-    quickbooks_sync_id VARCHAR(100),
-    notes TEXT
-);
-```
+- Program definitions with subsidy rates and budgets
+- Member assignments to employers/projects
+- Weekly hours submission and approval workflow
+- QuickBooks sync for payment processing
 
-### Module: Grievances
+### Module: Grievances — 🔜 Future
 
-```sql
-CREATE TABLE grievances (
-    id SERIAL PRIMARY KEY,
-    grievance_number VARCHAR(20) UNIQUE,
-    member_id INTEGER REFERENCES members(id),
-    employer_id INTEGER REFERENCES organizations(id),
-    filed_date DATE,
-    incident_date DATE,
-    contract_article VARCHAR(50),
-    violation_description TEXT,
-    remedy_sought TEXT,
-    current_step VARCHAR(30),  -- STEP_1, STEP_2, STEP_3, ARBITRATION
-    status VARCHAR(20),  -- OPEN, SETTLED, WITHDRAWN, ARBITRATION, CLOSED
-    assigned_rep INTEGER REFERENCES users(id),
-    resolution TEXT,
-    resolution_date DATE,
-    settlement_amount DECIMAL(10,2),
-    notes TEXT
-);
+Formal grievance tracking through multi-step processes:
 
-CREATE TABLE grievance_steps (
-    id SERIAL PRIMARY KEY,
-    grievance_id INTEGER REFERENCES grievances(id),
-    step_number INTEGER,
-    meeting_date DATE,
-    union_attendees TEXT,
-    employer_attendees TEXT,
-    outcome VARCHAR(20),  -- DENIED, SETTLED, ADVANCED
-    notes TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-```
+- Grievance filing and case management
+- Step progression (Step 1 → Step 2 → Step 3 → Arbitration)
+- Representative assignments
+- Resolution and settlement tracking
 
-### Module: Benevolence Fund
+### Module: Benevolence Fund — 🔜 Future
 
-```sql
-CREATE TABLE benevolence_applications (
-    id SERIAL PRIMARY KEY,
-    member_id INTEGER REFERENCES members(id),
-    application_date DATE,
-    reason VARCHAR(50),  -- MEDICAL, DEATH_IN_FAMILY, HARDSHIP, DISASTER
-    description TEXT,
-    amount_requested DECIMAL(10,2),
-    supporting_documents TEXT,  -- File attachment IDs
-    status VARCHAR(20),  -- SUBMITTED, UNDER_REVIEW, APPROVED, DENIED, PAID
-    approved_amount DECIMAL(10,2),
-    approved_by INTEGER REFERENCES users(id),
-    approved_date DATE,
-    payment_date DATE,
-    payment_method VARCHAR(20),
-    quickbooks_sync_id VARCHAR(100),
-    notes TEXT
-);
-```
+Member assistance program management:
+
+- Application intake and review
+- Approval workflow with supporting documentation
+- Payment processing and QuickBooks sync
 
 ---
 
@@ -500,139 +268,114 @@ CREATE TABLE benevolence_applications (
 
 ### Current Systems Inventory
 
-| System | Purpose | Data Volume | Integration Plan |
-|--------|---------|-------------|------------------|
-| **LaborPower (Referral)** | Dispatch, job calls | ~10K members | Phase 2: Import historical, parallel run |
-| **LaborPower (Dues)** | Payment collection | ~10K members | Phase 2+: Import historical, may replace |
-| **Access DB** | Market Recovery | Unknown | Phase 2: Replace entirely |
-| **QuickBooks** | Accounting | All financials | Ongoing sync (export/import) |
+| System | Purpose | Data Volume | Integration Plan | Status |
+|--------|---------|-------------|------------------|--------|
+| **LaborPower (Referral)** | Dispatch, job calls | ~4,000 members, ~843 employers | Phase 7: Build replacement | 🔜 Analysis complete |
+| **LaborPower (Dues)** | Payment collection | ~4,000 members | Already replaced by Phase 4 | ✅ Replaced |
+| **Access DB** | Member records | Unknown | Future: Replace entirely | 🔜 Planned |
+| **QuickBooks** | Accounting | All financials | Ongoing sync (export/import, not replace) | 🔜 Sync planned |
 
 ### Integration Strategy
 
 #### LaborPower
-- **Short-term:** Export data periodically for unified reporting
-- **Medium-term:** One-time import of historical data
-- **Long-term:** Run parallel, eventually migrate fully
 
-**Export approach:** LaborPower is Windows desktop software. Likely options:
-1. Built-in report export to CSV/Excel
-2. Direct database access (SQL Server)
-3. Contact Working Systems for data export assistance
+- **Analysis complete:** 24 files analyzed, 8 critical findings documented
+- **Key findings:** APN stored as DECIMAL (not integer), RESIDENTIAL is the 8th contract code (not 7 total), inverted tier ordering
+- **Strategy:** Build complete replacement (UnionCore), not integration
+- **Phase 7:** Implements referral/dispatch replacement
+- **3 Priority 1 data gaps** must be resolved before migration begins
 
 #### Access Database
+
 - **Strategy:** Full replacement
-- **Process:** 
-  1. Export all tables to CSV
-  2. Map fields to new schema
-  3. Import historical data
-  4. Retire Access DB
+- **Process:** Export tables to CSV → map fields to UnionCore schema → import historical data → retire Access DB
 
 #### QuickBooks
+
 - **Strategy:** Sync, not replace
-- **Direction:** 
-  - IP2A → QuickBooks (dues income, MR expenses, benevolence)
-  - QuickBooks → IP2A (payment cleared status)
+- **Direction:** UnionCore → QuickBooks (dues income, expenses); QuickBooks → UnionCore (payment cleared status)
 - **Method:** CSV export/import initially, API integration later
-
-### Data Migration Workflow
-
-```
-┌─────────────────┐
-│  Source System  │
-│  (LP/Access/QB) │
-└────────┬────────┘
-         │
-         ▼ Export (CSV/Excel)
-┌─────────────────┐
-│  Raw Export     │
-│  Files          │
-└────────┬────────┘
-         │
-         ▼ Transform (Python script)
-┌─────────────────┐
-│  Cleaned &      │
-│  Mapped Data    │
-└────────┬────────┘
-         │
-         ▼ Validate (ip2adb import --preview)
-┌─────────────────┐
-│  Preview        │
-│  Report         │
-└────────┬────────┘
-         │
-         ▼ Import (ip2adb import --execute)
-┌─────────────────┐
-│  IP2A Database  │
-└─────────────────┘
-```
 
 ---
 
 ## 6. Technical Architecture
 
-### Current Stack
-- **Database:** PostgreSQL 16
-- **Backend:** Python 3.12, FastAPI, SQLAlchemy 2.x (sync)
-- **Container:** Docker, Docker Compose
-- **Development:** VS Code Dev Containers
+### Current Stack (Implemented)
 
-### Planned Additions
-- **Authentication:** JWT tokens, role-based access control
-- **Frontend:** TBD (React, Vue, or simple HTML/Jinja templates)
-- **Payment Processing:** Stripe or Square integration
-- **File Storage:** Local initially, S3 for production
-- **Caching:** Redis (when needed, not immediately)
+| Layer | Technology | Notes |
+|-------|-----------|-------|
+| **Database** | PostgreSQL 16 | 26 ORM models, Railway-hosted |
+| **Backend** | Python 3.12, Flask, SQLAlchemy 2.x | ~150 endpoints, service layer pattern |
+| **Frontend** | Jinja2, HTMX, Alpine.js, DaisyUI | Server-rendered with progressive enhancement |
+| **Deployment** | Railway | Cloud PaaS, CI/CD from GitHub |
+| **Payments** | Stripe | Checkout Sessions + Webhooks (live) |
+| **Monitoring** | Sentry | Error tracking and performance ([ADR-007](../decisions/ADR-007-monitoring-strategy.md)) |
+| **PDF Export** | WeasyPrint | Report generation |
+| **Excel Export** | openpyxl | Data export |
+| **PWA** | Service Worker | Offline support (Week 18) |
+| **Analytics** | Chart.js | Dashboard visualizations (Week 19) |
+| **Testing** | pytest | ~470 tests |
 
-### Modular Architecture Principles
+### Modular Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        API LAYER                                 │
-│   /api/v1/students    /api/v1/members    /api/v1/dues   ...     │
+│                    PRESENTATION LAYER                            │
+│   Jinja2 Templates + HTMX + Alpine.js + DaisyUI                │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────────┐
+│                        ROUTE LAYER                               │
+│   Flask Blueprints: /members  /dues  /students  /auth   ...    │
 └─────────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────────┐
 │                      SERVICE LAYER                               │
-│   student_service    member_service    dues_service    ...      │
+│   member_service    dues_service    student_service    ...      │
 └─────────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────────┐
 │                        DATA LAYER                                │
-│   Student model      Member model      DuesPayment model  ...   │
+│   Member model      DuesPayment model    Student model    ...   │
 └─────────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────────┐
 │                   SHARED INFRASTRUCTURE                          │
-│   Audit Logging    Auth/RBAC    File Storage    Notifications   │
+│   Audit Logging    Auth/RBAC    File Storage    Sentry          │
+│   Stripe           WeasyPrint   openpyxl        Service Worker  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 **Key principles:**
+
 1. **Loose coupling:** Modules don't directly depend on each other
 2. **Shared core:** Users, organizations, audit logs used by all
-3. **Consistent patterns:** Every module follows same CRUD/API patterns
+3. **Consistent patterns:** Every module follows same service-layer/Blueprint patterns
 4. **Feature flags:** Modules can be enabled/disabled per installation
 
 ---
 
 ## 7. Data Migration Strategy
 
-### Phase 1: Pre-Apprenticeship
-- Likely manual entry or spreadsheet import
-- Small volume, can be done by hand if needed
+### Phase 1: Pre-Apprenticeship — ✅ Complete
 
-### Phase 2: LaborPower Import
+- Manual entry and spreadsheet import
+- Small volume, handled via seed scripts and web UI
+
+### Phase 7: LaborPower Import (Next)
 
 **Data to import:**
+
 | Table | Source | Est. Records | Priority |
 |-------|--------|--------------|----------|
-| Members | LaborPower | ~10,000 | Critical |
-| Employers | LaborPower | ~500-700 | Critical |
+| Members | LaborPower | ~4,000 active | Critical |
+| Employers | LaborPower | ~843 | Critical |
 | Employment history | LaborPower | ~50,000+ | High |
-| Dues payments | LaborPower Dues | ~100,000+ | High |
-| Referrals | LaborPower Referral | ~20,000+ | Medium |
+| Out-of-work list | LaborPower | Current list | Critical |
+| Referral history | LaborPower | ~20,000+ | Medium |
 
-**Import CLI design:**
+**Import approach:**
+
 ```bash
 # Preview import (no changes)
 ip2adb import members --source laborpower --file members.csv --preview
@@ -647,24 +390,24 @@ ip2adb import employers --source laborpower --file employers.csv --mapping emplo
 ip2adb integrity --tables members,organizations
 ```
 
-### Phase 2: Access DB Import
+### Future: Access DB Import
 
-**Process:**
-1. Open Access database
-2. Export each table to CSV
-3. Map fields to IP2A schema
-4. Import via CLI
+**Process:** Open Access database → export each table to CSV → map fields to UnionCore schema → import via CLI
 
 ---
 
 ## 8. Scaling Considerations
 
 ### Current Capacity
-- **Tested:** 50 concurrent users
-- **Proven data volume:** 500,000+ records
 
-### When to Scale (Not Now)
+- **Tested:** 515K+ records at 818 records/second
+- **Deployed on:** Railway (cloud PaaS with auto-scaling)
+- **Current user base:** ~40 staff + ~4,000 members
+
+### When to Scale
+
 Scaling infrastructure should be added when you see:
+
 - Connection pool exhaustion errors
 - Response times > 500ms under normal load
 - Database CPU consistently > 70%
@@ -673,11 +416,11 @@ Scaling infrastructure should be added when you see:
 
 | Phase | Trigger | Solution | Capacity |
 |-------|---------|----------|----------|
-| Current | N/A | Single PostgreSQL | ~50 users |
-| Scale 1 | Connection errors | Add PgBouncer | ~500 users |
-| Scale 2 | Read bottleneck | Add read replicas | ~2,000 users |
-| Scale 3 | Repeated queries | Add Redis cache | ~5,000 users |
-| Scale 4 | CPU bottleneck | Multiple API servers | ~10,000+ users |
+| Current | N/A | Railway PostgreSQL | ~50 concurrent users |
+| Scale 1 | Connection errors | Add PgBouncer | ~500 concurrent users |
+| Scale 2 | Read bottleneck | Add read replicas | ~2,000 concurrent users |
+| Scale 3 | Repeated queries | Add Redis cache | ~5,000 concurrent users |
+| Scale 4 | CPU bottleneck | Multiple app servers | ~10,000+ concurrent users |
 
 **Key point:** Don't implement scaling until needed. Build features first.
 
@@ -685,109 +428,139 @@ Scaling infrastructure should be added when you see:
 
 ## 9. Timeline & Milestones
 
-### Year 1 Roadmap
+### Completed Development (Weeks 1–19)
 
-```
-Q1 2026: Pre-Apprenticeship Foundation
-├── Month 1: Auth + Grants schema
-├── Month 2: Student progress tracking
-└── Month 3: Certifications + basic UI
+| Phase | Weeks | Focus | Status |
+|-------|-------|-------|--------|
+| **Phase 1** | 1–4 | Core models, schema, CLI tools | ✅ Complete |
+| **Phase 2** | 5–7 | Members, organizations, file attachments | ✅ Complete |
+| **Phase 3** | 8–9 | Authentication, RBAC, session management | ✅ Complete |
+| **Phase 4** | 10–11 | Dues tracking backend (rates, periods, payments, adjustments) | ✅ Complete |
+| **Phase 5** | 12–13 | Frontend foundation (Jinja2 + HTMX + Alpine.js + DaisyUI) | ✅ Complete |
+| **Phase 6** | 14–19 | Full frontend, Stripe, PWA, analytics, polish | ✅ Complete |
 
-Q2 2026: Pre-Apprenticeship Complete
-├── Month 4: Reporting + dashboards
-├── Month 5: Polish + testing
-└── Month 6: Production deployment
+> **Note:** Week 15 was intentionally skipped in numbering (14 → 16). This is not an error.
 
-Q3 2026: Begin Union Modules
-├── Month 7: Member import from LaborPower
-├── Month 8: Market Recovery module (replace Access)
-└── Month 9: Market Recovery UI + testing
+### Upcoming Development
 
-Q4 2026: Expand Union Functionality
-├── Month 10: Dues tracking (import history)
-├── Month 11: Payment integration (Stripe)
-└── Month 12: Member self-service portal
-```
+| Phase | Est. Duration | Focus | Status |
+|-------|---------------|-------|--------|
+| **Phase 7** | 100–150 hours | Referral & Dispatch (replace LaborPower) | 🔜 Analysis complete |
+| **Phase 8** | TBD | Market Recovery (replace Access DB) | 🔜 Planned |
+| **Phase 9** | TBD | Grievances module | 🔜 Planned |
+| **Phase 10** | TBD | Benevolence Fund | 🔜 Planned |
+| **Phase 11** | TBD | Member self-service portal | 🔜 Planned |
 
 ### Key Milestones
 
-| Milestone | Target Date | Success Criteria |
-|-----------|-------------|------------------|
-| **Auth working** | Month 1 | Staff can log in with roles |
-| **First grant tracked** | Month 2 | Complete grant + students in system |
-| **First report generated** | Month 5 | Push-button grant report |
-| **Pre-app in production** | Month 6 | Staff using daily for real cohort |
-| **Access DB retired** | Month 9 | Market Recovery fully in IP2A |
-| **Member portal live** | Month 12 | Members can view own records |
+| Milestone | Status | Notes |
+|-----------|--------|-------|
+| **Auth working** | ✅ Complete | Session-based auth + RBAC (Phase 3) |
+| **First grant tracked** | ✅ Complete | Grant + students in system |
+| **First report generated** | ✅ Complete | PDF/Excel export working |
+| **Dues system live** | ✅ Complete | Full lifecycle + Stripe payments |
+| **Web UI complete** | ✅ Complete | All modules have frontend (Phase 6) |
+| **PWA deployed** | ✅ Complete | Offline support (Week 18) |
+| **Analytics dashboards** | ✅ Complete | Chart.js visualizations (Week 19) |
+| **Production deployment** | ✅ Complete | Railway (live) |
+| **LaborPower replaced** | 🔜 Phase 7 | Referral/dispatch system |
+| **Access DB retired** | 🔜 Phase 8 | Market Recovery in UnionCore |
+| **Member portal live** | 🔜 Phase 11 | Members can view own records |
 
 ---
 
 ## 10. Key Decisions Made
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| **Start with pre-apprenticeship** | Yes | Lower stakes, proves concept, clear scope |
-| **Combine LP + Access into one DB** | Yes | Single source of truth, unified reporting |
-| **Keep QuickBooks separate** | Yes | Don't rebuild accounting, just sync |
-| **Integrate payments, don't build** | Stripe/Square | PCI compliance handled by experts |
-| **Build modular architecture** | Yes | Add features without breaking existing |
-| **Scale later, features first** | Yes | Current capacity sufficient for months |
-| **Web-based UI** | Yes | Accessible from anywhere, modern approach |
+| Decision | Choice | Rationale | ADR |
+|----------|--------|-----------|-----|
+| **Start with pre-apprenticeship** | Yes | Lower stakes, proves concept, clear scope | — |
+| **Combine LP + Access into one DB** | Yes | Single source of truth, unified reporting | — |
+| **Keep QuickBooks separate** | Yes | Don't rebuild accounting, just sync | — |
+| **Flask over FastAPI** | Flask | Server-rendered templates, simpler deployment, better Jinja2 integration | [ADR-001](../decisions/ADR-001-framework-selection.md) |
+| **Jinja2 + HTMX + Alpine.js** | Yes | Progressive enhancement, no SPA complexity, excellent DX | [ADR-010](../decisions/ADR-010-frontend-architecture.md) |
+| **DaisyUI for styling** | Yes | Tailwind-based, component library, consistent design | [ADR-010](../decisions/ADR-010-frontend-architecture.md) |
+| **Stripe for payments** | Stripe | PCI compliance handled, Checkout Sessions + Webhooks | [ADR-009](../decisions/ADR-009-payment-processing.md) |
+| **Sentry for monitoring** | Sentry | Error tracking, performance monitoring, Railway-compatible | [ADR-007](../decisions/ADR-007-monitoring-strategy.md) |
+| **Railway for deployment** | Railway | Cloud PaaS, GitHub integration, managed PostgreSQL | [ADR-006](../decisions/ADR-006-deployment-strategy.md) |
+| **Build modular architecture** | Yes | Add features without breaking existing | — |
+| **Scale later, features first** | Yes | Current capacity sufficient | — |
+| **Replace LaborPower (not integrate)** | Replace | Build better system informed by LP analysis | — |
 
 ---
 
 ## 11. Open Questions
 
-### Technical Questions
-- [ ] What frontend framework? (React, Vue, or server-rendered templates)
-- [ ] Self-hosted or cloud deployment?
-- [ ] Backup strategy for production?
+### Resolved ✅
 
-### Data Questions
-- [ ] What format can LaborPower export? (CSV, direct DB access?)
-- [ ] What tables exist in the Access database?
-- [ ] Which QuickBooks version? (Desktop or Online)
+| Question | Resolution |
+|----------|------------|
+| What frontend framework? | Jinja2 + HTMX + Alpine.js + DaisyUI (server-rendered) |
+| Self-hosted or cloud deployment? | Railway (cloud PaaS) |
+| Backup strategy? | Railway managed PostgreSQL backups |
+| What format can LaborPower export? | 24 files analyzed (CSV/report exports); 78 de-duplicated reports |
+| Payment integration? | Stripe Checkout Sessions + Webhooks (live) |
 
-### Business Questions
-- [ ] Who are the primary users for pre-apprenticeship system?
-- [ ] What grants are currently being tracked?
-- [ ] What reports are required for funders?
-- [ ] What's the approval workflow for Market Recovery hours?
+### Still Open
+
+- [ ] What tables exist in the Access database? (needed for Phase 8)
+- [ ] Which QuickBooks version? (Desktop or Online — affects sync approach)
+- [ ] What are the current grant reporting requirements? (for refinement)
+- [ ] What's the approval workflow for Market Recovery hours? (for Phase 8)
+- [ ] 3 Priority 1 data gaps for Phase 7 (must resolve before 7a)
 
 ### To Investigate
-- [ ] Get sample exports from LaborPower (column headers only)
-- [ ] Get table/field list from Access database
-- [ ] Document current grant reporting requirements
-- [ ] Identify pain points in current Market Recovery workflow
+
+- [ ] Resolve 3 Priority 1 data gaps blocking Phase 7a
+- [ ] Get Access database table/field inventory
+- [ ] Document current Market Recovery workflow
+- [ ] Evaluate QuickBooks API vs CSV sync
 
 ---
 
 ## 12. Reference Documents
 
-### In This Repository
+### Architecture & Decisions
 
 | Document | Location | Purpose |
 |----------|----------|---------|
 | **CLAUDE.md** | `/CLAUDE.md` | Project context for AI assistance |
-| **CONTINUITY.md** | `/CONTINUITY.md` | Handoff procedures |
-| **Scaling Assessment** | `/Documentation/Reports/SCALING_READINESS_ASSESSMENT.md` | Production readiness analysis |
-| **Scalability Architecture** | `/Documentation/Architecture/SCALABILITY_ARCHITECTURE.md` | Full scaling plan |
-| **Stress Test Report** | `/Documentation/Reports/STRESS_TEST_ANALYTICS_REPORT.md` | Performance benchmarks |
-| **Audit Logging Standards** | `/Documentation/Standards/AUDIT_LOGGING_STANDARDS.md` | Compliance requirements |
-| **Database Tools** | `/DATABASE_TOOLS_OVERVIEW.md` | CLI tool documentation |
+| **System Overview** | `/docs/architecture/SYSTEM_OVERVIEW.md` | Architecture documentation |
+| **ADR Index** | `/docs/decisions/README.md` | All 14 architecture decisions |
+| **Milestone Checklist** | `/docs/IP2A_MILESTONE_CHECKLIST.md` | Task tracking |
+| **Backend Roadmap** | `/docs/IP2A_BACKEND_ROADMAP.md` | Development plan (v3.0) |
+
+### Phase 7 Planning
+
+| Document | Location | Purpose |
+|----------|----------|---------|
+| **Phase 7 Overview** | `/docs/phase7/` | Referral/dispatch planning |
+| **LaborPower Analysis** | `/docs/phase7/laborpower-analysis.md` | System analysis findings |
+
+### Standards & Guides
+
+| Document | Location | Purpose |
+|----------|----------|---------|
+| **Coding Standards** | `/docs/standards/coding-standards.md` | Code conventions |
+| **Naming Conventions** | `/docs/standards/naming-conventions.md` | Naming patterns |
+| **Testing Strategy** | `/docs/guides/testing-strategy.md` | Test approach |
+| **Audit Logging** | `/docs/guides/audit-logging.md` | Audit standards |
+| **End-of-Session Docs** | `/docs/guides/END_OF_SESSION_DOCUMENTATION.md` | Session documentation rules |
 
 ### Key Commands
 
 ```bash
 # Development
-docker-compose up -d
-./ip2adb seed --quick        # Populate test data
-./ip2adb integrity           # Check data integrity
-./ip2adb auto-heal           # Fix issues automatically
+flask run --debug               # Start development server
+ip2adb seed                     # Populate test data
+ip2adb integrity --repair       # Check and fix data integrity
+ip2adb load --quick             # Quick performance test
 
 # Testing
-./ip2adb load --quick        # Quick performance test
-./ip2adb seed --stress       # Large-scale test (500K records)
+pytest -v                       # Run all ~470 tests
+pytest --cov=src                # Run with coverage
+
+# Deployment
+git push origin develop         # Railway auto-deploys from develop
 ```
 
 ---
@@ -795,31 +568,55 @@ docker-compose up -d
 ## Summary
 
 **The Plan:**
-1. Build pre-apprenticeship system first (6 months)
-2. Prove it works with real users
-3. Expand to union modules (Market Recovery first)
-4. Eventually run parallel to or replace LaborPower
+
+1. ~~Build pre-apprenticeship system first~~ ✅ Complete
+2. ~~Prove it works with real users~~ ✅ Deployed on Railway
+3. Expand to union modules — **Phase 7 (Referral/Dispatch) is next**
+4. Eventually run parallel to and replace LaborPower
 5. Potentially commercialize for other locals
 
 **The Approach:**
-- Modular architecture—add features without breaking existing
+
+- Modular architecture — add features without breaking existing
 - Start small, validate, expand
 - Keep QuickBooks for accounting, sync data
-- Integrate payment processing, don't build it
+- Integrate payment processing (Stripe ✅), don't build it
 
 **The Reality:**
-- This is a 12-18 month project at part-time pace
-- Phase 1 (pre-apprenticeship) achievable in 6 months
-- Each module after that: 2-3 months
+
+- 19 weeks of development completed (feature-complete)
+- Phase 7 (Referral/Dispatch) estimated at 100–150 hours
+- Each subsequent module: 2–3 months
+- Building a LaborPower **replacement**, not just a supplement
 
 **Next Steps:**
-1. Get sample data exports from LaborPower and Access
-2. Document current grant reporting requirements
-3. Build authentication system
-4. Create grants schema and import tools
+
+1. Resolve 3 Priority 1 data gaps blocking Phase 7a
+2. Begin Phase 7a: schema + seed data for referral/dispatch
+3. Get Access database inventory for Phase 8 planning
+4. Evaluate QuickBooks sync approach
 
 ---
 
-*Document Version: 1.0*
-*Last Updated: January 27, 2026*
-*Status: Strategic Planning Complete, Ready for Implementation*
+> **End-of-Session Rule:** Update *ANY* and *ALL* relevant documents to capture progress made this session. Scan `/docs/*` and make or create any relevant updates/documents to keep a historical record as the project progresses. Do not forget about ADRs — update as necessary.
+
+---
+
+| Cross-Reference | Location |
+|----------------|----------|
+| ADR-001: Framework Selection | `/docs/decisions/ADR-001-framework-selection.md` |
+| ADR-006: Deployment Strategy | `/docs/decisions/ADR-006-deployment-strategy.md` |
+| ADR-007: Monitoring Strategy | `/docs/decisions/ADR-007-monitoring-strategy.md` |
+| ADR-008: Dues Tracking System | `/docs/decisions/ADR-008-dues-tracking-system.md` |
+| ADR-009: Payment Processing | `/docs/decisions/ADR-009-payment-processing.md` |
+| ADR-010: Frontend Architecture | `/docs/decisions/ADR-010-frontend-architecture.md` |
+| ADR-012: Audit Logging | `/docs/decisions/ADR-012-audit-logging.md` |
+| Backend Roadmap v3.0 | `/docs/IP2A_BACKEND_ROADMAP.md` |
+| Milestone Checklist | `/docs/IP2A_MILESTONE_CHECKLIST.md` |
+| Phase 7 Planning | `/docs/phase7/` |
+
+---
+
+*Document Version: 2.0*
+*Last Updated: February 3, 2026*
+*Status: Active — Updated to reflect v0.9.4-alpha feature-complete state*
