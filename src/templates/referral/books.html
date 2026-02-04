@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Referral Books{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Referral Books</h1>
+        <p class="text-base-content/60">{{ books|length }} books configured</p>
+    </div>
+    {% if current_user and current_user.role_names %}
+        {% set user_roles_lower = current_user.role_names | map('lower') | list %}
+        {% if 'admin' in user_roles_lower or 'officer' in user_roles_lower %}
+    <button class="btn btn-primary btn-sm"
+            hx-get="/referral/partials/create-book-modal"
+            hx-target="#modal-container"
+            hx-swap="innerHTML">
+        + New Book
+    </button>
+        {% endif %}
+    {% endif %}
+</div>
+
+<!-- Filter Bar -->
+<div class="flex gap-2 mb-4">
+    <select class="select select-bordered select-sm"
+            hx-get="/referral/partials/books-table"
+            hx-target="#books-table-container"
+            hx-swap="innerHTML"
+            hx-include="[name='search']"
+            name="active_only">
+        <option value="true" selected>Active Only</option>
+        <option value="false">All Books</option>
+    </select>
+    <input type="search"
+           name="search"
+           placeholder="Search books..."
+           class="input input-bordered input-sm flex-1"
+           hx-get="/referral/partials/books-table"
+           hx-target="#books-table-container"
+           hx-swap="innerHTML"
+           hx-trigger="keyup changed delay:300ms, search"
+           hx-include="[name='active_only']">
+</div>
+
+<!-- Books Table (HTMX target) -->
+<div id="books-table-container">
+    {% include 'partials/referral/_books_table.html' %}
+</div>
+
+<!-- Modal container for HTMX modals -->
+<div id="modal-container"></div>
+{% endblock %}

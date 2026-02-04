@@ -61,6 +61,26 @@
                 </details>
             </li>
 
+            <!-- Referral & Dispatch -->
+            <li>
+                <details {% if request.url.path.startswith('/referral') or request.url.path.startswith('/dispatch') %}open{% endif %}>
+                    <summary>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                        Referral & Dispatch
+                    </summary>
+                    <ul>
+                        <li><a href="/referral" class="{% if request.url.path == '/referral' %}active{% endif %}">Overview</a></li>
+                        <li><a href="/referral/books" class="{% if request.url.path.startswith('/referral/books') %}active{% endif %}">Books</a></li>
+                        <li><a href="/referral/registrations" class="{% if request.url.path.startswith('/referral/registrations') %}active{% endif %}">Registrations</a></li>
+                        <li class="menu-title mt-2"><span>Dispatch</span></li>
+                        <li><a href="/dispatch" class="{% if request.url.path == '/dispatch' %}active{% endif %} text-base-content/50">Dashboard (Week 27)</a></li>
+                        <li><a href="/dispatch/requests" class="{% if request.url.path.startswith('/dispatch/requests') %}active{% endif %} text-base-content/50">Requests (Week 27)</a></li>
+                    </ul>
+                </details>
+            </li>
+
             <!-- Operations -->
             <li>
                 <details {% if '/operations' in request.url.path %}open{% endif %}>

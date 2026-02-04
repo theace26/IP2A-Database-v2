@@ -1,0 +1,26 @@
+<!-- Re-sign Member Modal -->
+<dialog id="re-sign-modal" class="modal modal-open">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Re-sign Member</h3>
+        <p class="py-4">
+            Confirm re-sign for <strong>{{ registration.member.first_name }} {{ registration.member.last_name }}</strong>
+            on <strong>{{ registration.book.name }}</strong>?
+        </p>
+        <p class="text-sm text-base-content/60 mb-4">
+            This will extend the registration for another {{ registration.book.re_sign_days }} days.
+        </p>
+        <form hx-post="/referral/registrations/{{ registration.id }}/re-sign"
+              hx-target="#modal-container"
+              hx-swap="innerHTML">
+            <div class="modal-action">
+                <button type="button" class="btn" onclick="document.getElementById('re-sign-modal').close()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">Confirm Re-sign</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>

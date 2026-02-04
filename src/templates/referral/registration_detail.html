@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Registration Detail{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="text-sm breadcrumbs mb-4">
+    <ul>
+        <li><a href="/referral">Referral</a></li>
+        <li><a href="/referral/registrations">Registrations</a></li>
+        <li>{{ member.first_name }} {{ member.last_name }}</li>
+    </ul>
+</div>
+
+<!-- Header -->
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">{{ member.first_name }} {{ member.last_name }}</h1>
+        <p class="text-base-content/60">Card #{{ member.card_number }} - {{ book.name }}</p>
+    </div>
+    <div class="flex gap-2">
+        {% set status_badge = service.registration_status_badge(registration.status) %}
+        <span class="badge {{ status_badge.class }}">{{ status_badge.label }}</span>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Registration Details (2 columns) -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Current Registration Card -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h2 class="card-title">Current Registration</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="font-semibold text-sm">Book:</span>
+                        <p class="text-base-content/70">
+                            <a href="/referral/books/{{ book.id }}" class="link">{{ book.name }}</a>
+                        </p>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-sm">Position (APN):</span>
+                        <p class="text-base-content/70">{{ registration.registration_number }}</p>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-sm">Registration Date:</span>
+                        <p class="text-base-content/70">{{ registration.registration_date.strftime('%b %d, %Y %I:%M %p') }}</p>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-sm">Method:</span>
+                        <p class="text-base-content/70">{{ registration.registration_method|replace('_', ' ')|title }}</p>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-sm">Last Re-sign:</span>
+                        <p class="text-base-content/70">
+                            {% if registration.last_re_sign_date %}
+                                {{ registration.last_re_sign_date.strftime('%b %d, %Y') }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-sm">Re-sign Deadline:</span>
+                        <p class="text-base-content/70">
+                            {% if registration.re_sign_deadline %}
+                                {{ registration.re_sign_deadline.strftime('%b %d, %Y') }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-sm">Check Marks:</span>
+                        <p class="text-base-content/70">
+                            {{ registration.check_marks }}
+                            {% if registration.has_check_mark %}
+                                <span class="badge badge-warning badge-sm">Active</span>
+                            {% else %}
+                                <span class="badge badge-success badge-sm">Clean</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-sm">Exempt Status:</span>
+                        <p class="text-base-content/70">
+                            {% if registration.is_exempt %}
+                                {% set exempt_badge = service.exempt_reason_badge(registration.exempt_reason) %}
+                                <span class="badge {{ exempt_badge.class }}">{{ exempt_badge.label }}</span>
+                            {% else %}
+                                No
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                {% if registration.notes %}
+                <div class="divider"></div>
+                <div>
+                    <span class="font-semibold text-sm">Notes:</span>
+                    <p class="text-base-content/70">{{ registration.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        {% if registration.status == 'registered' %}
+        <div class="flex gap-2">
+            <button class="btn btn-primary btn-sm"
+                    hx-get="/referral/partials/re-sign-modal/{{ registration.id }}"
+                    hx-target="#modal-container"
+                    hx-swap="innerHTML">
+                Re-sign
+            </button>
+            <button class="btn btn-warning btn-sm"
+                    hx-get="/referral/partials/resign-modal/{{ registration.id }}"
+                    hx-target="#modal-container"
+                    hx-swap="innerHTML">
+                Resign
+            </button>
+            <button class="btn btn-info btn-sm"
+                    hx-get="/referral/partials/exempt-modal/{{ registration.id }}"
+                    hx-target="#modal-container"
+                    hx-swap="innerHTML">
+                Grant Exempt
+            </button>
+        </div>
+        {% endif %}
+
+        <!-- Registration History -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h2 class="card-title">Registration History</h2>
+                {% if history %}
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Book</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Position</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reg in history %}
+                            <tr class="{% if reg.id == registration.id %}bg-base-200{% endif %}">
+                                <td>
+                                    <a href="/referral/books/{{ reg.book_id }}" class="link">{{ reg.book.name }}</a>
+                                </td>
+                                <td>{{ reg.registration_date.strftime('%b %d, %Y') }}</td>
+                                <td>
+                                    {% set hist_badge = service.registration_status_badge(reg.status) %}
+                                    <span class="badge badge-sm {{ hist_badge.class }}">{{ hist_badge.label }}</span>
+                                </td>
+                                <td>{{ reg.registration_number }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-base-content/60 text-sm">No history available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Member Info Sidebar (1 column) -->
+    <div class="lg:col-span-1 space-y-6">
+        <!-- Member Info Card -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h2 class="card-title text-lg">Member Info</h2>
+                <div class="space-y-2 text-sm">
+                    <div>
+                        <span class="font-semibold">Name:</span>
+                        <p class="text-base-content/70">{{ member.first_name }} {{ member.last_name }}</p>
+                    </div>
+                    <div>
+                        <span class="font-semibold">Card Number:</span>
+                        <p class="text-base-content/70">{{ member.card_number }}</p>
+                    </div>
+                    {% if member.email %}
+                    <div>
+                        <span class="font-semibold">Email:</span>
+                        <p class="text-base-content/70">{{ member.email }}</p>
+                    </div>
+                    {% endif %}
+                    {% if member.phone %}
+                    <div>
+                        <span class="font-semibold">Phone:</span>
+                        <p class="text-base-content/70">{{ member.phone }}</p>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <span class="font-semibold">Classification:</span>
+                        <p class="text-base-content/70">{{ member.classification.value|replace('_', ' ')|title }}</p>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <a href="/members/{{ member.id }}" class="btn btn-sm btn-outline w-full">
+                    View Full Profile
+                </a>
+            </div>
+        </div>
+
+        <!-- Queue Status Card -->
+        {% if queue_status %}
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h2 class="card-title text-lg">Queue Status</h2>
+                {% for status in queue_status %}
+                <div class="mb-3">
+                    <div class="font-semibold text-sm">{{ status.book_name }}</div>
+                    <div class="text-xs text-base-content/60">
+                        Position: {{ status.position }} | Days on book: {{ status.days_on_book }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal container for HTMX modals -->
+<div id="modal-container"></div>
+{% endblock %}

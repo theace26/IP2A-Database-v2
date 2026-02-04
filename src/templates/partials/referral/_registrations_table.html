@@ -1,0 +1,95 @@
+<!-- Registrations Table -->
+{% if registrations %}
+<div class="overflow-x-auto">
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Member</th>
+                <th>Card #</th>
+                <th>Book</th>
+                <th>Position</th>
+                <th>Registered</th>
+                <th>Status</th>
+                <th>Check Marks</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reg in registrations.registrations %}
+            <tr class="hover">
+                <td>
+                    <a href="/referral/registrations/{{ reg.id }}" class="link font-semibold">
+                        {{ reg.member.first_name }} {{ reg.member.last_name }}
+                    </a>
+                </td>
+                <td>{{ reg.member.card_number }}</td>
+                <td>
+                    <a href="/referral/books/{{ reg.book_id }}" class="link">
+                        {{ reg.book.name }}
+                    </a>
+                </td>
+                <td class="font-mono text-xs">{{ reg.registration_number }}</td>
+                <td>{{ reg.registration_date.strftime('%b %d, %Y') }}</td>
+                <td>
+                    {% set status_badge = service.registration_status_badge(reg.status) %}
+                    <span class="badge badge-sm {{ status_badge.class }}">{{ status_badge.label }}</span>
+                    {% if reg.is_exempt %}
+                    <span class="badge badge-accent badge-sm ml-1">Exempt</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if reg.check_marks > 0 %}
+                    <span class="badge badge-warning badge-sm">{{ reg.check_marks }}</span>
+                    {% else %}
+                    <span class="badge badge-success badge-sm">0</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="dropdown dropdown-end">
+                        <label tabindex="0" class="btn btn-ghost btn-xs">...</label>
+                        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                            <li><a href="/referral/registrations/{{ reg.id }}">View Detail</a></li>
+                            <li><a href="/members/{{ reg.member_id }}">View Member</a></li>
+                            {% if reg.status.value == 'registered' %}
+                            <li><a hx-get="/referral/partials/re-sign-modal/{{ reg.id }}" hx-target="#modal-container" hx-swap="innerHTML">Re-sign</a></li>
+                            <li><a hx-get="/referral/partials/resign-modal/{{ reg.id }}" hx-target="#modal-container" hx-swap="innerHTML">Resign</a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if registrations.total_pages > 1 %}
+<div class="flex justify-center mt-4">
+    <div class="join">
+        {% if registrations.has_prev %}
+        <a href="?page={{ registrations.page - 1 }}" class="join-item btn btn-sm">«</a>
+        {% endif %}
+        {% for p in range(1, registrations.total_pages + 1) %}
+            {% if p == registrations.page %}
+        <button class="join-item btn btn-sm btn-active">{{ p }}</button>
+            {% else %}
+        <a href="?page={{ p }}" class="join-item btn btn-sm">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if registrations.has_next %}
+        <a href="?page={{ registrations.page + 1 }}" class="join-item btn btn-sm">»</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<div class="text-sm text-base-content/60 mt-2">
+    Showing {{ registrations.registrations|length }} of {{ registrations.total }} registrations
+</div>
+
+{% else %}
+<div class="alert alert-info">
+    <span>No registrations match your search criteria.</span>
+</div>
+{% endif %}

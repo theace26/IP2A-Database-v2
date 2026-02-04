@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.name }} - Book Detail{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="text-sm breadcrumbs mb-4">
+    <ul>
+        <li><a href="/referral">Referral</a></li>
+        <li><a href="/referral/books">Books</a></li>
+        <li>{{ book.name }}</li>
+    </ul>
+</div>
+
+<!-- Header -->
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">{{ book.name }}</h1>
+        <p class="text-base-content/60">
+            Book {{ book.book_number }} - {{ book.classification.value|replace('_', ' ')|title }} - {{ book.region.value|title }}
+        </p>
+    </div>
+    <div class="flex gap-2">
+        {% if book.is_active %}
+        <span class="badge badge-success">Active</span>
+        {% else %}
+        <span class="badge badge-ghost">Inactive</span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div id="book-stats"
+     hx-get="/referral/books/{{ book.id }}/partials/stats"
+     hx-trigger="load, every 30s"
+     hx-swap="innerHTML"
+     class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+    {% if stats %}
+    <div class="stat bg-base-100 shadow rounded-lg">
+        <div class="stat-title">Total Registered</div>
+        <div class="stat-value text-primary">{{ stats.total_registered }}</div>
+        <div class="stat-desc">All-time</div>
+    </div>
+    <div class="stat bg-base-100 shadow rounded-lg">
+        <div class="stat-title">Active</div>
+        <div class="stat-value text-success">{{ stats.active_count }}</div>
+        <div class="stat-desc">On book now</div>
+    </div>
+    <div class="stat bg-base-100 shadow rounded-lg">
+        <div class="stat-title">Dispatched</div>
+        <div class="stat-value text-info">{{ stats.dispatched_count }}</div>
+        <div class="stat-desc">Working</div>
+    </div>
+    <div class="stat bg-base-100 shadow rounded-lg">
+        <div class="stat-title">With Check Mark</div>
+        <div class="stat-value text-warning">{{ stats.with_check_mark }}</div>
+        <div class="stat-desc">Penalty active</div>
+    </div>
+    <div class="stat bg-base-100 shadow rounded-lg">
+        <div class="stat-title">Without Check Mark</div>
+        <div class="stat-value">{{ stats.without_check_mark }}</div>
+        <div class="stat-desc">Clean record</div>
+    </div>
+    <div class="stat bg-base-100 shadow rounded-lg">
+        <div class="stat-title">Exempt</div>
+        <div class="stat-value text-accent">{{ stats.exempt_count }}</div>
+        <div class="stat-desc">Special status</div>
+    </div>
+    {% else %}
+    <div class="skeleton h-24 w-full"></div>
+    <div class="skeleton h-24 w-full"></div>
+    <div class="skeleton h-24 w-full"></div>
+    <div class="skeleton h-24 w-full"></div>
+    <div class="skeleton h-24 w-full"></div>
+    <div class="skeleton h-24 w-full"></div>
+    {% endif %}
+</div>
+
+<!-- Main Content Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <!-- Registered Members Table (3 columns) -->
+    <div class="lg:col-span-3">
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="card-title">Registered Members</h2>
+                    <button class="btn btn-primary btn-sm"
+                            hx-get="/referral/partials/register-modal?book_id={{ book.id }}"
+                            hx-target="#modal-container"
+                            hx-swap="innerHTML">
+                        + Register
+                    </button>
+                </div>
+
+                <!-- Search and Filter -->
+                <div class="flex gap-2 mb-4">
+                    <input type="search"
+                           name="search"
+                           placeholder="Search members..."
+                           class="input input-bordered input-sm flex-1"
+                           hx-get="/referral/books/{{ book.id }}/partials/queue"
+                           hx-target="#queue-container"
+                           hx-swap="innerHTML"
+                           hx-trigger="keyup changed delay:300ms, search"
+                           hx-include="[name='status_filter']">
+                    <select class="select select-bordered select-sm"
+                            name="status_filter"
+                            hx-get="/referral/books/{{ book.id }}/partials/queue"
+                            hx-target="#queue-container"
+                            hx-swap="innerHTML"
+                            hx-include="[name='search']">
+                        <option value="all">All Status</option>
+                        <option value="registered" selected>Registered</option>
+                        <option value="dispatched">Dispatched</option>
+                        <option value="exempt">Exempt</option>
+                    </select>
+                </div>
+
+                <!-- Queue Table -->
+                <div id="queue-container">
+                    {% include 'partials/referral/_queue_table.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Book Settings Sidebar (1 column) -->
+    <div class="lg:col-span-1">
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <h2 class="card-title text-lg">Book Settings</h2>
+                <div class="space-y-2 text-sm">
+                    <div>
+                        <span class="font-semibold">Code:</span>
+                        <span class="text-base-content/70">{{ book.code }}</span>
+                    </div>
+                    <div>
+                        <span class="font-semibold">Referral Start:</span>
+                        <span class="text-base-content/70">
+                            {% if book.referral_start_time %}
+                                {{ book.referral_start_time.strftime('%I:%M %p') }}
+                            {% else %}
+                                Not set
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="font-semibold">Re-sign Period:</span>
+                        <span class="text-base-content/70">{{ book.re_sign_days }} days</span>
+                    </div>
+                    <div>
+                        <span class="font-semibold">Max Check Marks:</span>
+                        <span class="text-base-content/70">{{ book.max_check_marks }}</span>
+                    </div>
+                    {% if book.grace_period_days %}
+                    <div>
+                        <span class="font-semibold">Grace Period:</span>
+                        <span class="text-base-content/70">{{ book.grace_period_days }} days</span>
+                    </div>
+                    {% endif %}
+                    {% if book.max_days_on_book %}
+                    <div>
+                        <span class="font-semibold">Max Days on Book:</span>
+                        <span class="text-base-content/70">{{ book.max_days_on_book }} days</span>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <span class="font-semibold">Internet Bidding:</span>
+                        <span class="text-base-content/70">
+                            {% if book.internet_bidding_enabled %}
+                                <span class="badge badge-success badge-sm">Enabled</span>
+                            {% else %}
+                                <span class="badge badge-ghost badge-sm">Disabled</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                {% if current_user and current_user.role_names %}
+                    {% set user_roles_lower = current_user.role_names | map('lower') | list %}
+                    {% if 'admin' in user_roles_lower %}
+                <div class="divider"></div>
+                <button class="btn btn-sm btn-outline w-full"
+                        hx-get="/referral/books/{{ book.id }}/partials/edit-settings-modal"
+                        hx-target="#modal-container"
+                        hx-swap="innerHTML">
+                    Edit Settings
+                </button>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal container for HTMX modals -->
+<div id="modal-container"></div>
+{% endblock %}

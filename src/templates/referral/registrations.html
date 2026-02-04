@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Registrations{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Registrations</h1>
+        <p class="text-base-content/60">Cross-book registration management</p>
+    </div>
+    <button class="btn btn-primary btn-sm"
+            hx-get="/referral/partials/register-modal"
+            hx-target="#modal-container"
+            hx-swap="innerHTML">
+        + Register Member
+    </button>
+</div>
+
+<!-- Filter Bar -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4">
+    <input type="search"
+           name="search"
+           placeholder="Search members..."
+           class="input input-bordered input-sm"
+           hx-get="/referral/partials/registrations-table"
+           hx-target="#registrations-container"
+           hx-swap="innerHTML"
+           hx-trigger="keyup changed delay:300ms, search"
+           hx-include="[name='book_id'], [name='status'], [name='filter']">
+
+    <select class="select select-bordered select-sm"
+            name="book_id"
+            hx-get="/referral/partials/registrations-table"
+            hx-target="#registrations-container"
+            hx-swap="innerHTML"
+            hx-include="[name='search'], [name='status'], [name='filter']">
+        <option value="">All Books</option>
+        {% if books %}
+            {% for book in books %}
+            <option value="{{ book.id }}">{{ book.name }}</option>
+            {% endfor %}
+        {% endif %}
+    </select>
+
+    <select class="select select-bordered select-sm"
+            name="status"
+            hx-get="/referral/partials/registrations-table"
+            hx-target="#registrations-container"
+            hx-swap="innerHTML"
+            hx-include="[name='search'], [name='book_id'], [name='filter']">
+        <option value="">All Status</option>
+        <option value="registered" selected>Registered</option>
+        <option value="dispatched">Dispatched</option>
+        <option value="resigned">Resigned</option>
+        <option value="rolled_off">Rolled Off</option>
+        <option value="exempt">Exempt</option>
+    </select>
+
+    <select class="select select-bordered select-sm"
+            name="filter"
+            hx-get="/referral/partials/registrations-table"
+            hx-target="#registrations-container"
+            hx-swap="innerHTML"
+            hx-include="[name='search'], [name='book_id'], [name='status']">
+        <option value="">No Filter</option>
+        <option value="expiring">Expiring Soon (Re-sign)</option>
+        <option value="check_marks">With Check Marks</option>
+        <option value="exempt">Exempt Status</option>
+    </select>
+</div>
+
+<!-- Registrations Table -->
+<div id="registrations-container">
+    {% include 'partials/referral/_registrations_table.html' %}
+</div>
+
+<!-- Modal container for HTMX modals -->
+<div id="modal-container"></div>
+{% endblock %}

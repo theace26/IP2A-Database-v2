@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Referral & Dispatch{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Referral & Dispatch</h1>
+        <p class="text-base-content/60">Out-of-work book management and dispatch operations</p>
+    </div>
+    <div class="flex gap-2">
+        <a href="/referral/books" class="btn btn-outline btn-sm">All Books</a>
+        <a href="/referral/registrations" class="btn btn-primary btn-sm">Registrations</a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div id="referral-stats"
+     hx-get="/referral/partials/stats"
+     hx-trigger="load, every 60s"
+     hx-swap="innerHTML"
+     class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <!-- Loading skeleton -->
+    <div class="skeleton h-24 w-full"></div>
+    <div class="skeleton h-24 w-full"></div>
+    <div class="skeleton h-24 w-full"></div>
+    <div class="skeleton h-24 w-full"></div>
+</div>
+
+<!-- Quick Actions + Books Summary -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Quick Actions (1 column) -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title text-lg">Quick Actions</h2>
+            <ul class="menu">
+                <li>
+                    <a href="#"
+                       hx-get="/referral/partials/register-modal"
+                       hx-target="#modal-container"
+                       hx-swap="innerHTML">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                        Register Member
+                    </a>
+                </li>
+                <li>
+                    <a href="/referral/registrations?filter=expiring">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Process Re-signs
+                    </a>
+                </li>
+                <li>
+                    <a href="/referral/books">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        View All Books
+                    </a>
+                </li>
+                <li>
+                    <a href="/dispatch" class="text-base-content/40" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Morning Referral (Week 27)
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Books Summary (2 columns) -->
+    <div class="col-span-2">
+        <div class="card bg-base-100 shadow">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="card-title text-lg">Books Overview</h2>
+                    <a href="/referral/books" class="btn btn-sm btn-ghost">View All →</a>
+                </div>
+                <div id="books-overview"
+                     hx-get="/referral/partials/books-overview"
+                     hx-trigger="load"
+                     hx-swap="innerHTML">
+                    <div class="skeleton h-48 w-full"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal container for HTMX modals -->
+<div id="modal-container"></div>
+{% endblock %}

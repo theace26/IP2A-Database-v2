@@ -7,12 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> **v0.9.6-alpha — PHASE 7 IN PROGRESS (Weeks 20-25 Complete)**
-> ~490+ tests, ~200+ API endpoints, 32 models (26 + 6 Phase 7), 15 ADRs
+> **v0.9.7-alpha — PHASE 7 Week 26 Complete**
+> 564+ tests, ~200+ API endpoints, 32 models (26 + 6 Phase 7), 15 ADRs
 > Railway deployed, Stripe live, Mobile PWA enabled
-> Current: Phase 7 — Referral & Dispatch System (models, enums, schemas, 7 services, 5 API routers complete)
+> Current: Phase 7 — Referral & Dispatch System (Backend + Week 26 Frontend UI Complete)
 
 ### Added
+- **Phase 7 Week 26: Books & Registration UI** (February 4, 2026)
+  * Created ReferralFrontendService for template data formatting and badge helpers
+  * Created referral landing page with stats dashboard (active books, registered members, dispatched count)
+  * Created books list page with HTMX filtering and search
+  * Created book detail page with registered members table, stats cards, and queue display
+  * Created registration list page with cross-book search and filtering
+  * Created registration detail page with member info and registration history
+  * Created 8 HTMX partials: stats cards, books overview/table, queue table, registrations table, register/re-sign/resign modals
+  * Created referral_frontend router with 17 routes (5 main pages, 8 HTMX partials, 3 form submissions, 1 member search)
+  * Added Referral & Dispatch section to sidebar navigation with Books and Registrations links
+  * Added 22 new frontend tests (564 total)
+  * Registered referral_frontend_router in main.py
+  * Created API discovery document: docs/phase7/week26_api_discovery.md
 - **Phase 7: Referral & Dispatch Implementation - Weeks 23-25** (February 4, 2026)
   * **Week 23A: LaborRequestService**
     - Created src/services/labor_request_service.py implementing Rules 2, 3, 4, 11

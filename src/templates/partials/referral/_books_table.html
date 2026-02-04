@@ -1,0 +1,66 @@
+<!-- Books Table -->
+{% if books %}
+<div class="overflow-x-auto">
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Book</th>
+                <th>Classification</th>
+                <th>Region</th>
+                <th>Book #</th>
+                <th>Active</th>
+                <th>Dispatched</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in books %}
+            <tr class="hover">
+                <td>
+                    <a href="/referral/books/{{ book.id }}" class="font-semibold link">
+                        {{ book.name }}
+                    </a>
+                    <div class="text-xs text-base-content/60">{{ book.code }}</div>
+                </td>
+                <td>{{ book.classification|replace('_', ' ')|title }}</td>
+                <td>{{ book.region|replace('_', ' ')|title }}</td>
+                <td>{{ book.book_number }}</td>
+                <td>
+                    <span class="font-semibold text-success">{{ book.active_count or 0 }}</span>
+                </td>
+                <td>
+                    <span class="font-semibold text-info">{{ book.dispatched_count or 0 }}</span>
+                </td>
+                <td>
+                    {% if book.is_active %}
+                    <span class="badge badge-success badge-sm">Active</span>
+                    {% else %}
+                    <span class="badge badge-ghost badge-sm">Inactive</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="dropdown dropdown-end">
+                        <label tabindex="0" class="btn btn-ghost btn-xs">...</label>
+                        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                            <li><a href="/referral/books/{{ book.id }}">View Detail</a></li>
+                            <li><a href="/referral/books/{{ book.id }}/queue">View Queue</a></li>
+                            {% if current_user and current_user.role_names %}
+                                {% set user_roles_lower = current_user.role_names | map('lower') | list %}
+                                {% if 'admin' in user_roles_lower %}
+                            <li><a hx-get="/referral/books/{{ book.id }}/partials/edit-modal" hx-target="#modal-container" hx-swap="innerHTML">Edit Settings</a></li>
+                                {% endif %}
+                            {% endif %}
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <span>No books match your search criteria.</span>
+</div>
+{% endif %}

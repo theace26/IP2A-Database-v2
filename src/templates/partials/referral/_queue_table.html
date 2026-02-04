@@ -1,0 +1,71 @@
+<!-- Queue Table (Members on Book) -->
+{% if queue %}
+<div class="overflow-x-auto">
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Pos</th>
+                <th>APN</th>
+                <th>Member</th>
+                <th>Card #</th>
+                <th>Days on Book</th>
+                <th>Check Marks</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reg in queue %}
+            <tr class="hover">
+                <td class="font-semibold">{{ reg.position }}</td>
+                <td class="font-mono text-xs">{{ reg.registration_number }}</td>
+                <td>
+                    <a href="/referral/registrations/{{ reg.registration_id }}" class="link">
+                        {{ reg.member_name }}
+                    </a>
+                </td>
+                <td>{{ reg.member_number }}</td>
+                <td>{{ reg.days_on_book }}</td>
+                <td>
+                    {% if reg.check_marks > 0 %}
+                    <span class="badge badge-warning badge-sm">{{ reg.check_marks }}</span>
+                    {% else %}
+                    <span class="badge badge-success badge-sm">0</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if reg.is_exempt %}
+                    <span class="badge badge-accent badge-sm">Exempt</span>
+                    {% else %}
+                    {% set status_badge = service.registration_status_badge(reg.status) %}
+                    <span class="badge badge-sm {{ status_badge.class }}">{{ status_badge.label }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="dropdown dropdown-end">
+                        <label tabindex="0" class="btn btn-ghost btn-xs">...</label>
+                        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                            <li><a href="/referral/registrations/{{ reg.registration_id }}">View Detail</a></li>
+                            <li><a href="/members/{{ reg.member_id }}">View Member</a></li>
+                            <li><a hx-get="/referral/partials/re-sign-modal/{{ reg.registration_id }}" hx-target="#modal-container" hx-swap="innerHTML">Re-sign</a></li>
+                            <li><a hx-get="/referral/partials/resign-modal/{{ reg.registration_id }}" hx-target="#modal-container" hx-swap="innerHTML">Resign</a></li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if queue|length > 25 %}
+<div class="text-sm text-base-content/60 mt-2">
+    Showing {{ queue|length }} members
+</div>
+{% endif %}
+
+{% else %}
+<div class="alert alert-info">
+    <span>No members registered on this book.</span>
+</div>
+{% endif %}

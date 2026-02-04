@@ -1,0 +1,89 @@
+<!-- Register Member Modal -->
+<dialog id="register-modal" class="modal modal-open">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Register Member on Book</h3>
+        <form hx-post="/referral/registrations"
+              hx-target="#modal-container"
+              hx-swap="innerHTML">
+
+            <!-- Member Search (typeahead) -->
+            <div class="form-control mb-4">
+                <label class="label"><span class="label-text">Member *</span></label>
+                <input type="text"
+                       name="member_search"
+                       placeholder="Search by name or card number..."
+                       class="input input-bordered"
+                       hx-get="/referral/partials/member-search"
+                       hx-trigger="keyup changed delay:300ms"
+                       hx-target="#member-results"
+                       autocomplete="off">
+                <div id="member-results" class="mt-1"></div>
+                <input type="hidden" name="member_id" id="selected-member-id" required>
+            </div>
+
+            <!-- Book Selection -->
+            <div class="form-control mb-4">
+                <label class="label"><span class="label-text">Book *</span></label>
+                <select name="book_id" class="select select-bordered" required>
+                    <option value="" disabled selected>Select a book...</option>
+                    {% if book_id %}
+                        {% for book in books %}
+                            <option value="{{ book.id }}" {% if book.id == book_id %}selected{% endif %}>
+                                {{ book.name }}
+                            </option>
+                        {% endfor %}
+                    {% else %}
+                        {% for book in books %}
+                            <option value="{{ book.id }}">{{ book.name }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+
+            <!-- Registration Method -->
+            <div class="form-control mb-4">
+                <label class="label"><span class="label-text">Registration Method</span></label>
+                <select name="registration_method" class="select select-bordered">
+                    <option value="in_person" selected>In Person</option>
+                    <option value="online">Online</option>
+                    <option value="phone">Phone</option>
+                    <option value="email">Email</option>
+                </select>
+            </div>
+
+            <!-- Notes -->
+            <div class="form-control mb-4">
+                <label class="label"><span class="label-text">Notes (optional)</span></label>
+                <textarea name="notes"
+                          class="textarea textarea-bordered"
+                          rows="2"
+                          placeholder="Additional notes..."></textarea>
+            </div>
+
+            <div class="modal-action">
+                <button type="button" class="btn" onclick="document.getElementById('register-modal').close()">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">Register</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<script>
+// Member search result click handler
+document.addEventListener('click', function(e) {
+    if (e.target.closest('[data-member-id]')) {
+        const memberCard = e.target.closest('[data-member-id]');
+        const memberId = memberCard.getAttribute('data-member-id');
+        const memberName = memberCard.getAttribute('data-member-name');
+
+        document.getElementById('selected-member-id').value = memberId;
+        document.querySelector('[name="member_search"]').value = memberName;
+        document.getElementById('member-results').innerHTML = '';
+    }
+});
+</script>

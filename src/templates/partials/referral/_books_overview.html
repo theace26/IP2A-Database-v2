@@ -1,0 +1,36 @@
+<!-- Books Overview Grid for Landing Page -->
+{% if books %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {% for book in books %}
+    <a href="/referral/books/{{ book.id }}" class="card bg-base-200 hover:bg-base-300 transition-colors">
+        <div class="card-body p-4">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 class="font-semibold">{{ book.name }}</h3>
+                    <p class="text-xs text-base-content/60">
+                        Book {{ book.book_number }} - {{ book.classification|replace('_', ' ')|title }}
+                    </p>
+                </div>
+                {% if book.is_active %}
+                <span class="badge badge-success badge-sm">Active</span>
+                {% else %}
+                <span class="badge badge-ghost badge-sm">Inactive</span>
+                {% endif %}
+            </div>
+            <div class="flex gap-4 mt-2 text-sm">
+                <div>
+                    <span class="font-semibold text-success">{{ book.active_count or 0 }}</span>
+                    <span class="text-base-content/60"> registered</span>
+                </div>
+                <div>
+                    <span class="font-semibold text-info">{{ book.dispatched_count or 0 }}</span>
+                    <span class="text-base-content/60"> dispatched</span>
+                </div>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<p class="text-base-content/60 text-sm">No books found.</p>
+{% endif %}
