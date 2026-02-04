@@ -10,7 +10,11 @@ from fastapi.responses import JSONResponse
 from src.config.auth_config import check_jwt_secret_configuration
 
 # Middleware
-from src.middleware import AuditContextMiddleware
+from src.middleware import AuditContextMiddleware, SecurityHeadersMiddleware
+
+# Logging and monitoring
+from src.core.logging_config import setup_logging
+from src.core.monitoring import init_sentry
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +82,22 @@ from src.routers.grants_frontend import router as grants_frontend_router
 # Webhooks
 from src.routers.webhooks.stripe_webhook import router as stripe_webhook_router
 
+# Health checks
+from src.routers.health import router as health_router
+
+# Admin metrics
+from src.routers.admin_metrics import router as admin_metrics_router
+
+# Analytics dashboard
+from src.routers.analytics import router as analytics_router
+
+# Phase 7: Referral & Dispatch
+from src.routers.referral_books_api import router as referral_books_api_router
+from src.routers.registration_api import router as registration_api_router
+from src.routers.labor_request_api import router as labor_request_api_router
+from src.routers.job_bid_api import router as job_bid_api_router
+from src.routers.dispatch_api import router as dispatch_api_router
+
 # ------------------------------------------------------------
 # Initialize FastAPI
 # ------------------------------------------------------------
@@ -94,6 +114,9 @@ app = FastAPI(
 
 # Audit context middleware (must be before CORS for proper request handling)
 app.add_middleware(AuditContextMiddleware)
+
+# Security headers middleware (production hardening)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # CORS (allow frontend development)
 app.add_middleware(
@@ -116,8 +139,16 @@ app.mount("/static", StaticFiles(directory="src/static"), name="static")
 # ------------------------------------------------------------
 @app.on_event("startup")
 async def startup_event():
-    """Run configuration checks on startup."""
+    """Run configuration checks and initialize monitoring on startup."""
+    # Setup structured logging
+    setup_logging()
+
+    # Initialize error tracking (Sentry)
+    init_sentry()
+
+    # Check JWT configuration
     check_jwt_secret_configuration()
+
     logger.info("IP2A Database API started successfully")
 
 
@@ -127,7 +158,7 @@ async def startup_event():
 @app.get("/health")
 def health():
     """Health check endpoint for container orchestration."""
-    return {"status": "healthy", "version": "0.7.9"}
+    return {"status": "healthy", "version": "0.9.6-alpha"}
 
 
 # ------------------------------------------------------------
@@ -206,6 +237,22 @@ app.include_router(grants_frontend_router)  # Grant management frontend
 
 # Webhooks (NO authentication - signature verified)
 app.include_router(stripe_webhook_router)
+
+# Health check routes (production monitoring)
+app.include_router(health_router)
+
+# Admin metrics dashboard
+app.include_router(admin_metrics_router)
+
+# Analytics dashboard (Week 19)
+app.include_router(analytics_router)
+
+# Phase 7: Referral & Dispatch (Weeks 20-25)
+app.include_router(referral_books_api_router)
+app.include_router(registration_api_router)
+app.include_router(labor_request_api_router)
+app.include_router(job_bid_api_router)
+app.include_router(dispatch_api_router)
 
 # Frontend routes (HTML pages) - include LAST to not interfere with API routes
 app.include_router(frontend.router)

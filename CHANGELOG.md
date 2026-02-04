@@ -7,7 +7,210 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> **v0.9.6-alpha — PHASE 7 IN PROGRESS (Weeks 20-25 Complete)**
+> ~490+ tests, ~200+ API endpoints, 32 models (26 + 6 Phase 7), 15 ADRs
+> Railway deployed, Stripe live, Mobile PWA enabled
+> Current: Phase 7 — Referral & Dispatch System (models, enums, schemas, 7 services, 5 API routers complete)
+
 ### Added
+- **Phase 7: Referral & Dispatch Implementation - Weeks 23-25** (February 4, 2026)
+  * **Week 23A: LaborRequestService**
+    - Created src/services/labor_request_service.py implementing Rules 2, 3, 4, 11
+    - Rule 2: Morning referral processing order (Wire 8:30 AM, S&C 9:00 AM, Tradeshow 9:30 AM)
+    - Rule 3: 3 PM cutoff enforcement for next-morning dispatch
+    - Rule 4: Agreement type filtering (PLA/CWA/TERO)
+    - Rule 11: Check mark determination (specialty skills, MOU sites, early starts)
+    - Methods: create_request, update_request, cancel_request, expire_request, fulfill_request
+  * **Week 23B: JobBidService**
+    - Created src/services/job_bid_service.py implementing Rule 8
+    - Rule 8: 5:30 PM – 7:00 AM bidding window validation
+    - Bid operations: place_bid, withdraw_bid, accept_bid, reject_bid
+    - Suspension tracking: 2 rejections in 12 months = 1-year suspension
+    - Methods: get_pending_bids, get_member_bids, process_bids_for_request
+  * **Week 23C: DispatchService**
+    - Created src/services/dispatch_service.py implementing Rules 9, 12, 13
+    - Rule 9: Short call handling (≤10 days, max 2 per cycle, position restoration)
+    - Rule 12: Quit/discharge = all-books rolloff + 2-week blackout
+    - Rule 13: By-name anti-collusion enforcement
+    - Methods: dispatch_from_queue, dispatch_by_name, terminate_dispatch, restore_position
+  * **Week 24A: QueueService Core**
+    - Created src/services/queue_service.py for queue management
+    - Queue snapshots with configurable depth and filters
+    - Multi-book queue views with book priority ordering (Book 1→2→3)
+    - Next-eligible selection (skips exempt, blackout, suspended)
+    - Wait time estimation based on historical dispatch rates
+    - Methods: get_queue_snapshot, get_member_queue_status, get_next_eligible
+  * **Week 24B: EnforcementService**
+    - Created src/services/enforcement_service.py for batch processing
+    - daily_enforcement_run() with dry_run mode for admin preview
+    - enforce_re_sign_deadlines() - 30-day cycle + grace period rolloffs
+    - send_re_sign_reminders() - 7 days before deadline warnings
+    - process_expired_requests/exemptions/bids() - cleanup routines
+    - enforce_check_mark_limits() - batch verification
+  * **Week 24C: Analytics & Integration**
+    - get_pending_enforcements() for dashboard counts
+    - get_enforcement_report() dry-run preview
+    - run_specific_enforcement() for targeted execution
+    - Queue utilization and dispatch rate metrics
+  * **Week 25A: Book & Registration API**
+    - Created src/routers/referral_books_api.py (~12 endpoints)
+    - GET /api/v1/referral/books - list all books
+    - GET /api/v1/referral/books/{id} - book detail
+    - POST /api/v1/referral/books - create book (admin)
+    - PUT /api/v1/referral/books/{id} - update book
+    - GET /api/v1/referral/books/{id}/stats - book statistics
+    - Created src/routers/registration_api.py (~12 endpoints)
+    - POST /api/v1/referral/registrations - register member
+    - POST /api/v1/referral/registrations/{id}/re-sign - re-sign
+    - POST /api/v1/referral/registrations/{id}/resign - resign from book
+    - GET /api/v1/referral/registrations/member/{id} - member's registrations
+  * **Week 25B: LaborRequest & Bid API**
+    - Created src/routers/labor_request_api.py (~12 endpoints)
+    - CRUD for labor requests with status lifecycle
+    - POST /api/v1/referral/requests/{id}/cancel
+    - POST /api/v1/referral/requests/{id}/fulfill
+    - GET /api/v1/referral/requests/open - active requests
+    - Created src/routers/job_bid_api.py (~10 endpoints)
+    - POST /api/v1/referral/bids - place bid (validates window)
+    - DELETE /api/v1/referral/bids/{id} - withdraw bid
+    - POST /api/v1/referral/bids/{id}/accept
+    - POST /api/v1/referral/bids/{id}/reject
+  * **Week 25C: Dispatch & Admin API**
+    - Created src/routers/dispatch_api.py (~16 endpoints)
+    - POST /api/v1/referral/dispatch/from-queue - dispatch next eligible
+    - POST /api/v1/referral/dispatch/by-name - dispatch specific member
+    - POST /api/v1/referral/dispatch/{id}/terminate - handle termination
+    - GET /api/v1/referral/queue/{book_id} - queue snapshot
+    - GET /api/v1/referral/queue/member/{id}/status - member queue status
+    - POST /api/v1/referral/enforcement/run - trigger daily enforcement
+    - GET /api/v1/referral/enforcement/report - dry-run preview
+  * **main.py Updates**
+    - Registered 5 Phase 7 API routers
+    - Version bumped to v0.9.6-alpha
+    - ~50 new endpoints for Phase 7
+  * All 14 business rules now have service-layer implementations
+- **Phase 7: Referral & Dispatch Implementation - Weeks 20-22** (February 4, 2026)
+  * **Week 20A: Schema Reconciliation & Enums**
+    - Created docs/phase7/PHASE7_SCHEMA_DECISIONS.md documenting 5 pre-implementation decisions
+    - Decision 1: Separate JobBid model (cleaner audit trail, rejection tracking)
+    - Decision 2: MemberTransaction independent of DuesPayment
+    - Decision 3: Per-book exempt status on BookRegistration (not global on Member)
+    - Decision 4: Field naming standardized (registration_number for APN, referral_start_time, etc.)
+    - Decision 5: Dual audit pattern (RegistrationActivity + audit_logs for NLRA compliance)
+    - Created src/db/enums/phase7_enums.py with 19 Phase 7 enums
+    - Enums: BookClassification, BookRegion, RegistrationStatus, RegistrationAction, ExemptReason, RolloffReason, NoCheckMarkReason, LaborRequestStatus, BidStatus, DispatchMethod, DispatchStatus, DispatchType, TermReason, JobClass, MemberType, ReferralStatus, ActivityCode, PaymentSource, AgreementType
+    - Updated src/db/enums/__init__.py to export all Phase 7 enums
+  * **Week 20B: ReferralBook Model & Seeds**
+    - Created src/models/referral_book.py with classification, region, referral_start_time, re_sign_days, max_check_marks, internet_bidding_enabled
+    - Properties: full_name (e.g., "Wire Seattle Book 1"), is_wire_book
+    - Created src/schemas/referral_book.py with ReferralBookBase, ReferralBookCreate, ReferralBookUpdate, ReferralBookRead, ReferralBookStats, ReferralBookSummary
+    - Created src/seed/phase7_seed.py seeding 11 referral books (Wire Seattle/Bremerton/Port Angeles, Tradeshow, Sound & Comm, Marine, Stockperson, Light Fixture, Residential, Technician, Utility Worker)
+  * **Week 20C: BookRegistration Model**
+    - Created src/models/book_registration.py with registration_number as DECIMAL(10,2) for APN FIFO ordering
+    - Fields: status, check_marks, exempt status (is_exempt, exempt_reason, exempt_start/end_date), rolloff tracking
+    - Properties: is_active, is_rolled_off, can_be_dispatched, days_on_book, check_marks_remaining
+    - Created src/schemas/book_registration.py with BookRegistrationBase, BookRegistrationCreate, BookRegistrationUpdate, BookRegistrationRead, BookRegistrationWithMember, QueuePosition, ReSignRequest, ExemptRequest, RolloffRequest
+    - Updated src/models/member.py with book_registrations relationship
+  * **Week 21A: LaborRequest & JobBid Models**
+    - Created src/models/labor_request.py for employer job requests
+    - Fields: workers_requested/dispatched, worksite info, short_call flags, check_mark rules, bidding windows
+    - Properties: is_filled, workers_remaining, is_bidding_open
+    - Created src/models/job_bid.py for member bid tracking (per Decision 1: separate model)
+    - Tracks bid_status, rejection tracking for 1-year suspension rule
+    - Properties: is_pending, was_accepted, counts_as_quit
+    - Created src/schemas/labor_request.py and src/schemas/job_bid.py
+  * **Week 21B: Dispatch Model**
+    - Created src/models/dispatch.py linking member → job_request → employer
+    - Tracks check-in, short call restoration, termination details
+    - Properties: is_active, is_completed, was_quit_or_fired, should_restore_position
+    - Created src/schemas/dispatch.py with DispatchBase, DispatchCreate, DispatchUpdate, DispatchCheckIn, DispatchTerminate, DispatchRead, DispatchWithDetails
+  * **Week 21C: RegistrationActivity Model**
+    - Created src/models/registration_activity.py as append-only audit trail (no updated_at column)
+    - Tracks action, previous_status, new_status, positions, related dispatch/labor_request
+    - Created src/schemas/registration_activity.py with RegistrationActivityBase, RegistrationActivityCreate, RegistrationActivityRead, RegistrationActivityWithDetails
+    - Updated src/models/__init__.py to export all 6 Phase 7 models
+    - Updated src/schemas/__init__.py to export all Phase 7 schemas
+  * **Week 22A: ReferralBookService**
+    - Created src/services/referral_book_service.py with full book management
+    - Query methods: get_by_id, get_by_code, get_all_active, get_all, get_by_classification, get_by_region, get_by_classification_and_region
+    - Stats: get_book_stats (registered, dispatched, avg_days_on_book, active_count), get_all_books_summary
+    - CRUD: create_book, update_book
+    - Admin: activate_book, deactivate_book, update_book_settings
+  * **Week 22B: BookRegistrationService Core**
+    - Created src/services/book_registration_service.py with core registration logic
+    - Registration: register_member (with next APN calculation), re_sign_member
+    - Status transitions: resign_member, roll_off_member, mark_dispatched
+    - Query: get_by_id, get_book_queue (FIFO ordered by APN), get_member_registrations, get_member_position, get_registrations_expiring_soon
+    - Validation: can_register (checks duplicate, status), can_re_sign (checks timing, status)
+  * **Week 22C: Check Mark Logic & Roll-Off Rules**
+    - Check marks: record_check_mark (increments, triggers rolloff at 3), record_missed_check_mark, restore_check_mark
+    - Exempt status: grant_exempt_status (7 reason types), revoke_exempt_status
+    - Roll-off: process_roll_offs (batch processing), get_re_sign_reminders (approaching 30-day deadline)
+    - Protection: is_protected_from_rolloff (checks specialty_skill, mou_site, short_call, under_scale, early_start)
+    - Business rules implemented: 30-day re-sign cycle, 3 check marks = rolloff, short call position restoration (max 2 per cycle)
+  * **Tests**
+    - Created src/tests/test_phase7_models.py with 20+ tests
+    - Tests cover: ReferralBook, BookRegistration, RegistrationActivity models
+    - Tests cover: BookClassification, BookRegion, RegistrationStatus enums
+    - Tests verify: APN as DECIMAL(10,2), unique constraints, model properties, relationships
+  * Version bumped to v0.9.5-alpha
+
+- **Phase 7: Referral & Dispatch Planning** (February 2, 2026)
+  * Created comprehensive Phase 7 planning documentation in docs/phase7/
+  * PHASE7_REFERRAL_DISPATCH_PLAN.md — Full implementation plan
+  * PHASE7_IMPLEMENTATION_PLAN_v2.md — Technical details and data models
+  * PHASE7_CONTINUITY_DOC.md — Session handoff document
+  * LOCAL46_REFERRAL_BOOKS.md — Referral book structure and seed data
+  * LABORPOWER_GAP_ANALYSIS.md — Gap analysis vs LaborPower system
+  * LABORPOWER_REFERRAL_REPORTS_INVENTORY.md — Inventory of ~78 reports to build (16 P0, 33 P1, 22 P2, 7 P3)
+
+- **Week 19: Advanced Analytics Dashboard & Report Builder** (February 2, 2026)
+  * Created AnalyticsService with membership stats, trends, dues analytics, training metrics, and activity tracking
+  * Created ReportBuilderService for custom reports with CSV/Excel export
+  * Created analytics router with executive dashboard, membership analytics, dues analytics, and report builder endpoints
+  * Created dashboard template with Chart.js integration for membership trends and payment method charts
+  * Created membership analytics page with 24-month trend chart and data table
+  * Created dues analytics page with collection stats and delinquency report
+  * Created custom report builder with dynamic field selection and status filtering
+  * Officer-level role checking for analytics access
+  * Created 19 new tests (test_analytics.py)
+  * Version bumped to v0.9.4-alpha
+
+- **Week 18: Mobile Optimization & Progressive Web App** (February 2, 2026)
+  * Created mobile.css with touch-friendly styles (48x48px minimum touch targets)
+  * Created PWA manifest.json with app icons and shortcuts
+  * Created service worker (sw.js) for offline support and caching
+  * Created offline.html page for when device has no internet connection
+  * Created mobile drawer component (_mobile_drawer.html)
+  * Created bottom navigation component (_bottom_nav.html)
+  * Updated base.html with PWA meta tags and service worker registration
+  * Added /offline route to frontend router
+  * Created 14 new tests (test_mobile_pwa.py)
+  * Version bumped to v0.9.3-alpha
+
+- **Week 17: Post-Launch Operations & Maintenance** (February 2, 2026)
+  * Created backup scripts (scripts/backup_database.sh, scripts/verify_backup.sh)
+  * Created audit log archival script (scripts/archive_audit_logs.sh)
+  * Created session cleanup script (scripts/cleanup_sessions.sh)
+  * Created crontab example with scheduled tasks (scripts/crontab.example)
+  * Created admin metrics dashboard router (src/routers/admin_metrics.py)
+  * Created admin metrics template (src/templates/admin/metrics.html)
+  * Created incident response runbook (docs/runbooks/incident-response.md)
+  * Updated runbooks README with scheduled tasks documentation
+  * Created 13 new tests (test_admin_metrics.py)
+  * Version bumped to v0.9.2-alpha
+
+- **Week 16: Production Hardening & Performance Optimization** (February 2, 2026)
+  * Added SecurityHeadersMiddleware with X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy, Content-Security-Policy, Permissions-Policy headers
+  * Created enhanced health check router with /health/live, /health/ready, /health/metrics endpoints
+  * Added Sentry integration for error tracking and performance monitoring (src/core/monitoring.py)
+  * Added structured JSON logging configuration for production (src/core/logging_config.py)
+  * Updated database connection pooling with configurable settings (DB_POOL_SIZE, DB_MAX_OVERFLOW, DB_POOL_TIMEOUT, DB_POOL_RECYCLE)
+  * Added new settings: SENTRY_DSN, APP_VERSION, ALLOWED_ORIGINS, JSON_LOGS
+  * Added sentry-sdk[fastapi]>=1.40.0 to requirements.txt
+  * Created 32 new tests (test_security_headers.py, test_health_checks.py, test_rate_limiting.py)
+  * Version bumped to v0.9.1-alpha
+
 - **Branching Strategy Established** (January 30, 2026)
   * Created `develop` branch for ongoing development
   * Frozen `main` branch at v0.8.0-alpha1 for Railway demo stability

@@ -1,9 +1,9 @@
 # IP2A-Database-v2: Project Context Document
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
-**Last Updated:** February 2, 2026
-**Current Version:** v0.9.0-alpha
-**Current Phase:** Grant Compliance Reporting Complete
+**Last Updated:** February 4, 2026
+**Current Version:** v0.9.6-alpha
+**Current Phase:** Phase 7 (Referral & Dispatch) IN PROGRESS — Weeks 20-25 Complete (Services + API)
 
 ---
 
@@ -13,17 +13,19 @@
 
 **Who:** Xerxes - Business Representative by day, solo developer (5-10 hrs/week)
 
-**Where:** Backend COMPLETE. Frontend FEATURE-COMPLETE. Stripe Payments LIVE. **Deployed to Railway.**
+**Where:** Backend COMPLETE. Frontend FEATURE-COMPLETE (Weeks 1-19). Stripe Payments LIVE. **Deployed to Railway.**
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl + Stripe
 
-**Status:** 200+ frontend tests, ~390 total tests, ~140 API endpoints, 14 ADRs, Railway deployment live, Stripe integration complete, Grant compliance complete
+**Status:** ~490+ total tests (200+ frontend, 165+ backend), ~200+ API endpoints, 32 models (26 existing + 6 Phase 7), 15 ADRs, Railway deployment live, Stripe integration complete, Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
+
+**Current:** Phase 7 — Referral & Dispatch System (~78 LaborPower reports to build). **Weeks 20-25 complete:** models, enums, schemas, 7 services, 5 API routers (~50 new endpoints). See `docs/phase7/`
 
 ---
 
 ## Current State
 
-### Backend: COMPLETE
+### Backend: COMPLETE + Phase 7 In Progress
 
 | Component | Models | Endpoints | Tests | Status |
 |-----------|--------|-----------|-------|--------|
@@ -33,9 +35,10 @@
 | Training (Students, Courses, Grades, Certs) | 7 | ~35 | 33 | Done |
 | Documents (S3/MinIO) | 1 | 8 | 11 | Done |
 | Dues (Rates, Periods, Payments, Adjustments) | 4 | ~35 | 21 | Done |
-| **Total** | **25** | **~120** | **165** | Done |
+| **Phase 7 (Referral & Dispatch)** | **6** | **~50** | **20+** | Services + API Complete |
+| **Total** | **32** | **~200** | **185+** | Phase 7 Service Layer Complete |
 
-### Frontend: PHASE 6 COMPLETE
+### Frontend: PHASE 6 COMPLETE + POST-LAUNCH (Weeks 1-19)
 
 | Week | Focus | Status |
 |------|-------|--------|
@@ -49,12 +52,16 @@
 | Week 8 | Reports & Export | Done |
 | Week 9 | Documents Frontend | Done |
 | Week 10 | Dues UI | Done |
-| Week 11 | Audit UI & Member Notes | Done |
+| Week 11 | Audit UI & Member Notes + Stripe | Done |
 | Week 12 | Profile & Settings | Done |
 | Week 13 | Entity Audit (verified existing) | Done |
 | Week 14 | Grant Compliance Reporting | Done |
+| Week 16 | Production Hardening & Security | Done |
+| Week 17 | Post-Launch Operations & Maintenance | Done |
+| Week 18 | Mobile Optimization & PWA | Done |
+| Week 19 | Analytics Dashboard & Report Builder | Done |
 
-### Frontend Tests: 167 tests
+### Frontend Tests: 200+ tests
 
 | Component | Tests | Status |
 |-----------|-------|--------|
@@ -74,6 +81,10 @@
 | Reports | 30 | Done |
 | Documents Frontend | 6 | Done |
 | Dues Frontend | 37 | Done |
+| Security Headers + Health Checks + Rate Limiting | 32 | Done |
+| Admin Metrics | 13 | Done |
+| Mobile PWA | 14 | Done |
+| Analytics Dashboard | 19 | Done |
 
 ---
 
@@ -91,7 +102,7 @@
 | **Interactivity** | HTMX | HTML-over-the-wire |
 | **Micro-interactions** | Alpine.js | Dropdowns, toggles |
 | **CSS** | DaisyUI + Tailwind | CDN, no build step |
-| **Testing** | pytest + httpx | 149 frontend tests passing |
+| **Testing** | pytest + httpx | ~470 total tests (~200+ frontend) |
 | **Reports** | WeasyPrint + openpyxl | PDF/Excel generation |
 | **Container** | Docker | Full dev environment |
 
@@ -162,18 +173,41 @@ IP2A-Database-v2/
 │   ├── seed/                   # Seed data
 │   └── tests/                  # pytest tests
 ├── docs/
-│   ├── decisions/              # ADRs (001-011)
+│   ├── decisions/              # ADRs (001-014)
 │   ├── instructions/           # Claude Code instruction docs
 │   │   ├── week2_instructions/
 │   │   ├── week3_instructions/
 │   │   ├── week4_instructions/
 │   │   ├── week5_instructions/
 │   │   ├── week6_instructions/
+│   │   ├── week11–stripe/
+│   │   ├── week12_istructions/
+│   │   ├── week12_overlooked/
+│   │   ├── dues/
+│   │   ├── deployment_instructions/
+│   │   ├── stripe/
 │   │   └── infra_phase2_instructions/
+│   ├── phase7/                 # Phase 7: Referral & Dispatch
+│   │   ├── PHASE7_REFERRAL_DISPATCH_PLAN.md
+│   │   ├── PHASE7_IMPLEMENTATION_PLAN_v2.md
+│   │   ├── PHASE7_CONTINUITY_DOC.md
+│   │   ├── PHASE7_CONTINUITY_DOC_ADDENDUM.md
+│   │   ├── LOCAL46_REFERRAL_BOOKS.md
+│   │   ├── LABORPOWER_GAP_ANALYSIS.md
+│   │   ├── LABORPOWER_IMPLEMENTATION_PLAN.md
+│   │   └── LABORPOWER_REFERRAL_REPORTS_INVENTORY.md
 │   ├── architecture/           # System docs
 │   ├── guides/                 # How-to guides
+│   ├── standards/              # Coding standards + END_OF_SESSION_DOCUMENTATION.md
+│   ├── runbooks/               # Deployment, backup, DR, incident response, audit-maintenance
 │   ├── BUGS_LOG.md             # Historical bugs record
 │   └── archive/                # Old documentation
+├── scripts/                    # Operational scripts (Week 17)
+│   ├── backup_database.sh      # Database backup
+│   ├── verify_backup.sh        # Backup verification
+│   ├── archive_audit_logs.sh   # Audit log archival
+│   ├── cleanup_sessions.sh     # Session cleanup
+│   └── crontab.example         # Scheduled tasks example
 ├── docker-compose.yml
 ├── CLAUDE.md                   # This file
 ├── CHANGELOG.md
@@ -991,14 +1025,16 @@ The Documents feature is currently disabled with a "Feature not implemented" pla
 
 | Branch | Purpose | Status | Auto-Deploy |
 |--------|---------|--------|-------------|
-| `main` | Demo/Production (FROZEN) | Stable v0.8.0-alpha1 | Railway |
-| `develop` | Active development | Current work | None (local only) |
+| `main` | Demo/Production | Stable (needs update from develop) | Railway |
+| `develop` | Active development | v0.9.4-alpha (FEATURE-COMPLETE) | None (local only) |
+
+**Current Action:** Merge `develop → main` to deploy v0.9.4-alpha feature-complete build to Railway.
 
 **Why Separate Branches:**
-- `main` is frozen for leadership demo on Railway
+- `main` is the production branch deployed to Railway
 - `develop` allows continued development without affecting demo
-- Merge `develop → main` only when ready to update demo
-- Protects demo from showing half-finished features
+- Merge `develop → main` only when ready to update production
+- Protects production from showing half-finished features
 
 ### Branch Commands
 
@@ -1037,6 +1073,26 @@ git push origin main
 3. Commit with conventional commit message
 4. `git push origin develop` (push to develop, NOT main)
 5. Note any blockers or next steps
+6. **⚠️ MANDATORY: End-of-session documentation update (see below)**
+
+### 📝 End-of-Session Documentation (MANDATORY — DO NOT SKIP)
+
+> Update *ANY* and *ALL* relevant documents to capture progress made this session.
+> Scan `/docs/*` and make or create any relevant updates/documents to keep a
+> historical record as the project progresses. Do not forget about ADRs —
+> update as necessary.
+
+**Before closing the session:**
+1. **Scan `/docs/*`** — Review all documentation files
+2. **Update existing docs** — Reflect changes, progress, and decisions
+3. **Create new docs** — If needed for new components or concepts
+4. **ADR Review** — Update or create Architecture Decision Records as necessary
+5. **Session log entry** — Record what was accomplished in `docs/reports/session-logs/`
+6. **CHANGELOG.md** — Add entries for work completed
+7. **CLAUDE.md** — Update current state if significant progress made
+
+This ensures historical record-keeping and project continuity ("bus factor" protection).
+See `docs/standards/END_OF_SESSION_DOCUMENTATION.md` for full checklist.
 
 ---
 
@@ -1603,7 +1659,482 @@ src/templates/components/_sidebar.html          # Added Grants nav link
 
 ---
 
-**Version:** v0.9.0-alpha
+## Week 16: Production Hardening & Performance Optimization (February 2, 2026)
 
-**Sessions Complete Today:** Week 13 + Week 14
+**Status:** ✅ **COMPLETE** - Security headers, health checks, monitoring, connection pooling
 
+### Overview
+
+Implements production-grade security and monitoring infrastructure.
+
+### Key Features
+
+- **SecurityHeadersMiddleware**: X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy, CSP, Permissions-Policy
+- **Enhanced Health Checks**: /health/live, /health/ready, /health/metrics endpoints
+- **Sentry Integration**: Error tracking and performance monitoring (`src/core/monitoring.py`)
+- **Structured JSON Logging**: Production logging config (`src/core/logging_config.py`)
+- **Connection Pooling**: Configurable DB_POOL_SIZE, DB_MAX_OVERFLOW, DB_POOL_TIMEOUT, DB_POOL_RECYCLE
+- **New Settings**: SENTRY_DSN, APP_VERSION, ALLOWED_ORIGINS, JSON_LOGS
+
+### Files Created
+
+```
+src/core/monitoring.py             # Sentry integration
+src/core/logging_config.py         # Structured JSON logging
+src/middleware/security_headers.py  # SecurityHeadersMiddleware
+src/routers/health.py              # Enhanced health check endpoints
+src/tests/test_security_headers.py # 12 tests
+src/tests/test_health_checks.py    # 10 tests
+src/tests/test_rate_limiting.py    # 10 tests
+```
+
+**Version:** v0.9.1-alpha (32 new tests)
+
+---
+
+## Week 17: Post-Launch Operations & Maintenance (February 2, 2026)
+
+**Status:** ✅ **COMPLETE** - Backup scripts, archival, admin metrics dashboard
+
+### Key Features
+
+- **Backup Scripts**: `scripts/backup_database.sh`, `scripts/verify_backup.sh`
+- **Audit Log Archival**: `scripts/archive_audit_logs.sh`
+- **Session Cleanup**: `scripts/cleanup_sessions.sh`
+- **Crontab Example**: `scripts/crontab.example` with scheduled tasks
+- **Admin Metrics Dashboard**: System health metrics at `/admin/metrics`
+- **Incident Response Runbook**: `docs/runbooks/incident-response.md`
+
+### Files Created
+
+```
+scripts/backup_database.sh
+scripts/verify_backup.sh
+scripts/archive_audit_logs.sh
+scripts/cleanup_sessions.sh
+scripts/crontab.example
+src/routers/admin_metrics.py
+src/templates/admin/metrics.html
+docs/runbooks/incident-response.md
+src/tests/test_admin_metrics.py     # 13 tests
+```
+
+**Version:** v0.9.2-alpha
+
+---
+
+## Week 18: Mobile Optimization & Progressive Web App (February 2, 2026)
+
+**Status:** ✅ **COMPLETE** - Mobile-responsive CSS, PWA manifest, service worker, offline support
+
+### Key Features
+
+- **Mobile CSS**: Touch-friendly styles with 48x48px minimum touch targets (`src/static/css/mobile.css`)
+- **PWA Manifest**: App icons and shortcuts (`src/static/manifest.json`)
+- **Service Worker**: Offline support and caching (`src/static/js/sw.js`)
+- **Offline Page**: Graceful degradation when device has no connection
+- **Mobile Drawer**: Slide-out navigation component
+- **Bottom Navigation**: Mobile-friendly bottom nav bar
+
+### Files Created
+
+```
+src/static/css/mobile.css
+src/static/manifest.json
+src/static/js/sw.js
+src/templates/offline.html
+src/templates/components/_mobile_drawer.html
+src/templates/components/_bottom_nav.html
+src/tests/test_mobile_pwa.py         # 14 tests
+```
+
+### Files Modified
+
+```
+src/templates/base.html               # PWA meta tags, service worker registration
+src/routers/frontend.py               # Added /offline route
+```
+
+**Version:** v0.9.3-alpha
+
+---
+
+## Week 19: Advanced Analytics Dashboard & Report Builder (February 2, 2026)
+
+**Status:** ✅ **COMPLETE** - Executive analytics, membership trends, dues analytics, custom report builder
+
+### Key Features
+
+- **AnalyticsService**: Membership stats, trends, dues analytics, training metrics, activity tracking
+- **ReportBuilderService**: Custom report generation with CSV/Excel export, dynamic field selection, status filtering
+- **Executive Dashboard**: Key metrics with Chart.js integration for membership trends and payment method charts
+- **Membership Analytics**: 24-month trend chart and data table
+- **Dues Analytics**: Collection stats and delinquency reporting
+- **Custom Report Builder**: Dynamic field selection and export
+- **Role Checking**: Officer-level access required for analytics
+
+### Files Created
+
+```
+src/services/analytics_service.py
+src/services/report_builder_service.py
+src/routers/analytics_frontend.py
+src/templates/analytics/dashboard.html
+src/templates/analytics/membership.html
+src/templates/analytics/dues.html
+src/templates/analytics/report_builder.html
+src/tests/test_analytics.py            # 19 tests
+```
+
+### Files Modified
+
+```
+src/main.py                            # Registered analytics_frontend router
+src/templates/components/_sidebar.html  # Added Analytics nav link
+```
+
+**Version:** v0.9.4-alpha (FEATURE-COMPLETE for Weeks 1-19)
+
+---
+
+## Phase 7: Referral & Dispatch System (IN PROGRESS)
+
+**Status:** 🚧 **WEEKS 20-25 COMPLETE** — Models, Enums, Schemas, 7 Services, 5 API Routers (~50 endpoints)
+**Effort Estimate:** 100-150 hours across 7 sub-phases (7a–7g)
+**Documentation:** `docs/phase7/` — 8+ planning documents
+
+### Overview
+
+Phase 7 implements the out-of-work referral and dispatch system for IBEW Local 46, replacing LaborPower with a modern, auditable system built on verified data structures. This is the largest remaining phase — 12 new database tables, 14 business rules, and ~78 reports to achieve LaborPower report parity.
+
+### Weeks 20-22 Implementation (February 4, 2026)
+
+**Week 20: Schema Foundation**
+
+| Session | Focus | Status |
+|---------|-------|--------|
+| 20A | Schema Reconciliation & Enums | ✅ Complete |
+| 20B | ReferralBook Model & Seeds | ✅ Complete |
+| 20C | BookRegistration Model | ✅ Complete |
+
+**Week 21: Core Models**
+
+| Session | Focus | Status |
+|---------|-------|--------|
+| 21A | LaborRequest & JobBid Models | ✅ Complete |
+| 21B | Dispatch Model | ✅ Complete |
+| 21C | RegistrationActivity Model | ✅ Complete |
+
+**Week 22: Services**
+
+| Session | Focus | Status |
+|---------|-------|--------|
+| 22A | ReferralBookService | ✅ Complete |
+| 22B | BookRegistrationService Core | ✅ Complete |
+| 22C | Check Mark Logic & Roll-Off Rules | ✅ Complete |
+
+### Weeks 23-25 Implementation (February 4, 2026)
+
+**Week 23: Dispatch Services**
+
+| Session | Focus | Status |
+|---------|-------|--------|
+| 23A | LaborRequestService | ✅ Complete |
+| 23B | JobBidService | ✅ Complete |
+| 23C | DispatchService | ✅ Complete |
+
+**Week 24: Queue Management & Enforcement**
+
+| Session | Focus | Status |
+|---------|-------|--------|
+| 24A | QueueService Core | ✅ Complete |
+| 24B | EnforcementService | ✅ Complete |
+| 24C | Analytics & Integration | ✅ Complete |
+
+**Week 25: API Endpoints**
+
+| Session | Focus | Status |
+|---------|-------|--------|
+| 25A | Book & Registration API | ✅ Complete |
+| 25B | LaborRequest & Bid API | ✅ Complete |
+| 25C | Dispatch & Admin API | ✅ Complete |
+
+### Files Created (Weeks 23-25)
+
+```
+src/services/
+├── labor_request_service.py         # Rules 2,3,4,11: Request lifecycle, cutoff, ordering
+├── job_bid_service.py               # Rule 8: Bidding window, suspension tracking
+├── dispatch_service.py              # Rules 9,12,13: Core dispatch, termination, by-name
+├── queue_service.py                 # Queue snapshots, next-eligible, wait estimation
+└── enforcement_service.py           # Batch processing: re-sign, expired cleanup
+
+src/routers/
+├── referral_books_api.py            # ~12 endpoints: Book CRUD, stats, settings
+├── registration_api.py              # ~12 endpoints: Registration, re-sign, resign
+├── labor_request_api.py             # ~12 endpoints: Request CRUD, fulfillment
+├── job_bid_api.py                   # ~10 endpoints: Bid submission, acceptance
+└── dispatch_api.py                  # ~16 endpoints: Dispatch, queue, enforcement
+```
+
+### Files Modified (Weeks 23-25)
+
+```
+src/main.py                          # Registered 5 Phase 7 API routers, version 0.9.6-alpha
+```
+
+### Business Rules Implemented (Weeks 23-25)
+
+| Rule | Implementation | Service |
+|------|---------------|---------|
+| Rule 2 | Morning referral processing order | LaborRequestService |
+| Rule 3 | 3 PM cutoff for next morning dispatch | LaborRequestService |
+| Rule 4 | Agreement type filtering (PLA/CWA/TERO) | LaborRequestService |
+| Rule 8 | 5:30 PM–7:00 AM bidding window, 2 rejection = 1-year suspension | JobBidService |
+| Rule 9 | Short call ≤10 days, position restoration | DispatchService |
+| Rule 11 | Check mark determination (specialty, MOU, early start) | LaborRequestService |
+| Rule 12 | Quit/discharge = all-books rolloff + 2-week blackout | DispatchService |
+| Rule 13 | By-name anti-collusion enforcement | DispatchService |
+
+### Files Created (Weeks 20-22)
+
+```
+docs/phase7/
+└── PHASE7_SCHEMA_DECISIONS.md          # 5 pre-implementation decisions
+
+src/db/enums/
+└── phase7_enums.py                      # 19 Phase 7 enums (BookClassification, RegistrationStatus, etc.)
+
+src/models/
+├── referral_book.py                     # ReferralBook model
+├── book_registration.py                 # BookRegistration model (APN as DECIMAL)
+├── registration_activity.py             # Append-only audit trail
+├── labor_request.py                     # Employer job request model
+├── job_bid.py                           # Member bid tracking
+└── dispatch.py                          # Central dispatch record
+
+src/schemas/
+├── referral_book.py                     # ReferralBook Pydantic schemas
+├── book_registration.py                 # BookRegistration schemas + QueuePosition
+├── registration_activity.py             # Activity schemas
+├── labor_request.py                     # LaborRequest schemas
+├── job_bid.py                           # JobBid schemas
+└── dispatch.py                          # Dispatch schemas
+
+src/services/
+├── referral_book_service.py             # Book CRUD, stats, settings
+└── book_registration_service.py         # Registration, check marks, roll-off logic
+
+src/seed/
+└── phase7_seed.py                       # Seeds 11 referral books
+
+src/tests/
+└── test_phase7_models.py                # Model and enum tests (20+ tests)
+```
+
+### Files Modified (Weeks 20-22)
+
+```
+src/db/enums/__init__.py                 # Export Phase 7 enums
+src/models/__init__.py                   # Export Phase 7 models
+src/models/member.py                     # Added book_registrations relationship
+src/schemas/__init__.py                  # Export Phase 7 schemas
+```
+
+### Key Schema Decisions
+
+| # | Decision | Rationale |
+|---|----------|-----------|
+| 1 | **Separate JobBid model** | Cleaner audit trail, supports rejection tracking for 1-year suspension |
+| 2 | **MemberTransaction independent** | Separates financial transactions from dues payments |
+| 3 | **Per-book exempt status** | Exempt on BookRegistration, not Member (more flexible) |
+| 4 | **Field naming standardized** | `registration_number` (APN), `referral_start_time`, etc. |
+| 5 | **Dual audit pattern** | Both RegistrationActivity AND audit_logs for NLRA compliance |
+
+### Phase 7 Enums Implemented (19)
+
+`BookClassification`, `BookRegion`, `RegistrationStatus`, `RegistrationAction`, `ExemptReason`, `RolloffReason`, `NoCheckMarkReason`, `LaborRequestStatus`, `BidStatus`, `DispatchMethod`, `DispatchStatus`, `DispatchType`, `TermReason`, `JobClass`, `MemberType`, `ReferralStatus`, `ActivityCode`, `PaymentSource`, `AgreementType`
+
+### Business Rules Implemented in Services
+
+- **30-day re-sign cycle** with automated reminder queries
+- **3 check marks = roll-off** with per-book tracking
+- **Exempt status** (7 reason types: military, medical, union_business, salting, jury_duty, training, other)
+- **Short call position restoration** (max 2 per cycle)
+- **FIFO queue ordering** by APN (DECIMAL(10,2))
+
+### Data Analysis Status
+
+Two batches of production data analyzed from LaborPower Custom Reports module:
+
+| Batch | Date | Files | Contents |
+|-------|------|-------|----------|
+| Batch 1 | Feb 2, 2026 | 12 | Wire SEA/BREM/PA + Technician + Utility Worker reg lists; 7 employer lists |
+| Batch 2 | Feb 2, 2026 | 12 | STOCKMAN + TRADESHOW + TERO APPR WIRE + Technician + Utility Worker; 7 employer lists (+ RESIDENTIAL discovery) |
+| **Total** | | **24 files** | 4,033 registrations across 8 books; ~843 unique employers across 8 contract codes |
+
+Analysis documents:
+- `LaborPower_Data_Analysis_Schema_Guidance_1.docx` — Volume 1 (Batch 1)
+- `LaborPower_Data_Analysis_Schema_Guidance_2.docx` — Volume 2 (Batch 2 + schema corrections)
+- `UnionCore_Continuity_Document_Consolidated.md` — Master reference merging both volumes
+
+### Critical Schema Findings (8)
+
+| # | Finding | Severity |
+|---|---------|----------|
+| 1 | **APN = DECIMAL(10,2), NOT INTEGER** — Integer part is Excel serial date, decimal is secondary sort key (.23–.91). INTEGER destroys dispatch ordering. | 🔴 Critical |
+| 2 | **Duplicate APNs within books** — Cannot use APN as unique key. Must use UNIQUE(member_id, book_id, book_priority_number). | 🔴 Critical |
+| 3 | **RESIDENTIAL = 8th contract code** — 259 employers, 80% also WIREPERSON, 52 residential-only shops. Missing from all prior docs. | 🟡 High |
+| 4 | **Book Name ≠ Contract Code** — STOCKMAN book → STOCKPERSON contract. TECHNICIAN/TRADESHOW/UTILITY WORKER have NO matching contract code. Schema must separate book_name, classification, and contract_code. | 🔴 Critical |
+| 5 | **TERO APPR WIRE = compound book** — Encodes agreement_type (TERO) + work_level (APPRENTICE) + classification (WIRE). Needs `agreement_type`, `work_level`, `book_type` columns on `referral_books`. | 🟡 High |
+| 6 | **Cross-regional registration** — 87% of Wire Book 1 on ALL THREE regional books. registrations table will have ~3× rows vs unique Wire members. | 🟢 Medium |
+| 7 | **APN 45880.41 on FOUR books** — One member on Technician, TERO Appr Wire, Tradeshow, Utility Worker simultaneously. Validates many-to-many model. | 🟢 Medium |
+| 8 | **Inverted tier distributions** — STOCKMAN Book 3 = 8.6× Book 1; TECHNICIAN Book 3 > Book 1. Strengthens "Book 3 = Travelers" hypothesis. | 🟢 Medium |
+
+### Known Books (11)
+
+| Book Name | Classification | Region | Contract Code | Agreement | Work Level |
+|-----------|---------------|--------|---------------|-----------|------------|
+| WIRE SEATTLE | Wire | Seattle | WIREPERSON | Standard | Journeyman |
+| WIRE BREMERTON | Wire | Bremerton | WIREPERSON | Standard | Journeyman |
+| WIRE PT ANGELES | Wire | Pt. Angeles | WIREPERSON | Standard | Journeyman |
+| TECHNICIAN | Technician | Jurisdiction-wide | *(unknown)* | Standard | Journeyman |
+| UTILITY WORKER | Utility Worker | Jurisdiction-wide | *(unknown)* | Standard | Journeyman |
+| STOCKMAN | Stockman | Jurisdiction-wide | STOCKPERSON | Standard | Journeyman |
+| TRADESHOW | Tradeshow | Jurisdiction-wide | *(none — supplemental)* | Standard | Journeyman |
+| TERO APPR WIRE | Wire | *(unknown)* | *(WIREPERSON?)* | **TERO** | **Apprentice** |
+| *(implied)* SOUND & COMM | Sound & Comm | *(unknown)* | SOUND & COMM | Standard | Journeyman |
+| *(implied)* LT FXT MAINT | Lt. Fixture Maint. | *(unknown)* | LT FXT MAINT | Standard | Journeyman |
+| *(implied)* MARINE | Marine | *(unknown)* | GROUP MARINE | Standard | Journeyman |
+
+**Employer Contract Codes (8 confirmed):** WIREPERSON, SOUND & COMM, STOCKPERSON, LT FXT MAINT, GROUP MARINE, GROUP TV & APPL, MARKET RECOVERY, RESIDENTIAL
+
+### Business Rules (14)
+
+Source: "IBEW Local 46 Referral Procedures" — Effective October 4, 2024
+
+| # | Rule | System Impact |
+|---|------|---------------|
+| 1 | Office Hours & Regions | Region entities with operating parameters |
+| 2 | Morning Referral Processing Order | Wire 8:30 AM → S&C/Marine/Stock/LFM/Residential 9:00 AM → Tradeshow 9:30 AM |
+| 3 | Labor Request Cutoff | Employer requests by 3 PM for next morning; web bids after 5:30 PM |
+| 4 | Agreement Types (PLA/CWA/TERO) | `agreement_type` on job_requests AND referral_books |
+| 5 | Registration Rules | One per classification per member |
+| 6 | Re-Registration Triggers | Short call termination, under scale, 90-day rule, turnarounds |
+| 7 | Re-Sign 30-Day Cycle | Automated alert/drop logic |
+| 8 | Internet/Email Bidding | 5:30 PM – 7:00 AM window; 2nd rejection = lose privileges 1 year |
+| 9 | Short Calls | ≤10 business days; max 2 per cycle; ≤3 days don't count |
+| 10 | Check Marks (Penalty) | 2 allowed, 3rd = rolled off that book. Separate per area book |
+| 11 | No Check Mark Exceptions | Specialty skills, MOU sites, early starts, under scale, short calls |
+| 12 | Quit or Discharge | Rolled off ALL books; 2-week foreperson-by-name blackout |
+| 13 | Foreperson By Name | Anti-collusion: cannot be filled by registrants who communicated with employer |
+| 14 | Exempt Status | Military, union business, salting, medical, jury duty |
+
+### New Tables (12)
+
+| Table | Purpose |
+|-------|---------|
+| `referral_books` | Book definitions — name, contract_code (NULLABLE), agreement_type, work_level, book_type |
+| `registrations` | Member out-of-work entries — APN as DECIMAL(10,2), status, re-sign tracking |
+| `employer_contracts` | Employer-to-contract relationships — 8 contract codes including RESIDENTIAL |
+| `job_requests` | Employer labor requests — lifecycle: OPEN→FILLED/CANCELLED/EXPIRED |
+| `job_requirements` | Per-request skill/cert requirements (junction table) |
+| `dispatches` | Referral transactions — links registration → job_request → member → employer |
+| `web_bids` | Internet bidding records — BID/NO_BID/RETRACT actions |
+| `check_marks` | Penalty tracking — 2 allowed per book, 3rd = roll-off |
+| `member_exemptions` | Exempt status periods — 7 reason types |
+| `bidding_infractions` | Bidding privilege violations and revocation periods |
+| `worksites` | Physical job locations separate from employer entity |
+| `blackout_periods` | Quit/discharge restrictions — per member-employer |
+
+### Schema Corrections Applied (9)
+
+| Item | Original Assumption | Corrected To |
+|------|---------------------|--------------|
+| APN data type | INTEGER | DECIMAL(10,2) |
+| APN field name | position_number | applicant_priority_number |
+| Unique constraint | (member_id, book_id) | (member_id, book_id, book_priority_number) |
+| Book tier field | Not explicit | book_priority_number INTEGER (1–4) |
+| referral_books.contract_code | NOT NULL | **NULLABLE** (Tradeshow, TERO have no contract) |
+| referral_books.agreement_type | Not proposed | **NEW:** VARCHAR(20) DEFAULT 'STANDARD' |
+| referral_books.work_level | Not proposed | **NEW:** VARCHAR(20) DEFAULT 'JOURNEYMAN' |
+| referral_books.book_type | Not proposed | **NEW:** VARCHAR(20) DEFAULT 'PRIMARY' |
+| employer_contracts domain | 7 contract codes | **8 codes (+ RESIDENTIAL)** |
+
+### Data Gaps (16)
+
+#### Priority 1 — BLOCKING (before schema DDL)
+
+| # | Gap | How to Resolve |
+|---|-----|----------------|
+| 1 | REGLIST with member identifiers | LaborPower Custom Report: REGLIST |
+| 2 | RAW DISPATCH DATA | LaborPower Custom Report: RAW DISPATCH DATA |
+| 3 | EMPLOYCONTRACT report | LaborPower Custom Report: EMPLOYCONTRACT |
+
+#### Priority 2 — IMPORTANT (6 items)
+Book catalog confirmation, book-to-contract mapping, sample registration detail, sample dispatch history, TERO/PLA/CWA catalog, duplicate employer resolution strategy.
+
+#### Priority 3 — CLARIFICATION (7 items)
+90-day rule definition, "too many days" threshold, total region count, tier semantics, TRADESHOW-specific rules, apprentice book rules, RESIDENTIAL vs WIREPERSON differences.
+
+⚠️ **Do NOT finalize schema DDL or begin migration code until Priority 1 gaps are resolved.**
+
+### Sub-Phases (7a–7g) — 100-150 hrs total
+
+| Sub-Phase | Focus | Hours | Blocked By |
+|-----------|-------|-------|------------|
+| 7a | Data Collection — 3 Priority 1 exports from LaborPower | 3-5 | ⛔ LaborPower access |
+| 7b | Schema Finalization — DDL, Alembic migrations, seed data | 10-15 | 7a |
+| 7c | Core Services + API — 14 business rules, CRUD, dispatch logic | 25-35 | 7b |
+| 7d | Import Tooling — CSV pipeline: employers → registrations → dispatch | 15-20 | 7b (parallel with 7c) |
+| 7e | Frontend UI — book management, dispatch board, web bidding | 20-30 | 7c |
+| 7f | Reports P0+P1 — 49 critical/high priority reports | 20-30 | 7c |
+| 7g | Reports P2+P3 — 29 medium/low priority reports | 10-15 | 7f |
+
+### LaborPower Report Inventory
+
+~78 de-duplicated reports (91 raw) organized by priority:
+
+| Priority | Count | Examples |
+|----------|-------|---------|
+| P0 (Critical) | 16 | Out-of-work lists, dispatch logs, employer active list |
+| P1 (High) | 33 | Registration history, dispatch summaries, check mark reports |
+| P2 (Medium) | 22 | Analytics, trend reports, employer utilization |
+| P3 (Low) | 7 | Projections, ad-hoc queries |
+
+Full inventory: `docs/phase7/LABORPOWER_REFERRAL_REPORTS_INVENTORY.md`
+
+### ⚠️ Phase 7 Session Reminders
+
+> **Member ≠ Student.** Members are IBEW union members in the referral system. Students are pre-apprenticeship program participants. NEVER conflate. Phase 7 models FK to `members`, NOT `students`.
+
+> **Book ≠ Contract.** Books are out-of-work registration lists. Contracts are collective bargaining agreements. The mapping is NOT 1:1. STOCKMAN book dispatches under STOCKPERSON contract. 3 books have NO contract code.
+
+> **APN = DECIMAL(10,2).** Integer part is Excel serial date. Decimal part (.23–.91) is secondary sort key for same-day dispatch ordering. NEVER truncate to INTEGER.
+
+> **Audit.** `registrations`, `dispatches`, and `check_marks` tables MUST be in AUDITED_TABLES (NLRA 7-year compliance).
+
+### Key Planning Documents
+
+| Document | Location |
+|----------|----------|
+| **Master reference (Volumes 1+2 merged)** | **`docs/phase7/UnionCore_Continuity_Document_Consolidated.md`** |
+| Full implementation plan | `docs/phase7/PHASE7_REFERRAL_DISPATCH_PLAN.md` |
+| Technical details (v2) | `docs/phase7/PHASE7_IMPLEMENTATION_PLAN_v2.md` |
+| Session continuity doc | `docs/phase7/PHASE7_CONTINUITY_DOC.md` |
+| Session continuity addendum | `docs/phase7/PHASE7_CONTINUITY_DOC_ADDENDUM.md` |
+| Local 46 referral books | `docs/phase7/LOCAL46_REFERRAL_BOOKS.md` |
+| Gap analysis | `docs/phase7/LABORPOWER_GAP_ANALYSIS.md` |
+| Reports inventory (78 reports) | `docs/phase7/LABORPOWER_REFERRAL_REPORTS_INVENTORY.md` |
+| Schema Guidance Vol. 1 | `LaborPower_Data_Analysis_Schema_Guidance_1.docx` |
+| Schema Guidance Vol. 2 | `LaborPower_Data_Analysis_Schema_Guidance_2.docx` |
+
+---
+
+*Welcome to IP2A. Let's build something that lasts.*
+
+---
+
+**Document Version:** 4.0
+**Last Updated:** February 4, 2026
+**Previous Version:** 3.0 (February 3, 2026 — Phase 7 section added, v0.9.4-alpha baseline)
