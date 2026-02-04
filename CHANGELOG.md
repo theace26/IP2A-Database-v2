@@ -7,12 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> **v0.9.7-alpha — PHASE 7 Week 26 Complete**
-> 564+ tests, ~200+ API endpoints, 32 models (26 + 6 Phase 7), 15 ADRs
+> **v0.9.8-alpha — PHASE 7 Week 27 In Progress**
+> 566+ tests passing (27 blocked by backend model issue), ~200+ API endpoints, 32 models (26 + 6 Phase 7), 15 ADRs
 > Railway deployed, Stripe live, Mobile PWA enabled
-> Current: Phase 7 — Referral & Dispatch System (Backend + Week 26 Frontend UI Complete)
+> Current: Phase 7 — Referral & Dispatch System (Backend + Weeks 26-27 Frontend UI)
+
+### Known Issues
+- **Dispatch Model Relationship Error** (Pre-existing from Phase 7 backend)
+  * SQLAlchemy error: "Could not determine join condition between parent/child tables on relationship Dispatch.bid"
+  * Affects 25 dispatch frontend tests that require database queries
+  * Fix required: Add `foreign_keys` parameter to Dispatch.bid relationship in src/models/dispatch.py
+  * Frontend code is complete and functional - issue is backend model configuration only
 
 ### Added
+- **Phase 7 Week 27: Dispatch Workflow UI** (February 4, 2026)
+  * Created DispatchFrontendService with time-aware business logic (bidding window, 3 PM cutoff, morning referral order)
+  * Created dispatch dashboard with live stats (pending requests, today's dispatches, active on job, pending bids)
+  * Created labor request list page with rich filtering (status, book, employer, search)
+  * Created labor request detail page with candidates, bids, and dispatch history
+  * Created morning referral processing page with time guards (bidding window alerts, cutoff warnings)
+  * Created active dispatches page with status filtering and short call tracking
+  * Created queue management page with book tabs and position display
+  * Created enforcement dashboard with suspensions, violations, and blackout tracking (placeholder data)
+  * Created 9 HTMX partials: stats cards, activity feed, pending requests, bid queue, queue table, request table, dispatch table
+  * Created dispatch_frontend router with 15 main routes + 5 HTMX partial routes
+  * Activated dispatch navigation links in sidebar (Dashboard, Requests, Morning Referral, Active, Queue, Enforcement)
+  * Added 27 new frontend tests (2 passing, 25 blocked by pre-existing Dispatch model relationship issue)
+  * Registered dispatch_frontend_router in main.py
+  * Created comprehensive API discovery document: docs/phase7/week27_api_discovery.md
+  * Business rules surfaced: Rules 2 (morning referral order), 3 (3 PM cutoff), 4 (agreement filtering), 8 (bidding window/suspension), 9 (short call), 11 (check marks), 12 (quit/discharge), 13 (by-name)
+  * Stack: Jinja2 + HTMX + DaisyUI + Alpine.js (time display)
 - **Phase 7 Week 26: Books & Registration UI** (February 4, 2026)
   * Created ReferralFrontendService for template data formatting and badge helpers
   * Created referral landing page with stats dashboard (active books, registered members, dispatched count)

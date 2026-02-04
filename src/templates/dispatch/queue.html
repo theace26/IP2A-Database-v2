@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Dispatch Queue{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Dispatch Queue</h1>
+        <p class="text-base-content/60">Current out-of-work queue positions</p>
+    </div>
+</div>
+
+<!-- Book tabs -->
+<div class="card bg-base-100 shadow-md">
+    <div class="card-body">
+        <div class="tabs tabs-boxed mb-4" x-data="{ activeBook: '{{ default_book_id }}' }">
+            {% for book in books %}
+            <a class="tab"
+               :class="{ 'tab-active': activeBook === '{{ book.id }}' }"
+               @click="activeBook = '{{ book.id }}'"
+               hx-get="/dispatch/partials/queue-table?book_id={{ book.id }}"
+               hx-target="#queue-table-container"
+               hx-swap="innerHTML">
+                {{ book.short_name }}
+                <span class="badge badge-sm ml-1">{{ book.queue_count }}</span>
+            </a>
+            {% endfor %}
+        </div>
+
+        <div id="queue-table-container"
+             hx-get="/dispatch/partials/queue-table{% if default_book_id %}?book_id={{ default_book_id }}{% endif %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <div class="skeleton h-96 w-full"></div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

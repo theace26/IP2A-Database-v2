@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Labor Requests{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Labor Requests</h1>
+        <p class="text-base-content/60">Employer requests for workers</p>
+    </div>
+    <button class="btn btn-primary btn-sm"
+            onclick="create_request_modal.showModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        New Request
+    </button>
+</div>
+
+<!-- Filters -->
+<div class="card bg-base-100 shadow-sm mb-6">
+    <div class="card-body p-4">
+        <form hx-get="/dispatch/requests"
+              hx-target="#requests-table"
+              hx-swap="innerHTML"
+              hx-trigger="change, submit"
+              class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+            <!-- Search -->
+            <input type="search"
+                   name="search"
+                   placeholder="Search employer or request #..."
+                   class="input input-bordered input-sm"
+                   value="{{ filters.search or '' }}"
+                   hx-get="/dispatch/requests"
+                   hx-trigger="input changed delay:300ms, search"
+                   hx-target="#requests-table"
+                   hx-include="[name='status'], [name='book_id']">
+
+            <!-- Status Filter -->
+            <select name="status" class="select select-bordered select-sm">
+                <option value="">All Statuses</option>
+                <option value="open" {% if filters.status == 'open' %}selected{% endif %}>Open</option>
+                <option value="partially_filled" {% if filters.status == 'partially_filled' %}selected{% endif %}>Partially Filled</option>
+                <option value="filled" {% if filters.status == 'filled' %}selected{% endif %}>Filled</option>
+                <option value="cancelled" {% if filters.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                <option value="expired" {% if filters.status == 'expired' %}selected{% endif %}>Expired</option>
+            </select>
+
+            <!-- Book Filter (if available) -->
+            <select name="book_id" class="select select-bordered select-sm">
+                <option value="">All Books</option>
+                <!-- Would populate from books in production -->
+            </select>
+
+            <button type="submit" class="btn btn-sm btn-ghost">Apply Filters</button>
+        </form>
+    </div>
+</div>
+
+<!-- Requests Table -->
+<div class="card bg-base-100 shadow-md">
+    <div class="card-body p-0">
+        <div id="requests-table"
+             hx-get="/dispatch/requests"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <div class="p-8 text-center">
+                <div class="skeleton h-96 w-full"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Request Modal (placeholder) -->
+<dialog id="create_request_modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">New Labor Request</h3>
+        <p class="text-base-content/60">Modal content would go here</p>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn">Close</button>
+            </form>
+        </div>
+    </div>
+</dialog>
+
+{% endblock %}

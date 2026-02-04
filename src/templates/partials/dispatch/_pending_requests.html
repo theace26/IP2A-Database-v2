@@ -1,0 +1,49 @@
+{% if pending_requests %}
+<div class="space-y-3">
+    {% for request in pending_requests[:5] %}
+    <div class="card bg-base-200 shadow-sm">
+        <div class="card-body p-4">
+            <div class="flex justify-between items-start">
+                <div class="flex-1">
+                    <h3 class="font-semibold">{{ request.employer_name }}</h3>
+                    <p class="text-sm text-base-content/70 mt-1">
+                        {{ request.workers_requested }} workers needed
+                        {% if request.classification %}
+                        • {{ request.classification.value.replace('_', ' ').title() }}
+                        {% endif %}
+                    </p>
+                    <p class="text-sm text-base-content/60 mt-1">
+                        Start: {{ request.start_date.strftime('%b %d') }}
+                        {% if request.start_time %}at {{ request.start_time.strftime('%I:%M %p') }}{% endif %}
+                    </p>
+                </div>
+                <div class="flex flex-col items-end gap-2">
+                    {% set badge = request_status_badge(request.status.value) %}
+                    <span class="badge {{ badge.class }}">{{ badge.label }}</span>
+                    <div class="flex gap-1">
+                        <a href="/dispatch/requests/{{ request.id }}" class="btn btn-xs btn-ghost">View</a>
+                        <button class="btn btn-xs btn-primary">Fill</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if pending_requests|length > 5 %}
+<div class="text-center mt-4">
+    <a href="/dispatch/requests?status=open" class="btn btn-sm btn-ghost">
+        View All {{ pending_requests|length }} Requests →
+    </a>
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-center py-12 text-base-content/60">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+    <p>No pending requests</p>
+</div>
+{% endif %}

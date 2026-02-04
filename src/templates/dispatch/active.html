@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Active Dispatches{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Active Dispatches</h1>
+        <p class="text-base-content/60">Members currently on jobs</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card bg-base-100 shadow-sm mb-6">
+    <div class="card-body p-4">
+        <form hx-get="/dispatch/active"
+              hx-target="#dispatches-table"
+              hx-swap="innerHTML"
+              hx-trigger="change, submit"
+              class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            <input type="search"
+                   name="search"
+                   placeholder="Search member or employer..."
+                   class="input input-bordered input-sm"
+                   value="{{ filters.search or '' }}"
+                   hx-get="/dispatch/active"
+                   hx-trigger="input changed delay:300ms, search"
+                   hx-target="#dispatches-table">
+
+            <select name="status" class="select select-bordered select-sm">
+                <option value="">All Statuses</option>
+                <option value="dispatched">Dispatched</option>
+                <option value="checked_in">Checked In</option>
+                <option value="working">Working</option>
+            </select>
+
+            <button type="submit" class="btn btn-sm btn-ghost">Apply Filters</button>
+        </form>
+    </div>
+</div>
+
+<!-- Dispatches Table -->
+<div class="card bg-base-100 shadow-md">
+    <div class="card-body p-0">
+        <div id="dispatches-table"
+             hx-get="/dispatch/active"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <div class="p-8 text-center">
+                <div class="skeleton h-96 w-full"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

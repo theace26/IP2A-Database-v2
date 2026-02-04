@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Enforcement Dashboard{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Enforcement Dashboard</h1>
+        <p class="text-base-content/60">Active suspensions, blackouts, and violations</p>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="stat bg-base-100 rounded-lg shadow-sm border border-base-300">
+        <div class="stat-title">Active Suspensions</div>
+        <div class="stat-value text-error">{{ enforcement.active_suspensions }}</div>
+        <div class="stat-desc">1-year bidding bans</div>
+    </div>
+
+    <div class="stat bg-base-100 rounded-lg shadow-sm border border-base-300">
+        <div class="stat-title">Recent Violations</div>
+        <div class="stat-value text-warning">{{ enforcement.recent_violations }}</div>
+        <div class="stat-desc">Last 30 days</div>
+    </div>
+
+    <div class="stat bg-base-100 rounded-lg shadow-sm border border-base-300">
+        <div class="stat-title">Blackout Members</div>
+        <div class="stat-value text-accent">{{ enforcement.blackout_members }}</div>
+        <div class="stat-desc">2-week restrictions</div>
+    </div>
+</div>
+
+<!-- Suspensions -->
+<div class="card bg-base-100 shadow-md mb-6">
+    <div class="card-body">
+        <h2 class="card-title">Active Suspensions (Rule 8 & 12)</h2>
+
+        {% if suspensions %}
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Member</th>
+                        <th>Reason</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Days Remaining</th>
+                        <th>Rule</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for suspension in suspensions %}
+                    <tr>
+                        <td>{{ suspension.member_name }}</td>
+                        <td>{{ suspension.reason }}</td>
+                        <td>{{ suspension.start_date.strftime('%b %d, %Y') }}</td>
+                        <td>{{ suspension.end_date.strftime('%b %d, %Y') }}</td>
+                        <td>{{ suspension.days_remaining }}</td>
+                        <td><span class="badge badge-sm">Rule {{ suspension.rule }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-base-content/60">
+            <p>No active suspensions</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Placeholder for additional sections -->
+<div class="alert alert-info">
+    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <span>Additional enforcement sections (blackouts, violations, by-name flagged requests) will be added in future iterations.</span>
+</div>
+
+{% endblock %}

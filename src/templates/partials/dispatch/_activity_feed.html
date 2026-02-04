@@ -1,0 +1,36 @@
+{% if activity %}
+<div class="space-y-3">
+    {% for event in activity %}
+    <div class="flex items-start gap-3 p-3 rounded-lg hover:bg-base-200 transition">
+        <div class="flex-shrink-0">
+            {% if event.type == 'dispatch' %}
+            <div class="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            {% elif event.type == 'request' %}
+            <div class="w-8 h-8 rounded-full bg-info/10 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+            </div>
+            {% endif %}
+        </div>
+        <div class="flex-1 min-w-0">
+            <p class="text-sm">{{ event.description }}</p>
+            <p class="text-xs text-base-content/60 mt-1">
+                {{ event.time.strftime('%I:%M %p') }}
+            </p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-12 text-base-content/60">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <p>No activity today</p>
+</div>
+{% endif %}

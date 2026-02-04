@@ -75,8 +75,12 @@
                         <li><a href="/referral/books" class="{% if request.url.path.startswith('/referral/books') %}active{% endif %}">Books</a></li>
                         <li><a href="/referral/registrations" class="{% if request.url.path.startswith('/referral/registrations') %}active{% endif %}">Registrations</a></li>
                         <li class="menu-title mt-2"><span>Dispatch</span></li>
-                        <li><a href="/dispatch" class="{% if request.url.path == '/dispatch' %}active{% endif %} text-base-content/50">Dashboard (Week 27)</a></li>
-                        <li><a href="/dispatch/requests" class="{% if request.url.path.startswith('/dispatch/requests') %}active{% endif %} text-base-content/50">Requests (Week 27)</a></li>
+                        <li><a href="/dispatch" class="{% if request.url.path == '/dispatch' %}active{% endif %}">Dashboard</a></li>
+                        <li><a href="/dispatch/requests" class="{% if request.url.path.startswith('/dispatch/requests') %}active{% endif %}">Requests</a></li>
+                        <li><a href="/dispatch/morning-referral" class="{% if request.url.path == '/dispatch/morning-referral' %}active{% endif %}">Morning Referral</a></li>
+                        <li><a href="/dispatch/active" class="{% if request.url.path.startswith('/dispatch/active') %}active{% endif %}">Active Dispatches</a></li>
+                        <li><a href="/dispatch/queue" class="{% if request.url.path == '/dispatch/queue' %}active{% endif %}">Queue</a></li>
+                        <li><a href="/dispatch/enforcement" class="{% if request.url.path == '/dispatch/enforcement' %}active{% endif %}">Enforcement</a></li>
                     </ul>
                 </details>
             </li>

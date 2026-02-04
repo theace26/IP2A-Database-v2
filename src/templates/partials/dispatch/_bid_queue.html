@@ -1,0 +1,60 @@
+{% if bids %}
+<div class="space-y-6">
+    {% for request_bids in bids %}
+    <div class="card bg-base-200 shadow-sm">
+        <div class="card-body p-4">
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <h3 class="font-semibold">{{ request_bids.request.employer_name }}</h3>
+                    <p class="text-sm text-base-content/70">
+                        Request #{{ request_bids.request.request_number }}
+                        • {{ request_bids.request.workers_requested }} workers
+                    </p>
+                </div>
+                <a href="/dispatch/requests/{{ request_bids.request.id }}" class="btn btn-xs btn-ghost">View Request</a>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Position</th>
+                            <th>Member</th>
+                            <th>Book</th>
+                            <th>Bid Time</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bid in request_bids.bids %}
+                        <tr>
+                            <td>{{ bid.registration.applicant_priority_number }}</td>
+                            <td>{{ bid.member.full_name if bid.member else 'Unknown' }}</td>
+                            <td>Book {{ bid.registration.book_priority_number }}</td>
+                            <td>{{ bid.bid_time.strftime('%I:%M %p') }}</td>
+                            <td>
+                                {% set badge = bid_status_badge(bid.status.value) %}
+                                <span class="badge {{ badge.class }} badge-sm">{{ badge.label }}</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-xs btn-success" disabled>Accept</button>
+                                <button class="btn btn-xs btn-error" disabled>Reject</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-12 text-base-content/60">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <p>No pending bids</p>
+</div>
+{% endif %}

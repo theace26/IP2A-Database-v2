@@ -1,0 +1,73 @@
+{% if dispatches %}
+<div class="overflow-x-auto">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Member</th>
+                <th>Employer</th>
+                <th>Classification</th>
+                <th>Dispatch Date</th>
+                <th>Days on Job</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dispatch in dispatches %}
+            <tr>
+                <td>
+                    {% if dispatch.member %}
+                    <a href="/members/{{ dispatch.member.id }}" class="link link-hover">
+                        {{ dispatch.member.full_name }}
+                    </a>
+                    {% else %}
+                    Unknown
+                    {% endif %}
+                </td>
+                <td>{{ dispatch.employer.name if dispatch.employer else 'Unknown' }}</td>
+                <td>{{ dispatch.book.classification.value.replace('_', ' ').title() if dispatch.book else 'N/A' }}</td>
+                <td>{{ dispatch.dispatch_date.strftime('%b %d, %Y') }}</td>
+                <td>
+                    {% if dispatch.days_worked is not none %}
+                    {{ dispatch.days_worked }} days
+                    {% else %}
+                    N/A
+                    {% endif %}
+                </td>
+                <td>
+                    {% set badge = dispatch_status_badge(dispatch.status.value) %}
+                    <span class="badge {{ badge.class }} badge-sm">{{ badge.label }}</span>
+                    {% if dispatch.is_short_call %}
+                    <span class="badge badge-warning badge-sm ml-1">Short Call</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <button class="btn btn-xs btn-ghost">View</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="flex justify-center mt-4">
+    <div class="join">
+        {% for page_num in range(1, pagination.pages + 1) %}
+        <a href="?page={{ page_num }}"
+           class="join-item btn btn-sm {% if page_num == pagination.page %}btn-active{% endif %}">
+            {{ page_num }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-center py-12 text-base-content/60">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+    <p>No dispatches found</p>
+</div>
+{% endif %}

@@ -98,6 +98,7 @@ from src.routers.labor_request_api import router as labor_request_api_router
 from src.routers.job_bid_api import router as job_bid_api_router
 from src.routers.dispatch_api import router as dispatch_api_router
 from src.routers.referral_frontend import router as referral_frontend_router
+from src.routers.dispatch_frontend import router as dispatch_frontend_router
 
 # ------------------------------------------------------------
 # Initialize FastAPI
@@ -255,6 +256,7 @@ app.include_router(labor_request_api_router)
 app.include_router(job_bid_api_router)
 app.include_router(dispatch_api_router)
 app.include_router(referral_frontend_router)  # Week 26: Books & Registration UI
+app.include_router(dispatch_frontend_router)  # Week 27: Dispatch Workflow UI
 
 # Frontend routes (HTML pages) - include LAST to not interfere with API routes
 app.include_router(frontend.router)

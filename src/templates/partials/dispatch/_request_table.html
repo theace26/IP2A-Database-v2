@@ -1,0 +1,56 @@
+{% if labor_requests %}
+<div class="overflow-x-auto">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Request #</th>
+                <th>Employer</th>
+                <th>Workers</th>
+                <th>Classification</th>
+                <th>Start Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in labor_requests %}
+            <tr>
+                <td class="font-mono">{{ request.request_number }}</td>
+                <td>{{ request.employer_name }}</td>
+                <td>{{ request.workers_dispatched }}/{{ request.workers_requested }}</td>
+                <td>{{ request.classification.value.replace('_', ' ').title() if request.classification else 'N/A' }}</td>
+                <td>{{ request.start_date.strftime('%b %d, %Y') }}</td>
+                <td>
+                    {% set badge = request_status_badge(request.status.value) %}
+                    <span class="badge {{ badge.class }} badge-sm">{{ badge.label }}</span>
+                </td>
+                <td>
+                    <a href="/dispatch/requests/{{ request.id }}" class="btn btn-xs btn-ghost">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="flex justify-center mt-4">
+    <div class="join">
+        {% for page_num in range(1, pagination.pages + 1) %}
+        <a href="?page={{ page_num }}"
+           class="join-item btn btn-sm {% if page_num == pagination.page %}btn-active{% endif %}">
+            {{ page_num }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-center py-12 text-base-content/60">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+    <p>No labor requests found</p>
+</div>
+{% endif %}

@@ -1,0 +1,57 @@
+{% if queue %}
+<div class="overflow-x-auto">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Position (APN)</th>
+                <th>Member</th>
+                <th>Book Priority</th>
+                <th>Registration Date</th>
+                <th>Check Marks</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for registration in queue %}
+            <tr>
+                <td class="font-mono">{{ registration.applicant_priority_number }}</td>
+                <td>
+                    {% if registration.member %}
+                    <a href="/members/{{ registration.member.id }}" class="link link-hover">
+                        {{ registration.member.full_name }}
+                    </a>
+                    {% else %}
+                    Unknown
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="badge badge-sm">Book {{ registration.book_priority_number }}</span>
+                </td>
+                <td>{{ registration.registration_date.strftime('%b %d, %Y') if registration.registration_date else 'N/A' }}</td>
+                <td>
+                    {% if registration.check_marks > 0 %}
+                    <span class="badge badge-warning badge-sm">{{ registration.check_marks }} marks</span>
+                    {% else %}
+                    <span class="text-base-content/50">None</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if registration.is_exempt %}
+                    <span class="badge badge-info badge-sm">Exempt</span>
+                    {% else %}
+                    <span class="badge badge-success badge-sm">Active</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center py-12 text-base-content/60">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+    </svg>
+    <p>No members in queue</p>
+</div>
+{% endif %}
