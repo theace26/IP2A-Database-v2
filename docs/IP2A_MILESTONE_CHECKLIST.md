@@ -1,14 +1,31 @@
-# IP2A Milestone Checklist (Quick Reference)
+# UnionCore Milestone Checklist (Quick Reference)
 
 > **Document Created:** January 27, 2026
 > **Last Updated:** February 4, 2026
-> **Version:** v0.9.5-alpha — Phase 7 Weeks 20-22 Complete
-> **Status:** Phase 7 IN PROGRESS — Models, Enums, Schemas, Services Complete
+> **Version:** v2.0 — Hub/Spoke Migration
+> **App Version:** v0.9.6-alpha — Phase 7 Weeks 20-25 Complete (Services + API)
+> **Status:** Phase 7 IN PROGRESS — Models, Enums, Services, API Routers Complete → Frontend Next
+> **Development Model:** Hub/Spoke (see below)
 > **Print this or keep it open during sessions**
 
 ---
 
-## Current Focus: Phase 7 — Referral & Dispatch System (Implementation)
+## Hub/Spoke Project Structure
+
+Development planning uses a Hub/Spoke model. All work before Week 20 was built under the original monolithic model. Spoke tags appear starting at Week 20.
+
+| Project | Scope | Status |
+|---------|-------|--------|
+| **Hub** | Strategy, architecture, roadmap, documentation | Active |
+| **Spoke 2: Operations** | Dispatch/Referral, Pre-Apprenticeship, SALTing, Benevolence | Active — Phase 7 |
+| **Spoke 1: Core Platform** | Members, Dues, Employers, Member Portal | Create when needed |
+| **Spoke 3: Infrastructure** | Dashboard/UI, Reports, Documents, Import/Export, Logging | Create when needed |
+
+> **Sprint Weeks ≠ Calendar Weeks.** "Week 20" is sprint 20, not calendar week 20. Each sprint takes 1-2 calendar weeks at 5-10 hrs/week pace.
+
+---
+
+## Current Focus: Phase 7 — Referral & Dispatch System (Spoke 2)
 
 ### Legend: Done | In Progress | Pending
 
@@ -16,20 +33,20 @@
 
 ## Backend Phases: ALL COMPLETE + Phase 7 In Progress
 
-| Phase | Description | Models | Endpoints | Tests | Status |
-|-------|-------------|--------|-----------|-------|--------|
-| Phase 0 | Documentation & Structure | - | - | - | Done |
-| Phase 1 | Auth (JWT, RBAC, Registration) | 4 | 13 | 52 | Done |
-| Phase 2a | Union Ops (SALT, Benevolence, Grievance) | 5 | 27 | 31 | Done |
-| Phase 2b | Training (Students, Courses, Grades) | 7 | ~35 | 33 | Done |
-| Phase 3 | Documents (S3/MinIO) | 1 | 8 | 11 | Done |
-| Phase 4 | Dues Tracking | 4 | ~35 | 21 | Done |
-| **Phase 7** | **Referral & Dispatch (foundation)** | **6** | **—** | **20+** | **WIP** |
-| **Total** | **Including Phase 7 foundation** | **31** | **~120** | **185+** | **WIP** |
+| Phase | Description | Models | Endpoints | Tests | Status | Spoke |
+|-------|-------------|--------|-----------|-------|--------|-------|
+| Phase 0 | Documentation & Structure | - | - | - | Done | *(pre-Hub/Spoke)* |
+| Phase 1 | Auth (JWT, RBAC, Registration) | 4 | 13 | 52 | Done | *(pre-Hub/Spoke)* |
+| Phase 2a | Union Ops (SALT, Benevolence, Grievance) | 5 | 27 | 31 | Done | *(pre-Hub/Spoke)* |
+| Phase 2b | Training (Students, Courses, Grades) | 7 | ~35 | 33 | Done | *(pre-Hub/Spoke)* |
+| Phase 3 | Documents (S3/MinIO) | 1 | 8 | 11 | Done | *(pre-Hub/Spoke)* |
+| Phase 4 | Dues Tracking | 4 | ~35 | 21 | Done | *(pre-Hub/Spoke)* |
+| **Phase 7** | **Referral & Dispatch (Weeks 20-25)** | **6** | **~51** | **20+** | **WIP** | **Spoke 2** |
+| **Total** | **Including Phase 7 services + API** | **32** | **~200** | **542** | **WIP** | |
 
 ---
 
-## Phase 6: Frontend Build — COMPLETE
+## Phase 6: Frontend Build — COMPLETE *(pre-Hub/Spoke)*
 
 ### Week 1: Setup + Login (COMPLETE)
 
@@ -340,7 +357,23 @@
 
 **Version:** v0.9.4-alpha (Week 19 Complete)
 
-### Weeks 20-22: Phase 7 Foundation (COMPLETE)
+---
+
+## Phase 7: Referral & Dispatch System — Spoke 2
+
+**Goal:** Build complete out-of-work referral and dispatch system to replace LaborPower.
+
+**Effort Estimate:** 100-150 hours across sub-phases 7a-7g
+
+**Planning Documents:** `docs/phase7/` — see §7.9 Key Documents below
+
+**Dependency Chain:** 7a → 7b → 7c/7d (parallel) → 7e → 7f → 7g
+
+**Audit Scope:** Phase 7 tables `registrations`, `dispatches`, and `check_marks` require full audit trail logging (7-year NLRA compliance). Add to `AUDITED_TABLES` during 7c.
+
+---
+
+### Weeks 20-22: Phase 7 Foundation (COMPLETE) — Spoke 2
 
 | Task | Status |
 |------|--------|
@@ -358,25 +391,27 @@
 
 **Version:** v0.9.5-alpha (Weeks 20-22 Complete)
 
+### Weeks 23-25: Phase 7 Services + API (COMPLETE) — Spoke 2
+
+| Task | Status |
+|------|--------|
+| **Week 23:** LaborRequestService (create, fill, cancel, deadline enforcement) | Done |
+| **Week 23:** JobBidService (time-gated bidding, rejection counting) | Done |
+| **Week 23:** DispatchService (dispatch, accept, reject, short call tracking) | Done |
+| **Week 24:** QueueService (processing order, queue management) | Done |
+| **Week 24:** EnforcementService (re-registration, cascade roll-off, exemptions) | Done |
+| **Week 25:** referral_books_api router (10 endpoints) | Done |
+| **Week 25:** registration_api router (10 endpoints) | Done |
+| **Week 25:** labor_request_api router (9 endpoints) | Done |
+| **Week 25:** job_bid_api router (8 endpoints) | Done |
+| **Week 25:** dispatch_api router (14 endpoints) | Done |
+| 14 of 14 business rules implemented | Done |
+
+**Version:** v0.9.6-alpha (Weeks 23-25 Complete)
+
 ---
 
-## Phase 7: Referral & Dispatch System
-
-**Goal:** Build complete out-of-work referral and dispatch system to replace LaborPower.
-
-**Effort Estimate:** 100-150 hours across sub-phases 7a-7g
-
-**Planning Documents:** `docs/phase7/` — see §7.9 Key Documents below
-
-**Dependency Chain:** 7a → 7b → 7c/7d (parallel) → 7e → 7f → 7g
-
-**Audit Scope:** Phase 7 tables `registrations`, `dispatches`, and `check_marks` require full audit trail logging (7-year NLRA compliance). Add to `AUDITED_TABLES` during 7c.
-
-**Pre-Deployment:** Merge `develop → main` for v0.9.4-alpha production deployment before starting Phase 7 development.
-
----
-
-### §7.0 LaborPower Data Analysis (COMPLETE)
+### §7.0 LaborPower Data Analysis (COMPLETE) — Hub
 
 | Task | Status |
 |------|--------|
@@ -434,24 +469,24 @@
 
 ---
 
-### §7.3 Quick Reference: Business Rules (14)
+### §7.3 Quick Reference: Business Rules (14) — ALL IMPLEMENTED in Weeks 22-25
 
-| # | Rule | System Impact |
-|---|------|---------------|
-| 1 | Office Hours & Regions | Region enum, operating hours config |
-| 2 | Morning Referral Processing Order (Wire 8:30 → S&C/Marine/Stock/LFM/Residential 9:00 → Tradeshow 9:30) | Processing queue with time windows |
-| 3 | Labor Request Cutoff (3 PM next-day; web bids after 5:30 PM) | Deadline enforcement, web bid time gates |
-| 4 | Agreement Types (PLA/CWA/TERO) | agreement_type enum on referral_books |
-| 5 | Registration Rules (one per classification) | Validation: one active registration per book per member |
-| 6 | Re-Registration Triggers (short call, under scale, 90-day, turnarounds) | re_registration_reason enum, auto-relist logic |
-| 7 | Re-Sign 30-Day Cycle | Scheduled job or manual trigger, notification |
-| 8 | Internet/Email Bidding (5:30 PM–7 AM; 2nd rejection = 1 year loss) | Time-gated bidding, rejection counter, penalty enforcement |
-| 9 | Short Calls (≤10 days, max 2 per cycle, ≤3 days don't count) | Duration tracking, cycle counter, exemption logic |
-| 10 | Check Marks (2 allowed, 3rd = rolled off; separate per area book) | check_marks table with per-book tracking |
-| 11 | No Check Mark Exceptions (specialty, MOU, early start, under scale, etc.) | member_exemptions table, exemption_type enum |
-| 12 | Quit/Discharge (rolled off ALL books; 2-week foreperson blackout) | Cascade deregistration, blackout_periods table |
-| 13 | Foreperson By Name (anti-collusion) | by_name_request flag on dispatches |
-| 14 | Exempt Status (military, union business, salting, medical, jury duty) | member_exemptions with date ranges and reason types |
+| # | Rule | System Impact | Implemented |
+|---|------|---------------|-------------|
+| 1 | Office Hours & Regions | Region enum, operating hours config | ✅ Week 22 |
+| 2 | Morning Referral Processing Order | Processing queue with time windows | ✅ Week 24 |
+| 3 | Labor Request Cutoff | Deadline enforcement, web bid time gates | ✅ Week 23 |
+| 4 | Agreement Types (PLA/CWA/TERO) | agreement_type enum on referral_books | ✅ Week 20 |
+| 5 | Registration Rules (one per classification) | Validation: one active registration per book per member | ✅ Week 22 |
+| 6 | Re-Registration Triggers | re_registration_reason enum, auto-relist logic | ✅ Week 24 |
+| 7 | Re-Sign 30-Day Cycle | Scheduled trigger, notification | ✅ Week 24 |
+| 8 | Internet/Email Bidding | Time-gated bidding, rejection counter, penalty | ✅ Week 23 |
+| 9 | Short Calls | Duration tracking, cycle counter, exemption logic | ✅ Week 23 |
+| 10 | Check Marks | check_marks table with per-book tracking | ✅ Week 22 |
+| 11 | No Check Mark Exceptions | member_exemptions table, exemption_type enum | ✅ Week 24 |
+| 12 | Quit/Discharge | Cascade deregistration, blackout_periods table | ✅ Week 24 |
+| 13 | Foreperson By Name | by_name_request flag on dispatches | ✅ Week 23 |
+| 14 | Exempt Status | member_exemptions with date ranges and reason types | ✅ Week 24 |
 
 ---
 
@@ -531,7 +566,7 @@ Can be resolved during implementation without blocking.
 
 ---
 
-### Sub-Phase 7a: Data Collection (3-5 hrs) — BLOCKED by LaborPower access
+### Sub-Phase 7a: Data Collection (3-5 hrs) — BLOCKED by LaborPower access — Spoke 2
 
 | Task | Est. | Status |
 |------|------|--------|
@@ -544,44 +579,47 @@ Can be resolved during implementation without blocking.
 
 ---
 
-### Sub-Phase 7b: Schema Finalization (10-15 hrs) — BLOCKED by 7a
+### Sub-Phase 7b: Schema Finalization (10-15 hrs) — ✅ COMPLETE (Weeks 20-21) — Spoke 2
 
 | Task | Est. | Status |
 |------|------|--------|
-| Finalize referral_books table DDL with all corrected columns | 1 hr | Pending |
-| Finalize registrations table DDL with DECIMAL(10,2) APN | 1 hr | Pending |
-| Finalize employer_contracts with 8 contract codes | 1 hr | Pending |
-| Create DDL for remaining 9 tables (jobs, dispatches, bids, etc.) | 3 hrs | Pending |
-| Create Alembic migration for all 12 tables | 2 hrs | Pending |
-| Create enums (contract_code, agreement_type, dispatch_status, etc.) | 1 hr | Pending |
-| Create SQLAlchemy ORM models for all 12 tables | 2 hrs | Pending |
-| Seed referral_books with 11 known books | 30 min | Pending |
-| Seed contract codes with 8 known codes | 30 min | Pending |
-| Validate schema against all 14 business rules | 1 hr | Pending |
-| Update AUDITED_TABLES with registrations, dispatches, check_marks | 15 min | Pending |
+| Finalize referral_books table DDL with all corrected columns | 1 hr | Done |
+| Finalize registrations table DDL with DECIMAL(10,2) APN | 1 hr | Done |
+| Finalize employer_contracts with 8 contract codes | 1 hr | Done |
+| Create DDL for remaining 9 tables (jobs, dispatches, bids, etc.) | 3 hrs | Done |
+| Create Alembic migration for all 12 tables | 2 hrs | Done |
+| Create enums (contract_code, agreement_type, dispatch_status, etc.) | 1 hr | Done |
+| Create SQLAlchemy ORM models for all 12 tables | 2 hrs | Done |
+| Seed referral_books with 11 known books | 30 min | Done |
+| Seed contract codes with 8 known codes | 30 min | Done |
+| Validate schema against all 14 business rules | 1 hr | Done |
+| Update AUDITED_TABLES with registrations, dispatches, check_marks | 15 min | Done |
+
+**Note:** Sub-phase completed using available Batch 1 & Batch 2 data. Schema may require refinement when Priority 1 data gaps are resolved.
 
 ---
 
-### Sub-Phase 7c: Core Services + API (25-35 hrs) — BLOCKED by 7b
+### Sub-Phase 7c: Core Services + API (25-35 hrs) — ✅ COMPLETE (Weeks 22-25) — Spoke 2
 
 | Task | Est. | Status |
 |------|------|--------|
-| ReferralBookService (CRUD + book catalog queries) | 2 hrs | Pending |
-| RegistrationService (register, deregister, re-register, APN management) | 4 hrs | Pending |
-| EmployerContractService (CRUD + contract code management) | 2 hrs | Pending |
-| JobRequestService (create, fill, cancel, deadline enforcement) | 3 hrs | Pending |
-| DispatchService (dispatch, accept, reject, short call tracking) | 5 hrs | Pending |
-| WebBidService (time-gated bidding, rejection counting, penalty logic) | 3 hrs | Pending |
-| CheckMarkService (track marks, enforce 3rd-mark roll-off, per-book) | 2 hrs | Pending |
-| ExemptionService (military, medical, union business, salting) | 2 hrs | Pending |
-| Re-registration logic (short call, under scale, 90-day, turnaround) | 2 hrs | Pending |
-| Quit/discharge cascade (roll off ALL books, foreperson blackout) | 1 hr | Pending |
-| API routers for all services | 3 hrs | Pending |
-| Unit + integration tests (target: 50+) | 5 hrs | Pending |
+| ReferralBookService (CRUD + book catalog queries) | 2 hrs | Done (Week 22) |
+| BookRegistrationService (register, re-sign, queue, check marks) | 4 hrs | Done (Week 22) |
+| LaborRequestService (create, fill, cancel, deadline enforcement) | 3 hrs | Done (Week 23) |
+| JobBidService (time-gated bidding, rejection counting, penalty logic) | 3 hrs | Done (Week 23) |
+| DispatchService (dispatch, accept, reject, short call tracking) | 5 hrs | Done (Week 23) |
+| QueueService (processing order, morning sort, queue management) | 2 hrs | Done (Week 24) |
+| EnforcementService (re-registration, cascade roll-off, exemptions) | 2 hrs | Done (Week 24) |
+| referral_books_api router (10 endpoints) | — | Done (Week 25) |
+| registration_api router (10 endpoints) | — | Done (Week 25) |
+| labor_request_api router (9 endpoints) | — | Done (Week 25) |
+| job_bid_api router (8 endpoints) | — | Done (Week 25) |
+| dispatch_api router (14 endpoints) | — | Done (Week 25) |
+| 14 of 14 business rules implemented | — | Done |
 
 ---
 
-### Sub-Phase 7d: Import Tooling (15-20 hrs) — BLOCKED by 7b, parallel with 7c
+### Sub-Phase 7d: Import Tooling (15-20 hrs) — BLOCKED by 7a — Spoke 2
 
 | Task | Est. | Status |
 |------|------|--------|
@@ -597,25 +635,26 @@ Can be resolved during implementation without blocking.
 
 ---
 
-### Sub-Phase 7e: Frontend UI (20-30 hrs) — BLOCKED by 7c
+### Sub-Phase 7e: Frontend UI (20-30 hrs) — 🔜 NEXT (Weeks 26-28) — Spoke 2
 
-| Task | Est. | Status |
-|------|------|--------|
-| Referral landing page with book status overview | 2 hrs | Pending |
-| Book list page with registration counts per tier | 2 hrs | Pending |
-| Book detail page with registrant list | 3 hrs | Pending |
-| Registration management (add/remove members from books) | 3 hrs | Pending |
-| Dispatch board (pending requests, available members, drag-assign) | 5 hrs | Pending |
-| Job request creation form (employer, requirements, dates) | 2 hrs | Pending |
-| Web bidding interface (time-gated, member-facing) | 3 hrs | Pending |
-| Check mark tracking UI | 2 hrs | Pending |
-| Exemption management UI | 2 hrs | Pending |
-| Sidebar navigation update (Referral & Dispatch section) | 1 hr | Pending |
-| Frontend tests (target: 30+) | 3 hrs | Pending |
+| Task | Est. | Sprint | Status |
+|------|------|--------|--------|
+| Referral landing page with book status overview | 2 hrs | Week 26 | Pending |
+| Book list page with registration counts per tier | 2 hrs | Week 26 | Pending |
+| Book detail page with registrant list | 3 hrs | Week 26 | Pending |
+| Registration management (add/remove members from books) | 3 hrs | Week 26 | Pending |
+| Dispatch board (pending requests, available members, drag-assign) | 5 hrs | Week 27 | Pending |
+| Job request creation form (employer, requirements, dates) | 2 hrs | Week 27 | Pending |
+| Web bidding interface (time-gated, member-facing) | 3 hrs | Week 27 | Pending |
+| Check mark tracking UI | 2 hrs | Week 27 | Pending |
+| Exemption management UI | 2 hrs | Week 28 | Pending |
+| Reports navigation & dashboard | 3 hrs | Week 28 | Pending |
+| Sidebar navigation update (Referral & Dispatch section) | 1 hr | Week 26 | Pending |
+| Frontend tests (target: 30+) | 3 hrs | All weeks | Pending |
 
 ---
 
-### Sub-Phase 7f: Reports P0 + P1 (20-30 hrs) — BLOCKED by 7c
+### Sub-Phase 7f: Reports P0 + P1 (20-30 hrs) — BLOCKED by 7c ✅ → Ready — Spoke 2 or 3
 
 | Priority | Count | Examples | Status |
 |----------|-------|----------|--------|
@@ -632,7 +671,7 @@ Can be resolved during implementation without blocking.
 
 ---
 
-### Sub-Phase 7g: Reports P2 + P3 (10-15 hrs) — BLOCKED by 7f
+### Sub-Phase 7g: Reports P2 + P3 (10-15 hrs) — BLOCKED by 7f — Spoke 2 or 3
 
 | Priority | Count | Examples | Status |
 |----------|-------|----------|--------|
@@ -662,14 +701,15 @@ Full report inventory in `docs/phase7/LABORPOWER_REPORTS_INVENTORY.md`
 
 ---
 
-### §7.8 Immediate Next Steps (Pre-7a)
+### §7.8 Immediate Next Steps
 
-| # | Task | Status |
-|---|------|--------|
-| 1 | Merge `develop → main` for v0.9.4-alpha production deployment | Pending |
-| 2 | Set production Stripe keys and S3 storage | Pending |
-| 3 | Obtain Priority 1 blocking data exports from LaborPower (3 reports) | Pending |
-| 4 | Resolve Priority 2 data gaps as exports become available | Pending |
+| # | Task | Spoke | Status |
+|---|------|-------|--------|
+| 1 | Merge `develop → main` for v0.9.4-alpha production deployment | Hub | Pending |
+| 2 | Set production Stripe keys and S3 storage | Spoke 3 | Pending |
+| 3 | Obtain Priority 1 blocking data exports from LaborPower (3 reports) | Spoke 2 | Pending |
+| 4 | Resolve Priority 2 data gaps as exports become available | Spoke 2 | Pending |
+| 5 | Build Week 26 instruction document (Books & Registration UI) | Spoke 2 | 🔜 Next |
 
 ---
 
@@ -677,7 +717,7 @@ Full report inventory in `docs/phase7/LABORPOWER_REPORTS_INVENTORY.md`
 
 | Document | Location | Purpose |
 |----------|----------|---------|
-| Roadmap v3.0 | `IP2A_BACKEND_ROADMAP.md` | Master plan with Phase 7 detail |
+| Roadmap v4.0 | `IP2A_BACKEND_ROADMAP.md` | Master plan with Phase 7 detail + Hub/Spoke tags |
 | Schema Guidance Vol. 1 | `docs/phase7/LaborPower_Schema_Guidance_Vol1.docx` | APN analysis, cross-registration findings |
 | Schema Guidance Vol. 2 | `docs/phase7/LaborPower_Schema_Guidance_Vol2.docx` | Batch 2 analysis, RESIDENTIAL discovery |
 | Continuity Document | `docs/phase7/UnionCore_Continuity_Document_Consolidated.md` | Full context for new chat threads |
@@ -693,19 +733,21 @@ Full report inventory in `docs/phase7/LABORPOWER_REPORTS_INVENTORY.md`
 
 | Metric | Current |
 |--------|---------|
-| Total Tests | ~490+ |
+| Total Tests | 542 |
 | Backend Tests | 185+ |
 | Frontend Tests | 200+ |
 | Production Tests | 78 |
 | Stripe Tests | 25 |
-| API Endpoints | ~150 |
+| API Endpoints | ~200 (~150 existing + ~51 Phase 7) |
 | ORM Models | 32 (26 existing + 6 Phase 7) |
-| ADRs | 14 |
-| Version | v0.9.5-alpha |
+| ADRs | 15 |
+| Version | v0.9.6-alpha |
 | Phase 7 Models Complete | 6 |
-| Phase 7 Services Complete | 2 |
+| Phase 7 Services Complete | 7 |
+| Phase 7 Routers Complete | 5 (~51 endpoints) |
+| Phase 7 Business Rules | 14 of 14 |
 | Phase 7 Reports | 78 (de-duplicated, pending) |
-| Phase 7 Effort Remaining | ~80-100 hrs |
+| Phase 7 Effort Remaining | ~65-95 hrs (7d + 7e + 7f + 7g) |
 
 ---
 
@@ -713,6 +755,8 @@ Full report inventory in `docs/phase7/LABORPOWER_REPORTS_INVENTORY.md`
 
 | Version | Date | Milestone |
 |---------|------|-----------|
+| **v2.0 (Checklist)** | **2026-02-04** | **Hub/Spoke migration: Spoke tags on all phases/weeks, Weeks 23-25 completed, business rules implementation tracking, updated Quick Stats, sprint clarification, cross-cutting concerns protocol** |
+| v0.9.6-alpha | 2026-02-04 | Phase 7 Weeks 23-25 — Services + API Routers (7 services, 5 routers, ~51 endpoints) |
 | v0.9.5-alpha | 2026-02-04 | Phase 7 Weeks 20-22 - Models, Enums, Schemas, Services |
 | v0.9.4-alpha | 2026-02-03 | Phase 7 planning integrated into checklist |
 | v0.9.4-alpha | 2026-02-02 | Week 19 - Analytics Dashboard |
@@ -795,6 +839,7 @@ open http://localhost:9001
 3. `docker-compose up -d`
 4. `pytest -v --tb=short` (verify green)
 5. Check CLAUDE.md for current tasks
+6. Note which Spoke the instruction document originated from
 
 ### Ending a Session
 1. `pytest -v` (verify green)
@@ -802,6 +847,7 @@ open http://localhost:9001
 3. Commit with conventional commit message
 4. `git push origin develop` (push to develop, NOT main)
 5. Update CLAUDE.md with session summary
+6. If shared files were modified (`main.py`, `conftest.py`, base templates), note in summary for Hub handoff
 
 ### Merging to Main (for deployment)
 1. `git checkout main`
@@ -809,7 +855,7 @@ open http://localhost:9001
 3. `git merge develop`
 4. `git push origin main` (triggers Railway auto-deploy)
 
-### Phase 7 Session Reminders
+### Phase 7 Session Reminders (Spoke 2)
 
 > **Member ≠ Student.** Members are IBEW union members in the referral system. Students are pre-apprenticeship program participants. Never conflate these entities in code, models, or UI.
 
@@ -830,8 +876,11 @@ See `docs/standards/END_OF_SESSION_DOCUMENTATION.md` for full checklist.
 
 ## Previous Version Notes
 
-**v0.9.4-alpha Checklist (Feb 2, 2026):** Phase 7 section contained only report priority summary (17 lines). Updated Feb 3 to incorporate all LaborPower data analysis findings from Roadmap v3.0 including 8 schema findings, 11-book catalog, 14 business rules, 9 schema corrections, 12 new tables, 16 data gaps, and 7a-7g implementation sub-phases.
+**v1.0 Checklist (Feb 3-4, 2026):** Original monolithic checklist. Phase 7 section added Feb 3 incorporating all LaborPower data analysis findings. Weeks 20-22 completion tracked.
+
+**v2.0 Checklist (Feb 4, 2026):** Hub/Spoke migration. Added Spoke tags to all phases, completed Weeks 23-25 sections, updated business rules with implementation tracking, reconciled version numbers to v0.9.6-alpha, added sprint vs calendar week clarification.
 
 ---
 
 *Keep this checklist updated during each session!*
+*Hub/Spoke Model: Added February 2026*

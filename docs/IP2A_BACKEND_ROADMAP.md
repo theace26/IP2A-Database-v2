@@ -1,39 +1,62 @@
-# IP2A Database - Development Roadmap
+# UnionCore — Development Roadmap
 
 > **Document Created:** January 27, 2026
 > **Last Updated:** February 4, 2026
-> **Version:** 3.1
-> **Status:** Phase 7 IN PROGRESS (v0.9.5-alpha) — Weeks 20-22 Complete
+> **Version:** 4.0
+> **Status:** Phase 7 IN PROGRESS (v0.9.6-alpha) — Weeks 20-25 Complete (Services + API)
 > **For:** Claude Code implementation sessions
 > **Time Budget:** 5-10 hours/week (estimates include 50% buffer)
+> **Development Model:** Hub/Spoke (see below)
+
+---
+
+## Sprint Weeks vs Calendar Weeks
+
+> **Important:** "Week" numbers in this document (Week 20, Week 25, etc.) are **sprint numbers**, not calendar weeks. At 5-10 hours/week development pace, each sprint takes **1-2 calendar weeks** to complete. Do not assume sprint numbers map to specific dates. Effort estimates assume a 50% buffer for testing, debugging, and documentation.
+
+---
+
+## Hub/Spoke Project Structure
+
+Development planning uses a Hub/Spoke model organized across Claude AI projects. This does NOT affect the codebase — it controls how conversations and instruction documents are organized.
+
+| Project | Scope | Status |
+|---------|-------|--------|
+| **Hub** | Strategy, architecture, cross-cutting decisions, roadmap, documentation | Active |
+| **Spoke 2: Operations** | Dispatch/Referral, Pre-Apprenticeship, SALTing, Benevolence | Active — Phase 7 |
+| **Spoke 1: Core Platform** | Members, Dues, Employers, Member Portal | Create when needed |
+| **Spoke 3: Infrastructure** | Dashboard/UI, Reports, Documents, Import/Export, Logging | Create when needed |
+
+All Phases through Week 19 were built under the original monolithic model (pre-Hub/Spoke). Spoke tags appear starting at Week 20.
 
 ---
 
 ## Executive Summary
 
-| Phase | Focus | Duration | Hours | Status |
-|-------|-------|----------|-------|--------|
-| Phase 0 | Documentation & Structure | Week 1 | 5-8 hrs | ✅ Complete |
-| Phase 1 | Foundation (Auth + Files) | Weeks 2-10 | 55-70 hrs | ✅ Complete |
-| Phase 2 | Union Ops + Training | Weeks 11-18 | 55-70 hrs | ✅ Complete |
-| Phase 3 | Documents (S3/MinIO) | Weeks 19-22 | 20-30 hrs | ✅ Complete |
-| Phase 4 | Dues Tracking | Weeks 23-27 | 35-45 hrs | ✅ Complete |
-| Phase 5 | Access DB Migration | TBD | 45-70 hrs | ⬜ Blocked (Awaiting Approval) |
-| Phase 6 | Frontend Build (Weeks 1-14) | Weeks 28-40 | 60-80 hrs | ✅ Complete |
-| Phase 6+ | Post-Launch (Weeks 16-19) | Weeks 41-44 | 25-35 hrs | ✅ Complete |
-| **Phase 7** | **Referral & Dispatch** | **Weeks 20-22+** | **100-150 hrs** | **🚧 IN PROGRESS — Weeks 20-22 Complete** |
+| Phase | Focus | Duration | Hours | Status | Spoke |
+|-------|-------|----------|-------|--------|-------|
+| Phase 0 | Documentation & Structure | Week 1 | 5-8 hrs | ✅ Complete | *(pre-Hub/Spoke)* |
+| Phase 1 | Foundation (Auth + Files) | Weeks 2-10 | 55-70 hrs | ✅ Complete | *(pre-Hub/Spoke)* |
+| Phase 2 | Union Ops + Training | Weeks 11-18 | 55-70 hrs | ✅ Complete | *(pre-Hub/Spoke)* |
+| Phase 3 | Documents (S3/MinIO) | Weeks 19-22 | 20-30 hrs | ✅ Complete | *(pre-Hub/Spoke)* |
+| Phase 4 | Dues Tracking | Weeks 23-27 | 35-45 hrs | ✅ Complete | *(pre-Hub/Spoke)* |
+| Phase 5 | Access DB Migration | TBD | 45-70 hrs | ⬜ Blocked (Awaiting Approval) | Hub (strategy) |
+| Phase 6 | Frontend Build (Weeks 1-19) | Weeks 28-44 | 85-115 hrs | ✅ Complete | *(pre-Hub/Spoke)* |
+| **Phase 7** | **Referral & Dispatch** | **Weeks 20-28+** | **100-150 hrs** | **🚧 IN PROGRESS — Weeks 20-25 Complete** | **Spoke 2** |
 
-**Current Version:** v0.9.5-alpha (Phase 7 Foundation Complete)
-**Total Tests:** ~490+ (~200+ frontend, 185+ backend, ~78 production, 25 Stripe)
-**Total API Endpoints:** ~150
+**Current Version:** v0.9.6-alpha (Phase 7 Services + API Complete)
+**Total Tests:** 542 — ~200+ frontend, 185+ backend, ~78 production, 25 Stripe
+**Total API Endpoints:** ~200 (~150 existing + ~51 Phase 7)
 **Total ORM Models:** 32 (26 existing + 6 Phase 7)
-**Total ADRs:** 14
+**Total ADRs:** 15
 
-**Phase 7 Progress (Weeks 20-22):**
+**Phase 7 Progress (Weeks 20-25) — Spoke 2:**
 - 6 models: ReferralBook, BookRegistration, RegistrationActivity, LaborRequest, JobBid, Dispatch
 - 19 enums in phase7_enums.py
-- 2 services: ReferralBookService, BookRegistrationService
-- 20+ model tests
+- 7 services: ReferralBookService, BookRegistrationService, LaborRequestService, JobBidService, DispatchService, QueueService, EnforcementService
+- 5 routers: referral_books_api (10), registration_api (10), labor_request_api (9), job_bid_api (8), dispatch_api (14) — ~51 endpoints total
+- 14 of 14 business rules implemented
+- 20+ model tests + service/router tests
 - Schema decisions documented in PHASE7_SCHEMA_DECISIONS.md
 
 **Note on Phase 5:** Intentionally blocked until the Access DB owner approves. Phases 1-4 serve as proof-of-concept. Phase 5 begins only after demo and approval.
@@ -87,15 +110,15 @@ Two-tier logging architecture:
 - `dues_payments` — Financial transactions
 - `grievances` — Legal/labor relations
 - `benevolence_applications` — Financial assistance
-- `registrations` — *Phase 7: out-of-work book registrations*
-- `dispatches` — *Phase 7: referral/dispatch transactions*
-- `check_marks` — *Phase 7: penalty system records*
+- `registrations` — *Phase 7: out-of-work book registrations (Spoke 2)*
+- `dispatches` — *Phase 7: referral/dispatch transactions (Spoke 2)*
+- `check_marks` — *Phase 7: penalty system records (Spoke 2)*
 
 ---
 
 ## Completed Phases Summary
 
-### Backend (Phases 0-4): ALL COMPLETE ✅
+### Backend (Phases 0-4): ALL COMPLETE ✅ — *(pre-Hub/Spoke)*
 
 | Phase | Models | Endpoints | Tests |
 |-------|--------|-----------|-------|
@@ -104,10 +127,19 @@ Two-tier logging architecture:
 | Phase 2b: Training (Students, Courses, Grades) | 7 | ~35 | 33 |
 | Phase 3: Documents (S3/MinIO) | 1 | 8 | 11 |
 | Phase 4: Dues (Rates, Periods, Payments, Adjustments) | 4 | ~35 | 21 |
-| **Phase 7: Referral & Dispatch (foundation)** | **6** | **—** | **20+** |
-| **Total (including Phase 7 foundation)** | **31** | **~120** | **185+** |
+| **Subtotal (Backend Phases 0-4)** | **21** | **~120** | **148** |
 
-### Frontend (Phase 6, Weeks 1-14): ALL COMPLETE ✅
+### Phase 7 Foundation + Services + API: COMPLETE ✅ — Spoke 2
+
+| Sprint | Focus | Services | Routers | Endpoints | Tests |
+|--------|-------|----------|---------|-----------|-------|
+| Weeks 20-21 | Models, Enums, Schemas | — | — | — | 20+ |
+| Week 22 | Foundation Services | 2 | — | — | *(included above)* |
+| Weeks 23-24 | Additional Services | 5 | — | — | *(included above)* |
+| Week 25 | API Routers | — | 5 | ~51 | *(included above)* |
+| **Subtotal (Phase 7 Weeks 20-25)** | | **7** | **5** | **~51** | **20+** |
+
+### Frontend (Phase 6, Weeks 1-14): ALL COMPLETE ✅ — *(pre-Hub/Spoke)*
 
 | Week | Focus | Tests | Version |
 |------|-------|-------|---------|
@@ -125,7 +157,7 @@ Two-tier logging architecture:
 | 13 | Entity Completion Audit | — | v0.8.2-alpha |
 | 14 | Grant Compliance Reporting | ~20 | v0.9.0-alpha |
 
-### Post-Launch (Phase 6+, Weeks 16-19): ALL COMPLETE ✅
+### Post-Launch (Phase 6+, Weeks 16-19): ALL COMPLETE ✅ — *(pre-Hub/Spoke)*
 
 | Week | Focus | Tests | Version |
 |------|-------|-------|---------|
@@ -136,12 +168,13 @@ Two-tier logging architecture:
 
 ---
 
-## Phase 7: Referral & Dispatch System (NEXT)
+## Phase 7: Referral & Dispatch System — Spoke 2
 
 **Goal:** Implement the out-of-work referral and dispatch system for IBEW Local 46, replacing LaborPower with a modern, auditable system built on verified data structures.
 
 **Documentation:** `docs/phase7/`
 **Master Reference:** `UnionCore_Continuity_Document_Consolidated.md`
+**Spoke Owner:** Spoke 2 (Operations)
 
 ### 7.1 LaborPower Data Analysis Status
 
@@ -295,18 +328,43 @@ All corrections from Volumes 1 & 2 applied. Full DDL in Continuity Document §9.
 
 **Note on report counts:** Raw total across LaborPower tabs is 91 reports. After de-duplication (reports appearing in multiple tabs), the unique count is ~78. Both numbers are tracked in the inventory document.
 
-### 7.8 Implementation Plan — Sub-Phases
+### 7.8 Implementation Plan — Sub-Phases with Spoke Assignments
 
-| Sub-Phase | Tasks | Hours Est. | Blocked By |
-|-----------|-------|------------|------------|
-| **7a: Data Collection** | Export 3 remaining Priority 1 reports; resolve blocking gaps | 3-5 | LaborPower system access |
-| **7b: Schema Finalization** | Lock DDL with all corrections; create Alembic migrations; seed referral_books + contract codes | 10-15 | Sub-phase 7a |
-| **7c: Core Services + API** | Registration CRUD, dispatch logic, business rule engine (14 rules), check mark tracking, exemption management | 25-35 | Sub-phase 7b |
-| **7d: Import Tooling** | CSV import pipeline: employers → registrations → dispatch history; field-by-field LaborPower→UnionCore mapping | 15-20 | Sub-phase 7b |
-| **7e: Frontend UI** | Book management, dispatch board, registration screens, web bidding interface, member referral views | 20-30 | Sub-phase 7c |
-| **7f: Reports (P0+P1)** | 49 critical/high priority reports using existing WeasyPrint + Chart.js infrastructure | 20-30 | Sub-phase 7c |
-| **7g: Reports (P2+P3)** | 29 medium/low priority reports, advanced analytics, projections | 10-15 | Sub-phase 7f |
-| **Total** | | **100-150 hrs** | |
+| Sub-Phase | Tasks | Hours Est. | Status | Spoke |
+|-----------|-------|------------|--------|-------|
+| **7a: Data Collection** | Export 3 remaining Priority 1 reports; resolve blocking gaps | 3-5 | ⛔ Blocked (LaborPower access) | Spoke 2 |
+| **7b: Schema Finalization** | ORM models, enums, Pydantic schemas, Alembic migrations, seed data | 10-15 | ✅ Complete (Weeks 20-21) | Spoke 2 |
+| **7c: Core Services + API** | 7 services, 5 routers, ~51 endpoints, 14 business rules, dispatch logic | 25-35 | ✅ Complete (Weeks 22-25) | Spoke 2 |
+| **7d: Import Tooling** | CSV import pipeline: employers → registrations → dispatch history | 15-20 | ⬜ Pending | Spoke 2 |
+| **7e: Frontend UI** | Book management, dispatch board, registration screens, web bidding | 20-30 | 🔜 Next (Weeks 26-28) | Spoke 2 |
+| **7f: Reports (P0+P1)** | 49 critical/high priority reports using WeasyPrint + Chart.js | 20-30 | ⬜ Pending | Spoke 2 or 3 |
+| **7g: Reports (P2+P3)** | 29 medium/low priority reports, advanced analytics, projections | 10-15 | ⬜ Pending | Spoke 2 or 3 |
+| **Total** | | **100-150 hrs** | | |
+
+**Weeks 20-25 Detail (Spoke 2 — COMPLETE):**
+
+| Sprint | Sub-Phase | What Was Built |
+|--------|-----------|---------------|
+| Week 20A | 7b | Schema reconciliation, 19 Phase 7 enums |
+| Week 20B | 7b | ReferralBook model, 11 book seeds |
+| Week 20C | 7b | BookRegistration model with DECIMAL APN |
+| Week 21A | 7b | LaborRequest & JobBid models |
+| Week 21B | 7b | Dispatch model |
+| Week 21C | 7b | RegistrationActivity model (append-only audit) |
+| Week 22A | 7c | ReferralBookService (CRUD, stats, settings) |
+| Week 22B | 7c | BookRegistrationService core (register, re-sign, queue) |
+| Week 22C | 7c | Check mark logic & roll-off rules |
+| Week 23 | 7c | LaborRequestService, JobBidService, DispatchService |
+| Week 24 | 7c | QueueService, EnforcementService |
+| Week 25 | 7c | 5 API routers (~51 endpoints) |
+
+**Weeks 26-28 Plan (Spoke 2 — NEXT):**
+
+| Sprint | Sub-Phase | Focus |
+|--------|-----------|-------|
+| Week 26 | 7e | Books & Registration UI (book list, book detail, registration management) |
+| Week 27 | 7e | Dispatch Workflow UI (dispatch board, job requests, assignment) |
+| Week 28 | 7e/7f | Reports Navigation & Dashboard (referral landing page, report generation) |
 
 **Integration with existing infrastructure:**
 - WeasyPrint (PDF generation) — already used for report export
@@ -333,7 +391,7 @@ All corrections from Volumes 1 & 2 applied. Full DDL in Continuity Document §9.
 
 ## Documentation Update Project Status
 
-A comprehensive documentation update project has been systematically updating all project files from outdated versions (v0.7.8–v0.9.0) to reflect the current v0.9.4-alpha feature-complete status.
+A comprehensive documentation update project has been systematically updating all project files from outdated versions (v0.7.8–v0.9.0) to reflect the current state.
 
 | Batch | Scope | Files | Status |
 |-------|-------|-------|--------|
@@ -342,6 +400,7 @@ A comprehensive documentation update project has been systematically updating al
 | Batch 3 | ADRs (README + ADR-001 through ADR-014) | 15 | ✅ Complete |
 | Batch 4a | Phase 7 planning (GAP_ANALYSIS, IMPLEMENTATION_PLAN, REFERRAL_BOOKS, CONTINUITY_ADDENDUM) | 4 | ✅ Complete |
 | Batch 4b | Phase 7 planning (REFERRAL_DISPATCH_PLAN, IMPL_PLAN_v2, REPORTS_INVENTORY, AUDIT_ARCHITECTURE) | 4 | ✅ Complete |
+| Hub/Spoke | Roadmap v4.0, Checklist v2.0, README, CLAUDE.md | 4 | ✅ Complete |
 | Batch 5 | Standards, Guides, References, Runbooks, Instructions | TBD | ⬜ Pending |
 
 **Established conventions:** Header blocks (Created, Updated, Version, Status), implementation status tables (✅/🔜/❌), cross-reference tables, mandatory end-of-session documentation instruction, version footers.
@@ -352,6 +411,7 @@ A comprehensive documentation update project has been systematically updating al
 - ADR-007 described Grafana/Loki but Sentry shipped — restructured to reflect reality
 - Report inventory: raw count 91 vs de-duplicated 78 — both tracked
 - Schema conflicts between planning documents — reconciled in Continuity Doc
+- **Roadmap version header:** v3.1 was a typo (no v3.1 entry in version history) — corrected to v4.0
 
 ---
 
@@ -370,6 +430,7 @@ A comprehensive documentation update project has been systematically updating al
 | **Unknown compound books** | **Medium** | **Medium** | **TERO APPR WIRE discovered; PLA/CWA books may exist. Schema designed for extensibility with agreement_type + work_level columns.** |
 | **Book↔Contract mapping gaps** | **High** | **Medium** | **3 books have no known contract code. Dispatch staff consultation required before migration.** |
 | **Duplicate employer data quality** | **Medium** | **Medium** | **196 duplicates across employer lists. Import strategy: ingest all, deduplicate programmatically with EMPLOYCONTRACT report.** |
+| **Hub/Spoke coordination overhead** | **Low** | **Low** | **Handoff notes between projects. Only risk if multiple Spokes active simultaneously. Currently only Spoke 2 is active.** |
 
 ---
 
@@ -414,6 +475,7 @@ When starting a session, check:
 2. Last completed task
 3. Any blockers documented
 4. Branch status (`git branch --show-current`)
+5. Which Spoke the instruction document originated from
 
 Typical session goal: Complete 1-2 tasks from current milestone.
 
@@ -431,7 +493,7 @@ Typical session goal: Complete 1-2 tasks from current milestone.
 3. Verify role-based redaction works
 4. Test audit export for compliance officer role
 
-### Phase 7-Specific Reminders
+### Phase 7-Specific Reminders (Spoke 2)
 
 **BEFORE writing any Phase 7 code:**
 1. Confirm all 3 Priority 1 data gaps have been resolved
@@ -456,6 +518,7 @@ Typical session goal: Complete 1-2 tasks from current milestone.
 3. **Create new docs** — If needed for new components or concepts
 4. **ADR Review** — Update or create Architecture Decision Records as necessary
 5. **Session log entry** — Record what was accomplished
+6. **Cross-Spoke check** — If this session touched shared files (`main.py`, `conftest.py`, base templates), note in session summary for Hub handoff
 
 This ensures historical record-keeping and project continuity ("bus factor" protection).
 See `docs/standards/END_OF_SESSION_DOCUMENTATION.md` for full checklist.
@@ -470,10 +533,12 @@ See `docs/standards/END_OF_SESSION_DOCUMENTATION.md` for full checklist.
 | 1.1 | 2026-01-28 | Updated backlog — marked Phase 2 and Phase 4 items as complete |
 | 1.2 | 2026-01-29 | Added Week 11 (Audit Trail & Member History UI), ADR-008, audit strategy |
 | 2.0 | 2026-02-02 | Comprehensive update — v0.9.4-alpha FEATURE-COMPLETE. All Weeks 1-19 marked complete. Added Phase 7 Referral & Dispatch plan. Updated technology decisions, risk register, and backlog. |
-| **3.0** | **2026-02-03** | **Major Phase 7 expansion incorporating LaborPower data analysis (24 files, 2 batches). Added: 8 critical schema findings, complete 11-book catalog, 14 business rules summary, corrected 12-table data model with 9 schema corrections, 16-item data gap list with priorities, revised sub-phase implementation plan (7a–7g), documentation update project status, 4 new risk register items. Updated effort estimate from 80-120 to 100-150 hrs. Updated backlog with 3 new Phase 8 candidates. Corrected LaborPower stance from "use their system" to "building replacement."** |
+| 3.0 | 2026-02-03 | Major Phase 7 expansion incorporating LaborPower data analysis (24 files, 2 batches). Added: 8 critical schema findings, complete 11-book catalog, 14 business rules summary, corrected 12-table data model with 9 schema corrections, 16-item data gap list with priorities, revised sub-phase implementation plan (7a–7g), documentation update project status, 4 new risk register items. Updated effort estimate from 80-120 to 100-150 hrs. Updated backlog with 3 new Phase 8 candidates. Corrected LaborPower stance from "use their system" to "building replacement." |
+| **4.0** | **2026-02-04** | **Hub/Spoke migration. Added: Hub/Spoke project structure section, Spoke ownership tags on all phases and sub-phases, sprint vs calendar week clarification. Updated: Phase 7 state to Weeks 20-25 complete (7 services, 5 routers, ~51 endpoints). Reconciled version numbers (v0.9.6-alpha). Fixed v3.1 header typo (no v3.1 existed). Added Hub/Spoke coordination risk. Added cross-Spoke end-of-session check.** |
 
 ---
 
 *Document created: January 27, 2026*
-*Last updated: February 3, 2026*
-*Previous version: 2.0 (February 2, 2026)*
+*Last updated: February 4, 2026*
+*Previous version: 3.0 (February 3, 2026)*
+*Hub/Spoke Model: Added February 2026*

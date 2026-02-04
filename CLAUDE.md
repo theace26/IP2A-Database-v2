@@ -3,7 +3,7 @@
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
 **Last Updated:** February 4, 2026
 **Current Version:** v0.9.6-alpha
-**Current Phase:** Phase 7 (Referral & Dispatch) IN PROGRESS — Weeks 20-25 Complete (Services + API)
+**Current Phase:** Phase 7 (Referral & Dispatch) IN PROGRESS — Weeks 20-25 Complete (Services + API) | Spoke 2
 
 ---
 
@@ -17,9 +17,30 @@
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl + Stripe
 
-**Status:** ~490+ total tests (200+ frontend, 165+ backend), ~200+ API endpoints, 32 models (26 existing + 6 Phase 7), 15 ADRs, Railway deployment live, Stripe integration complete, Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
+**Status:** 542 total tests (200+ frontend, 185+ backend, 78 production, 25 Stripe), ~200+ API endpoints, 32 models (26 existing + 6 Phase 7), 15 ADRs, Railway deployment live, Stripe integration complete, Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
 **Current:** Phase 7 — Referral & Dispatch System (~78 LaborPower reports to build). **Weeks 20-25 complete:** models, enums, schemas, 7 services, 5 API routers (~50 new endpoints). See `docs/phase7/`
+
+---
+
+## Development Model: Hub/Spoke
+
+This project uses a **Hub/Spoke model** for planning and coordination via Claude AI projects (claude.ai). This does NOT affect the code architecture — it's about how development conversations are organized.
+
+| Project | Scope | What Goes There |
+|---------|-------|-----------------|
+| **Hub** | Strategy, architecture, cross-cutting decisions, roadmap, docs | "How should we approach X?" |
+| **Spoke 2: Operations** | Dispatch/Referral, Pre-Apprenticeship, SALTing, Benevolence | Phase 7 implementation, instruction docs |
+| **Spoke 1: Core Platform** | Members, Dues, Employers, Member Portal | Create when needed |
+| **Spoke 3: Infrastructure** | Dashboard/UI, Reports, Documents, Import/Export, Logging | Create when needed |
+
+**What this means for you (Claude Code):**
+- You operate directly on the codebase regardless of which Spoke produced the instruction document
+- Instruction documents are created in Hub or Spoke projects and provided to you for execution
+- If you encounter **cross-cutting concerns** (e.g., changes to `src/main.py`, shared test fixtures in `conftest.py`, or modifications to base templates), note them in your session summary so the user can create a handoff note for the Hub
+- The Hub/Spoke model is for human/AI planning coordination, not code architecture. Do not create separate code directories for Spokes.
+
+**Sprint Weeks ≠ Calendar Weeks:** Instruction document "weeks" (Week 20, Week 25, etc.) are sprint numbers, not calendar weeks. At 5-10 hours/week development pace, each sprint takes 1-2 calendar weeks to complete. Do not assume sprint numbers map to specific dates.
 
 ---
 
@@ -2135,6 +2156,7 @@ Full inventory: `docs/phase7/LABORPOWER_REFERRAL_REPORTS_INVENTORY.md`
 
 ---
 
-**Document Version:** 4.0
+**Document Version:** 5.0
 **Last Updated:** February 4, 2026
-**Previous Version:** 3.0 (February 3, 2026 — Phase 7 section added, v0.9.4-alpha baseline)
+**Previous Version:** 4.0 (February 4, 2026 — Phase 7 Weeks 20-25 detail added)
+**Hub/Spoke Model:** Added February 2026
