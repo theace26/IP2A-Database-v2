@@ -123,26 +123,33 @@ class TestAuditFrontendAPI:
     """Tests for audit frontend API endpoints."""
 
     def test_audit_page_requires_auth(self, client):
-        """Audit logs page requires authentication."""
+        """Audit logs page requires authentication - redirects to login."""
+        # TestClient follows redirects by default, so we get login page (200 OK)
+        # To verify auth protection, check that we land on login page
         response = client.get("/admin/audit-logs")
-        assert response.status_code in [302, 401]
+        assert response.status_code == 200
+        assert b"Login" in response.content or b"login" in response.content
 
     def test_export_endpoint_exists(self, client):
-        """Export endpoint exists."""
+        """Export endpoint requires authentication - redirects to login."""
         response = client.get("/admin/audit-logs/export")
-        assert response.status_code in [302, 401, 403]
+        assert response.status_code == 200
+        assert b"Login" in response.content or b"login" in response.content
 
     def test_detail_endpoint_exists(self, client):
-        """Detail endpoint exists."""
+        """Detail endpoint requires authentication - redirects to login."""
         response = client.get("/admin/audit-logs/detail/1")
-        assert response.status_code in [302, 401, 404]
+        assert response.status_code == 200
+        assert b"Login" in response.content or b"login" in response.content
 
     def test_search_endpoint_exists(self, client):
-        """Search endpoint exists."""
+        """Search endpoint requires authentication - redirects to login."""
         response = client.get("/admin/audit-logs/search")
-        assert response.status_code in [302, 401]
+        assert response.status_code == 200
+        assert b"Login" in response.content or b"login" in response.content
 
     def test_entity_history_endpoint_exists(self, client):
-        """Entity history endpoint exists."""
+        """Entity history endpoint requires authentication - redirects to login."""
         response = client.get("/admin/audit-logs/entity/members/1")
-        assert response.status_code in [302, 401]
+        assert response.status_code == 200
+        assert b"Login" in response.content or b"login" in response.content
