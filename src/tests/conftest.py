@@ -166,12 +166,12 @@ def test_user(db_session):
         is_verified=True,
     )
     db_session.add(user)
-    db_session.flush()
+    db_session.flush()  # Get user.id for the role assignment
 
     # Assign admin role
     user_role = UserRole(user_id=user.id, role_id=admin_role.id)
     db_session.add(user_role)
-    db_session.flush()
+    db_session.commit()  # Commit so user is visible to API calls via separate sessions
 
     return user
 
@@ -180,6 +180,7 @@ def test_user(db_session):
 def auth_headers(test_user):
     """
     Create authentication headers with Bearer token for the test user.
+    For API routes that use Bearer token auth.
     """
     token = create_access_token(
         subject=test_user.id,
@@ -189,6 +190,25 @@ def auth_headers(test_user):
         },
     )
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture(scope="function")
+def auth_cookies(test_user):
+    """
+    Create authentication cookies for the test user.
+    For frontend routes that use cookie-based auth.
+
+    Usage:
+        response = client.get("/dispatch", cookies=auth_cookies)
+    """
+    token = create_access_token(
+        subject=test_user.id,
+        additional_claims={
+            "email": test_user.email,
+            "roles": ["admin"],
+        },
+    )
+    return {"access_token": token}
 
 
 @pytest.fixture(scope="function")
