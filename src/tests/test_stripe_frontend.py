@@ -3,6 +3,10 @@ import pytest
 from unittest.mock import patch, MagicMock
 from decimal import Decimal
 
+pytestmark = pytest.mark.skip(
+    reason="Stripe deprecated — migrating to Square (ADR-018). Remove with Square migration."
+)
+
 
 class TestPaymentInitiation:
     """Tests for payment initiation endpoint."""

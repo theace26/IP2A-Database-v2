@@ -1,12 +1,15 @@
 # ADR-013: Stripe Payment Integration for Dues Collection
 
 > **Document Created:** 2026-01-30
-> **Last Updated:** February 3, 2026
-> **Version:** 2.0
-> **Status:** Implemented — Stripe Checkout Sessions live in production since Week 11
+> **Last Updated:** February 5, 2026
+> **Version:** 3.0
+> **Status:** Superseded by ADR-018 (Square Payment Integration)
+
+> **⚠️ SUPERSEDED:** This ADR has been superseded by [ADR-018](ADR-018-square-payment-integration.md).
+> Stripe is being replaced by Square. See ADR-018 for rationale and migration plan.
 
 ## Status
-Implemented
+Superseded by ADR-018 (Square Payment Integration)
 
 ## Date
 2026-01-30

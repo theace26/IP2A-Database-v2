@@ -2,8 +2,8 @@
 
 > **Document Created:** January 2026
 > **Last Updated:** February 5, 2026
-> **Version:** 2.3
-> **Status:** Active — 17 ADRs documented through v0.9.8-alpha
+> **Version:** 2.4
+> **Status:** Active — 18 ADRs documented through v0.9.8-alpha
 
 This directory contains Architecture Decision Records (ADRs) documenting significant technical decisions made during the development of IP2A Database v2 (UnionCore) — the union operations management platform for IBEW Local 46.
 
@@ -27,11 +27,12 @@ An ADR captures an important architectural decision along with its context and c
 | [ADR-010](ADR-010-operations-frontend-patterns.md) | Operations Frontend Patterns | Implemented | 2026-01-29 | Week 7 |
 | [ADR-011](ADR-011-dues-frontend-patterns.md) | Dues Frontend Patterns | Implemented | 2026-01-30 | Week 10 |
 | [ADR-012](ADR-012-audit-logging.md) | Audit Logging Architecture | Implemented | 2026-01-29 | Week 11 (NLRA compliant) |
-| [ADR-013](ADR-013-stripe-payment-integration.md) | Stripe Payment Integration | Implemented | 2026-01-30 | Week 11 — live in production |
+| [ADR-013](ADR-013-stripe-payment-integration.md) | Stripe Payment Integration | **Superseded** (ADR-018) | 2026-01-30 | Week 11 — replaced by Square |
 | [ADR-014](ADR-014-grant-compliance-reporting.md) | Grant Compliance Reporting | Implemented | 2026-02-02 | Week 14 |
 | [ADR-015](ADR-015-referral-dispatch-architecture.md) | Referral & Dispatch Architecture | Implemented (partial) | 2026-02-04 | Weeks 20-25 — backend complete |
 | [ADR-016](ADR-016-phase7-frontend-ui-patterns.md) | Phase 7 Frontend UI Patterns | Implemented | 2026-02-04 | Weeks 26-27 — Books & Dispatch UI |
 | [ADR-017](ADR-017-schema-drift-prevention.md) | Schema Drift Prevention Strategy | Accepted | 2026-02-05 | Post-ISSUE-001 follow-up |
+| [ADR-018](ADR-018-square-payment-integration.md) | Square Payment Integration | Accepted | 2026-02-05 | Supersedes ADR-013. Square replaces Stripe for unified payment ecosystem. |
 
 ### Status Legend
 
@@ -128,6 +129,6 @@ ADR-015 documents the Referral & Dispatch system architecture decisions made dur
 
 ---
 
-Document Version: 2.2
-Last Updated: February 4, 2026
-Previous Version: 2.1 (February 4, 2026 — 15 ADRs through v0.9.5-alpha)
+Document Version: 2.4
+Last Updated: February 5, 2026
+Previous Version: 2.3 (February 5, 2026 — 17 ADRs through v0.9.8-alpha)

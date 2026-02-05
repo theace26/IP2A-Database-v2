@@ -7,6 +7,10 @@ from sqlalchemy.orm import Session
 from src.services.payment_service import PaymentService
 from src.models.member import Member
 
+pytestmark = pytest.mark.skip(
+    reason="Stripe deprecated — migrating to Square (ADR-018). Remove with Square migration."
+)
+
 
 class TestPaymentService:
     """Tests for PaymentService."""

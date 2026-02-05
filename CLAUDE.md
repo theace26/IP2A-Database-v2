@@ -13,11 +13,11 @@
 
 **Who:** Xerxes - Business Representative by day, solo developer (5-10 hrs/week)
 
-**Where:** Backend COMPLETE. Frontend FEATURE-COMPLETE (Weeks 1-19). Stripe Payments LIVE. **Deployed to Railway.**
+**Where:** Backend COMPLETE. Frontend FEATURE-COMPLETE (Weeks 1-19). Stripe Payments LIVE (migrating to Square per ADR-018). **Deployed to Railway.**
 
-**Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl + Stripe
+**Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl + Stripe (migrating to Square)
 
-**Status:** 590 total tests (495 passing as of Feb 5, 2026), ~228+ API endpoints, 32 models (26 existing + 6 Phase 7), 16 ADRs, Railway deployment live, Stripe integration complete, Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
+**Status:** 593 total tests (477 passing, 30 skipped [27 Stripe deprecated], as of Feb 5, 2026), ~228+ API endpoints, 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
 **Current:** Phase 7 — Referral & Dispatch System (~78 LaborPower reports to build). **Weeks 20-27 complete:** models, enums, schemas, 7 services, 5 API routers, 2 frontend services, 2 frontend routers, 13 pages, 15 HTMX partials. See `docs/phase7/`
 
@@ -1192,11 +1192,13 @@ This ensures historical record-keeping and project continuity ("bus factor" prot
 
 ## Stripe Payment Integration (January 30, 2026)
 
-**Status:** ✅ **FULLY COMPLETE** - All 3 phases implemented (Backend + Database + Frontend)
+> **⚠️ SUPERSEDED:** Stripe is being replaced by Square (ADR-018, accepted February 5, 2026). All Stripe tests skip-marked. Migration planned after Phase 7 stabilization. See [ADR-018](docs/decisions/ADR-018-square-payment-integration.md) for rationale and migration plan.
+
+**Status:** ✅ **FULLY COMPLETE** - All 3 phases implemented (Backend + Database + Frontend) | **Deprecated** - Migrating to Square
 
 ### Overview
 
-Stripe integration enables online dues payment for IBEW Local 46 members. Decision documented in [ADR-013](docs/decisions/ADR-013-stripe-payment-integration.md).
+Stripe integration enables online dues payment for IBEW Local 46 members. Decision documented in [ADR-013](docs/decisions/ADR-013-stripe-payment-integration.md) (superseded by ADR-018).
 
 ### Key Decisions
 
@@ -1295,6 +1297,49 @@ stripe trigger checkout.session.completed
 - Phase 5: QuickBooks integration for accounting sync
 
 **Reference:** See [docs/instructions/stripe/CONTINUITY_STRIPE_UPDATED.md](docs/instructions/stripe/CONTINUITY_STRIPE_UPDATED.md) for full implementation guide.
+
+---
+
+## Square Payment Integration (February 5, 2026)
+
+**Status:** 📋 **PLANNED** - ADR-018 accepted, migration scheduled after Phase 7 stabilization
+
+### Overview
+
+Square will replace Stripe as the payment processor for UnionCore. Decision documented in [ADR-018](docs/decisions/ADR-018-square-payment-integration.md) (supersedes ADR-013).
+
+**Rationale:** The union hall already uses Square for in-person payments. Running two payment ecosystems (Square for walk-ins, Stripe for online) creates operational inefficiency and reconciliation burden. Square migration unifies all payments into a single system.
+
+### Migration Phases
+
+| Phase | Scope | Type | Hours Est. | Status |
+|-------|-------|------|------------|--------|
+| **Phase A** | Replace Stripe → Square online payments | Migration (direct swap) | 15-20 | Planned |
+| **Phase B** | Square Terminal/POS at union hall | New feature | 10-15 | Future |
+| **Phase C** | Square Invoices for dues billing | New feature | 10-15 | Future |
+
+**Phasing Rules:**
+- Phase A must complete before removing Stripe code
+- Phases B & C are independent enhancements
+- Phases B & C should not block Phase 7 stabilization
+
+### Key Decisions (from ADR-018)
+
+| Decision | Rationale |
+|----------|-----------|
+| **Square over Stripe** | Operational integration — one payment ecosystem instead of two |
+| **Client-side tokenization** | PCI compliance (SAQ-A) maintained, card data never touches server |
+| **Service layer abstraction** | `SquarePaymentService` replaces `StripePaymentService` with same interface |
+| **Processor-agnostic DB column** | Rename `stripe_payment_id` → `processor_payment_id` for future flexibility |
+
+### Test Cleanup (February 5, 2026)
+
+All Stripe tests skip-marked as deprecated:
+- `src/tests/test_stripe_integration.py` — 13 tests skipped
+- `src/tests/test_stripe_frontend.py` — 14 tests skipped
+- **Total:** 27 tests skipped (will be removed during Square migration Phase A)
+
+**Reference:** See [ADR-018](docs/decisions/ADR-018-square-payment-integration.md) for full technical architecture and migration plan.
 
 ---
 
