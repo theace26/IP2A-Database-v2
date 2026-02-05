@@ -24,7 +24,7 @@ class MemberBase(BaseModel):
     hire_date: Optional[date] = None
     status: MemberStatus = MemberStatus.ACTIVE
     classification: MemberClassification
-    notes: Optional[str] = None
+    general_notes: Optional[str] = None
 
 
 class MemberCreate(MemberBase):
@@ -50,7 +50,7 @@ class MemberUpdate(BaseModel):
     hire_date: Optional[date] = None
     status: Optional[MemberStatus] = None
     classification: Optional[MemberClassification] = None
-    notes: Optional[str] = None
+    general_notes: Optional[str] = None
 
 
 class MemberRead(MemberBase):

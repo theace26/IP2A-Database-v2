@@ -11,8 +11,8 @@ class TestAuditImmutability:
         """Test that UPDATE on audit_logs is blocked by trigger."""
         # First, create an audit log entry
         db_session.execute(text("""
-            INSERT INTO audit_logs (action, table_name, record_id, user_id, created_at)
-            VALUES ('TEST', 'test_table', 1, 1, NOW())
+            INSERT INTO audit_logs (action, table_name, record_id, changed_by, changed_at)
+            VALUES ('TEST', 'test_table', '1', '1', NOW())
         """))
         db_session.commit()
 
@@ -33,8 +33,8 @@ class TestAuditImmutability:
         """Test that DELETE on audit_logs is blocked by trigger."""
         # Create an audit log entry
         db_session.execute(text("""
-            INSERT INTO audit_logs (action, table_name, record_id, user_id, created_at)
-            VALUES ('TEST_DELETE', 'test_table', 2, 1, NOW())
+            INSERT INTO audit_logs (action, table_name, record_id, changed_by, changed_at)
+            VALUES ('TESTDELETE', 'test_table', '2', '1', NOW())
         """))
         db_session.commit()
 
@@ -42,7 +42,7 @@ class TestAuditImmutability:
         with pytest.raises((InternalError, ProgrammingError)) as exc_info:
             db_session.execute(text("""
                 DELETE FROM audit_logs
-                WHERE action = 'TEST_DELETE' AND table_name = 'test_table'
+                WHERE action = 'TESTDELETE' AND table_name = 'test_table'
             """))
             db_session.commit()
 
@@ -54,8 +54,8 @@ class TestAuditImmutability:
     def test_audit_log_insert_still_works(self, db_session):
         """Test that INSERT on audit_logs still works."""
         result = db_session.execute(text("""
-            INSERT INTO audit_logs (action, table_name, record_id, user_id, created_at)
-            VALUES ('TEST_INSERT', 'test_table', 3, 1, NOW())
+            INSERT INTO audit_logs (action, table_name, record_id, changed_by, changed_at)
+            VALUES ('TESTINSERT', 'test_table', '3', '1', NOW())
             RETURNING id
         """))
         db_session.commit()
@@ -68,18 +68,18 @@ class TestAuditImmutability:
         """Test that SELECT on audit_logs still works."""
         # Insert a test record
         db_session.execute(text("""
-            INSERT INTO audit_logs (action, table_name, record_id, user_id, created_at)
-            VALUES ('TEST_SELECT', 'test_table', 4, 1, NOW())
+            INSERT INTO audit_logs (action, table_name, record_id, changed_by, changed_at)
+            VALUES ('TESTSELECT', 'test_table', '4', '1', NOW())
         """))
         db_session.commit()
 
         # Query the record
         result = db_session.execute(text("""
             SELECT action, table_name FROM audit_logs
-            WHERE action = 'TEST_SELECT'
+            WHERE action = 'TESTSELECT'
         """))
 
         row = result.fetchone()
         assert row is not None
-        assert row[0] == 'TEST_SELECT'
+        assert row[0] == 'TESTSELECT'
         assert row[1] == 'test_table'

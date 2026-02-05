@@ -22,6 +22,7 @@ from src.models.user_role import UserRole
 from src.models.member import Member
 from src.core.jwt import create_access_token
 from src.core.security import hash_password
+from src.db.enums import MemberStatus, MemberClassification
 
 
 # Create engine once, reuse across tests
@@ -200,8 +201,8 @@ def test_member(db_session):
         member_number="TEST001",
         first_name="Test",
         last_name="Member",
-        classification="journeyman_wireman",
-        status="active",
+        classification=MemberClassification.JOURNEYMAN,
+        status=MemberStatus.ACTIVE,
     )
     db_session.add(member)
     db_session.flush()

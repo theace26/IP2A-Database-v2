@@ -1,7 +1,7 @@
 # IP2A-Database-v2: Project Context Document
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
-**Last Updated:** February 4, 2026
+**Last Updated:** February 5, 2026
 **Current Version:** v0.9.8-alpha
 **Current Phase:** Phase 7 (Referral & Dispatch) IN PROGRESS — Weeks 20-27 Complete (Backend + Frontend UI) | Spoke 2
 
@@ -17,7 +17,7 @@
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl + Stripe
 
-**Status:** 593 total tests (250+ frontend, 185+ backend, 78 production, 25 Stripe, 51 Phase 7), ~228+ API endpoints, 32 models (26 existing + 6 Phase 7), 16 ADRs, Railway deployment live, Stripe integration complete, Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
+**Status:** 590 total tests (495 passing as of Feb 5, 2026), ~228+ API endpoints, 32 models (26 existing + 6 Phase 7), 16 ADRs, Railway deployment live, Stripe integration complete, Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
 **Current:** Phase 7 — Referral & Dispatch System (~78 LaborPower reports to build). **Weeks 20-27 complete:** models, enums, schemas, 7 services, 5 API routers, 2 frontend services, 2 frontend routers, 13 pages, 15 HTMX partials. See `docs/phase7/`
 
@@ -993,6 +993,9 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 | bcrypt `__about__` AttributeError | bcrypt 4.1.x incompatible with passlib (Bug #023) | Pin bcrypt>=4.0.1 |
 | Reports 500 error (async/sync mismatch) | Router used `await` with sync Session (Bug #024) | Fixed in `9543c5b` |
 | Setup users have no roles | Role assignment failed silently (Bug #025) | Fixed in `2f16502` |
+| Member CRUD fails "general_notes doesn't exist" | Model attribute didn't map to DB column (Bug #026) | Fixed with explicit column name |
+| Audit log tests fail with wrong columns | Tests used `user_id`/`created_at` vs `changed_by`/`changed_at` (Bug #027) | Fixed in test file |
+| Test fixtures use invalid enum values | conftest.py used obsolete strings (Bug #028) | Use enum objects |
 
 **Note:** As of commit `013cf92`, invalid JWT cookies are automatically cleared on redirect to login, preventing repeated "Signature verification failed" log spam.
 
@@ -1815,6 +1818,85 @@ src/templates/components/_sidebar.html  # Added Analytics nav link
 ```
 
 **Version:** v0.9.4-alpha (FEATURE-COMPLETE for Weeks 1-19)
+
+---
+
+## Test Verification & Schema Drift Fixes (February 5, 2026)
+
+**Status:** ✅ **COMPLETE** - Post-migration test suite verification and critical schema drift fixes
+
+### Overview
+
+Following ISSUE-001 migration drift resolution (Stripe + Grant parallel development), a comprehensive test verification identified and fixed 3 critical schema drift issues affecting 106 tests.
+
+### Issues Fixed
+
+| Issue | Impact | Files Modified | Tests Fixed |
+|-------|--------|----------------|-------------|
+| **Audit log column mismatch** | Tests used wrong column names (`user_id`/`created_at` vs `changed_by`/`changed_at`) | `test_audit_immutability.py` | 4 |
+| **Member notes field conflict** | Model attribute `general_notes` didn't map to DB column `notes` | `member.py`, `member.py` (schema) | ~50 |
+| **Test fixture enum values** | conftest.py used obsolete enum values (`journeyman_wireman`, `active`) | `conftest.py` | ~12 |
+| **Phase 7 test database** | Used SQLite instead of PostgreSQL (JSONB incompatibility) | `test_phase7_models.py` | N/A |
+
+### Schema Drift Details
+
+**Bug #026: Member Model Column Name Mapping**
+- **Problem:** Model defined `general_notes = Column(Text)` without explicit column name
+- **Database:** Column named `notes` (not `general_notes`)
+- **Impact:** All Member CRUD operations failed with "column 'general_notes' does not exist"
+- **Fix:** `general_notes = Column("notes", Text)` + renamed schema fields to match
+- **Commit:** (to be added)
+
+**Bug #027: Audit Log Test Column Names**
+- **Problem:** Tests used `user_id` and `created_at`, but table has `changed_by` and `changed_at`
+- **Fix:** Updated all 4 immutability tests with correct column names
+- **Additional:** Shortened test action strings to fit VARCHAR(10) limit
+
+**Bug #028: Test Fixture Enum Values**
+- **Problem:** `test_member` fixture used outdated string values instead of enums
+- **Fix:** Import enums and use `MemberStatus.ACTIVE`, `MemberClassification.JOURNEYMAN`
+
+### Test Suite Results
+
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| **Passing** | 389 | 495 | +106 (+27%) |
+| **Failing** | 112 | 65 | -47 |
+| **Errors** | 89 | 30 | -59 |
+| **Pass Rate** | 68% | 84% | +16 pts |
+
+### Remaining Issues (Blocked)
+
+**Category 1: Phase 7 Tables (19 errors)**
+- Phase 7 migrations not yet applied to database
+- Tables don't exist: `referral_books`, `book_registrations`, `dispatches`, etc.
+- **Resolution:** Apply Phase 7 migrations when ready for integration testing
+
+**Category 2: Stripe Tests (30 errors/failures)**
+- No Stripe API key in test environment
+- **Resolution:** Configure `STRIPE_SECRET_KEY` or implement mocking
+
+**Category 3: Miscellaneous (16 failures)**
+- Frontend integration tests (11)
+- Grant services (1)
+- Setup tests (4)
+- **Resolution:** Individual investigation needed
+
+### Files Modified
+
+```
+src/models/member.py                             # Added column name mapping
+src/schemas/member.py                            # Renamed notes → general_notes
+src/tests/test_audit_immutability.py             # Fixed column names
+src/tests/conftest.py                            # Fixed enum values
+src/tests/test_phase7_models.py                  # SQLite → PostgreSQL
+```
+
+### Documentation
+
+- Full diagnostic report: `docs/reports/session-logs/2026-02-05-test-verification-diagnostic-report.md`
+- Schema drift prevention recommendations included
+- Hub handoff notes: Phase 7 migration timing + Stripe test configuration
 
 ---
 

@@ -45,7 +45,7 @@ class Member(Base, TimestampMixin, SoftDeleteMixin):
     classification = Column(SAEnum(MemberClassification), nullable=False)
 
     # General notes (deprecated - use MemberNote relationship for staff notes)
-    general_notes = Column(Text)
+    general_notes = Column("notes", Text)
 
     # Stripe Integration
     stripe_customer_id = Column(

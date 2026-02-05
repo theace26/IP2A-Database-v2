@@ -30,22 +30,24 @@ from src.db.enums import (
     ExemptReason,
     RolloffReason,
 )
+from src.config.settings import get_settings
 
 
-# Test database setup
-TEST_DATABASE_URL = "sqlite:///:memory:"
+# Use the actual test database (PostgreSQL), not SQLite
+settings = get_settings()
 
 
 @pytest.fixture(scope="function")
 def db_session():
-    """Create a fresh database session for each test."""
-    engine = create_engine(TEST_DATABASE_URL, echo=False)
-    Base.metadata.create_all(engine)
+    """Create a fresh database session for each test using PostgreSQL."""
+    engine = create_engine(str(settings.DATABASE_URL), echo=False)
     Session = sessionmaker(bind=engine)
     session = Session()
+
     yield session
+
+    session.rollback()
     session.close()
-    Base.metadata.drop_all(engine)
 
 
 @pytest.fixture

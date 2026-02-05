@@ -2009,3 +2009,255 @@ def upgrade():
 ---
 
 *Last Updated: 2026-01-30 (Bugs #022-#025 added - HTMX error handling, bcrypt compatibility, reports async/sync, setup role assignment)*
+
+---
+
+## Bug #026: Member Model Column Name Mapping Mismatch
+
+**Date Discovered:** 2026-02-05
+**Date Fixed:** 2026-02-05
+**Severity:** Critical (all Member CRUD operations failed)
+**Status:** RESOLVED
+
+### Symptoms
+- Member creation/update fails with error: `column "general_notes" does not exist`
+- Test failures: `test_create_student`, `test_create_member`, etc.
+- Error occurs in database INSERT/UPDATE operations
+- SQLAlchemy ProgrammingError
+
+### Root Cause Analysis
+
+Schema drift between model definition and database schema:
+
+**Database:**
+- Column name: `notes` (TEXT)
+
+**Model (WRONG):**
+```python
+# src/models/member.py
+general_notes = Column(Text)  # SQLAlchemy infers column name from attribute name
+```
+
+**What happened:**
+1. Database migration created column named `notes`
+2. Model attribute named `general_notes` without explicit column name
+3. SQLAlchemy generated SQL using attribute name: `INSERT INTO members (..., general_notes, ...)`
+4. PostgreSQL rejected: column `general_notes` doesn't exist
+
+**Schema field confusion:**
+- Schema had `notes: Optional[str]` field
+- Model had `notes = relationship("MemberNote", ...)` (relationship)
+- Model had `general_notes = Column(Text)` (actual database field)
+- Service layer passed schema `notes` → model constructor
+- Conflict: can't set relationship attribute with string value
+
+### Solution
+
+**1. Fixed model with explicit column name:**
+```python
+# src/models/member.py - FIXED
+general_notes = Column("notes", Text)  # Explicitly map to 'notes' column
+```
+
+**2. Updated schemas to match model attribute:**
+```python
+# src/schemas/member.py - BEFORE
+class MemberBase(BaseModel):
+    ...
+    notes: Optional[str] = None  # WRONG - conflicts with relationship
+
+# src/schemas/member.py - AFTER
+class MemberBase(BaseModel):
+    ...
+    general_notes: Optional[str] = None  # Matches model attribute
+```
+
+**3. Service layer unchanged (no mapping needed):**
+```python
+# src/services/member_service.py
+def create_member(db: Session, data: MemberCreate) -> Member:
+    obj = Member(**data.model_dump())  # Now works correctly
+    db.add(obj)
+    db.commit()
+    return obj
+```
+
+### Files Modified
+- `src/models/member.py` - Added explicit column name parameter
+- `src/schemas/member.py` - Renamed `notes` → `general_notes` in MemberBase and MemberUpdate
+
+### Prevention
+- **Lesson:** Always specify column name explicitly when model attribute ≠ database column
+- **Best Practice:** `Column("db_column_name", Type)` not `Column(Type)`
+- **Future:** Add schema validation tests (ADR-017)
+
+### References
+- Test verification report: `docs/reports/session-logs/2026-02-05-test-verification-diagnostic-report.md`
+- ADR-017: Schema Drift Prevention Strategy
+- Commit: (to be determined)
+
+---
+
+## Bug #027: Audit Log Test Column Name Mismatch
+
+**Date Discovered:** 2026-02-05
+**Date Fixed:** 2026-02-05
+**Severity:** Medium (tests failing, but production code unaffected)
+**Status:** RESOLVED
+
+### Symptoms
+- 4 audit immutability tests failing with: `column "user_id" of relation "audit_logs" does not exist`
+- Tests: `test_audit_log_update_blocked`, `test_audit_log_delete_blocked`, etc.
+- All INSERT operations failed in test suite
+
+### Root Cause Analysis
+
+Tests used incorrect column names not matching database schema:
+
+**Database Schema (Correct):**
+- `changed_by` (VARCHAR(100))
+- `changed_at` (TIMESTAMP)
+- `record_id` (VARCHAR(50))
+- `action` (VARCHAR(10))
+
+**Tests (WRONG):**
+```python
+# test_audit_immutability.py - BEFORE
+INSERT INTO audit_logs (action, table_name, record_id, user_id, created_at)
+VALUES ('TEST_DELETE', 'test_table', 2, 1, NOW())
+```
+
+**What happened:**
+1. Tests written with assumed column names (`user_id`, `created_at`)
+2. Actual database uses different names (`changed_by`, `changed_at`)
+3. Tests never passed, but weren't run regularly
+4. Schema drift went undetected
+
+**Additional issue:**
+- Action values like `TEST_DELETE` (11 chars) exceeded VARCHAR(10) limit
+- Needed to shorten to `TESTDELETE` (10 chars)
+
+### Solution
+
+**Fixed all 4 tests with correct column names:**
+```python
+# test_audit_immutability.py - AFTER
+INSERT INTO audit_logs (action, table_name, record_id, changed_by, changed_at)
+VALUES ('TESTDELETE', 'test_table', '2', '1', NOW())
+```
+
+**Changes applied:**
+- `user_id` → `changed_by`
+- `created_at` → `changed_at`
+- `TEST_DELETE` → `TESTDELETE` (and similar for all action values)
+- Wrapped values in quotes (VARCHAR, not INTEGER)
+
+### Files Modified
+- `src/tests/test_audit_immutability.py` - Updated all 4 test methods
+
+### Validation
+All 4 audit immutability tests now pass:
+- `test_audit_log_update_blocked` ✅
+- `test_audit_log_delete_blocked` ✅
+- `test_audit_log_insert_still_works` ✅
+- `test_audit_log_select_still_works` ✅
+
+### Prevention
+- **Lesson:** Test column names must match database schema exactly
+- **Future:** Schema validation tests will catch this (ADR-017)
+- **Best Practice:** Reference model definitions when writing raw SQL in tests
+
+### References
+- AuditLog model: `src/models/audit_log.py`
+- Test file: `src/tests/test_audit_immutability.py`
+- ADR-017: Schema Drift Prevention Strategy
+
+---
+
+## Bug #028: Test Fixture Obsolete Enum Values
+
+**Date Discovered:** 2026-02-05
+**Date Fixed:** 2026-02-05
+**Severity:** Medium (12+ test failures)
+**Status:** RESOLVED
+
+### Symptoms
+- Member notes tests failing with: `invalid input value for enum memberclassification: "journeyman_wireman"`
+- Error: `psycopg2.errors.InvalidTextRepresentation`
+- Tests using `test_member` fixture all failed
+
+### Root Cause Analysis
+
+Test fixture used hardcoded string values that didn't match current enum definitions:
+
+**Test Fixture (WRONG):**
+```python
+# conftest.py - BEFORE
+member = Member(
+    member_number="TEST001",
+    first_name="Test",
+    last_name="Member",
+    classification="journeyman_wireman",  # ❌ INVALID - old enum value
+    status="active",                       # ❌ INVALID - lowercase
+)
+```
+
+**Actual Enum Values:**
+```python
+# src/db/enums.py
+class MemberClassification(str, Enum):
+    JOURNEYMAN = "journeyman"  # Not "journeyman_wireman"
+    ...
+
+class MemberStatus(str, Enum):
+    ACTIVE = "ACTIVE"  # Not "active"
+    ...
+```
+
+**What happened:**
+1. Enum values changed during development (simplified classifications)
+2. Test fixtures not updated to use enum objects
+3. Hardcoded strings became stale
+4. PostgreSQL rejected invalid enum values
+
+### Solution
+
+**1. Import enum classes:**
+```python
+# conftest.py - AFTER
+from src.db.enums import MemberStatus, MemberClassification
+```
+
+**2. Use enum objects instead of strings:**
+```python
+# conftest.py - AFTER
+member = Member(
+    member_number="TEST001",
+    first_name="Test",
+    last_name="Member",
+    classification=MemberClassification.JOURNEYMAN,  # ✅ Valid enum
+    status=MemberStatus.ACTIVE,                      # ✅ Valid enum
+)
+```
+
+### Files Modified
+- `src/tests/conftest.py` - Updated `test_member` fixture
+
+### Impact
+Fixed 12+ tests that depended on `test_member` fixture:
+- All member notes tests ✅
+- Member CRUD tests ✅
+- Audit frontend tests ✅
+
+### Prevention
+- **Lesson:** Never hardcode enum values as strings in tests
+- **Best Practice:** Always import and use enum objects
+- **Future:** Consider pytest fixture validation (check enum types)
+
+### References
+- Enum definitions: `src/db/enums.py`
+- Test fixtures: `src/tests/conftest.py`
+- Affected tests: `test_member_notes.py`, `test_audit_frontend.py`
+- ADR-017: Schema Drift Prevention Strategy
+
+---
