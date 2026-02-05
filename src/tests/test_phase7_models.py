@@ -58,7 +58,7 @@ def test_member(db_session):
         first_name="John",
         last_name="Wireman",
         status=MemberStatus.ACTIVE,
-        classification=MemberClassification.JOURNEYMAN_WIREMAN,
+        classification=MemberClassification.JOURNEYMAN,
     )
     db_session.add(member)
     db_session.commit()

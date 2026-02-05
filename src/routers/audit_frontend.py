@@ -2,7 +2,7 @@
 from datetime import date
 from typing import Optional
 from fastapi import APIRouter, Depends, Request, Query, HTTPException, status
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 import csv
@@ -33,6 +33,10 @@ def audit_logs_page(
     current_user: User = Depends(get_current_user_model),
 ):
     """Main audit logs page with filtering."""
+    # Auth check
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
     # Check user has some audit permission
     user_permissions = audit_frontend_service.get_available_tables(current_user)
     primary_role = audit_frontend_service._get_primary_role(current_user)
@@ -105,6 +109,10 @@ def audit_logs_search(
     current_user: User = Depends(get_current_user_model),
 ):
     """HTMX endpoint for filtered audit log table."""
+    # Auth check
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
     result = audit_frontend_service.get_audit_logs(
         db=db,
         current_user=current_user,
@@ -136,6 +144,10 @@ def audit_log_detail(
     current_user: User = Depends(get_current_user_model),
 ):
     """View details of a single audit log entry."""
+    # Auth check
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
     from src.models.audit_log import AuditLog
 
     log = db.query(AuditLog).filter(AuditLog.id == log_id).first()
@@ -171,6 +183,10 @@ def export_audit_logs(
     current_user: User = Depends(get_current_user_model),
 ):
     """Export audit logs to CSV (admin only)."""
+    # Auth check
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
     primary_role = audit_frontend_service._get_primary_role(current_user)
 
     if not has_audit_permission(primary_role, AuditPermission.EXPORT):
@@ -232,6 +248,10 @@ def entity_audit_history(
     current_user: User = Depends(get_current_user_model),
 ):
     """HTMX endpoint for inline entity history."""
+    # Auth check
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
     logs = audit_frontend_service.get_entity_history(
         db=db,
         current_user=current_user,

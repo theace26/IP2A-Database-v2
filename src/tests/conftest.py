@@ -66,6 +66,12 @@ def db_session():
 
 
 @pytest.fixture(scope="function")
+def db(db_session):
+    """Alias for db_session - some tests use 'db' instead of 'db_session'."""
+    return db_session
+
+
+@pytest.fixture(scope="function")
 def client():
     """
     Synchronous HTTP client for testing FastAPI endpoints.

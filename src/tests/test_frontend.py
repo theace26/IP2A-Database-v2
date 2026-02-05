@@ -190,10 +190,13 @@ class TestDashboardAPI:
 class TestPlaceholderRoutes:
     """Tests for placeholder pages that return 404."""
 
-    def test_profile_returns_404(self):
-        """Profile page should return 404."""
+    def test_profile_page_exists(self):
+        """Profile page should exist (implemented Week 12)."""
         response = client.get("/profile")
-        assert response.status_code == 404
+        # Unauthenticated should redirect to login, not 404
+        assert response.status_code in [200, 302]
+        if response.status_code == 302:
+            assert "/login" in response.headers.get("location", "")
 
     def test_settings_returns_404(self):
         """Settings page should return 404."""
