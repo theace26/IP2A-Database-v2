@@ -17,7 +17,7 @@
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl + Stripe (migrating to Square)
 
-**Status:** 593 total tests (491 passing, 35 skipped [27 Stripe + 5 setup + 3 S3], 88.0% pass rate, as of Feb 5, 2026), ~228+ API endpoints, 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
+**Status:** 593 total tests (507 passing, 35 skipped [27 Stripe + 5 setup + 3 S3], 90.9% pass rate, Week 29 as of Feb 5, 2026), ~228+ API endpoints, 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
 **Current:** Phase 7 — Referral & Dispatch System (~78 LaborPower reports to build). **Weeks 20-27 complete:** models, enums, schemas, 7 services, 5 API routers, 2 frontend services, 2 frontend routers, 13 pages, 15 HTMX partials. See `docs/phase7/`
 
@@ -1910,26 +1910,46 @@ Following ISSUE-001 migration drift resolution (Stripe + Grant parallel developm
 | **Errors** | 89 | 16 | -73 (-82%!) |
 | **Pass Rate** | 68% | 86.6% | +18.6 pts |
 
-### Remaining Issues (As of February 5, 2026 - Week 28)
+### Remaining Issues (As of February 5, 2026 - Week 29)
 
-**Category 1: Phase 7 Test Fixtures (16 errors)**
-- Phase 7 migrations ✅ APPLIED (migration `3f0166296a87`)
-- Tables exist with correct schema
-- **Issue:** Test fixtures creating duplicate seed data (unique constraint violations)
-- Affected: `test_phase7_models.py` (13 errors), `test_referral_frontend.py` (3 errors)
-- **Resolution:** Requires Phase 7 test fixture cleanup (separate task)
+**Week 29 Test Stabilization Results:**
+- **Pass Rate:** 90.9% (507/558 non-skipped tests) — within 1.1% of 92% target
+- **Improvement:** +16 passing, -13 failed, -3 errors from Week 28
+- **Session Log:** `docs/reports/session-logs/2026-02-05-week29-test-stabilization.md`
 
-**Category 2: Stripe Tests (27 skipped)**
+**Category 1: Dispatch Frontend Application Bug (19 failures) — BLOCKING**
+- **Root Cause:** `Dispatch` model missing `status` attribute
+- **Error:** `AttributeError: type object 'Dispatch' has no attribute 'status'` at `dispatch_frontend_service.py:82`
+- **Impact:** All dispatch dashboard tests blocked
+- **Status:** **Bug #029** — Requires application fix before tests can pass
+- **Resolution:** Add `status` column to Dispatch model or fix field reference
+
+**Category 2: Phase 7 Model Tests (13 errors) — FLAKY**
+- **Root Cause:** Test fixture isolation — tests pass individually but fail together
+- **Issue:** Module-scoped cleanup fixture timing or transaction interference
+- **Affected:** `test_phase7_models.py` (9 errors on BookRegistration, 3 on RegistrationActivity, 1 on ReferralBook)
+- **Resolution:** Requires investigation of fixture cleanup ordering
+
+**Category 3: Member Notes API (5 failures) — TEST REFACTOR NEEDED**
+- **Root Cause:** Test fixture isolation — `test_user` not visible to synchronous API client
+- **Issue:** `client` fixture uses FastAPI app's separate database session
+- **Resolution:** Refactor tests to use `async_client_with_db` or commit test data outside transaction
+
+**Category 4: Dues Tests (4 failures) — QUICK WIN**
+- **Root Cause:** Unique constraint violations (year=2093, month=7)
+- **Fix:** Add cleanup fixtures (same pattern as Phase 7 fixes in Week 29)
+- **Estimated Effort:** 15 minutes
+- **Impact:** +4 passing tests → 91.6% pass rate
+
+**Category 5: Referral Frontend (5 failures) — MIXED**
+- **Root Cause:** Various (404 errors, NameError, partial rendering issues)
+- **Resolution:** Individual investigation needed
+
+**Category 6: Stripe Tests (27 skipped)**
 - All Stripe tests skip-marked per ADR-018 (migrating to Square)
 - **Resolution:** Will be removed during Square migration Phase A
 
-**Category 3: Frontend Integration (11 failures)**
-- Referral frontend tests: 11 failures
-- **Resolution:** Individual investigation needed (separate task)
-
-**Category 4: Dispatch Frontend (27 failures)**
-- Dispatch workflow UI tests
-- **Resolution:** Individual investigation needed (separate task)
+**Projected Pass Rate with Easy Wins:** Fixing Category 1 (dispatch bug) + Category 4 (dues cleanup) would yield **94.6%** (530/558 tests passing)
 
 ### Files Modified
 
