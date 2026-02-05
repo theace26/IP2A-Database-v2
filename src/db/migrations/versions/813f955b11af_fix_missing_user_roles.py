@@ -76,8 +76,8 @@ def upgrade() -> None:
 
         conn.execute(
             sa.text("""
-                INSERT INTO user_roles (user_id, role_id, assigned_by, created_at)
-                VALUES (:user_id, :role_id, 'migration_fix', NOW())
+                INSERT INTO user_roles (user_id, role_id, assigned_by, assigned_at, created_at, updated_at)
+                VALUES (:user_id, :role_id, 'migration_fix', NOW(), NOW(), NOW())
             """),
             {"user_id": user_id, "role_id": admin_role_id}
         )

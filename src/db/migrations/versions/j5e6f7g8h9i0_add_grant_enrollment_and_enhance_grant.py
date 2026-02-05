@@ -17,32 +17,38 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Create grant_status enum
+    conn = op.get_bind()
+
+    # Drop existing enum types if they exist (from failed migration attempts)
+    # This ensures we start clean
+    conn.execute(sa.text("DROP TYPE IF EXISTS grant_status CASCADE"))
+    conn.execute(sa.text("DROP TYPE IF EXISTS grant_enrollment_status CASCADE"))
+    conn.execute(sa.text("DROP TYPE IF EXISTS grant_outcome CASCADE"))
+
+    # Create enums fresh
     grant_status_enum = sa.Enum(
         'pending', 'active', 'completed', 'closed', 'suspended',
         name='grant_status'
     )
-    grant_status_enum.create(op.get_bind(), checkfirst=True)
+    grant_status_enum.create(op.get_bind())
 
-    # Create grant_enrollment_status enum
     grant_enrollment_status_enum = sa.Enum(
         'enrolled', 'active', 'completed', 'withdrawn', 'dropped',
         name='grant_enrollment_status'
     )
-    grant_enrollment_status_enum.create(op.get_bind(), checkfirst=True)
+    grant_enrollment_status_enum.create(op.get_bind())
 
-    # Create grant_outcome enum
     grant_outcome_enum = sa.Enum(
         'completed_program', 'obtained_credential', 'entered_apprenticeship',
         'obtained_employment', 'continued_education', 'withdrawn', 'other',
         name='grant_outcome'
     )
-    grant_outcome_enum.create(op.get_bind(), checkfirst=True)
+    grant_outcome_enum.create(op.get_bind())
 
     # Add new columns to grants table
     op.add_column('grants', sa.Column(
         'status',
-        sa.Enum('pending', 'active', 'completed', 'closed', 'suspended', name='grant_status'),
+        sa.Enum('pending', 'active', 'completed', 'closed', 'suspended', name='grant_status', create_type=False),
         nullable=True,
         server_default='pending'
     ))
@@ -60,28 +66,29 @@ def upgrade() -> None:
     # Make status non-nullable after setting defaults
     op.alter_column('grants', 'status', nullable=False)
 
-    # Create grant_enrollments table
-    op.create_table(
-        'grant_enrollments',
-        sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column('grant_id', sa.Integer(), sa.ForeignKey('grants.id', ondelete='CASCADE'), nullable=False),
-        sa.Column('student_id', sa.Integer(), sa.ForeignKey('students.id', ondelete='CASCADE'), nullable=False),
-        sa.Column('enrollment_date', sa.Date(), nullable=False),
-        sa.Column('status', sa.Enum('enrolled', 'active', 'completed', 'withdrawn', 'dropped', name='grant_enrollment_status'), nullable=False, server_default='enrolled'),
-        sa.Column('completion_date', sa.Date(), nullable=True),
-        sa.Column('outcome', sa.Enum('completed_program', 'obtained_credential', 'entered_apprenticeship', 'obtained_employment', 'continued_education', 'withdrawn', 'other', name='grant_outcome'), nullable=True),
-        sa.Column('outcome_date', sa.Date(), nullable=True),
-        sa.Column('placement_employer', sa.String(200), nullable=True),
-        sa.Column('placement_date', sa.Date(), nullable=True),
-        sa.Column('placement_wage', sa.String(50), nullable=True),
-        sa.Column('placement_job_title', sa.String(200), nullable=True),
-        sa.Column('notes', sa.Text(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
-        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
-        sa.Column('is_deleted', sa.Boolean(), nullable=False, server_default='false'),
-        sa.Column('deleted_at', sa.DateTime(), nullable=True),
-        sa.UniqueConstraint('grant_id', 'student_id', name='uq_grant_student'),
-    )
+    # Create grant_enrollments table using raw SQL to avoid enum creation issues
+    conn.execute(sa.text("""
+        CREATE TABLE grant_enrollments (
+            id SERIAL PRIMARY KEY,
+            grant_id INTEGER NOT NULL REFERENCES grants(id) ON DELETE CASCADE,
+            student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+            enrollment_date DATE NOT NULL,
+            status grant_enrollment_status NOT NULL DEFAULT 'enrolled',
+            completion_date DATE,
+            outcome grant_outcome,
+            outcome_date DATE,
+            placement_employer VARCHAR(200),
+            placement_date DATE,
+            placement_wage VARCHAR(50),
+            placement_job_title VARCHAR(200),
+            notes TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            is_deleted BOOLEAN NOT NULL DEFAULT false,
+            deleted_at TIMESTAMP,
+            CONSTRAINT uq_grant_student UNIQUE (grant_id, student_id)
+        )
+    """))
 
     # Create indexes
     op.create_index('ix_grant_enrollments_grant_id', 'grant_enrollments', ['grant_id'], unique=False)

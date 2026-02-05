@@ -13,6 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > Current: Phase 7 — Referral & Dispatch System (Backend Complete + Books & Dispatch Frontend UI Complete)
 
 ### Fixed
+- **Database Migration Drift Resolution** (February 5, 2026)
+  * Resolved multiple migration heads (813f955b11af + j5e6f7g8h9i0) from parallel branch development
+  * Fixed cross-branch enum dependency: g2b3c4d5e6f7 (Stripe) now handles missing duespaymentmethod enum
+  * Fixed migration 813f955b11af: Added missing assigned_at and updated_at columns to user_roles INSERT
+  * Fixed migration ee8ead726e9b: Replaced invalid CREATE TYPE IF NOT EXISTS with existence check
+  * Fixed migration j5e6f7g8h9i0: Used raw SQL for grant_enrollments table to avoid enum recreation conflicts
+  * Created merge migration 9d48d853728b to unify branches
+  * Database now at single head, all migrations applied successfully
+  * Fixed 32 users with missing role assignments during migration
+  * See docs/issues/ISSUE-001-migration-drift-resolution.md for full details
 - **Dispatch Model Relationship Error** (February 5, 2026)
   * Fixed SQLAlchemy foreign_keys parameter on Dispatch.bid relationship
   * Fixed JobBid.dispatch inverse relationship (was missing entirely)

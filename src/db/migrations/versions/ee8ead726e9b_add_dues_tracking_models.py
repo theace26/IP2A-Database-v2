@@ -20,11 +20,31 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # Create new enum types for dues tracking
-    op.execute("CREATE TYPE duespaymentmethod AS ENUM ('PAYROLL_DEDUCTION', 'CHECK', 'CASH', 'MONEY_ORDER', 'CREDIT_CARD', 'ACH_TRANSFER', 'ONLINE', 'OTHER')")
-    op.execute("CREATE TYPE duespaymentstatus AS ENUM ('PENDING', 'DUE', 'PARTIAL', 'PAID', 'OVERDUE', 'WAIVED', 'WRITTEN_OFF')")
-    op.execute("CREATE TYPE duesadjustmenttype AS ENUM ('WAIVER', 'HARDSHIP', 'CREDIT', 'CORRECTION', 'LATE_FEE', 'REINSTATEMENT', 'OTHER')")
-    op.execute("CREATE TYPE adjustmentstatus AS ENUM ('PENDING', 'APPROVED', 'DENIED')")
+    import sqlalchemy as sa
+    conn = op.get_bind()
+
+    # Create new enum types for dues tracking (only if they don't exist)
+    # This handles cross-branch migration scenarios where enums may have been created elsewhere
+
+    # Check and create duespaymentmethod
+    result = conn.execute(sa.text("SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'duespaymentmethod')"))
+    if not result.scalar():
+        op.execute("CREATE TYPE duespaymentmethod AS ENUM ('PAYROLL_DEDUCTION', 'CHECK', 'CASH', 'MONEY_ORDER', 'CREDIT_CARD', 'ACH_TRANSFER', 'ONLINE', 'OTHER')")
+
+    # Check and create duespaymentstatus
+    result = conn.execute(sa.text("SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'duespaymentstatus')"))
+    if not result.scalar():
+        op.execute("CREATE TYPE duespaymentstatus AS ENUM ('PENDING', 'DUE', 'PARTIAL', 'PAID', 'OVERDUE', 'WAIVED', 'WRITTEN_OFF')")
+
+    # Check and create duesadjustmenttype
+    result = conn.execute(sa.text("SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'duesadjustmenttype')"))
+    if not result.scalar():
+        op.execute("CREATE TYPE duesadjustmenttype AS ENUM ('WAIVER', 'HARDSHIP', 'CREDIT', 'CORRECTION', 'LATE_FEE', 'REINSTATEMENT', 'OTHER')")
+
+    # Check and create adjustmentstatus
+    result = conn.execute(sa.text("SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'adjustmentstatus')"))
+    if not result.scalar():
+        op.execute("CREATE TYPE adjustmentstatus AS ENUM ('PENDING', 'APPROVED', 'DENIED')")
 
     # Create dues_rates table - uses existing memberclassification enum
     op.execute("""

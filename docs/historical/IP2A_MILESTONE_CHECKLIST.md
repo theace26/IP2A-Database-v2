@@ -2,9 +2,9 @@
 
 > **Document Created:** January 27, 2026
 > **Last Updated:** February 4, 2026
-> **Version:** v2.0 — Hub/Spoke Migration
-> **App Version:** v0.9.6-alpha — Phase 7 Weeks 20-25 Complete (Services + API)
-> **Status:** Phase 7 IN PROGRESS — Models, Enums, Services, API Routers Complete → Frontend Next
+> **Version:** v3.0 — Weeks 26-27 Complete
+> **App Version:** v0.9.8-alpha — Phase 7 Weeks 20-27 Complete (Services + API + Frontend)
+> **Status:** Phase 7 IN PROGRESS — Backend + Frontend Complete → Reports & Import Next
 > **Development Model:** Hub/Spoke (see below)
 > **Print this or keep it open during sessions**
 
@@ -41,8 +41,8 @@ Development planning uses a Hub/Spoke model. All work before Week 20 was built u
 | Phase 2b | Training (Students, Courses, Grades) | 7 | ~35 | 33 | Done | *(pre-Hub/Spoke)* |
 | Phase 3 | Documents (S3/MinIO) | 1 | 8 | 11 | Done | *(pre-Hub/Spoke)* |
 | Phase 4 | Dues Tracking | 4 | ~35 | 21 | Done | *(pre-Hub/Spoke)* |
-| **Phase 7** | **Referral & Dispatch (Weeks 20-25)** | **6** | **~51** | **20+** | **WIP** | **Spoke 2** |
-| **Total** | **Including Phase 7 services + API** | **32** | **~200** | **542** | **WIP** | |
+| **Phase 7** | **Referral & Dispatch (Weeks 20-27)** | **6** | **~79** | **71** | **WIP** | **Spoke 2** |
+| **Total** | **Including Phase 7** | **32** | **~228** | **593** | **WIP** | |
 
 ---
 
@@ -373,45 +373,7 @@ Development planning uses a Hub/Spoke model. All work before Week 20 was built u
 
 ---
 
-### Weeks 20-22: Phase 7 Foundation (COMPLETE) — Spoke 2
-
-| Task | Status |
-|------|--------|
-| **Week 20A:** Schema reconciliation & Phase 7 enums (19 enums) | Done |
-| **Week 20B:** ReferralBook model & 11 book seeds | Done |
-| **Week 20C:** BookRegistration model with DECIMAL APN | Done |
-| **Week 21A:** LaborRequest & JobBid models | Done |
-| **Week 21B:** Dispatch model | Done |
-| **Week 21C:** RegistrationActivity model (append-only audit) | Done |
-| **Week 22A:** ReferralBookService (CRUD, stats, settings) | Done |
-| **Week 22B:** BookRegistrationService core (register, re-sign, queue) | Done |
-| **Week 22C:** Check mark logic & roll-off rules | Done |
-| 20+ model tests | Done |
-| Schema decisions documented (PHASE7_SCHEMA_DECISIONS.md) | Done |
-
-**Version:** v0.9.5-alpha (Weeks 20-22 Complete)
-
-### Weeks 23-25: Phase 7 Services + API (COMPLETE) — Spoke 2
-
-| Task | Status |
-|------|--------|
-| **Week 23:** LaborRequestService (create, fill, cancel, deadline enforcement) | Done |
-| **Week 23:** JobBidService (time-gated bidding, rejection counting) | Done |
-| **Week 23:** DispatchService (dispatch, accept, reject, short call tracking) | Done |
-| **Week 24:** QueueService (processing order, queue management) | Done |
-| **Week 24:** EnforcementService (re-registration, cascade roll-off, exemptions) | Done |
-| **Week 25:** referral_books_api router (10 endpoints) | Done |
-| **Week 25:** registration_api router (10 endpoints) | Done |
-| **Week 25:** labor_request_api router (9 endpoints) | Done |
-| **Week 25:** job_bid_api router (8 endpoints) | Done |
-| **Week 25:** dispatch_api router (14 endpoints) | Done |
-| 14 of 14 business rules implemented | Done |
-
-**Version:** v0.9.6-alpha (Weeks 23-25 Complete)
-
----
-
-### §7.0 LaborPower Data Analysis (COMPLETE) — Hub
+### §7.0 LaborPower Data Analysis (COMPLETE)
 
 | Task | Status |
 |------|--------|
@@ -469,24 +431,24 @@ Development planning uses a Hub/Spoke model. All work before Week 20 was built u
 
 ---
 
-### §7.3 Quick Reference: Business Rules (14) — ALL IMPLEMENTED in Weeks 22-25
+### §7.3 Quick Reference: Business Rules (14)
 
-| # | Rule | System Impact | Implemented |
-|---|------|---------------|-------------|
-| 1 | Office Hours & Regions | Region enum, operating hours config | ✅ Week 22 |
-| 2 | Morning Referral Processing Order | Processing queue with time windows | ✅ Week 24 |
-| 3 | Labor Request Cutoff | Deadline enforcement, web bid time gates | ✅ Week 23 |
-| 4 | Agreement Types (PLA/CWA/TERO) | agreement_type enum on referral_books | ✅ Week 20 |
-| 5 | Registration Rules (one per classification) | Validation: one active registration per book per member | ✅ Week 22 |
-| 6 | Re-Registration Triggers | re_registration_reason enum, auto-relist logic | ✅ Week 24 |
-| 7 | Re-Sign 30-Day Cycle | Scheduled trigger, notification | ✅ Week 24 |
-| 8 | Internet/Email Bidding | Time-gated bidding, rejection counter, penalty | ✅ Week 23 |
-| 9 | Short Calls | Duration tracking, cycle counter, exemption logic | ✅ Week 23 |
-| 10 | Check Marks | check_marks table with per-book tracking | ✅ Week 22 |
-| 11 | No Check Mark Exceptions | member_exemptions table, exemption_type enum | ✅ Week 24 |
-| 12 | Quit/Discharge | Cascade deregistration, blackout_periods table | ✅ Week 24 |
-| 13 | Foreperson By Name | by_name_request flag on dispatches | ✅ Week 23 |
-| 14 | Exempt Status | member_exemptions with date ranges and reason types | ✅ Week 24 |
+| # | Rule | System Impact |
+|---|------|---------------|
+| 1 | Office Hours & Regions | Region enum, operating hours config |
+| 2 | Morning Referral Processing Order (Wire 8:30 → S&C/Marine/Stock/LFM/Residential 9:00 → Tradeshow 9:30) | Processing queue with time windows |
+| 3 | Labor Request Cutoff (3 PM next-day; web bids after 5:30 PM) | Deadline enforcement, web bid time gates |
+| 4 | Agreement Types (PLA/CWA/TERO) | agreement_type enum on referral_books |
+| 5 | Registration Rules (one per classification) | Validation: one active registration per book per member |
+| 6 | Re-Registration Triggers (short call, under scale, 90-day, turnarounds) | re_registration_reason enum, auto-relist logic |
+| 7 | Re-Sign 30-Day Cycle | Scheduled job or manual trigger, notification |
+| 8 | Internet/Email Bidding (5:30 PM–7 AM; 2nd rejection = 1 year loss) | Time-gated bidding, rejection counter, penalty enforcement |
+| 9 | Short Calls (≤10 days, max 2 per cycle, ≤3 days don't count) | Duration tracking, cycle counter, exemption logic |
+| 10 | Check Marks (2 allowed, 3rd = rolled off; separate per area book) | check_marks table with per-book tracking |
+| 11 | No Check Mark Exceptions (specialty, MOU, early start, under scale, etc.) | member_exemptions table, exemption_type enum |
+| 12 | Quit/Discharge (rolled off ALL books; 2-week foreperson blackout) | Cascade deregistration, blackout_periods table |
+| 13 | Foreperson By Name (anti-collusion) | by_name_request flag on dispatches |
+| 14 | Exempt Status (military, union business, salting, medical, jury duty) | member_exemptions with date ranges and reason types |
 
 ---
 
@@ -506,22 +468,16 @@ Development planning uses a Hub/Spoke model. All work before Week 20 was built u
 
 ---
 
-### §7.5 Quick Reference: New Tables (12)
+### §7.5 Quick Reference: New Tables (6 Implemented)
 
 | Table | Purpose | Key Relationships |
 |-------|---------|-------------------|
 | referral_books | Book definitions (name, contract, agreement type, region) | → employer_contracts |
-| registrations | Member out-of-work list entries with APN | → members, → referral_books |
-| employer_contracts | Employer-contract associations with status | → employers (existing or new) |
-| job_requests | Employer labor requests with requirements | → employer_contracts |
-| job_requirements | Per-request skill/cert requirements | → job_requests |
-| dispatches | Member dispatch records with outcomes | → members, → job_requests |
-| web_bids | Internet bidding entries with timestamps | → members, → job_requests |
-| check_marks | Penalty tracking (2 allowed, 3rd = roll-off) | → members, → referral_books |
-| member_exemptions | Exempt status with reason and date range | → members |
-| bidding_infractions | Internet bidding violations and penalties | → members |
-| worksites | Physical job locations for dispatch | → employer_contracts |
-| blackout_periods | Foreperson/employer blackout windows | → members or employers |
+| book_registrations | Member out-of-work list entries with APN | → members, → referral_books |
+| registration_activities | Activity log for registrations | → book_registrations |
+| labor_requests | Employer labor requests with requirements | → employers |
+| job_bids | Member bids on labor requests | → members, → labor_requests |
+| dispatches | Member dispatch records with outcomes | → members, → labor_requests, → job_bids |
 
 ---
 
@@ -619,7 +575,7 @@ Can be resolved during implementation without blocking.
 
 ---
 
-### Sub-Phase 7d: Import Tooling (15-20 hrs) — BLOCKED by 7a — Spoke 2
+### Sub-Phase 7d: Import Tooling (15-20 hrs) — Ready to Start — Spoke 2
 
 | Task | Est. | Status |
 |------|------|--------|
@@ -635,26 +591,52 @@ Can be resolved during implementation without blocking.
 
 ---
 
-### Sub-Phase 7e: Frontend UI (20-30 hrs) — 🔜 NEXT (Weeks 26-28) — Spoke 2
+### Sub-Phase 7e: Frontend UI (20-30 hrs) — 🚧 IN PROGRESS (Weeks 26-27 Done) — Spoke 2
 
 | Task | Est. | Sprint | Status |
 |------|------|--------|--------|
-| Referral landing page with book status overview | 2 hrs | Week 26 | Pending |
-| Book list page with registration counts per tier | 2 hrs | Week 26 | Pending |
-| Book detail page with registrant list | 3 hrs | Week 26 | Pending |
-| Registration management (add/remove members from books) | 3 hrs | Week 26 | Pending |
-| Dispatch board (pending requests, available members, drag-assign) | 5 hrs | Week 27 | Pending |
-| Job request creation form (employer, requirements, dates) | 2 hrs | Week 27 | Pending |
-| Web bidding interface (time-gated, member-facing) | 3 hrs | Week 27 | Pending |
-| Check mark tracking UI | 2 hrs | Week 27 | Pending |
+| ReferralFrontendService (badge helpers, stats queries) | 2 hrs | Week 26 | Done |
+| Referral landing page with book status overview | 2 hrs | Week 26 | Done |
+| Book list page with registration counts per tier | 2 hrs | Week 26 | Done |
+| Book detail page with registrant list | 3 hrs | Week 26 | Done |
+| Registrations page with search/filter | 2 hrs | Week 26 | Done |
+| Registration detail page | 1 hr | Week 26 | Done |
+| Register/Re-sign/Resign modals | 2 hrs | Week 26 | Done |
+| 8 HTMX partials for referral pages | 2 hrs | Week 26 | Done |
+| Sidebar navigation update (Referral section) | 30 min | Week 26 | Done |
+| 22 referral frontend tests | 2 hrs | Week 26 | Done |
+| DispatchFrontendService (time-aware logic, stats) | 2 hrs | Week 27 | Done |
+| Dispatch dashboard (key daily view) | 2 hrs | Week 27 | Done |
+| Labor requests page | 2 hrs | Week 27 | Done |
+| Morning referral processing page | 3 hrs | Week 27 | Done |
+| Active dispatches page | 2 hrs | Week 27 | Done |
+| Queue management page | 2 hrs | Week 27 | Done |
+| Enforcement page (check marks, exemptions) | 2 hrs | Week 27 | Done |
+| 7 HTMX partials with auto-refresh | 2 hrs | Week 27 | Done |
+| 29 dispatch frontend tests | 2 hrs | Week 27 | Done |
 | Exemption management UI | 2 hrs | Week 28 | Pending |
-| Reports navigation & dashboard | 3 hrs | Week 28 | Pending |
-| Sidebar navigation update (Referral & Dispatch section) | 1 hr | Week 26 | Pending |
-| Frontend tests (target: 30+) | 3 hrs | All weeks | Pending |
+| Reports navigation dashboard | 2 hrs | Week 28 | Pending |
+| Check mark tracking UI refinement | 1 hr | Week 28 | Pending |
+
+**Week 26 Deliverables (v0.9.7-alpha):**
+- ReferralFrontendService: badge helpers, stats queries, pagination
+- 17 routes in `referral_frontend.py`
+- 5 page templates: landing, books, book_detail, registrations, registration_detail
+- 8 HTMX partials: stats, books_overview, books_table, queue_table, registrations_table, register_modal, re_sign_modal, resign_modal
+- 22 new tests in `test_referral_frontend.py` — all passing
+
+**Week 27 Deliverables (v0.9.8-alpha):**
+- DispatchFrontendService: time-aware business logic, dashboard stats, activity feed
+- Time-aware features: bidding window (5:30 PM - 7:00 AM), 3:00 PM cutoff, morning processing order
+- 11 routes in `dispatch_frontend.py`
+- 6 page templates: dashboard, requests, morning_referral, active, queue, enforcement
+- 7 HTMX partials with auto-refresh: stats_cards (60s), activity_feed (30s), pending_requests, bid_queue, queue_table, request_table, dispatch_table
+- 29 new tests in `test_dispatch_frontend.py` — 2 passing, 27 blocked by Dispatch.bid bug (see Known Issues)
+- ADR-016: Phase 7 Frontend UI Patterns
 
 ---
 
-### Sub-Phase 7f: Reports P0 + P1 (20-30 hrs) — BLOCKED by 7c ✅ → Ready — Spoke 2 or 3
+### Sub-Phase 7f: Reports P0 + P1 (20-30 hrs) — Ready to Start — Spoke 2 or 3
 
 | Priority | Count | Examples | Status |
 |----------|-------|----------|--------|
@@ -697,7 +679,7 @@ Can be resolved during implementation without blocking.
 | P3 (Low) | 7 | Nice-to-have projections and ad-hoc | Pending |
 | **Total** | **78** | **De-duplicated from 91 raw reports** | **Pending** |
 
-Full report inventory in `docs/phase7/LABORPOWER_REPORTS_INVENTORY.md`
+Full report inventory in `docs/phase7/LABORPOWER_REFERRAL_REPORTS_INVENTORY.md`
 
 ---
 
@@ -705,11 +687,11 @@ Full report inventory in `docs/phase7/LABORPOWER_REPORTS_INVENTORY.md`
 
 | # | Task | Spoke | Status |
 |---|------|-------|--------|
-| 1 | Merge `develop → main` for v0.9.4-alpha production deployment | Hub | Pending |
-| 2 | Set production Stripe keys and S3 storage | Spoke 3 | Pending |
-| 3 | Obtain Priority 1 blocking data exports from LaborPower (3 reports) | Spoke 2 | Pending |
-| 4 | Resolve Priority 2 data gaps as exports become available | Spoke 2 | Pending |
-| 5 | Build Week 26 instruction document (Books & Registration UI) | Spoke 2 | 🔜 Next |
+| 1 | **Fix Dispatch.bid relationship bug** (blocks 25 tests) | Spoke 2 | 🔴 HIGH PRIORITY |
+| 2 | Merge `develop → main` for v0.9.8-alpha production deployment | Hub | Pending |
+| 3 | Set production Stripe keys and S3 storage | Spoke 3 | Pending |
+| 4 | Obtain Priority 1 blocking data exports from LaborPower (3 reports) | Spoke 2 | Pending |
+| 5 | Build Week 28 (remaining 7e tasks: exemption UI, reports nav, check marks) | Spoke 2 | 🔜 Next |
 
 ---
 
@@ -717,7 +699,7 @@ Full report inventory in `docs/phase7/LABORPOWER_REPORTS_INVENTORY.md`
 
 | Document | Location | Purpose |
 |----------|----------|---------|
-| Roadmap v4.0 | `IP2A_BACKEND_ROADMAP.md` | Master plan with Phase 7 detail + Hub/Spoke tags |
+| Roadmap v5.0 | `IP2A_BACKEND_ROADMAP.md` | Master plan with Phase 7 detail + Hub/Spoke tags |
 | Schema Guidance Vol. 1 | `docs/phase7/LaborPower_Schema_Guidance_Vol1.docx` | APN analysis, cross-registration findings |
 | Schema Guidance Vol. 2 | `docs/phase7/LaborPower_Schema_Guidance_Vol2.docx` | Batch 2 analysis, RESIDENTIAL discovery |
 | Continuity Document | `docs/phase7/UnionCore_Continuity_Document_Consolidated.md` | Full context for new chat threads |
@@ -726,6 +708,22 @@ Full report inventory in `docs/phase7/LABORPOWER_REPORTS_INVENTORY.md`
 | Referral Books Schema | `docs/phase7/IP2A_REFERRAL_BOOKS_SCHEMA.md` | DDL and model specifications |
 | Dispatch Plan | `docs/phase7/IP2A_REFERRAL_DISPATCH_PLAN.md` | Dispatch workflow and business logic |
 | Reports Inventory | `docs/phase7/LABORPOWER_REPORTS_INVENTORY.md` | 78 reports by priority with field mapping |
+| ADR-016 | `docs/decisions/ADR-016-phase7-frontend-ui-patterns.md` | Week 26-27 frontend patterns |
+
+---
+
+## Known Issues
+
+### Dispatch.bid Relationship Bug (CRITICAL)
+
+**Status:** 🔴 Blocks 25 tests
+**Location:** `src/models/dispatch.py`
+**Error:** `Could not determine join condition between parent/child tables on relationship Dispatch.bid`
+**Fix:** Add `foreign_keys` parameter to the `Dispatch.bid` relationship:
+```python
+bid = relationship("JobBid", foreign_keys=[bid_id], back_populates="dispatch")
+```
+**Impact:** 25 dispatch frontend tests blocked. Once fixed, test count goes from 568 passing to 593 passing.
 
 ---
 
@@ -733,21 +731,24 @@ Full report inventory in `docs/phase7/LABORPOWER_REPORTS_INVENTORY.md`
 
 | Metric | Current |
 |--------|---------|
-| Total Tests | 542 |
+| Total Tests | 593 (568 passing, 25 blocked) |
 | Backend Tests | 185+ |
-| Frontend Tests | 200+ |
+| Frontend Tests | 300+ |
 | Production Tests | 78 |
 | Stripe Tests | 25 |
-| API Endpoints | ~200 (~150 existing + ~51 Phase 7) |
+| API Endpoints | ~228 (~178 existing + ~50 Phase 7) |
 | ORM Models | 32 (26 existing + 6 Phase 7) |
-| ADRs | 15 |
-| Version | v0.9.6-alpha |
+| ADRs | 16 |
+| Version | v0.9.8-alpha |
 | Phase 7 Models Complete | 6 |
 | Phase 7 Services Complete | 7 |
-| Phase 7 Routers Complete | 5 (~51 endpoints) |
+| Phase 7 Backend Routers Complete | 5 (~51 endpoints) |
+| Phase 7 Frontend Routers Complete | 2 (28 routes) |
+| Phase 7 Frontend Pages | 11 |
+| Phase 7 HTMX Partials | 15 |
 | Phase 7 Business Rules | 14 of 14 |
 | Phase 7 Reports | 78 (de-duplicated, pending) |
-| Phase 7 Effort Remaining | ~65-95 hrs (7d + 7e + 7f + 7g) |
+| Phase 7 Effort Remaining | ~45-75 hrs (7d + 7e Week 28 + 7f + 7g) |
 
 ---
 
@@ -755,7 +756,10 @@ Full report inventory in `docs/phase7/LABORPOWER_REPORTS_INVENTORY.md`
 
 | Version | Date | Milestone |
 |---------|------|-----------|
-| **v2.0 (Checklist)** | **2026-02-04** | **Hub/Spoke migration: Spoke tags on all phases/weeks, Weeks 23-25 completed, business rules implementation tracking, updated Quick Stats, sprint clarification, cross-cutting concerns protocol** |
+| **v3.0 (Checklist)** | **2026-02-04** | **Weeks 26-27 complete: referral frontend (22 tests), dispatch frontend (29 tests), ADR-016. Known bug documented (Dispatch.bid). Test count 593. ADRs 16.** |
+| v2.0 (Checklist) | 2026-02-04 | Hub/Spoke migration: Spoke tags on all phases/weeks, Weeks 23-25 completed |
+| v0.9.8-alpha | 2026-02-04 | Phase 7 Week 27 — Dispatch Workflow UI (6 pages, 7 partials, ADR-016) |
+| v0.9.7-alpha | 2026-02-04 | Phase 7 Week 26 — Books & Registration UI (5 pages, 8 partials, 22 tests) |
 | v0.9.6-alpha | 2026-02-04 | Phase 7 Weeks 23-25 — Services + API Routers (7 services, 5 routers, ~51 endpoints) |
 | v0.9.5-alpha | 2026-02-04 | Phase 7 Weeks 20-22 - Models, Enums, Schemas, Services |
 | v0.9.4-alpha | 2026-02-03 | Phase 7 planning integrated into checklist |
@@ -795,19 +799,13 @@ pytest -v
 # Run frontend tests only
 pytest src/tests/test_frontend.py -v
 
-# Run staff tests only
-pytest src/tests/test_staff.py -v
+# Run referral frontend tests
+pytest src/tests/test_referral_frontend.py -v
 
-# Run training tests only
-pytest src/tests/test_training_frontend.py -v
+# Run dispatch frontend tests
+pytest src/tests/test_dispatch_frontend.py -v
 
-# Run member tests only
-pytest src/tests/test_member_frontend.py -v
-
-# Run dues frontend tests only
-pytest src/tests/test_dues_frontend.py -v
-
-# Run referral/dispatch tests (Phase 7)
+# Run all Phase 7 tests
 pytest src/tests/test_referral*.py src/tests/test_dispatch*.py -v
 
 # Check code quality
@@ -879,6 +877,8 @@ See `docs/standards/END_OF_SESSION_DOCUMENTATION.md` for full checklist.
 **v1.0 Checklist (Feb 3-4, 2026):** Original monolithic checklist. Phase 7 section added Feb 3 incorporating all LaborPower data analysis findings. Weeks 20-22 completion tracked.
 
 **v2.0 Checklist (Feb 4, 2026):** Hub/Spoke migration. Added Spoke tags to all phases, completed Weeks 23-25 sections, updated business rules with implementation tracking, reconciled version numbers to v0.9.6-alpha, added sprint vs calendar week clarification.
+
+**v3.0 Checklist (Feb 4, 2026):** Weeks 26-27 complete. Added referral frontend (Week 26: 5 pages, 8 partials, 22 tests) and dispatch frontend (Week 27: 6 pages, 7 partials, 29 tests). Documented Dispatch.bid bug blocking 25 tests. Updated test count to 593, ADR count to 16. Added ADR-016.
 
 ---
 
