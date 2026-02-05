@@ -7,10 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> **v0.9.8-alpha — PHASE 7 Weeks 26-27 Complete + Week 30 Field Name Fixes**
-> 593 total tests (517 passing, 92.7% pass rate), ~228+ API endpoints, 32 models (26 + 6 Phase 7), 18 ADRs
+> **v0.9.8-alpha — PHASE 7 Weeks 26-27 Complete + Week 30-31 Documentation & Test Fixes**
+> 593 total tests (519 passing when excluding Stripe/flaky, 92.7% base pass rate), ~228+ API endpoints, 32 models, 18 ADRs
 > Railway deployed, Stripe live, Mobile PWA enabled
 > Current: Phase 7 — Referral & Dispatch System (Backend Complete + Books & Dispatch Frontend UI Complete + Migrations Applied)
+
+### Added (February 5, 2026 — Week 31)
+- **Hub Documentation Suite** (commit `e17e8ee`)
+  * Created docs/README.md v1.0 with Hub/Spoke explainer and quick links
+  * Created docs/IP2A_MILESTONE_CHECKLIST.md v2.0 with Weeks 20-30 status tracking
+  * Created docs/IP2A_BACKEND_ROADMAP.md v4.0 with Phase 7 detail and timeline expectations
+  * Archived old documentation versions to docs/historical/
+- **Phase 7 Sub-Phase Instruction Framework** (commit `e17e8ee`)
+  * Deployed 8 instruction documents to docs/instructions/phase7/
+  * Framework document with dependency chain visualization
+  * Sub-phases 7a-7g: Data Collection, Schema Finalization, Services, Import, Frontend, Reports P0-P3
+  * Ready-when conditions and effort estimates for each sub-phase
+
+### Fixed (February 5, 2026 — Week 31)
+- **Dispatch Frontend Tests** (commit `e17e8ee`)
+  * Fixed 2 failing tests: test_dashboard_shows_stats, test_dashboard_stats_calculation
+  * Issue: Tests checked main page for HTMX-loaded content ("Today's Dispatches")
+  * Solution: Updated tests to check partial endpoint /dispatch/partials/stats directly
+  * Result: 29/29 dispatch frontend tests passing (was 27/29)
+- **Bug #031: Dues Test Collisions Documented**
+  * Investigated dues test UniqueViolation failures (tests pass individually, fail when run together)
+  * Root cause: nanosecond-based uniqueness helpers in test data collide across test runs
+  * Documented in docs/bugs/BUG-031-dues-test-collisions.md for future resolution
+  * Attempted fixture-based cleanup approach caused test hangs (transaction conflict)
 
 ### Fixed (February 5, 2026 — Week 30)
 - **Bug #029: Phase 7 Model Field Name Mismatches** (commit `8480366`)
