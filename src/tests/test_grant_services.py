@@ -1,5 +1,4 @@
 """Tests for grant services."""
-import pytest
 
 from src.services.grant_metrics_service import GrantMetricsService
 from src.services.grant_report_service import GrantReportService
@@ -15,26 +14,82 @@ class TestGrantMetricsService:
 
     def test_status_badge_class(self):
         """Test status badge class helper."""
-        assert GrantMetricsService.get_status_badge_class(GrantStatus.PENDING) == "badge-warning"
-        assert GrantMetricsService.get_status_badge_class(GrantStatus.ACTIVE) == "badge-success"
-        assert GrantMetricsService.get_status_badge_class(GrantStatus.COMPLETED) == "badge-info"
-        assert GrantMetricsService.get_status_badge_class(GrantStatus.CLOSED) == "badge-ghost"
-        assert GrantMetricsService.get_status_badge_class(GrantStatus.SUSPENDED) == "badge-error"
+        assert (
+            GrantMetricsService.get_status_badge_class(GrantStatus.PENDING)
+            == "badge-warning"
+        )
+        assert (
+            GrantMetricsService.get_status_badge_class(GrantStatus.ACTIVE)
+            == "badge-success"
+        )
+        assert (
+            GrantMetricsService.get_status_badge_class(GrantStatus.COMPLETED)
+            == "badge-info"
+        )
+        assert (
+            GrantMetricsService.get_status_badge_class(GrantStatus.CLOSED)
+            == "badge-ghost"
+        )
+        assert (
+            GrantMetricsService.get_status_badge_class(GrantStatus.SUSPENDED)
+            == "badge-error"
+        )
 
     def test_enrollment_status_badge_class(self):
         """Test enrollment status badge class helper."""
-        assert GrantMetricsService.get_enrollment_status_badge_class(GrantEnrollmentStatus.ENROLLED) == "badge-info"
-        assert GrantMetricsService.get_enrollment_status_badge_class(GrantEnrollmentStatus.ACTIVE) == "badge-success"
-        assert GrantMetricsService.get_enrollment_status_badge_class(GrantEnrollmentStatus.COMPLETED) == "badge-primary"
-        assert GrantMetricsService.get_enrollment_status_badge_class(GrantEnrollmentStatus.WITHDRAWN) == "badge-warning"
-        assert GrantMetricsService.get_enrollment_status_badge_class(GrantEnrollmentStatus.DROPPED) == "badge-error"
+        assert (
+            GrantMetricsService.get_enrollment_status_badge_class(
+                GrantEnrollmentStatus.ENROLLED
+            )
+            == "badge-info"
+        )
+        assert (
+            GrantMetricsService.get_enrollment_status_badge_class(
+                GrantEnrollmentStatus.ACTIVE
+            )
+            == "badge-success"
+        )
+        assert (
+            GrantMetricsService.get_enrollment_status_badge_class(
+                GrantEnrollmentStatus.COMPLETED
+            )
+            == "badge-primary"
+        )
+        assert (
+            GrantMetricsService.get_enrollment_status_badge_class(
+                GrantEnrollmentStatus.WITHDRAWN
+            )
+            == "badge-warning"
+        )
+        assert (
+            GrantMetricsService.get_enrollment_status_badge_class(
+                GrantEnrollmentStatus.DROPPED
+            )
+            == "badge-error"
+        )
 
     def test_outcome_badge_class(self):
         """Test outcome badge class helper."""
-        assert GrantMetricsService.get_outcome_badge_class(GrantOutcome.COMPLETED_PROGRAM) == "badge-success"
-        assert GrantMetricsService.get_outcome_badge_class(GrantOutcome.ENTERED_APPRENTICESHIP) == "badge-primary"
-        assert GrantMetricsService.get_outcome_badge_class(GrantOutcome.OBTAINED_EMPLOYMENT) == "badge-primary"
-        assert GrantMetricsService.get_outcome_badge_class(GrantOutcome.WITHDRAWN) == "badge-warning"
+        assert (
+            GrantMetricsService.get_outcome_badge_class(GrantOutcome.COMPLETED_PROGRAM)
+            == "badge-success"
+        )
+        assert (
+            GrantMetricsService.get_outcome_badge_class(
+                GrantOutcome.ENTERED_APPRENTICESHIP
+            )
+            == "badge-primary"
+        )
+        assert (
+            GrantMetricsService.get_outcome_badge_class(
+                GrantOutcome.OBTAINED_EMPLOYMENT
+            )
+            == "badge-primary"
+        )
+        assert (
+            GrantMetricsService.get_outcome_badge_class(GrantOutcome.WITHDRAWN)
+            == "badge-warning"
+        )
 
 
 class TestGrantReportService:
@@ -56,6 +111,7 @@ class TestGrantFrontendRouter:
     def test_router_imports(self):
         """Verify grants frontend router can be imported."""
         from src.routers.grants_frontend import router
+
         assert router is not None
 
     def test_router_has_routes(self):
@@ -66,11 +122,11 @@ class TestGrantFrontendRouter:
         paths = [route.path for route in router.routes]
 
         # Check expected routes exist
-        assert "" in paths  # Landing page
-        assert "/list" in paths  # List page
-        assert "/{grant_id}" in paths  # Detail page
-        assert "/{grant_id}/enrollments" in paths
-        assert "/{grant_id}/expenses" in paths
-        assert "/{grant_id}/reports" in paths
-        assert "/{grant_id}/reports/summary" in paths
-        assert "/{grant_id}/reports/excel" in paths
+        assert "/grants" in paths  # Landing page
+        assert "/grants/list" in paths  # List page
+        assert "/grants/{grant_id}" in paths  # Detail page
+        assert "/grants/{grant_id}/enrollments" in paths
+        assert "/grants/{grant_id}/expenses" in paths
+        assert "/grants/{grant_id}/reports" in paths
+        assert "/grants/{grant_id}/reports/summary" in paths
+        assert "/grants/{grant_id}/reports/excel" in paths

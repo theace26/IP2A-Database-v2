@@ -17,7 +17,7 @@
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl + Stripe (migrating to Square)
 
-**Status:** 593 total tests (486 passing, 35 skipped [27 Stripe + 5 setup + 3 S3], 87.1% pass rate, as of Feb 5, 2026), ~228+ API endpoints, 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
+**Status:** 593 total tests (491 passing, 35 skipped [27 Stripe + 5 setup + 3 S3], 88.0% pass rate, as of Feb 5, 2026), ~228+ API endpoints, 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
 **Current:** Phase 7 — Referral & Dispatch System (~78 LaborPower reports to build). **Weeks 20-27 complete:** models, enums, schemas, 7 services, 5 API routers, 2 frontend services, 2 frontend routers, 13 pages, 15 HTMX partials. See `docs/phase7/`
 

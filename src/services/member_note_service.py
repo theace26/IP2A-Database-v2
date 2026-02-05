@@ -1,4 +1,5 @@
 """Service layer for member notes."""
+
 from datetime import datetime
 from typing import Optional, List
 from sqlalchemy.orm import Session, joinedload
@@ -13,11 +14,7 @@ class MemberNoteService:
     """Service for managing member notes."""
 
     @staticmethod
-    def create(
-        db: Session,
-        data: MemberNoteCreate,
-        current_user: User
-    ) -> MemberNote:
+    def create(db: Session, data: MemberNoteCreate, current_user: User) -> MemberNote:
         """Create a new member note."""
         note = MemberNote(
             member_id=data.member_id,
@@ -34,13 +31,15 @@ class MemberNoteService:
             db=db,
             table_name="member_notes",
             record_id=note.id,
-            user_id=current_user.id,
+            changed_by=current_user.email,
             new_values={
                 "member_id": note.member_id,
-                "note_text": note.note_text[:100] + "..." if len(note.note_text) > 100 else note.note_text,
+                "note_text": note.note_text[:100] + "..."
+                if len(note.note_text) > 100
+                else note.note_text,
                 "visibility": note.visibility,
                 "category": note.category,
-            }
+            },
         )
 
         db.commit()
@@ -50,17 +49,15 @@ class MemberNoteService:
     @staticmethod
     def get_by_id(db: Session, note_id: int) -> Optional[MemberNote]:
         """Get a note by ID."""
-        return db.query(MemberNote).filter(
-            MemberNote.id == note_id,
-            MemberNote.is_deleted == False
-        ).first()
+        return (
+            db.query(MemberNote)
+            .filter(MemberNote.id == note_id, ~MemberNote.is_deleted)
+            .first()
+        )
 
     @staticmethod
     def get_by_member(
-        db: Session,
-        member_id: int,
-        current_user: User,
-        include_deleted: bool = False
+        db: Session, member_id: int, current_user: User, include_deleted: bool = False
     ) -> List[MemberNote]:
         """
         Get all notes for a member, filtered by user's permission level.
@@ -68,33 +65,40 @@ class MemberNoteService:
         query = db.query(MemberNote).filter(MemberNote.member_id == member_id)
 
         if not include_deleted:
-            query = query.filter(MemberNote.is_deleted == False)
+            query = query.filter(~MemberNote.is_deleted)
 
         # Filter by visibility based on user role
         visible_levels = MemberNoteService._get_visible_levels(current_user)
 
         # Special case: staff can see their own staff_only notes
         from sqlalchemy import or_
+
         if current_user.role not in ["admin", "officer"]:
             query = query.filter(
                 or_(
                     MemberNote.visibility.in_(visible_levels),
-                    MemberNote.created_by_id == current_user.id
+                    MemberNote.created_by_id == current_user.id,
                 )
             )
         else:
             query = query.filter(MemberNote.visibility.in_(visible_levels))
 
-        return query.options(
-            joinedload(MemberNote.created_by)
-        ).order_by(MemberNote.created_at.desc()).all()
+        return (
+            query.options(joinedload(MemberNote.created_by))
+            .order_by(MemberNote.created_at.desc())
+            .all()
+        )
 
     @staticmethod
     def _get_visible_levels(user: User) -> List[str]:
         """Determine which visibility levels a user can see."""
         # Admin sees everything
         if user.role == "admin":
-            return [NoteVisibility.STAFF_ONLY, NoteVisibility.OFFICERS, NoteVisibility.ALL_AUTHORIZED]
+            return [
+                NoteVisibility.STAFF_ONLY,
+                NoteVisibility.OFFICERS,
+                NoteVisibility.ALL_AUTHORIZED,
+            ]
 
         # Officers see officers and all_authorized
         if user.role in ["officer", "organizer"]:
@@ -105,10 +109,7 @@ class MemberNoteService:
 
     @staticmethod
     def update(
-        db: Session,
-        note_id: int,
-        data: MemberNoteUpdate,
-        current_user: User
+        db: Session, note_id: int, data: MemberNoteUpdate, current_user: User
     ) -> Optional[MemberNote]:
         """Update an existing note."""
         note = MemberNoteService.get_by_id(db, note_id)
@@ -117,7 +118,9 @@ class MemberNoteService:
 
         # Capture old values for audit
         old_values = {
-            "note_text": note.note_text[:100] + "..." if len(note.note_text) > 100 else note.note_text,
+            "note_text": note.note_text[:100] + "..."
+            if len(note.note_text) > 100
+            else note.note_text,
             "visibility": note.visibility,
             "category": note.category,
         }
@@ -129,7 +132,9 @@ class MemberNoteService:
 
         # Capture new values
         new_values = {
-            "note_text": note.note_text[:100] + "..." if len(note.note_text) > 100 else note.note_text,
+            "note_text": note.note_text[:100] + "..."
+            if len(note.note_text) > 100
+            else note.note_text,
             "visibility": note.visibility,
             "category": note.category,
         }
@@ -139,9 +144,9 @@ class MemberNoteService:
             db=db,
             table_name="member_notes",
             record_id=note.id,
-            user_id=current_user.id,
+            changed_by=current_user.email,
             old_values=old_values,
-            new_values=new_values
+            new_values=new_values,
         )
 
         db.commit()
@@ -149,11 +154,7 @@ class MemberNoteService:
         return note
 
     @staticmethod
-    def soft_delete(
-        db: Session,
-        note_id: int,
-        current_user: User
-    ) -> bool:
+    def soft_delete(db: Session, note_id: int, current_user: User) -> bool:
         """Soft delete a note (preserves for audit trail)."""
         note = MemberNoteService.get_by_id(db, note_id)
         if not note:
@@ -167,12 +168,14 @@ class MemberNoteService:
             db=db,
             table_name="member_notes",
             record_id=note.id,
-            user_id=current_user.id,
+            changed_by=current_user.email,
             old_values={
                 "member_id": note.member_id,
-                "note_text": note.note_text[:100] + "..." if len(note.note_text) > 100 else note.note_text,
+                "note_text": note.note_text[:100] + "..."
+                if len(note.note_text) > 100
+                else note.note_text,
                 "visibility": note.visibility,
-            }
+            },
         )
 
         db.commit()
