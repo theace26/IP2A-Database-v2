@@ -17,7 +17,7 @@
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl + Stripe (migrating to Square)
 
-**Status:** 593 total tests (507 passing, 35 skipped [27 Stripe + 5 setup + 3 S3], 90.9% pass rate, Week 29 as of Feb 5, 2026), ~228+ API endpoints, 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
+**Status:** 593 total tests (517 passing, 35 skipped [27 Stripe + 5 setup + 3 S3], 92.7% pass rate, Week 30 as of Feb 5, 2026), ~228+ API endpoints, 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
 **Current:** Phase 7 — Referral & Dispatch System (~78 LaborPower reports to build). **Weeks 20-27 complete:** models, enums, schemas, 7 services, 5 API routers, 2 frontend services, 2 frontend routers, 13 pages, 15 HTMX partials. See `docs/phase7/`
 
@@ -996,6 +996,7 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 | Member CRUD fails "general_notes doesn't exist" | Model attribute didn't map to DB column (Bug #026) | Fixed with explicit column name |
 | Audit log tests fail with wrong columns | Tests used `user_id`/`created_at` vs `changed_by`/`changed_at` (Bug #027) | Fixed in test file |
 | Test fixtures use invalid enum values | conftest.py used obsolete strings (Bug #028) | Use enum objects |
+| Dispatch frontend tests fail with AttributeError | Service used wrong field names: `Dispatch.status`, `JobBid.status`, `JobBid.bid_time`, `BookRegistration.book_priority_number` (Bug #029) | Fixed 14 field names in `8480366` |
 
 **Note:** As of commit `013cf92`, invalid JWT cookies are automatically cleared on redirect to login, preventing repeated "Signature verification failed" log spam.
 
@@ -1910,19 +1911,25 @@ Following ISSUE-001 migration drift resolution (Stripe + Grant parallel developm
 | **Errors** | 89 | 16 | -73 (-82%!) |
 | **Pass Rate** | 68% | 86.6% | +18.6 pts |
 
-### Remaining Issues (As of February 5, 2026 - Week 29)
+### Remaining Issues (As of February 5, 2026 - Week 30)
 
-**Week 29 Test Stabilization Results:**
-- **Pass Rate:** 90.9% (507/558 non-skipped tests) — within 1.1% of 92% target
-- **Improvement:** +16 passing, -13 failed, -3 errors from Week 28
-- **Session Log:** `docs/reports/session-logs/2026-02-05-week29-test-stabilization.md`
+**Week 30 Bug Fix Results:**
+- **Pass Rate:** 92.7% (517/558 non-skipped tests) — exceeding 92% target!
+- **Improvement:** +10 passing from Bug #029 fix (507 → 517)
+- **Bug Fixed:** Bug #029 - Phase 7 model field name mismatches (14 corrections)
+- **Session:** Week 30 dispatch field name fix
 
-**Category 1: Dispatch Frontend Application Bug (19 failures) — BLOCKING**
-- **Root Cause:** `Dispatch` model missing `status` attribute
-- **Error:** `AttributeError: type object 'Dispatch' has no attribute 'status'` at `dispatch_frontend_service.py:82`
-- **Impact:** All dispatch dashboard tests blocked
-- **Status:** **Bug #029** — Requires application fix before tests can pass
-- **Resolution:** Add `status` column to Dispatch model or fix field reference
+**Previous Week 29 Results:**
+- Pass Rate: 90.9% (507/558 non-skipped tests)
+- Session Log: `docs/reports/session-logs/2026-02-05-week29-test-stabilization.md`
+
+**Category 1: Dispatch Frontend Field Names (19 failures) — ✅ FIXED (Week 30)**
+- **Root Cause:** Phase 7 model field name mismatches in `dispatch_frontend_service.py`
+- **Error:** Multiple AttributeErrors (`Dispatch.status`, `JobBid.status`, `JobBid.bid_time`, `BookRegistration.book_priority_number`)
+- **Impact:** 19 dispatch frontend tests blocked → 13 tests unblocked
+- **Status:** **Bug #029 FIXED** — Commit `8480366` (February 5, 2026)
+- **Resolution:** Corrected 14 field name mismatches to match model definitions
+- **Details:** See `docs/historical/BUG_029_DISPATCH_FIELD_NAMES.md`
 
 **Category 2: Phase 7 Model Tests (13 errors) — FLAKY**
 - **Root Cause:** Test fixture isolation — tests pass individually but fail together
@@ -1949,7 +1956,7 @@ Following ISSUE-001 migration drift resolution (Stripe + Grant parallel developm
 - All Stripe tests skip-marked per ADR-018 (migrating to Square)
 - **Resolution:** Will be removed during Square migration Phase A
 
-**Projected Pass Rate with Easy Wins:** Fixing Category 1 (dispatch bug) + Category 4 (dues cleanup) would yield **94.6%** (530/558 tests passing)
+**Projected Pass Rate with Easy Wins:** Fixing Category 4 (dues cleanup) would yield **93.4%** (521/558 tests passing) — Category 1 already fixed!
 
 ### Files Modified
 

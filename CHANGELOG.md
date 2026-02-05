@@ -7,10 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> **v0.9.8-alpha — PHASE 7 Weeks 26-27 Complete + Week 28 Test Cleanup**
-> 593 total tests (486 passing, 87.1% pass rate), ~228+ API endpoints, 32 models (26 + 6 Phase 7), 18 ADRs
+> **v0.9.8-alpha — PHASE 7 Weeks 26-27 Complete + Week 30 Field Name Fixes**
+> 593 total tests (517 passing, 92.7% pass rate), ~228+ API endpoints, 32 models (26 + 6 Phase 7), 18 ADRs
 > Railway deployed, Stripe live, Mobile PWA enabled
 > Current: Phase 7 — Referral & Dispatch System (Backend Complete + Books & Dispatch Frontend UI Complete + Migrations Applied)
+
+### Fixed (February 5, 2026 — Week 30)
+- **Bug #029: Phase 7 Model Field Name Mismatches** (commit `8480366`)
+  * Fixed 14 field name errors in `dispatch_frontend_service.py`:
+    - Dispatch.status → Dispatch.dispatch_status (3 occurrences)
+    - JobBid.status → JobBid.bid_status (2 occurrences)
+    - JobBid.bid_time → JobBid.bid_submitted_at (3 occurrences)
+    - BookRegistration.book_priority_number → registration_number (3 occurrences)
+    - BookRegistration.applicant_priority_number → registration_number (3 occurrences)
+  * Root cause: Copy-paste errors during Week 27 frontend service implementation
+  * Impact: Dispatch frontend tests 13 → 26 passing (89.7% pass rate, +13 tests)
+  * Full suite: 507 → 517 passing (+10 tests, 92.7% pass rate, +1.8 points)
+  * Unblocked 6 service methods: get_dashboard_stats, get_active_dispatches, get_pending_bids, get_request_detail, get_bids_for_request, get_queue_positions
+  * See docs/historical/BUG_029_DISPATCH_FIELD_NAMES.md for full analysis
 
 ### Added (February 5, 2026)
 - Phase 7 Alembic migration for 6 referral & dispatch tables (migration `3f0166296a87`)

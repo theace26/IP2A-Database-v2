@@ -1,0 +1,226 @@
+# Week 30: Dispatch Frontend Service Field Name Fix
+
+**Spoke:** 2 (Operations)
+**Type:** Bug Fix + Test Verification
+**Estimated Time:** 30-45 minutes
+**Bug Reference:** Bug #029
+**Priority:** High — blocks all dispatch frontend tests
+
+---
+
+## Context
+
+A diagnostic run identified a field name mismatch in `src/services/dispatch_frontend_service.py`. The file references `Dispatch.status` in 3 locations, but the actual model column is `Dispatch.dispatch_status`.
+
+**Evidence chain (all confirmed):**
+- Migration `3f0166296a87_phase7_referral_dispatch_tables.py` defines column as `dispatch_status` (line 215)
+- Model uses `dispatch_status` field name
+- Pydantic schema `src/schemas/dispatch.py` uses `dispatch_status` (line 98 in `DispatchRead`, line 49 in `DispatchUpdate`)
+- Only the frontend service file has the wrong name
+
+**Root cause:** Copy-paste error or incorrect assumption about field name when writing the dispatch frontend service during Week 27.
+
+**Impact:** All dispatch frontend tests that call `get_dashboard_stats()` or `get_active_dispatches()` fail with:
+```
+AttributeError: type object 'Dispatch' has no attribute 'status'
+```
+
+---
+
+## Pre-Flight Checklist
+
+```bash
+# 1. Verify Docker is running
+docker-compose ps
+
+# 2. Record starting test state
+pytest --tb=short 2>&1 | tail -10
+
+# 3. Confirm the bug exists — run dispatch frontend tests only
+pytest src/tests/test_dispatch_frontend.py -v --tb=short 2>&1 | tail -20
+
+# 4. Confirm the field name in the model
+grep -n "dispatch_status" src/models/dispatch.py
+
+# 5. Confirm the wrong references in the service
+grep -n "Dispatch\.status" src/services/dispatch_frontend_service.py
+```
+
+**Expected output from step 5:** Three matches at approximately lines 82, 346, 357.
+
+If you find MORE than 3 matches, STOP and report. If you find FEWER, the file may have been partially fixed — verify each line before proceeding.
+
+---
+
+## Task 1: Fix Field Name References
+
+**File:** `src/services/dispatch_frontend_service.py`
+
+**Action:** Change all 3 instances of `Dispatch.status` to `Dispatch.dispatch_status`.
+
+### Fix 1 (approximately line 82 — in `get_dashboard_stats()`)
+
+Find:
+```python
+Dispatch.status
+```
+
+Replace with:
+```python
+Dispatch.dispatch_status
+```
+
+### Fix 2 (approximately line 346 — in `get_active_dispatches()`)
+
+Find:
+```python
+Dispatch.status
+```
+
+Replace with:
+```python
+Dispatch.dispatch_status
+```
+
+### Fix 3 (approximately line 357 — in `get_active_dispatches()`)
+
+Find:
+```python
+Dispatch.status
+```
+
+Replace with:
+```python
+Dispatch.dispatch_status
+```
+
+### Verification After Fix
+
+```bash
+# Confirm NO remaining wrong references
+grep -n "Dispatch\.status" src/services/dispatch_frontend_service.py
+
+# Should return 0 results. If any remain, fix them.
+
+# Confirm correct references exist
+grep -n "Dispatch\.dispatch_status" src/services/dispatch_frontend_service.py
+
+# Should return 3+ results (the ones you just fixed, plus any others that were already correct).
+```
+
+---
+
+## Task 2: Run Dispatch Frontend Tests
+
+```bash
+# Run dispatch frontend tests in isolation
+pytest src/tests/test_dispatch_frontend.py -v --tb=short
+
+# Record: how many passed, how many failed, how many errors
+```
+
+**Expected outcome:** Tests that previously failed with `AttributeError: type object 'Dispatch' has no attribute 'status'` should now pass.
+
+**If new failures appear:** These are DIFFERENT bugs. Document them but do NOT attempt to fix in this session unless they are also simple field name mismatches. Report back to Hub.
+
+---
+
+## Task 3: Run Full Test Suite
+
+```bash
+# Full test suite
+pytest -v --tb=short 2>&1 | tail -20
+
+# Record the summary line: X passed, Y failed, Z skipped, W errors
+```
+
+**Expected numbers:**
+- Starting state: 593 total, ~507 passing, 35 skipped, ~51 failing (90.9% pass rate)
+- After fix: The failing count should decrease by the number of dispatch frontend tests this fix unblocked
+
+**Calculate new pass rate:**
+```
+pass_rate = (passing / (total - skipped)) * 100
+```
+
+---
+
+## Task 4: Scan for Similar Issues
+
+While we're here, check if ANY other frontend service files have the same pattern — referencing `Dispatch.status` instead of `Dispatch.dispatch_status`:
+
+```bash
+# Check ALL service files for the wrong pattern
+grep -rn "Dispatch\.status" src/services/
+grep -rn "Dispatch\.status" src/routers/
+grep -rn "Dispatch\.status" src/tests/
+```
+
+**If you find additional matches:** Document them with file, line number, and context. Do NOT fix them in this session without explicit approval — we want a clean, auditable fix chain.
+
+---
+
+## Task 5: Commit
+
+```bash
+# Stage the single file
+git add src/services/dispatch_frontend_service.py
+
+# Commit with conventional commit format and bug reference
+git commit -m "fix(dispatch): correct field name Dispatch.status → Dispatch.dispatch_status
+
+Bug #029: dispatch_frontend_service.py referenced Dispatch.status in 3 locations
+but the actual model column is Dispatch.dispatch_status. Root cause: copy-paste
+error during Week 27 frontend service creation.
+
+Fixes AttributeError in get_dashboard_stats() and get_active_dispatches()."
+
+# Push
+git push origin develop
+```
+
+---
+
+## Session Summary Template
+
+Copy and fill in before ending:
+
+```markdown
+## Week 30 Session Summary
+
+**Date:** [date]
+**Duration:** [time]
+**Bug Fixed:** #029 — Dispatch.status → Dispatch.dispatch_status (3 occurrences)
+
+### Test Results
+- **Before fix:** [X] passed, [Y] failed, [Z] skipped, [W] errors out of [T] total
+- **After fix:** [X] passed, [Y] failed, [Z] skipped, [W] errors out of [T] total
+- **Pass rate change:** [before]% → [after]%
+- **Tests unblocked by this fix:** [count and names]
+
+### Scan Results
+- Additional `Dispatch.status` references found: [yes/no — list if yes]
+- Other field name mismatches noticed: [yes/no — list if yes]
+
+### Files Modified
+- `src/services/dispatch_frontend_service.py` — 3 line changes
+
+### Handoff Notes
+- [Any observations for Hub or next session]
+```
+
+---
+
+## Acceptance Criteria
+
+- [ ] All 3 instances of `Dispatch.status` changed to `Dispatch.dispatch_status` in `dispatch_frontend_service.py`
+- [ ] Zero remaining `Dispatch.status` references in `dispatch_frontend_service.py`
+- [ ] Dispatch frontend tests that were failing with `AttributeError` now pass
+- [ ] No regressions — no tests that were passing before are now failing
+- [ ] Scan of other service/router/test files completed for same pattern
+- [ ] Committed with conventional commit format and bug reference
+- [ ] Session summary completed with before/after test numbers
+
+---
+
+*Week 30 Instruction — Generated February 4, 2026 | Hub → Spoke 2*
