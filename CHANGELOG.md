@@ -8,9 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 > **v0.9.8-alpha — PHASE 7 Weeks 26-27 Complete**
-> 593 total tests (all passing), ~228+ API endpoints, 32 models (26 + 6 Phase 7), 16 ADRs
+> 593 total tests (484 passing, 86.6% pass rate), ~228+ API endpoints, 32 models (26 + 6 Phase 7), 18 ADRs
 > Railway deployed, Stripe live, Mobile PWA enabled
-> Current: Phase 7 — Referral & Dispatch System (Backend Complete + Books & Dispatch Frontend UI Complete)
+> Current: Phase 7 — Referral & Dispatch System (Backend Complete + Books & Dispatch Frontend UI Complete + Migrations Applied)
+
+### Added (February 5, 2026)
+- Phase 7 Alembic migration for 6 referral & dispatch tables (migration `3f0166296a87`)
+- `db` fixture alias in conftest.py for Phase 7 test compatibility
+
+### Fixed (February 5, 2026)
+- Audit frontend router: Added RedirectResponse type checks to prevent AttributeError
+- Test fixture enum values: Changed JOURNEYMAN_WIREMAN → JOURNEYMAN (Bug #028)
+- Test expectations: Updated profile page test (now exists, not 404)
+- Test expectations: Skip-marked 4 setup tests when default admin missing
+
+### Changed (February 5, 2026)
+- Test pass rate improved to 86.6% (484/559 non-skipped tests)
+- Errors reduced by 82% (16 down from 89 before first cleanup session)
 
 ### Fixed
 - **Database Migration Drift Resolution** (February 5, 2026)

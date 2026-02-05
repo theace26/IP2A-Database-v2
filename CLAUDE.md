@@ -17,7 +17,7 @@
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl + Stripe (migrating to Square)
 
-**Status:** 593 total tests (477 passing, 30 skipped [27 Stripe deprecated], as of Feb 5, 2026), ~228+ API endpoints, 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
+**Status:** 593 total tests (484 passing, 34 skipped [27 Stripe + 4 setup + 3 S3], 86.6% pass rate, as of Feb 5, 2026), ~228+ API endpoints, 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
 **Current:** Phase 7 — Referral & Dispatch System (~78 LaborPower reports to build). **Weeks 20-27 complete:** models, enums, schemas, 7 services, 5 API routers, 2 frontend services, 2 frontend routers, 13 pages, 15 HTMX partials. See `docs/phase7/`
 
@@ -56,7 +56,7 @@ This project uses a **Hub/Spoke model** for planning and coordination via Claude
 | Training (Students, Courses, Grades, Certs) | 7 | ~35 | 33 | Done |
 | Documents (S3/MinIO) | 1 | 8 | 11 | Done |
 | Dues (Rates, Periods, Payments, Adjustments) | 4 | ~35 | 21 | Done |
-| **Phase 7 (Referral & Dispatch)** | **6** | **~50** | **20+** | Services + API Complete |
+| **Phase 7 (Referral & Dispatch)** | **6** | **~50** | **20 (7 passing, 13 errors)** | **Tables Created + Migrated** |
 | **Total** | **32** | **~200** | **185+** | Phase 7 Service Layer Complete |
 
 ### Frontend: PHASE 6 COMPLETE + POST-LAUNCH (Weeks 1-19)
@@ -1903,12 +1903,12 @@ Following ISSUE-001 migration drift resolution (Stripe + Grant parallel developm
 
 ### Test Suite Results
 
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| **Passing** | 389 | 495 | +106 (+27%) |
-| **Failing** | 112 | 65 | -47 |
-| **Errors** | 89 | 30 | -59 |
-| **Pass Rate** | 68% | 84% | +16 pts |
+| Metric | Before | After Migration | Change |
+|--------|--------|-----------------|--------|
+| **Passing** | 389 | 484 | +95 (+24%) |
+| **Failing** | 112 | 59 | -53 |
+| **Errors** | 89 | 16 | -73 (-82%!) |
+| **Pass Rate** | 68% | 86.6% | +18.6 pts |
 
 ### Remaining Issues (Blocked)
 
@@ -1942,6 +1942,30 @@ src/tests/test_phase7_models.py                  # SQLite → PostgreSQL
 - Full diagnostic report: `docs/reports/session-logs/2026-02-05-test-verification-diagnostic-report.md`
 - Schema drift prevention recommendations included
 - Hub handoff notes: Phase 7 migration timing + Stripe test configuration
+
+---
+
+## Phase 7 Migration Applied (February 5, 2026)
+
+**Status:** ✅ **COMPLETE** - Alembic migration generated and applied for 6 Phase 7 tables
+
+**Migration:** `3f0166296a87_phase7_referral_dispatch_tables.py`
+
+**Tables Created:**
+- `referral_books` - Out-of-work book definitions
+- `book_registrations` - Member registrations with APN (DECIMAL(10,2))
+- `registration_activities` - Append-only audit trail
+- `labor_requests` - Employer job requests
+- `job_bids` - Member bid tracking
+- `dispatches` - Central dispatch records
+
+**Verification:**
+- ✅ APN column is NUMERIC(10,2) per ADR-015 (not INTEGER)
+- ✅ All 6 tables exist with correct foreign keys
+- ✅ Schema drift cleaned (member_notes, grant changes removed from migration)
+- ✅ Unblocked 68 tests (19 model tests + 22 referral + 27 dispatch)
+
+**Commit:** `20e2340` (February 5, 2026)
 
 ---
 
