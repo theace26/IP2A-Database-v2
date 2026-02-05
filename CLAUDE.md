@@ -17,7 +17,7 @@
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl + Stripe (migrating to Square)
 
-**Status:** 593 total tests (484 passing, 34 skipped [27 Stripe + 4 setup + 3 S3], 86.6% pass rate, as of Feb 5, 2026), ~228+ API endpoints, 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
+**Status:** 593 total tests (486 passing, 35 skipped [27 Stripe + 5 setup + 3 S3], 87.1% pass rate, as of Feb 5, 2026), ~228+ API endpoints, 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
 **Current:** Phase 7 — Referral & Dispatch System (~78 LaborPower reports to build). **Weeks 20-27 complete:** models, enums, schemas, 7 services, 5 API routers, 2 frontend services, 2 frontend routers, 13 pages, 15 HTMX partials. See `docs/phase7/`
 
@@ -1910,22 +1910,26 @@ Following ISSUE-001 migration drift resolution (Stripe + Grant parallel developm
 | **Errors** | 89 | 16 | -73 (-82%!) |
 | **Pass Rate** | 68% | 86.6% | +18.6 pts |
 
-### Remaining Issues (Blocked)
+### Remaining Issues (As of February 5, 2026 - Week 28)
 
-**Category 1: Phase 7 Tables (19 errors)**
-- Phase 7 migrations not yet applied to database
-- Tables don't exist: `referral_books`, `book_registrations`, `dispatches`, etc.
-- **Resolution:** Apply Phase 7 migrations when ready for integration testing
+**Category 1: Phase 7 Test Fixtures (16 errors)**
+- Phase 7 migrations ✅ APPLIED (migration `3f0166296a87`)
+- Tables exist with correct schema
+- **Issue:** Test fixtures creating duplicate seed data (unique constraint violations)
+- Affected: `test_phase7_models.py` (13 errors), `test_referral_frontend.py` (3 errors)
+- **Resolution:** Requires Phase 7 test fixture cleanup (separate task)
 
-**Category 2: Stripe Tests (30 errors/failures)**
-- No Stripe API key in test environment
-- **Resolution:** Configure `STRIPE_SECRET_KEY` or implement mocking
+**Category 2: Stripe Tests (27 skipped)**
+- All Stripe tests skip-marked per ADR-018 (migrating to Square)
+- **Resolution:** Will be removed during Square migration Phase A
 
-**Category 3: Miscellaneous (16 failures)**
-- Frontend integration tests (11)
-- Grant services (1)
-- Setup tests (4)
-- **Resolution:** Individual investigation needed
+**Category 3: Frontend Integration (11 failures)**
+- Referral frontend tests: 11 failures
+- **Resolution:** Individual investigation needed (separate task)
+
+**Category 4: Dispatch Frontend (27 failures)**
+- Dispatch workflow UI tests
+- **Resolution:** Individual investigation needed (separate task)
 
 ### Files Modified
 
