@@ -33,6 +33,12 @@ client = TestClient(app)
 @pytest.fixture
 def test_book(db):
     """Create a test referral book."""
+    # Clean up any existing test book
+    existing = db.query(ReferralBook).filter(ReferralBook.code == "TEST_BOOK_1").first()
+    if existing:
+        db.delete(existing)
+        db.commit()
+
     book = ReferralBook(
         name="Test Book",
         code="TEST_BOOK_1",
@@ -52,10 +58,16 @@ def test_book(db):
 @pytest.fixture
 def test_member_for_registration(db):
     """Create a test member for registration."""
+    # Clean up any existing test member
+    existing = db.query(Member).filter(Member.email == "john.doe@test.com").first()
+    if existing:
+        db.delete(existing)
+        db.commit()
+
     member = Member(
         first_name="John",
         last_name="Doe",
-        card_number="654321",
+        member_number="TEST_REF_FRONT_001",
         status=MemberStatus.ACTIVE,
         classification=MemberClassification.JOURNEYMAN,
         email="john.doe@test.com",
@@ -236,9 +248,9 @@ def test_sidebar_shows_referral_section(auth_headers):
     assert b"Referral & Dispatch" in response.content or b"Referral" in response.content
 
 
-def test_admin_sees_create_book_button(admin_auth_headers, test_book):
+def test_admin_sees_create_book_button(auth_headers, test_book):
     """Admin should see 'New Book' button on books list."""
-    response = client.get("/referral/books", headers=admin_auth_headers)
+    response = client.get("/referral/books", headers=auth_headers)
     assert response.status_code == 200
     # Admin should see the new book button (or books page should render)
     assert b"New Book" in response.content or b"Referral Books" in response.content

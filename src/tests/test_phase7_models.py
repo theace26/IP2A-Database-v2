@@ -37,6 +37,40 @@ from src.config.settings import get_settings
 settings = get_settings()
 
 
+@pytest.fixture(scope="module", autouse=True)
+def clean_phase7_test_data():
+    """Clean up Phase 7 test data before and after this test module runs."""
+    from sqlalchemy import text
+
+    engine = create_engine(str(settings.DATABASE_URL), echo=False)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    def cleanup():
+        """Delete test data created by this module."""
+        try:
+            # Delete in reverse order of foreign key dependencies
+            session.execute(text("DELETE FROM registration_activities WHERE registration_id IN (SELECT id FROM book_registrations WHERE member_id IN (SELECT id FROM members WHERE member_number = 'TEST_PHASE7_001'))"))
+            session.execute(text("DELETE FROM book_registrations WHERE member_id IN (SELECT id FROM members WHERE member_number = 'TEST_PHASE7_001')"))
+            session.execute(text("DELETE FROM book_registrations WHERE book_id IN (SELECT id FROM referral_books WHERE code LIKE 'TEST_%')"))
+            session.execute(text("DELETE FROM referral_books WHERE code LIKE 'TEST_%'"))
+            session.execute(text("DELETE FROM members WHERE member_number = 'TEST_PHASE7_001'"))
+            session.execute(text("DELETE FROM users WHERE email = 'phase7_dispatcher@test.com'"))
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            print(f"Warning: Could not clean up test data: {e}")
+
+    # Clean before tests
+    cleanup()
+
+    yield
+
+    # Clean after tests
+    cleanup()
+    session.close()
+
+
 @pytest.fixture(scope="function")
 def db_session():
     """Create a fresh database session for each test using PostgreSQL."""
@@ -52,9 +86,16 @@ def db_session():
 
 @pytest.fixture
 def test_member(db_session):
-    """Create a test member."""
+    """Create a test member for Phase 7 tests."""
+    # Clean up any existing test member from previous test runs
+    existing = db_session.query(Member).filter(Member.member_number == "TEST_PHASE7_001").first()
+    if existing:
+        db_session.delete(existing)
+        db_session.commit()
+
+    # Use unique member number to avoid conflicts with conftest.py fixture
     member = Member(
-        member_number="TEST001",
+        member_number="TEST_PHASE7_001",
         first_name="John",
         last_name="Wireman",
         status=MemberStatus.ACTIVE,
@@ -67,16 +108,25 @@ def test_member(db_session):
 
 @pytest.fixture
 def test_user(db_session):
-    """Create a test user for performed_by fields."""
-    # Create a role first
-    role = Role(name="admin", description="Admin role", is_system_role=True)
-    db_session.add(role)
-    db_session.commit()
+    """Create a test user for Phase 7 performed_by fields."""
+    # Check if admin role exists
+    existing_role = db_session.query(Role).filter(Role.name == "admin").first()
+    if not existing_role:
+        role = Role(name="admin", description="Admin role", is_system_role=True)
+        db_session.add(role)
+        db_session.commit()
 
+    # Clean up any existing test user from previous test runs
+    existing_user = db_session.query(User).filter(User.email == "phase7_dispatcher@test.com").first()
+    if existing_user:
+        db_session.delete(existing_user)
+        db_session.commit()
+
+    # Use unique email to avoid conflicts
     user = User(
-        email="dispatcher@test.com",
-        hashed_password="fakehash",
-        first_name="Test",
+        email="phase7_dispatcher@test.com",
+        password_hash="fakehash",
+        first_name="Phase7",
         last_name="Dispatcher",
         is_active=True,
     )
@@ -88,9 +138,15 @@ def test_user(db_session):
 @pytest.fixture
 def test_book(db_session):
     """Create a test referral book."""
+    # Clean up any existing test book from previous test runs
+    existing = db_session.query(ReferralBook).filter(ReferralBook.code == "TEST_WIRE_SEA_1").first()
+    if existing:
+        db_session.delete(existing)
+        db_session.commit()
+
     book = ReferralBook(
-        name="Wire Seattle",
-        code="WIRE_SEA_1",
+        name="Test Wire Seattle",
+        code="TEST_WIRE_SEA_1",
         classification=BookClassification.INSIDE_WIREPERSON,
         book_number=1,
         region=BookRegion.SEATTLE,
@@ -111,8 +167,8 @@ class TestReferralBook:
     def test_create_referral_book(self, db_session):
         """Test creating a referral book."""
         book = ReferralBook(
-            name="Wire Bremerton",
-            code="WIRE_BREM_1",
+            name="Test Wire Bremerton",
+            code="TEST_WIRE_BREM_1",
             classification=BookClassification.INSIDE_WIREPERSON,
             book_number=1,
             region=BookRegion.BREMERTON,
@@ -124,8 +180,8 @@ class TestReferralBook:
         db_session.commit()
 
         assert book.id is not None
-        assert book.name == "Wire Bremerton"
-        assert book.code == "WIRE_BREM_1"
+        assert book.name == "Test Wire Bremerton"
+        assert book.code == "TEST_WIRE_BREM_1"
         assert book.classification == BookClassification.INSIDE_WIREPERSON
         assert book.region == BookRegion.BREMERTON
         assert book.is_active is True
@@ -134,7 +190,7 @@ class TestReferralBook:
         """Test that book codes are unique."""
         duplicate_book = ReferralBook(
             name="Duplicate Book",
-            code="WIRE_SEA_1",  # Same code as test_book
+            code="TEST_WIRE_SEA_1",  # Same code as test_book
             classification=BookClassification.INSIDE_WIREPERSON,
             book_number=1,
             region=BookRegion.SEATTLE,
@@ -147,7 +203,7 @@ class TestReferralBook:
         """Test default values for referral book."""
         book = ReferralBook(
             name="Test Book",
-            code="TEST_1",
+            code="TEST_BOOK_1",
             classification=BookClassification.TRADESHOW,
             region=BookRegion.SEATTLE,
         )
@@ -162,19 +218,19 @@ class TestReferralBook:
 
     def test_referral_book_full_name_property(self, test_book):
         """Test the full_name property."""
-        assert test_book.full_name == "Wire Seattle Book 1"
+        assert test_book.full_name == "Test Wire Seattle Book 1"
 
     def test_referral_book_is_wire_book_property(self, db_session):
         """Test the is_wire_book property."""
         wire_book = ReferralBook(
-            name="Wire Test",
-            code="WIRE_TEST",
+            name="Test Wire",
+            code="TEST_WIRE",
             classification=BookClassification.INSIDE_WIREPERSON,
             region=BookRegion.SEATTLE,
         )
         tradeshow_book = ReferralBook(
-            name="Trade Test",
-            code="TRADE_TEST",
+            name="Test Trade",
+            code="TEST_TRADE",
             classification=BookClassification.TRADESHOW,
             region=BookRegion.SEATTLE,
         )
