@@ -8,16 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 > **v0.9.8-alpha — PHASE 7 Weeks 26-27 Complete**
-> 593 total tests (568 passing, 25 blocked by pre-existing backend model issue), ~228+ API endpoints, 32 models (26 + 6 Phase 7), 15 ADRs
+> 593 total tests (all passing), ~228+ API endpoints, 32 models (26 + 6 Phase 7), 16 ADRs
 > Railway deployed, Stripe live, Mobile PWA enabled
 > Current: Phase 7 — Referral & Dispatch System (Backend Complete + Books & Dispatch Frontend UI Complete)
 
-### Known Issues
-- **Dispatch Model Relationship Error** (Pre-existing from Phase 7 backend)
-  * SQLAlchemy error: "Could not determine join condition between parent/child tables on relationship Dispatch.bid"
-  * Affects 25 dispatch frontend tests that require database queries
-  * Fix required: Add `foreign_keys` parameter to Dispatch.bid relationship in src/models/dispatch.py
-  * Frontend code is complete and functional - issue is backend model configuration only
+### Fixed
+- **Dispatch Model Relationship Error** (February 5, 2026)
+  * Fixed SQLAlchemy foreign_keys parameter on Dispatch.bid relationship
+  * Fixed JobBid.dispatch inverse relationship (was missing entirely)
+  * Unblocked 25 dispatch frontend tests - all 593 tests now passing
+  * Fixed test fixtures using commit() instead of flush(), breaking transaction isolation
 
 ### Added
 - **Phase 7 Week 27: Dispatch Workflow UI** (February 4, 2026)

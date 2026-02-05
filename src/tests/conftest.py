@@ -133,8 +133,20 @@ def test_user(db_session):
     # Check if admin role exists
     admin_role = db_session.query(Role).filter(Role.name == "admin").first()
     if not admin_role:
-        admin_role = Role(name="admin", description="Administrator")
+        admin_role = Role(
+            name="admin",
+            display_name="Administrator",
+            description="Administrator"
+        )
         db_session.add(admin_role)
+        db_session.flush()
+
+    # Check if test user already exists (from previous failed test run)
+    existing_user = db_session.query(User).filter(User.email == "test@example.com").first()
+    if existing_user:
+        # Delete existing user to start fresh
+        db_session.query(UserRole).filter(UserRole.user_id == existing_user.id).delete()
+        db_session.delete(existing_user)
         db_session.flush()
 
     # Create test user
@@ -152,7 +164,7 @@ def test_user(db_session):
     # Assign admin role
     user_role = UserRole(user_id=user.id, role_id=admin_role.id)
     db_session.add(user_role)
-    db_session.commit()
+    db_session.flush()
 
     return user
 
@@ -177,6 +189,13 @@ def test_member(db_session):
     """
     Create a test member for member-related tests.
     """
+    # Check if test member already exists (from previous failed test run)
+    existing_member = db_session.query(Member).filter(Member.member_number == "TEST001").first()
+    if existing_member:
+        # Delete existing member to start fresh
+        db_session.delete(existing_member)
+        db_session.flush()
+
     member = Member(
         member_number="TEST001",
         first_name="Test",
@@ -185,5 +204,5 @@ def test_member(db_session):
         status="active",
     )
     db_session.add(member)
-    db_session.commit()
+    db_session.flush()
     return member

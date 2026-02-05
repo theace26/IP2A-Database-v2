@@ -291,7 +291,9 @@ class Dispatch(Base, TimestampMixin):
     registration: Mapped[Optional["BookRegistration"]] = relationship(
         "BookRegistration"
     )
-    bid: Mapped[Optional["JobBid"]] = relationship("JobBid")
+    bid: Mapped[Optional["JobBid"]] = relationship(
+        "JobBid", foreign_keys=[bid_id], back_populates="dispatch"
+    )
     employer: Mapped["Organization"] = relationship("Organization", lazy="joined")
     employment: Mapped[Optional["MemberEmployment"]] = relationship(
         "MemberEmployment"

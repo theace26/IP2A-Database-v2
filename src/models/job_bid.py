@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from src.models.labor_request import LaborRequest
     from src.models.member import Member
     from src.models.book_registration import BookRegistration
+    from src.models.dispatch import Dispatch
 
 
 class JobBid(Base, TimestampMixin):
@@ -161,6 +162,9 @@ class JobBid(Base, TimestampMixin):
     member: Mapped["Member"] = relationship("Member", lazy="joined")
     registration: Mapped[Optional["BookRegistration"]] = relationship(
         "BookRegistration"
+    )
+    dispatch: Mapped[Optional["Dispatch"]] = relationship(
+        "Dispatch", foreign_keys="[Dispatch.bid_id]", back_populates="bid", uselist=False
     )
 
     def __repr__(self) -> str:
