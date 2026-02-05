@@ -2,6 +2,8 @@
 
 import uuid
 import time
+import pytest
+from sqlalchemy import text
 
 
 # Sequential counter for guaranteed uniqueness within a test run

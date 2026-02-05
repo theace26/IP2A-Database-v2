@@ -45,11 +45,16 @@ class TestDispatchDashboard:
     @pytest.mark.asyncio
     async def test_dashboard_shows_stats(self, async_client: AsyncClient, auth_cookies):
         """Dashboard displays key metrics."""
+        # Check main dashboard loads
         response = await async_client.get("/dispatch", cookies=auth_cookies)
         assert response.status_code == 200
         assert b"Pending Requests" in response.content
-        assert b"Today's Dispatches" in response.content
-        assert b"Active on Job" in response.content
+
+        # Check stats partial (loaded via HTMX)
+        stats_response = await async_client.get("/dispatch/partials/stats", cookies=auth_cookies)
+        assert stats_response.status_code == 200
+        assert b"Today's Dispatches" in stats_response.content
+        assert b"Active on Job" in stats_response.content
 
     @pytest.mark.asyncio
     async def test_dashboard_shows_time_context(self, async_client: AsyncClient, auth_cookies):
@@ -318,12 +323,17 @@ class TestServiceIntegration:
     @pytest.mark.asyncio
     async def test_dashboard_stats_calculation(self, async_client: AsyncClient, auth_cookies):
         """Dashboard correctly calculates stats from database."""
+        # Check main dashboard loads
         response = await async_client.get("/dispatch", cookies=auth_cookies)
         assert response.status_code == 200
-        # Stats should be present
         content = response.content.decode()
         assert "Pending Requests" in content
-        assert "Today's Dispatches" in content
+
+        # Check stats partial (loaded via HTMX)
+        stats_response = await async_client.get("/dispatch/partials/stats", cookies=auth_cookies)
+        assert stats_response.status_code == 200
+        stats_content = stats_response.content.decode()
+        assert "Today's Dispatches" in stats_content
 
     @pytest.mark.asyncio
     async def test_time_aware_business_logic(self, async_client: AsyncClient, auth_cookies):
