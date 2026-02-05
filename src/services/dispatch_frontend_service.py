@@ -79,7 +79,7 @@ class DispatchFrontendService:
         # Count active dispatches
         active_dispatches = (
             self.db.query(Dispatch)
-            .filter(Dispatch.status.in_([
+            .filter(Dispatch.dispatch_status.in_([
                 DispatchStatus.DISPATCHED,
                 DispatchStatus.CHECKED_IN,
                 DispatchStatus.WORKING
@@ -90,7 +90,7 @@ class DispatchFrontendService:
         # Count pending bids
         pending_bids = (
             self.db.query(JobBid)
-            .filter(JobBid.status == BidStatus.PENDING)
+            .filter(JobBid.bid_status == BidStatus.PENDING)
             .count()
         )
 
@@ -255,8 +255,7 @@ class DispatchFrontendService:
                 BookRegistration.status == RegistrationStatus.REGISTERED
             )
             .order_by(
-                BookRegistration.book_priority_number,
-                BookRegistration.applicant_priority_number
+                BookRegistration.registration_number
             )
             .limit(50)
             .all()
@@ -266,7 +265,7 @@ class DispatchFrontendService:
         bids = (
             self.db.query(JobBid)
             .filter(JobBid.labor_request_id == request_id)
-            .order_by(JobBid.bid_time)
+            .order_by(JobBid.bid_submitted_at)
             .all()
         )
 
@@ -295,13 +294,12 @@ class DispatchFrontendService:
         # Get all pending bids with registration and request info
         bids = (
             self.db.query(JobBid)
-            .filter(JobBid.status == BidStatus.PENDING)
+            .filter(JobBid.bid_status == BidStatus.PENDING)
             .join(JobBid.registration)
             .join(JobBid.labor_request)
             .order_by(
-                BookRegistration.book_priority_number,
-                BookRegistration.applicant_priority_number,
-                JobBid.bid_time
+                BookRegistration.registration_number,
+                JobBid.bid_submitted_at
             )
             .all()
         )
@@ -326,7 +324,7 @@ class DispatchFrontendService:
         return (
             self.db.query(JobBid)
             .filter(JobBid.labor_request_id == request_id)
-            .order_by(JobBid.bid_time)
+            .order_by(JobBid.bid_submitted_at)
             .all()
         )
 
@@ -343,7 +341,7 @@ class DispatchFrontendService:
         """
         filters = filters or {}
         query = self.db.query(Dispatch).filter(
-            Dispatch.status.in_([
+            Dispatch.dispatch_status.in_([
                 DispatchStatus.DISPATCHED,
                 DispatchStatus.CHECKED_IN,
                 DispatchStatus.WORKING
@@ -354,7 +352,7 @@ class DispatchFrontendService:
         if filters.get("status"):
             try:
                 status = DispatchStatus(filters["status"])
-                query = query.filter(Dispatch.status == status)
+                query = query.filter(Dispatch.dispatch_status == status)
             except ValueError:
                 pass
 
@@ -413,8 +411,7 @@ class DispatchFrontendService:
             query = query.filter(BookRegistration.book_id == book_id)
 
         query = query.order_by(
-            BookRegistration.book_priority_number,
-            BookRegistration.applicant_priority_number
+            BookRegistration.registration_number
         )
 
         return query.limit(limit).all()
