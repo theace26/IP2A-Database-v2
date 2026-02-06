@@ -2261,3 +2261,403 @@ Fixed 12+ tests that depended on `test_member` fixture:
 - ADR-017: Schema Drift Prevention Strategy
 
 ---
+
+## Bug #030: Dues Tests Unique Constraint Violations
+
+**Date Discovered:** 2026-02-06 (Week 39 Bug Squash)
+**Date Fixed:** 2026-02-06
+**Severity:** Medium (9 test failures)
+**Status:** RESOLVED
+
+### Symptoms
+- All dues tests failing with: `UniqueViolation: duplicate key value violates unique constraint "uq_dues_period_year_month"`
+- Error details: `Key (period_year, period_month)=(2093, 7) already exists`
+- Failures on: test_create_dues_period, test_get_dues_period, test_close_dues_period, etc.
+
+### Root Cause Analysis
+
+**Problem:** Tests created DuesPeriod and DuesRate records with values that persisted across test runs, causing collisions.
+
+**Why it happened:**
+1. `get_unique_year_month()` function only has 132 combinations (11 years × 12 months)
+2. Global `_call_counter` wraps around when tests run in sequence
+3. No cleanup between tests — data persisted in database
+4. Second test with same (year, month) triggers UniqueViolation
+
+**Example collision:**
+```python
+# Test 1 creates:
+DuesPeriod(period_year=2093, period_month=7)  # ✅ Success
+
+# Test 2 (later in suite) tries to create:
+DuesPeriod(period_year=2093, period_month=7)  # ❌ UniqueViolation!
+```
+
+### Solution
+
+**Added autouse cleanup fixture** that runs before AND after each test:
+
+```python
+@pytest.fixture(scope="function", autouse=True)
+def cleanup_test_dues_data():
+    """Clean up test dues data before and after each test."""
+    from sqlalchemy import create_engine, text
+    from sqlalchemy.orm import sessionmaker
+    from src.config.settings import settings
+
+    def cleanup():
+        engine = create_engine(str(settings.DATABASE_URL), echo=False)
+        SessionLocal = sessionmaker(bind=engine)
+        session = SessionLocal()
+        try:
+            # Delete in reverse dependency order
+            session.execute(text("DELETE FROM dues_payments WHERE period_id IN (SELECT id FROM dues_periods WHERE period_year >= 2090)"))
+            session.execute(text("DELETE FROM dues_periods WHERE period_year >= 2090"))
+            session.execute(text("DELETE FROM dues_rates WHERE effective_date >= '2200-01-01'"))
+            session.commit()
+        except Exception:
+            session.rollback()
+        finally:
+            session.close()
+
+    cleanup()  # Before test
+    yield
+    cleanup()  # After test
+```
+
+**Key points:**
+- Runs BEFORE test to clean leftover data from previous failed tests
+- Runs AFTER test to clean up test's own data
+- Uses direct SQL for efficiency
+- Targets test data ranges (years 2090+, dates 2200+)
+
+### Files Modified
+- `src/tests/test_dues.py` — Added cleanup_test_dues_data fixture
+
+### Impact
+Fixed 9 dues test failures:
+- test_create_dues_period ✅
+- test_get_dues_period ✅
+- test_close_dues_period ✅
+- test_create_dues_payment ✅
+- test_get_dues_payment ✅
+- test_create_dues_rate ✅
+- test_get_dues_rate ✅
+- test_update_dues_rate ✅
+- test_get_period_by_month ✅
+
+All 21 dues tests now passing.
+
+### Prevention
+- **Pattern:** Always add cleanup fixtures for tests that create database records
+- **Best Practice:** Cleanup BEFORE and AFTER, not just after
+- **Lesson:** Use unique identifiers (UUIDs) + cleanup, not just modulo math
+
+### References
+- Similar fix: Bug #029 (Phase 7 model tests)
+- Cleanup pattern: `src/tests/test_phase7_models.py::clean_phase7_test_data`
+- Week 39 Bug Squash: `docs/reports/session-logs/2026-02-06-week39-bug-squash.md`
+
+---
+
+## Bug #031: Member Note Service User.role Attribute Error
+
+**Date Discovered:** 2026-02-06 (Week 39 Bug Squash)
+**Date Fixed:** 2026-02-06
+**Severity:** Medium (2 test failures, schema drift)
+**Status:** RESOLVED
+
+### Symptoms
+- Member notes API tests failing with: `AttributeError: 'User' object has no attribute 'role'. Did you mean: 'roles'?`
+- Error in `member_note_service.py` line 96 and 76
+- Tests: test_get_notes_for_member, test_get_note_by_id
+
+### Root Cause Analysis
+
+**Problem:** Service code used `user.role` attribute that doesn't exist on User model.
+
+**What the User model actually has:**
+```python
+# src/models/user.py
+class User(Base):
+    @property
+    def role_names(self) -> list[str]:
+        """Return list of role names for this user."""
+        return [ur.role.name for ur in self.user_roles if ur.role]
+
+    def has_role(self, role_name: str) -> bool:
+        """Check if user has a specific role."""
+        return role_name.lower() in [r.lower() for r in self.role_names]
+```
+
+**What the service tried to do (WRONG):**
+```python
+# src/services/member_note_service.py - BEFORE
+if user.role == "admin":  # ❌ AttributeError - no 'role' attribute
+    return [...]
+
+if current_user.role not in ["admin", "officer"]:  # ❌ Same error
+    query = query.filter(...)
+```
+
+**Why this happened:**
+- User model changed in Week 11 to support multiple roles via UserRole junction table
+- Service code not updated to match new API
+- Single `role` attribute replaced by `role_names` list property
+
+### Solution
+
+**Changed to use `has_role()` method:**
+
+```python
+# src/services/member_note_service.py - AFTER
+def _get_visible_levels(user: User) -> List[str]:
+    # Admin sees everything
+    if user.has_role("admin"):  # ✅ Correct
+        return [NoteVisibility.STAFF_ONLY, ...]
+
+    # Officers see officers and all_authorized
+    if user.has_role("officer") or user.has_role("organizer"):  # ✅ Correct
+        return [NoteVisibility.OFFICERS, ...]
+
+# Later in the file:
+if not (current_user.has_role("admin") or current_user.has_role("officer")):  # ✅ Correct
+    query = query.filter(...)
+```
+
+### Files Modified
+- `src/services/member_note_service.py` — Fixed 2 occurrences of user.role
+
+### Impact
+Fixed 2 member notes API test failures:
+- test_get_notes_for_member ✅
+- test_get_note_by_id ✅
+
+### Prevention
+- **Lesson:** Schema changes must cascade to all consumers
+- **Best Practice:** Grep for old attribute names after model changes
+- **Future:** Add deprecation warnings before removing model attributes
+- **Tool:** Consider `mypy` or `pyright` for static type checking
+
+### References
+- User model changes: Week 11 (multi-role support via UserRole junction table)
+- Affected service: `src/services/member_note_service.py`
+- Week 39 Bug Squash: `docs/reports/session-logs/2026-02-06-week39-bug-squash.md`
+
+---
+
+## Bug #032: Member Notes API Fixture Isolation
+
+**Date Discovered:** 2026-02-06 (Week 39 Bug Squash)
+**Date Fixed:** 2026-02-06
+**Severity:** High (5 test failures, auth blocking)
+**Status:** RESOLVED
+
+### Symptoms
+- All member notes API tests failing with: `401 Unauthorized`
+- Tests using `client` + `auth_headers` + `test_user` fixtures
+- Expected 201, got 401
+
+### Root Cause Analysis
+
+**Problem:** Test fixtures created data in one database session, but HTTP client used a completely separate session.
+
+**The fixture isolation issue:**
+```python
+# conftest.py
+@pytest.fixture
+def test_user(db_session):  # Session A (rolled back after test)
+    user = User(...)
+    db_session.add(user)
+    db_session.commit()  # Commits to transaction, not real DB
+    return user
+
+@pytest.fixture
+def client():  # Session B (separate connection to DB)
+    return TestClient(app)
+
+# Test
+def test_create_note(client, auth_headers, test_user):
+    # auth_headers has JWT with test_user.id
+    # But client's DB session can't see test_user!
+    response = client.post("/notes/", headers=auth_headers)
+    # Backend: get_current_user() queries for user_id → NOT FOUND → 401
+```
+
+**Why it failed:**
+1. `test_user` created in `db_session` transaction (isolated)
+2. `client` uses FastAPI app's `get_db()` dependency (separate session)
+3. JWT token references `test_user.id`
+4. Backend tries to fetch user by ID → not found → 401 Unauthorized
+
+### Solution
+
+**Converted tests to use `async_client_with_db` which shares the transaction:**
+
+```python
+# BEFORE (synchronous, separate sessions)
+def test_create_note_endpoint(client, auth_headers, test_member):
+    response = client.post("/notes/", json={...}, headers=auth_headers)
+    assert response.status_code == 201
+
+# AFTER (async, shared session)
+async def test_create_note_endpoint(async_client_with_db):
+    client, db_session = async_client_with_db
+
+    # Create user in SAME session as client will use
+    admin_role = db_session.query(Role).filter(Role.name == "admin").first()
+    test_user = User(email="test_api@example.com", ...)
+    db_session.add(test_user)
+    db_session.flush()
+
+    user_role = UserRole(user_id=test_user.id, role_id=admin_role.id)
+    db_session.add(user_role)
+    db_session.flush()
+
+    # Create member in same session
+    test_member = Member(member_number="API_TEST_001", ...)
+    db_session.add(test_member)
+    db_session.flush()
+
+    # Create auth headers
+    token = create_access_token(subject=test_user.id, ...)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Now client can see test_user!
+    response = await client.post("/notes/", json={...}, headers=headers)
+    assert response.status_code == 201  # ✅ Success
+```
+
+**Key insight:** `async_client_with_db` overrides FastAPI's `get_db()` dependency to use the test's session, so fixtures and HTTP client share the same transaction.
+
+### Files Modified
+- `src/tests/test_member_notes.py` — Converted 5 API tests to async with shared session
+
+### Impact
+Fixed 5 member notes API test failures:
+- test_create_note_endpoint ✅
+- test_get_notes_for_member ✅
+- test_get_note_by_id ✅
+- test_update_note_endpoint ✅
+- test_delete_note_endpoint ✅
+
+### Prevention
+- **Lesson:** For API tests needing fixtures, ALWAYS use `async_client_with_db`
+- **Pattern:** Avoid mixing `client` + `db_session` fixtures
+- **Documentation:** conftest.py now has clear notes about session isolation
+- **Alternative:** Create all test data via API calls (not fixtures)
+
+### References
+- Similar issue: Bug #030 (dues tests), Bug #033 (referral frontend tests)
+- Fixture: `src/tests/conftest.py::async_client_with_db`
+- Week 39 Bug Squash: `docs/reports/session-logs/2026-02-06-week39-bug-squash.md`
+
+---
+
+## Bug #033: Referral Frontend Test Fixture Isolation
+
+**Date Discovered:** 2026-02-06 (Week 39 Bug Squash)
+**Date Fixed:** 2026-02-06
+**Severity:** Medium (4 test failures)
+**Status:** RESOLVED
+
+### Symptoms
+- Referral frontend tests failing: `assert b'Test Book' in response.content`
+- Test creates `test_book` fixture but content not rendered in HTML
+- Page loads (200 OK) but empty — no book data
+
+### Root Cause Analysis
+
+**Problem:** Same fixture isolation issue as Bug #032, but with synchronous TestClient.
+
+**The issue:**
+```python
+# test_referral_frontend.py - BEFORE
+@pytest.fixture
+def test_book(db):  # 'db' is alias for db_session (transactional)
+    book = ReferralBook(name="Test Book", code="TEST_BOOK_1", ...)
+    db.add(book)
+    db.commit()  # Commits to TRANSACTION, not real database
+    return book
+
+client = TestClient(app)  # Module-level client
+
+def test_books_list_renders(auth_cookies, test_book):
+    response = client.get("/referral/books", cookies=auth_cookies)
+    assert b"Test Book" in response.content  # ❌ FAILS - book not in DB
+```
+
+**Why it failed:**
+1. `test_book(db)` creates book in transactional session (rolled back after test)
+2. Module-level `client` uses FastAPI app's normal `get_db()` (separate real DB connection)
+3. Backend queries for books → finds nothing → empty HTML
+4. Test expects "Test Book" → not found → assertion fails
+
+### Solution
+
+**Rewrote `test_book` fixture to commit to REAL database, not transaction:**
+
+```python
+# test_referral_frontend.py - AFTER
+@pytest.fixture(scope="function")
+def test_book():
+    """Create test referral book outside of test transaction."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from src.config.settings import settings
+
+    # Create NEW session that commits to REAL database
+    engine = create_engine(str(settings.DATABASE_URL), echo=False)
+    SessionLocal = sessionmaker(bind=engine)
+    db = SessionLocal()
+
+    try:
+        # Clean up existing
+        existing = db.query(ReferralBook).filter(ReferralBook.code == "TEST_BOOK_1").first()
+        if existing:
+            db.delete(existing)
+            db.commit()
+
+        # Create test book
+        book = ReferralBook(name="Test Book", code="TEST_BOOK_1", ...)
+        db.add(book)
+        db.commit()  # ✅ Real commit to database
+        db.refresh(book)
+
+        yield book  # Test runs with book visible in DB
+
+        # Cleanup AFTER test
+        db.delete(book)
+        db.commit()
+    finally:
+        db.close()
+```
+
+**Key changes:**
+1. Create own engine/session (not using `db` fixture)
+2. Commit to real database, not transaction
+3. Use `yield` pattern with cleanup after test
+4. Delete book in finally block
+
+### Files Modified
+- `src/tests/test_referral_frontend.py` — Rewrote test_book fixture
+
+### Impact
+Fixed 4 referral frontend test failures:
+- test_books_list_renders ✅
+- test_book_detail_renders ✅
+- test_books_overview_partial_returns_html ✅
+- test_registration_detail_renders ✅
+
+### Prevention
+- **Lesson:** For frontend tests using TestClient, fixtures must commit to real DB
+- **Pattern:** Create separate engine/session for fixture data that needs to persist
+- **Alternative:** Convert to async tests with `async_client_with_db` (Bug #032 approach)
+- **Best Practice:** Always cleanup in finally block
+
+### References
+- Similar issue: Bug #032 (member notes API fixture isolation)
+- Cleanup pattern: Bug #030 (dues test cleanup fixture)
+- Week 39 Bug Squash: `docs/reports/session-logs/2026-02-06-week39-bug-squash.md`
+
+---
