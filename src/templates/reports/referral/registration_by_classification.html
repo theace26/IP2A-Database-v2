@@ -1,0 +1,45 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Registration by Classification{% endblock %}
+{% block subtitle %}Snapshot: {{ filters.snapshot_date.strftime('%B %d, %Y') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Total Registrations:</span> {{ summary.total_registrations }} |
+    <span class="count-label">Tier 1:</span> {{ summary.tier_totals[1] }} |
+    <span class="count-label">Tier 2:</span> {{ summary.tier_totals[2] }} |
+    <span class="count-label">Tier 3:</span> {{ summary.tier_totals[3] }} |
+    <span class="count-label">Tier 4:</span> {{ summary.tier_totals[4] }}
+</div>
+
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Classification</th>
+            <th style="text-align: right">Tier 1</th>
+            <th style="text-align: right">Tier 2</th>
+            <th style="text-align: right">Tier 3</th>
+            <th style="text-align: right">Tier 4</th>
+            <th style="text-align: right">Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td><strong>{{ row.classification }}</strong></td>
+            <td style="text-align: right">{{ row.tier_1 }}</td>
+            <td style="text-align: right">{{ row.tier_2 }}</td>
+            <td style="text-align: right">{{ row.tier_3 }}</td>
+            <td style="text-align: right">{{ row.tier_4 }}</td>
+            <td style="text-align: right; font-weight: bold">{{ row.total }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align: center; color: #666;">No registrations found</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

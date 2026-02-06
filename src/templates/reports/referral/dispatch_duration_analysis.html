@@ -1,0 +1,58 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Dispatch Duration Analysis{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }} (by {{ summary.group_by|capitalize }}){% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Total Completed Dispatches:</span> {{ summary.total_dispatches }} |
+    <span class="count-label">Overall Median:</span> {{ summary.overall_median_days }} days |
+    <span class="count-label">Longest Avg:</span> {{ summary.longest_avg_group }} |
+    <span class="count-label">Shortest Avg:</span> {{ summary.shortest_avg_group }}
+</div>
+
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+{% if filters.employer_id %}
+<div class="meta">Filtered by Employer ID: {{ filters.employer_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>{{ summary.group_by|capitalize }}</th>
+            <th style="text-align: right">Avg Days</th>
+            <th style="text-align: right">Median Days</th>
+            <th style="text-align: right">Min</th>
+            <th style="text-align: right">Max</th>
+            <th style="text-align: right">Std Dev</th>
+            <th style="text-align: right">Count</th>
+            <th style="text-align: right">Short Calls (≤10d)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td><strong>{{ row.group }}</strong></td>
+            <td style="text-align: right; font-weight: bold">{{ row.avg_days }}</td>
+            <td style="text-align: right">{{ row.median_days }}</td>
+            <td style="text-align: right">{{ row.min_days }}</td>
+            <td style="text-align: right">{{ row.max_days }}</td>
+            <td style="text-align: right">{{ row.std_dev }}</td>
+            <td style="text-align: right">{{ row.count }}</td>
+            <td style="text-align: right; {% if row.short_calls > 0 %}color: orange;{% endif %}">{{ row.short_calls }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align: center; color: #666;">No completed dispatch data available</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="summary-box" style="margin-top: 20px; background: #fff3cd;">
+    <small>
+        <strong>Note:</strong> Short calls (≤10 business days) are flagged but included in calculations.
+        Only completed dispatches (with end date) are included in this analysis.
+    </small>
+</div>
+{% endblock %}

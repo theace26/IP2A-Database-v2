@@ -1,0 +1,55 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Queue Wait Time Report{% endblock %}
+{% block subtitle %}As of {{ filters.snapshot_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Longest Avg Wait:</span> {{ summary.longest_avg_wait_book }} |
+    <span class="count-label">Members Waiting >90 Days:</span> {{ summary.members_waiting_over_90 }} |
+    <span class="count-label">Re-Sign Due This Week:</span> {{ summary.resign_due_this_week }}
+</div>
+
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Book</th>
+            <th style="text-align: center">Tier</th>
+            <th style="text-align: right">Active Count</th>
+            <th style="text-align: right">Avg Wait (Days)</th>
+            <th style="text-align: right">Median Wait</th>
+            <th style="text-align: right">Longest Wait</th>
+            <th style="text-align: right">Re-Sign Due</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td style="font-weight: bold">{{ row.book }}</td>
+            <td style="text-align: center">Book {{ row.tier }}</td>
+            <td style="text-align: right">{{ row.active_count }}</td>
+            <td style="text-align: right; {% if row.avg_wait_days > 60 %}color: #dc3545; font-weight: bold{% elif row.avg_wait_days > 30 %}color: #fd7e14{% endif %}">
+                {{ row.avg_wait_days }}
+            </td>
+            <td style="text-align: right">{{ row.median_wait }}</td>
+            <td style="text-align: right; {% if row.longest_wait_days > 90 %}color: #dc3545{% endif %}">
+                {{ row.longest_wait_days }}
+            </td>
+            <td style="text-align: right; {% if row.resign_due_count > 0 %}color: #fd7e14; font-weight: bold{% endif %}">
+                {{ row.resign_due_count }}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align: center; color: #666;">No queue data available</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div style="margin-top: 15px; font-size: 9pt; color: #666;">
+    <strong>Note:</strong> Member names anonymized for Staff-level access. Longest wait member shown as ID only.
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Re-Registration Analysis{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Total Re-Registrations:</span> {{ summary.total_re_registrations }} |
+    <span class="count-label">Repeat Re-Registrants:</span> {{ summary.repeat_re_registrants }}
+    <br><small>
+    {% for reason, count in summary.by_reason.items() %}
+        {{ reason }}: {{ count }}{% if not loop.last %} | {% endif %}
+    {% endfor %}
+    </small>
+</div>
+
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Member</th>
+            <th>Book</th>
+            <th>Re-Reg Date</th>
+            <th>Reason</th>
+            <th>Category</th>
+            <th style="text-align: right">Prev APN</th>
+            <th style="text-align: right">New APN</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td>{{ row.member_name }}</td>
+            <td>{{ row.book_name }}</td>
+            <td>{{ row.re_reg_date.strftime('%m/%d/%Y') if row.re_reg_date else '' }}</td>
+            <td><small>{{ row.reason[:30] }}{% if row.reason|length > 30 %}...{% endif %}</small></td>
+            <td><span class="tier-badge tier-{{ loop.index % 4 + 1 }}">{{ row.reason_category }}</span></td>
+            <td style="text-align: right">{{ row.previous_apn if row.previous_apn else '-' }}</td>
+            <td style="text-align: right">{{ row.new_apn if row.new_apn else '-' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align: center; color: #666;">No re-registrations in this period</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Employer Utilization Report{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<style>
+    .fill-green { background: #dcfce7 !important; color: #166534 !important; }
+    .fill-yellow { background: #fef3c7 !important; color: #92400e !important; }
+    .fill-red { background: #fecaca !important; color: #dc2626 !important; }
+</style>
+
+<div class="summary-box">
+    <span class="count-label">Total Employers:</span> {{ summary.total_employers }} |
+    <span class="count-label">Total Requests:</span> {{ summary.total_requests }} |
+    <span class="count-label">Total Dispatched:</span> {{ summary.total_dispatched }} |
+    <span class="count-label">Total Unfilled:</span> <span style="color: {% if summary.total_unfilled > 0 %}red{% else %}green{% endif %}">{{ summary.total_unfilled }}</span> |
+    <span class="count-label">Low Fill Rate (<70%):</span> {{ summary.low_fill_rate_count }}
+</div>
+
+{% if filters.employer_id %}
+<div class="meta">Filtered by Employer ID: {{ filters.employer_id }}</div>
+{% endif %}
+{% if filters.contract_code %}
+<div class="meta">Filtered by Contract Code: {{ filters.contract_code }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Employer</th>
+            <th style="text-align: right">Requests Made</th>
+            <th style="text-align: right">Workers Requested</th>
+            <th style="text-align: right">Workers Dispatched</th>
+            <th style="text-align: right">Fill Rate %</th>
+            <th style="text-align: right">Avg Fill Time (Days)</th>
+            <th style="text-align: right">Cancellations</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td><strong>{{ row.employer }}</strong></td>
+            <td style="text-align: right">{{ row.requests_made }}</td>
+            <td style="text-align: right">{{ row.workers_requested }}</td>
+            <td style="text-align: right">{{ row.workers_dispatched }}</td>
+            <td style="text-align: right" class="{% if row.fill_rate_pct > 90 %}fill-green{% elif row.fill_rate_pct >= 70 %}fill-yellow{% else %}fill-red{% endif %}">
+                {{ row.fill_rate_pct }}%
+            </td>
+            <td style="text-align: right">{{ row.avg_fill_time_days }}</td>
+            <td style="text-align: right{% if row.cancellations > 0 %}; color: orange{% endif %}">{{ row.cancellations }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align: center; color: #666;">No employer data available</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="summary-box" style="margin-top: 20px; background: #f3f4f6;">
+    <small>
+        <strong>Fill Rate Legend:</strong>
+        <span class="fill-green" style="padding: 2px 6px; border-radius: 3px;">Green: >90%</span>
+        <span class="fill-yellow" style="padding: 2px 6px; border-radius: 3px; margin-left: 10px;">Yellow: 70-90%</span>
+        <span class="fill-red" style="padding: 2px 6px; border-radius: 3px; margin-left: 10px;">Red: <70%</span>
+    </small>
+</div>
+{% endblock %}

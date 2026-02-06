@@ -1,0 +1,66 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Foreperson By Name Audit{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<div class="confidential-banner" style="background: #dc3545; color: white; padding: 8px; text-align: center; margin-bottom: 15px; font-weight: bold;">
+    ⚠️ CONFIDENTIAL — ANTI-COLLUSION COMPLIANCE DATA — OFFICER+ ONLY
+</div>
+
+<div class="summary-box">
+    <span class="count-label">By-Name Requests:</span> {{ summary.total_by_name_requests }} |
+    <span class="count-label">By-Name %:</span> {{ summary.by_name_percentage }}% |
+    <span class="count-label">Total Dispatches:</span> {{ summary.total_dispatches }} |
+    <span class="count-label">Blackout Violations:</span> {{ summary.blackout_violations }}
+</div>
+
+<div class="rule-reminder" style="background: #f8d7da; padding: 10px; margin: 10px 0; border-left: 4px solid #dc3545; font-size: 9pt;">
+    <strong>Rule 13:</strong> Anti-collusion — foreperson by-name requests cannot be filled by registrants who communicated with employer.<br>
+    <strong>Rule 12:</strong> 2-week blackout after quit/discharge — member cannot be dispatched by-name to same employer.
+</div>
+
+{% if summary.top_employers_by_name %}
+<div class="meta" style="margin: 10px 0;">
+    <strong>Top By-Name Employers:</strong>
+    {% for emp, count in summary.top_employers_by_name %}
+    {{ emp }}: {{ count }}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if filters.employer_id %}
+<div class="meta">Filtered by Employer ID: {{ filters.employer_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Employer</th>
+            <th>Foreperson</th>
+            <th>Requested Member</th>
+            <th>Approved</th>
+            <th>Blackout Active</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr{% if row.blackout_active == 'Y' %} style="background: #ffcccc"{% endif %}>
+            <td>{{ row.date }}</td>
+            <td>{{ row.employer }}</td>
+            <td>{{ row.foreperson }}</td>
+            <td>{{ row.requested_member }}</td>
+            <td>{{ row.approved }}</td>
+            <td style="{% if row.blackout_active == 'Y' %}color: #dc3545; font-weight: bold{% endif %}">
+                {{ row.blackout_active }}{% if row.blackout_active == 'Y' %} ⚠️{% endif %}
+            </td>
+            <td style="font-size: 9pt;">{{ row.notes }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align: center; color: #666;">No by-name requests found</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

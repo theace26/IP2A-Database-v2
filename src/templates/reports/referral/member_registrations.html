@@ -1,0 +1,51 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Active Registrations{% endblock %}
+{% block subtitle %}{{ member.full_name if member else 'Member' }} - {{ member.member_number if member else '' }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <strong>Member:</strong> {{ member.first_name }} {{ member.last_name }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>Member #:</strong> {{ member.member_number or 'N/A' }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>Classification:</strong> {{ member.classification.value if member.classification else 'N/A' }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>Active on:</strong> {{ total_books }} book(s)
+</div>
+
+{% if registrations %}
+<table>
+    <thead>
+        <tr>
+            <th>Book</th>
+            <th style="text-align: center;">Tier</th>
+            <th>APN</th>
+            <th>Registered</th>
+            <th>Last Re-Sign</th>
+            <th>Re-Sign Due</th>
+            <th style="text-align: center;">Check Marks</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for reg in registrations %}
+        <tr class="{% if reg.check_marks >= 2 %}warning-row{% endif %}">
+            <td>{{ reg.book.name if reg.book else 'Unknown' }}</td>
+            <td style="text-align: center;">
+                <span class="tier-badge tier-{{ reg.tier }}">{{ reg.tier }}</span>
+            </td>
+            <td style="font-family: monospace;">{{ "%.2f"|format(reg.apn) }}</td>
+            <td>{{ reg.registered_date.strftime('%m/%d/%Y') if reg.registered_date else 'N/A' }}</td>
+            <td>{{ reg.last_re_sign.strftime('%m/%d/%Y') if reg.last_re_sign else 'Never' }}</td>
+            <td>{{ reg.re_sign_due.strftime('%m/%d/%Y') if reg.re_sign_due else 'N/A' }}</td>
+            <td style="text-align: center;">{{ reg.check_marks }}</td>
+            <td>{{ reg.status }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p style="text-align: center; color: #666;">This member has no active registrations.</p>
+{% endif %}
+{% endblock %}

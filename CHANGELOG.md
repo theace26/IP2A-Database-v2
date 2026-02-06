@@ -7,10 +7,162 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> **v0.9.8-alpha — PHASE 7 Weeks 26-27 Complete + Week 30-31 Documentation & Test Fixes**
-> 593 total tests (519 passing when excluding Stripe/flaky, 92.7% base pass rate), ~228+ API endpoints, 32 models, 18 ADRs
-> Railway deployed, Stripe live, Mobile PWA enabled
-> Current: Phase 7 — Referral & Dispatch System (Backend Complete + Books & Dispatch Frontend UI Complete + Migrations Applied)
+> **v0.9.12-alpha — PHASE 7 Week 38 Complete: P1 Sprint Complete**
+> 680+ total tests (~660 passing, 96% pass rate), ~260+ API endpoints, 32 models, 18 ADRs
+> Railway deployed, Mobile PWA enabled, Stripe removed (ADR-018 Square migration)
+> Current: Phase 7 — Referral & Dispatch System (44 reports: 14 P0 + 30 P1 complete)
+
+### Added (February 6, 2026 — Week 38: P1 Compliance, Operational & Cross-Book Reports)
+- **Week 38: 10 P1 Compliance, Operational & Cross-Book Analytics Reports**
+  - Internet Bidding Activity (PDF + Excel) — bid submissions, Rule 8 compliance, ban tracking
+  - Exempt Status Report (PDF + Excel) — exempt members by type with Rule 14 compliance
+  - Penalty Report (PDF + Excel) — check marks, bid rejections, quit/discharge roll-offs
+  - Foreperson By Name Audit (PDF only) — anti-collusion (Rule 13) and blackout (Rule 12) compliance
+  - Queue Wait Time Report (PDF + Excel) — wait times by book, bottleneck identification
+  - Morning Referral History (PDF + Excel) — processing order (Rule 2), unfilled rate trends
+  - Unfilled Request Report (PDF + Excel) — aging analysis, shortfall by classification
+  - Referral Agent Activity (PDF only) — staff workload distribution, Officer+ only
+  - Multi-Book Members (PDF + Excel) — cross-classification validation (Rule 5)
+  - Book Transfer Report (PDF + Excel) — re-registration patterns after drop
+- **10 new API endpoints** at `/api/v1/reports/referral/`:
+  - GET `/internet-bidding-activity`, `/exempt-status`, `/penalty-report`
+  - GET `/foreperson-by-name-audit` (Officer+), `/queue-wait-time`
+  - GET `/morning-referral-history`, `/unfilled-requests`
+  - GET `/referral-agent-activity` (Officer+), `/multi-book-members`, `/book-transfers`
+- **10 PDF templates** with print-friendly CSS and compliance-specific formatting
+- **20 new tests** for Week 38 P1 reports (95 total referral report tests passing)
+- **Report count:** 44 total (14 P0 + 30 P1 complete) — P1 sprint complete!
+
+### Added (February 6, 2026 — Week 37: P1 Dispatch & Employer Analytics)
+- **Week 37: 10 P1 Dispatch & Employer Analytics Reports**
+  - Weekly Dispatch Summary (PDF + Excel) — dispatches by week with book/employer breakdown
+  - Monthly Dispatch Summary (PDF + Excel) — trend indicators (↑↓→) vs previous month
+  - Dispatch by Agreement Type (PDF + Excel) — PLA/CWA/TERO/Standard breakdown
+  - Dispatch Duration Analysis (PDF + Excel) — avg/median/min/max by group
+  - Short Call Analysis (PDF + Excel) — frequency, re-registration patterns, Rule 9 compliance
+  - Employer Utilization Report (PDF + Excel) — fill rate with color coding (green/yellow/red)
+  - Employer Request Patterns (PDF + Excel) — seasonal trends, day-of-week distribution
+  - Top Employers Report (PDF + Excel) — ranked by volume with medal indicators
+  - Employer Compliance Report (PDF only) — sensitive anti-collusion data, by-name rates
+  - Member Dispatch Frequency (PDF + Excel) — dispatch patterns per member
+- **10 new API endpoints** at `/api/v1/reports/referral/`:
+  - GET `/weekly-dispatch-summary`, `/monthly-dispatch-summary`
+  - GET `/dispatch-by-agreement-type`, `/dispatch-duration-analysis`
+  - GET `/short-call-analysis`, `/employer-utilization`
+  - GET `/employer-request-patterns`, `/top-employers`
+  - GET `/employer-compliance` (Officer+ only), `/member-dispatch-frequency`
+- **10 PDF templates** with print-friendly CSS and report-specific formatting
+- **20 new tests** for Week 37 P1 reports (75 total referral report tests passing)
+- **Report count:** 24 total (14 P0 + 10 Week 36 P1 + 10 Week 37 P1)
+
+### Added (February 6, 2026 — Week 36: P1 Registration & Book Analytics)
+- **Week 36: 10 P1 Registration & Book Analytics Reports**
+  - Registration Summary by Book (PDF + Excel)
+  - Registration Trends (PDF + Excel) — monthly trends with indicators
+  - Book Tier Distribution (PDF + Excel)
+  - Classification Distribution (PDF + Excel)
+  - New Registrations Report (PDF + Excel)
+  - Dropped Registrations Report (PDF + Excel)
+  - Re-Sign Compliance Report (PDF + Excel)
+  - Registration Aging Report (PDF + Excel)
+  - Book Capacity Report (PDF + Excel)
+  - Member Registration History (PDF + Excel)
+- **10 new API endpoints** for registration analytics
+- **10 PDF templates** with consistent styling
+- **20 new tests** for Week 36 P1 reports (55 total referral report tests after Week 36)
+
+### Removed (February 6, 2026 — Week 35: Stripe Removal)
+- **All Stripe payment processing code** (ADR-018 — Square migration)
+  * Deleted `src/services/payment_service.py` — Stripe Checkout session creation
+  * Deleted `src/routers/webhooks/stripe_webhook.py` — Webhook handler and verification
+  * Deleted `src/tests/test_stripe_integration.py` — 13 integration tests
+  * Deleted `src/tests/test_stripe_frontend.py` — 14 frontend tests
+  * Removed Stripe payment routes from `src/routers/dues_frontend.py` (initiate, success, cancel)
+  * Removed Stripe configuration from `src/config/settings.py`
+  * Removed Stripe router registration from `src/main.py`
+  * Removed Stripe health check from `src/routers/health.py`
+  * Removed Stripe CSP entries from `src/middleware/security_headers.py`
+  * Removed `stripe>=8.0.0` from `requirements.txt`
+  * Removed Stripe environment variables from `.env.example`
+- **Preserved for Square migration (Phase A):**
+  * Dues tracking models (DuesPayment, DuesRate, DuesPeriod, DuesAdjustment)
+  * Dues service layer (calculation, recording, querying)
+  * Dues API routes and frontend routes
+  * `stripe_customer_id` column on Member (to be renamed `processor_customer_id`)
+  * `DuesPaymentMethod.STRIPE_*` enum values (historical payment records)
+  * Payment success/cancel templates (generic, reusable)
+  * All non-Stripe dues tests
+
+### Fixed (February 6, 2026 — Week 35: Bug Squash)
+- **Test Fixture Auth Mismatches** — 10 tests in `test_referral_frontend.py`
+  * Tests declared `auth_headers` parameter but used `auth_cookies` variable
+  * Fixed by correcting parameter names to match actual usage
+- **Phase 7 Model Test Collisions** — `test_phase7_models.py`
+  * Hardcoded test codes like `TEST_WIRE_BREM_1` caused UniqueViolation errors
+  * Fixed by using UUID-based unique codes (`TEST_BREM_{uuid.uuid4().hex[:8]}`)
+  * Added registration_activities cleanup to prevent ForeignKeyViolation
+- **Schema Drift: Member.card_number → Member.member_number**
+  * `referral_frontend_service.py` used non-existent `Member.card_number` field
+  * `referral_frontend.py` template used wrong dict key `card_number`
+  * Fixed both to use correct `member_number` field
+- **Test pass rate improved:** 98.5% (596/606 non-skipped tests, up from ~92%)
+
+### Changed (February 6, 2026 — Week 35)
+- Updated ADR-018 with Stripe Removal section documenting what was removed/preserved
+- Version bumped to v0.9.10-alpha
+
+### Added (February 5, 2026 — Week 34)
+- **Employer & Registration Reports (P0/P1)** — 5 reports completing all P0 critical reports
+  * Employer Active List (PDF + Excel) — employers with open requests or dispatched workers
+  * Employer Dispatch History (PDF + Excel) — single employer dispatch history with stats
+  * Registration History (Excel only) — activity log with 2-sheet summary
+  * Check Mark Report (PDF) — per-book check mark tracking with at-limit warnings
+  * Re-Sign Due List (PDF) — CRITICAL daily report with overdue/upcoming sections
+- **ReferralReportService enhancements** — 5 new report methods (14 total) with PDF/Excel renderers
+- **API endpoints** — 5 new routes at `/api/v1/reports/referral/`:
+  * GET `/employers/active` (contract filter, PDF/Excel)
+  * GET `/employers/{id}/dispatch-history` (date range, PDF/Excel)
+  * GET `/registrations/history` (Excel only, book/activity type filters)
+  * GET `/check-marks` (book filter, PDF)
+  * GET `/re-sign-due` (days ahead, include overdue, PDF)
+- **PDF templates** — 4 new templates in `src/templates/reports/referral/`:
+  * `employer_active_list.html`, `employer_dispatch_history.html`
+  * `check_mark_report.html` (1-mark yellow, 2-mark orange with warning icons)
+  * `re_sign_due_list.html` (overdue red section, urgency-colored due soon rows)
+- **Tests** — 14 new tests for Week 34 reports (34 total referral report tests, 8 API tests skipped)
+- **Reports dashboard** — 14 of 78 reports now available (4 Out-of-Work, 5 Dispatch, 2 Registration, 2 Employer, 1 Check Mark)
+
+### Added (February 5, 2026 — Week 33B)
+- **Dispatch & Labor Request Reports (P0)** — 5 critical dispatch operation reports
+  * Daily Dispatch Log (PDF + Excel) — dispatches by date range with book/employer summaries
+  * Dispatch History by Member (PDF) — complete member dispatch history with duration stats
+  * Labor Request Status (PDF + Excel) — request tracking with status filters
+  * Morning Referral Sheet (PDF, landscape) — CRITICAL daily report with 3 PM cutoff logic
+  * Active Dispatches (PDF + Excel) — currently dispatched members with short call tracking
+- **ReferralReportService enhancements** — 5 new report methods with PDF/Excel renderers
+- **API endpoints** — 5 new routes at `/api/v1/reports/referral/`:
+  * GET `/dispatch-log` (date range, PDF/Excel)
+  * GET `/member/{id}/dispatch-history` (PDF)
+  * GET `/labor-requests` (status filter, date range, PDF/Excel)
+  * GET `/morning-referral` (PDF, target date optional)
+  * GET `/active-dispatches` (PDF/Excel)
+- **PDF templates** — 5 new templates in `src/templates/reports/referral/`:
+  * `daily_dispatch_log.html`, `member_dispatch_history.html`, `labor_request_status.html`
+  * `morning_referral_sheet.html` (landscape layout, visual flags for check limits/web bids)
+  * `active_dispatches.html` (employer grouping, short call day tracking)
+- **Tests** — 12 new dispatch report service tests (20 total referral report tests passing)
+- **Reports dashboard** — Updated dispatch_frontend_service to mark 5 more reports available (9 total)
+
+### Added (February 5, 2026 — Week 33A)
+- **Out-of-Work List Reports (P0)** — 4 critical daily operational reports
+  * Out-of-Work List by Book (PDF + Excel)
+  * Out-of-Work List All Books (PDF + Excel)
+  * Out-of-Work Summary (PDF)
+  * Active Registrations by Member (PDF)
+- **ReferralReportService** — new service for report generation with WeasyPrint/openpyxl
+- **API router** — referral_reports_api.py with 4 endpoints
+- **PDF templates** — 5 base templates for referral reports
+- **Tests** — 8 service layer tests passing, 8 API tests skipped (fixture isolation)
 
 ### Added (February 5, 2026 — Week 31)
 - **Hub Documentation Suite** (commit `e17e8ee`)

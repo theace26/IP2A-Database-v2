@@ -1,0 +1,53 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Referral Agent Activity{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<div class="confidential-banner" style="background: #6c757d; color: white; padding: 8px; text-align: center; margin-bottom: 15px; font-weight: bold;">
+    📊 PERFORMANCE DATA — OFFICER+ ONLY
+</div>
+
+<div class="summary-box">
+    <span class="count-label">Total Processed:</span> {{ summary.total_processed }} |
+    <span class="count-label">Agent Count:</span> {{ summary.agent_count }} |
+    <span class="count-label">Avg/Agent:</span> {{ summary.avg_per_agent }} |
+    <span class="count-label">Busiest:</span> {{ summary.busiest_agent }} |
+    <span class="count-label">Quietest:</span> {{ summary.quietest_agent }}
+</div>
+
+{% if filters.staff_member_id %}
+<div class="meta">Filtered by Staff Member ID: {{ filters.staff_member_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Staff Member</th>
+            <th style="text-align: right">Dispatches Processed</th>
+            <th style="text-align: right">Registrations</th>
+            <th style="text-align: right">Check Marks Issued</th>
+            <th style="text-align: right">By-Name Approvals</th>
+            <th style="text-align: center">Hours Active</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td style="font-weight: bold">{{ row.staff_member }}</td>
+            <td style="text-align: right">{{ row.dispatches_processed }}</td>
+            <td style="text-align: right">{{ row.registrations_processed }}</td>
+            <td style="text-align: right">{{ row.check_marks_issued }}</td>
+            <td style="text-align: right">{{ row.by_name_approvals }}</td>
+            <td style="text-align: center">{{ row.hours_active }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align: center; color: #666;">No agent activity found</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div style="margin-top: 15px; font-size: 9pt; color: #666;">
+    <strong>Note:</strong> This report is for workload distribution analysis only. Individual performance should be evaluated with additional context.
+</div>
+{% endblock %}

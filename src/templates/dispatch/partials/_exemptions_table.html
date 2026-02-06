@@ -1,0 +1,95 @@
+{% if exemptions %}
+<div class="overflow-x-auto">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Member</th>
+                <th>Book</th>
+                <th>Type</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exemption in exemptions %}
+            <tr class="hover">
+                <td>
+                    <div class="font-medium">{{ exemption.member.full_name if exemption.member else 'Unknown' }}</div>
+                    <div class="text-sm text-base-content/60">{{ exemption.member.card_number if exemption.member else '' }}</div>
+                </td>
+                <td>{{ exemption.book.name if exemption.book else 'Unknown' }}</td>
+                <td>
+                    {% if exemption.exempt_reason %}
+                    {% set badge = format_exemption_badge(exemption.exempt_reason.value) %}
+                    <span class="badge {{ badge.class }}">{{ badge.label }}</span>
+                    {% else %}
+                    <span class="text-base-content/60">Not specified</span>
+                    {% endif %}
+                </td>
+                <td>{{ exemption.exempt_start_date.strftime('%b %d, %Y') if exemption.exempt_start_date else 'N/A' }}</td>
+                <td>
+                    {% if exemption.exempt_end_date %}
+                    {{ exemption.exempt_end_date.strftime('%b %d, %Y') }}
+                    {% else %}
+                    <span class="text-base-content/60">No end date</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if exemption.is_exempt %}
+                    <span class="badge badge-success">Active</span>
+                    {% else %}
+                    <span class="badge badge-ghost">Inactive</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="flex gap-1">
+                        <a href="/dispatch/exemptions/{{ exemption.id }}" class="btn btn-ghost btn-xs">
+                            View
+                        </a>
+                        {% if exemption.is_exempt %}
+                        <button
+                            class="btn btn-ghost btn-xs text-warning"
+                            hx-post="/dispatch/exemptions/{{ exemption.id }}/deactivate"
+                            hx-confirm="Deactivate this exemption?"
+                            hx-target="#exemptions-table"
+                        >
+                            Deactivate
+                        </button>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if pagination.pages > 1 %}
+<div class="flex justify-center mt-4">
+    <div class="join">
+        {% if pagination.page > 1 %}
+        <a href="?page={{ pagination.page - 1 }}" class="join-item btn btn-sm">Previous</a>
+        {% endif %}
+
+        {% for p in range(1, pagination.pages + 1) %}
+        <a href="?page={{ p }}" class="join-item btn btn-sm {% if p == pagination.page %}btn-active{% endif %}">{{ p }}</a>
+        {% endfor %}
+
+        {% if pagination.page < pagination.pages %}
+        <a href="?page={{ pagination.page + 1 }}" class="join-item btn btn-sm">Next</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% else %}
+<div class="text-center py-12 text-base-content/60">
+    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <p>No exemptions found</p>
+    <p class="text-sm">Use the "New Exemption" button to create one</p>
+</div>
+{% endif %}

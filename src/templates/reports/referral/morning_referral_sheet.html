@@ -1,0 +1,237 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Morning Referral Sheet{% endblock %}
+{% block subtitle %}Processing Date: {{ target_date.strftime('%A, %B %d, %Y') }}{% endblock %}
+
+{% block head %}
+<style>
+    @page {
+        size: letter landscape;
+        margin: 0.5in;
+    }
+
+    body {
+        font-size: 9pt;
+    }
+
+    .meta-box {
+        background: #003366;
+        color: white;
+        padding: 0.5rem 1rem;
+        margin-bottom: 1rem;
+        border-radius: 4px;
+    }
+
+    .time-slot-header {
+        background: #003366;
+        color: white;
+        padding: 0.5rem 1rem;
+        margin: 1.5rem 0 0.5rem 0;
+        font-size: 1.2rem;
+        page-break-before: auto;
+    }
+
+    .book-header {
+        background: #f5f5f5;
+        padding: 0.4rem 0.75rem;
+        margin: 1rem 0 0.25rem 0;
+        font-size: 1rem;
+        font-weight: 600;
+        border-left: 4px solid #003366;
+    }
+
+    .request-card {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin: 0.5rem 0;
+        padding: 0.5rem;
+        page-break-inside: avoid;
+    }
+
+    .request-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.25rem;
+        border-bottom: 1px solid #eee;
+    }
+
+    .request-employer {
+        font-weight: 700;
+        font-size: 1rem;
+    }
+
+    .request-info {
+        font-size: 0.85rem;
+        color: #666;
+    }
+
+    .queue-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+
+    .queue-table th {
+        background: #f5f5f5;
+        padding: 0.3rem 0.5rem;
+        text-align: left;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+    }
+
+    .queue-table td {
+        padding: 0.25rem 0.5rem;
+        border-bottom: 1px solid #eee;
+    }
+
+    .row-at-limit {
+        background: #fff3cd !important;
+    }
+
+    .row-has-bid {
+        background: #d1ecf1 !important;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.15rem 0.4rem;
+        border-radius: 3px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+
+    .badge-short-call { background: #fef3cd; color: #856404; }
+    .badge-by-name { background: #cce5ff; color: #004085; }
+    .badge-agreement { background: #e9ecef; color: #495057; }
+    .badge-warning { background: #f8d7da; color: #721c24; }
+    .badge-bid { background: #d1ecf1; color: #0c5460; }
+
+    .checkmark-warning {
+        color: #dc3545;
+        font-weight: 600;
+    }
+
+    .web-bids-section {
+        background: #d1ecf1;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+    }
+
+    .no-requests {
+        text-align: center;
+        color: #666;
+        padding: 2rem;
+        font-style: italic;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="meta-box">
+    <strong>Cutoff:</strong> Requests received before {{ cutoff_datetime.strftime('%I:%M %p on %A, %B %d') }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>Total Requests:</strong> {{ total_requests }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>Workers Needed:</strong> {{ total_workers_needed }}
+</div>
+
+{% if total_requests == 0 %}
+<div class="no-requests">
+    <p>No open labor requests for this morning's referral.</p>
+</div>
+{% else %}
+
+{% for group in processing_groups %}
+{% if group.books|length > 0 %}
+<h2 class="time-slot-header">{{ group.time_slot }} Processing</h2>
+
+{% for book_data in group.books %}
+<h3 class="book-header">{{ book_data.book_name }}</h3>
+
+{% for request in book_data.requests %}
+<div class="request-card">
+    <div class="request-header">
+        <span class="request-employer">
+            {{ request.employer_name }}
+            <span class="request-info">
+                ({{ request.workers_needed }} worker{{ 's' if request.workers_needed != 1 else '' }} needed)
+            </span>
+        </span>
+        <span>
+            {% if request.is_short_call %}
+            <span class="badge badge-short-call">Short Call</span>
+            {% endif %}
+            {% if request.is_by_name %}
+            <span class="badge badge-by-name">By Name</span>
+            {% endif %}
+            {% if request.agreement_type != 'standard' %}
+            <span class="badge badge-agreement">{{ request.agreement_type|upper }}</span>
+            {% endif %}
+        </span>
+    </div>
+
+    {% if request.web_bids %}
+    <div class="web-bids-section">
+        <strong>Web Bids Received:</strong>
+        {% for bid in request.web_bids %}
+        <span class="badge badge-bid">
+            {{ bid.member_name }} ({{ bid.bid_time.strftime('%I:%M %p') if bid.bid_time else 'N/A' }})
+        </span>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <table class="queue-table">
+        <thead>
+            <tr>
+                <th style="width: 40px; text-align: center;">#</th>
+                <th>Member Name</th>
+                <th style="width: 80px;">APN</th>
+                <th style="width: 50px; text-align: center;">Tier</th>
+                <th style="width: 60px; text-align: center;">Checks</th>
+                <th style="width: 60px; text-align: center;">Bid?</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in request.next_in_queue %}
+            <tr class="{% if member.at_check_limit %}row-at-limit{% elif member.has_web_bid %}row-has-bid{% endif %}">
+                <td style="text-align: center;">{{ member.position }}</td>
+                <td>
+                    {{ member.member_name }}
+                    {% if member.at_check_limit %}
+                    <span class="badge badge-warning">AT LIMIT</span>
+                    {% endif %}
+                </td>
+                <td style="font-family: monospace;">{{ "%.2f"|format(member.apn) }}</td>
+                <td style="text-align: center;">{{ member.tier }}</td>
+                <td style="text-align: center;">
+                    {% if member.at_check_limit %}
+                    <span class="checkmark-warning">{{ member.check_marks }}/2</span>
+                    {% else %}
+                    {{ member.check_marks }}/2
+                    {% endif %}
+                </td>
+                <td style="text-align: center;">
+                    {% if member.has_web_bid %}
+                    <span class="badge badge-bid">YES</span>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endfor %}
+
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+{% endif %}
+{% endblock %}

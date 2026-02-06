@@ -1,0 +1,75 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Penalty Report{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<style>
+    .severity-1 { background-color: #fff3cd; }
+    .severity-2 { background-color: #ffe0b2; }
+    .severity-3 { background-color: #ffcccc; }
+</style>
+
+<div class="summary-box">
+    <span class="count-label">Total Penalties:</span> {{ summary.total_penalties }} |
+    <span class="count-label">Most Penalized Book:</span> {{ summary.most_penalized_book }}
+</div>
+
+{% if summary.by_type %}
+<div class="meta" style="margin: 10px 0;">
+    <strong>By Type:</strong>
+    {% for type, count in summary.by_type.items() %}
+    {{ type|replace('_', ' ')|title }}: {{ count }}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if filters.penalty_type %}
+<div class="meta">Filtered by Type: {{ filters.penalty_type }}</div>
+{% endif %}
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Member</th>
+            <th>Penalty Type</th>
+            <th>Book</th>
+            <th>Details</th>
+            <th>Resulting Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr class="severity-{{ row.severity }}">
+            <td>{{ row.date }}</td>
+            <td>{{ row.member }}</td>
+            <td>
+                {% if row.penalty_type == 'check_mark' %}⚠️{% endif %}
+                {% if row.penalty_type == 'bid_rejection' %}❌{% endif %}
+                {% if row.penalty_type == 'quit_discharge' %}🚪{% endif %}
+                {% if row.penalty_type == 'termination' %}🔴{% endif %}
+                {{ row.penalty_type|replace('_', ' ')|title }}
+            </td>
+            <td>{{ row.book }}</td>
+            <td>{{ row.details }}</td>
+            <td style="font-weight: {% if 'Roll-off' in row.resulting_action or 'blackout' in row.resulting_action %}bold{% else %}normal{% endif %}">
+                {{ row.resulting_action }}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align: center; color: #666;">No penalties found</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div style="margin-top: 15px; font-size: 9pt; color: #666;">
+    <strong>Legend:</strong>
+    <span style="background: #fff3cd; padding: 2px 6px;">Yellow: Warning</span>
+    <span style="background: #ffe0b2; padding: 2px 6px;">Orange: Approaching Limit</span>
+    <span style="background: #ffcccc; padding: 2px 6px;">Red: Roll-off/Ban</span>
+</div>
+{% endblock %}

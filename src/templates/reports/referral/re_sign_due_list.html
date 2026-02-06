@@ -1,0 +1,121 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Re-Sign Due List{% endblock %}
+{% block subtitle %}30-Day Re-Sign Deadline Tracking{% endblock %}
+
+{% block content %}
+<style>
+    .section-header { padding: 10px 12px; font-weight: bold; font-size: 11pt; margin-top: 20px; border-radius: 4px 4px 0 0; }
+    .overdue-header { background: #fecaca; color: #991b1b; }
+    .due-soon-header { background: #fef3c7; color: #92400e; }
+    .overdue-row { background: #fecaca !important; font-weight: bold; }
+    .due-1-3 { background: #fed7aa !important; }
+    .due-4-7 { background: #fef9c3 !important; }
+    .all-clear { background: #d1fae5; color: #065f46; padding: 15px; text-align: center; border-radius: 4px; }
+    .critical { font-weight: bold; color: #991b1b; }
+</style>
+
+<div class="summary-box">
+    <span class="count-label" style="color: #991b1b;">Overdue:</span>
+    <strong style="color: #991b1b;">{{ overdue_count }}</strong>
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span class="count-label" style="color: #92400e;">Due within {{ days_ahead }} days:</span>
+    <strong style="color: #92400e;">{{ due_soon_count }}</strong>
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>Total Requiring Action:</strong> {{ overdue_count + due_soon_count }}
+</div>
+
+<!-- OVERDUE SECTION -->
+<div class="section-header overdue-header">
+    OVERDUE - IMMEDIATE ACTION REQUIRED
+</div>
+{% if overdue %}
+<table style="margin-top: 0;">
+    <thead>
+        <tr>
+            <th style="width: 80px;">Days Overdue</th>
+            <th>Member</th>
+            <th>Card #</th>
+            <th>Book</th>
+            <th style="text-align: center;">Tier</th>
+            <th>APN</th>
+            <th>Last Re-Sign</th>
+            <th>Due Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for m in overdue %}
+        <tr class="overdue-row">
+            <td style="text-align: center;" class="critical">{{ m.days_overdue }}</td>
+            <td>{{ m.member_name }}</td>
+            <td style="font-family: monospace;">{{ m.member_card }}</td>
+            <td>{{ m.book_name }}</td>
+            <td style="text-align: center;">
+                <span class="tier-badge tier-{{ m.tier }}">{{ m.tier }}</span>
+            </td>
+            <td style="font-family: monospace;">{{ "%.2f"|format(m.apn) if m.apn else 'N/A' }}</td>
+            <td>{{ m.last_re_sign.strftime('%m/%d/%Y') if m.last_re_sign else 'N/A' }}</td>
+            <td class="critical">{{ m.re_sign_due.strftime('%m/%d/%Y') if m.re_sign_due else 'N/A' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="all-clear">
+    No overdue members
+</div>
+{% endif %}
+
+<!-- DUE SOON SECTION -->
+<div class="section-header due-soon-header">
+    DUE WITHIN {{ days_ahead }} DAYS
+</div>
+{% if due_soon %}
+<table style="margin-top: 0;">
+    <thead>
+        <tr>
+            <th style="width: 80px;">Days Until Due</th>
+            <th>Member</th>
+            <th>Card #</th>
+            <th>Book</th>
+            <th style="text-align: center;">Tier</th>
+            <th>APN</th>
+            <th>Last Re-Sign</th>
+            <th>Due Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for m in due_soon %}
+        <tr class="{% if m.days_until_due <= 3 %}due-1-3{% elif m.days_until_due <= 7 %}due-4-7{% endif %}">
+            <td style="text-align: center; font-weight: bold;">
+                {% if m.days_until_due == 0 %}
+                <span style="color: #991b1b;">TODAY</span>
+                {% elif m.days_until_due == 1 %}
+                <span style="color: #b45309;">TOMORROW</span>
+                {% else %}
+                {{ m.days_until_due }}
+                {% endif %}
+            </td>
+            <td>{{ m.member_name }}</td>
+            <td style="font-family: monospace;">{{ m.member_card }}</td>
+            <td>{{ m.book_name }}</td>
+            <td style="text-align: center;">
+                <span class="tier-badge tier-{{ m.tier }}">{{ m.tier }}</span>
+            </td>
+            <td style="font-family: monospace;">{{ "%.2f"|format(m.apn) if m.apn else 'N/A' }}</td>
+            <td>{{ m.last_re_sign.strftime('%m/%d/%Y') if m.last_re_sign else 'N/A' }}</td>
+            <td>{{ m.re_sign_due.strftime('%m/%d/%Y') if m.re_sign_due else 'N/A' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="all-clear">
+    No members due within {{ days_ahead }} days
+</div>
+{% endif %}
+
+<p style="margin-top: 20px; font-size: 8pt; color: #666; text-align: center;">
+    <strong>REMINDER:</strong> Members who miss their 30-day re-sign deadline will be rolled off ALL books (Business Rule #7).
+</p>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Morning Referral History{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Avg Dispatches/Morning:</span> {{ summary.avg_dispatches_per_morning }} |
+    <span class="count-label">Busiest Day:</span> {{ summary.busiest_day_of_week }} |
+    <span class="count-label">Total Unfilled:</span> {{ summary.total_unfilled }} |
+    <span class="count-label">Unfilled Rate:</span> {{ summary.unfilled_rate }}%
+</div>
+
+<div class="rule-reminder" style="background: #d1ecf1; padding: 10px; margin: 10px 0; border-left: 4px solid #17a2b8; font-size: 9pt;">
+    <strong>Rule 2 — Processing Order:</strong><br>
+    8:30 AM: Wire Seattle, Wire Bremerton, Wire Pt Angeles<br>
+    9:00 AM: Sound & Comm, Marine, Stockman, Lt Fxt Maint, Residential<br>
+    9:30 AM: Tradeshow
+</div>
+
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Time Slot</th>
+            <th>Book</th>
+            <th style="text-align: right">Dispatched</th>
+            <th style="text-align: right">Unfilled</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td>{{ row.date }}</td>
+            <td>
+                {% if row.processing_time == '8:30 AM' %}
+                <span style="color: #007bff">⏰ {{ row.processing_time }}</span>
+                {% elif row.processing_time == '9:00 AM' %}
+                <span style="color: #28a745">⏰ {{ row.processing_time }}</span>
+                {% elif row.processing_time == '9:30 AM' %}
+                <span style="color: #fd7e14">⏰ {{ row.processing_time }}</span>
+                {% else %}
+                <span style="color: #6c757d">{{ row.processing_time }}</span>
+                {% endif %}
+            </td>
+            <td>{{ row.book }}</td>
+            <td style="text-align: right; font-weight: bold">{{ row.dispatched }}</td>
+            <td style="text-align: right; {% if row.unfilled > 0 %}color: #dc3545{% endif %}">
+                {{ row.unfilled }}{% if row.unfilled > 0 %} ⚠️{% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align: center; color: #666;">No referral history found</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

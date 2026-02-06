@@ -1,0 +1,51 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Registration Duration Report{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Overall Avg Wait:</span> {{ summary.overall_avg_wait }} days |
+    <span class="count-label">Total Completed:</span> {{ summary.total_completed }}
+    <br>
+    <small>
+        Fastest Book: <strong>{{ summary.fastest_book or 'N/A' }}</strong> |
+        Slowest Book: <strong>{{ summary.slowest_book or 'N/A' }}</strong>
+    </small>
+</div>
+
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Book</th>
+            <th style="text-align: center">Tier</th>
+            <th style="text-align: right">Avg Days</th>
+            <th style="text-align: right">Median Days</th>
+            <th style="text-align: right">Min</th>
+            <th style="text-align: right">Max</th>
+            <th style="text-align: right">Still Active</th>
+            <th style="text-align: right">Completed</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr{% if row.avg_days > 60 %} class="warning-row"{% endif %}>
+            <td><strong>{{ row.book_name }}</strong></td>
+            <td style="text-align: center"><span class="tier-badge tier-{{ row.tier }}">{{ row.tier }}</span></td>
+            <td style="text-align: right">{{ row.avg_days }}</td>
+            <td style="text-align: right">{{ row.median_days }}</td>
+            <td style="text-align: right">{{ row.min_days }}</td>
+            <td style="text-align: right">{{ row.max_days }}</td>
+            <td style="text-align: right">{{ row.still_active_count }}</td>
+            <td style="text-align: right">{{ row.completed_count }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align: center; color: #666;">No duration data available</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

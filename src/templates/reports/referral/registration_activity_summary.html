@@ -1,0 +1,51 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Registration Activity Summary{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Total Registrations In:</span> {{ summary.total_registrations_in }} |
+    <span class="count-label">Re-Signs:</span> {{ summary.total_re_signs }} |
+    <span class="count-label">Drops:</span> {{ summary.total_drops }} |
+    <span class="count-label">Dispatched Out:</span> {{ summary.total_dispatched_out }} |
+    <span class="count-label">Net Change:</span>
+    <span style="color: {% if summary.net_change > 0 %}green{% elif summary.net_change < 0 %}red{% else %}#333{% endif %}">
+        {{ summary.net_change }}
+    </span>
+    {% if summary.busiest_period %}<br><small>Busiest period: {{ summary.busiest_period }}</small>{% endif %}
+</div>
+
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Period</th>
+            <th style="text-align: right">Registrations In</th>
+            <th style="text-align: right">Re-Signs</th>
+            <th style="text-align: right">Drops</th>
+            <th style="text-align: right">Dispatched Out</th>
+            <th style="text-align: right">Net Change</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td>{{ row.period }}</td>
+            <td style="text-align: right">{{ row.registrations_in }}</td>
+            <td style="text-align: right">{{ row.re_signs }}</td>
+            <td style="text-align: right">{{ row.drops }}</td>
+            <td style="text-align: right">{{ row.dispatched_out }}</td>
+            <td style="text-align: right; color: {% if row.net_change > 0 %}green{% elif row.net_change < 0 %}red{% else %}#333{% endif %}">
+                {{ row.net_change }}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align: center; color: #666;">No activity in this period</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

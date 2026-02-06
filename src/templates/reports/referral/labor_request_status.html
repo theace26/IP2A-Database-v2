@@ -1,0 +1,110 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Labor Request Status Report{% endblock %}
+{% block subtitle %}Generated {{ generated_at.strftime('%B %d, %Y at %I:%M %p') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <strong>Total Requests:</strong> {{ requests|length }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>Workers Requested:</strong> {{ total_workers_requested }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>Workers Filled:</strong> {{ total_workers_filled }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>Fill Rate:</strong> {{ fill_rate }}%
+</div>
+
+<div class="status-summary">
+    <span class="status-chip status-open">Open: {{ status_counts.open }}</span>
+    <span class="status-chip status-partial">Partial: {{ status_counts.partially_filled }}</span>
+    <span class="status-chip status-filled">Filled: {{ status_counts.filled }}</span>
+    <span class="status-chip status-cancelled">Cancelled: {{ status_counts.cancelled }}</span>
+    <span class="status-chip status-expired">Expired: {{ status_counts.expired }}</span>
+</div>
+
+{% if requests %}
+<table>
+    <thead>
+        <tr>
+            <th style="text-align: center;">#</th>
+            <th>Employer</th>
+            <th>Book</th>
+            <th style="text-align: center;">Req/Filled</th>
+            <th>Status</th>
+            <th>Agreement</th>
+            <th>Type</th>
+            <th>Created</th>
+            <th>Filled</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in requests %}
+        <tr class="{% if r.status == 'open' %}row-open{% elif r.status == 'cancelled' or r.status == 'expired' %}row-inactive{% endif %}">
+            <td style="text-align: center;">{{ r.request_id }}</td>
+            <td>{{ r.employer_name }}</td>
+            <td>{{ r.book_name }}</td>
+            <td style="text-align: center; font-weight: 600;">
+                {{ r.workers_filled }} / {{ r.workers_requested }}
+            </td>
+            <td>
+                <span class="badge badge-{{ r.status }}">{{ r.status|upper }}</span>
+            </td>
+            <td>{{ r.agreement_type|title }}</td>
+            <td>
+                {% if r.is_short_call and r.is_by_name %}
+                Short Call, By Name
+                {% elif r.is_short_call %}
+                Short Call
+                {% elif r.is_by_name %}
+                By Name
+                {% else %}
+                Regular
+                {% endif %}
+            </td>
+            <td>{{ r.created_at.strftime('%m/%d/%Y') if r.created_at else '-' }}</td>
+            <td>{{ r.filled_at.strftime('%m/%d/%Y') if r.filled_at else '-' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p style="text-align: center; color: #666; margin-top: 2rem;">No labor requests found.</p>
+{% endif %}
+
+<style>
+    .status-summary {
+        margin: 1rem 0;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .status-chip {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .status-open { background: #d1ecf1; color: #0c5460; }
+    .status-partial { background: #fef3cd; color: #856404; }
+    .status-filled { background: #d4edda; color: #155724; }
+    .status-cancelled { background: #f8d7da; color: #721c24; }
+    .status-expired { background: #e9ecef; color: #495057; }
+
+    .badge {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 3px;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+    .badge-open { background: #d1ecf1; color: #0c5460; }
+    .badge-partially_filled { background: #fef3cd; color: #856404; }
+    .badge-filled { background: #d4edda; color: #155724; }
+    .badge-cancelled { background: #f8d7da; color: #721c24; }
+    .badge-expired { background: #e9ecef; color: #495057; }
+
+    .row-open { background: #f0f9ff; }
+    .row-inactive { opacity: 0.7; }
+</style>
+{% endblock %}

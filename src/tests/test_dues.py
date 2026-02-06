@@ -43,6 +43,43 @@ def get_unique_year_month() -> tuple[int, int]:
     return year, month
 
 
+@pytest.fixture(scope="function", autouse=True)
+def cleanup_test_dues_data():
+    """Clean up test dues data before and after each test to avoid unique constraint violations."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from src.config.settings import settings
+
+    def cleanup():
+        """Delete test dues data."""
+        engine = create_engine(str(settings.DATABASE_URL), echo=False)
+        Session = sessionmaker(bind=engine)
+        session = Session()
+
+        try:
+            # Delete test dues data in reverse dependency order
+            # Delete payments first (they reference periods)
+            session.execute(text("DELETE FROM dues_payments WHERE period_id IN (SELECT id FROM dues_periods WHERE period_year >= 2090)"))
+            # Delete periods created by tests (years 2090-2100 from get_unique_year_month)
+            session.execute(text("DELETE FROM dues_periods WHERE period_year >= 2090"))
+            # Delete rates with future dates (years 2200+ from get_unique_date)
+            session.execute(text("DELETE FROM dues_rates WHERE effective_date >= '2200-01-01'"))
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            # Silently continue - cleanup is best-effort
+        finally:
+            session.close()
+
+    # Clean before the test
+    cleanup()
+
+    yield
+
+    # Clean after the test
+    cleanup()
+
+
 # ============================================================================
 # DUES RATES TESTS
 # ============================================================================

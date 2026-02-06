@@ -1,0 +1,54 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Book Comparison{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    Comparing:
+    {% for book_id, book_name in book_names.items() %}
+        <strong>{{ book_name }}</strong>{% if not loop.last %} vs {% endif %}
+    {% endfor %}
+    {% if summary.differentiators %}
+    <br><small>
+    {% for diff in summary.differentiators %}
+        {{ diff }}{% if not loop.last %}; {% endif %}
+    {% endfor %}
+    </small>
+    {% endif %}
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Metric</th>
+            {% for book_id in book_ids %}
+            <th style="text-align: right">{{ book_names.get(book_id, 'Book ' ~ book_id) }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td><strong>{{ row.metric }}</strong></td>
+            {% for book_id in book_ids %}
+            <td style="text-align: right">{{ row.get('book_' ~ book_id, 'N/A') }}</td>
+            {% endfor %}
+        </tr>
+        {% else %}
+        <tr><td colspan="{{ book_ids|length + 1 }}" style="text-align: center; color: #666;">No comparison data</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if summary.recommendations %}
+<div class="summary-box" style="margin-top: 20px; background: #fff3cd;">
+    <span class="count-label">Recommendations:</span>
+    <ul style="margin: 5px 0 0 20px; padding: 0;">
+        {% for rec in summary.recommendations %}
+        <li>{{ rec }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+{% endblock %}

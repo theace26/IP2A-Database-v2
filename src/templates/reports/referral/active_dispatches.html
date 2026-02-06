@@ -1,0 +1,153 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Active Dispatches{% endblock %}
+{% block subtitle %}As of {{ generated_at.strftime('%B %d, %Y at %I:%M %p') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <strong>Total Active:</strong> {{ total_active }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>Long Calls:</strong> {{ long_call_count }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>Short Calls:</strong> {{ short_call_count }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>Employers:</strong> {{ by_employer|length }}
+</div>
+
+{% if by_book %}
+<div class="summary-section">
+    <strong>By Book:</strong>
+    {% for book_name, count in by_book.items() %}
+    <span class="stat-chip">{{ book_name }}: {{ count }}</span>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if dispatches %}
+<table>
+    <thead>
+        <tr>
+            <th>Member</th>
+            <th>Card #</th>
+            <th>Employer</th>
+            <th>Book</th>
+            <th>Dispatched</th>
+            <th style="text-align: center;">Days on Job</th>
+            <th style="text-align: center;">Short Call</th>
+            <th style="text-align: center;">Days Left</th>
+            <th>Agreement</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for d in dispatches %}
+        <tr class="{% if d.is_short_call %}row-short-call{% endif %}">
+            <td>{{ d.member_name }}</td>
+            <td style="font-family: monospace;">{{ d.member_card }}</td>
+            <td>{{ d.employer_name }}</td>
+            <td>{{ d.book_name }}</td>
+            <td>{{ d.dispatch_date.strftime('%m/%d/%Y') if d.dispatch_date else 'N/A' }}</td>
+            <td style="text-align: center;">{{ d.days_on_job }}</td>
+            <td style="text-align: center;">
+                {% if d.is_short_call %}
+                <span class="badge badge-short-call">Yes</span>
+                {% else %}
+                -
+                {% endif %}
+            </td>
+            <td style="text-align: center;">
+                {% if d.short_call_days_remaining is not none %}
+                {% if d.short_call_days_remaining <= 2 %}
+                <span class="days-warning">{{ d.short_call_days_remaining }}</span>
+                {% else %}
+                {{ d.short_call_days_remaining }}
+                {% endif %}
+                {% else %}
+                -
+                {% endif %}
+            </td>
+            <td>{{ d.agreement_type|title }}</td>
+            <td>
+                <span class="status-{{ d.status }}">{{ d.status|replace('_', ' ')|title }}</span>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if by_employer %}
+<h3 style="margin-top: 2rem;">By Employer</h3>
+<div class="employer-summary">
+    {% for employer_name, count in by_employer.items()|sort(attribute='1', reverse=true) %}
+    <div class="employer-chip">
+        <span class="employer-name">{{ employer_name }}</span>
+        <span class="employer-count">{{ count }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% else %}
+<p style="text-align: center; color: #666; margin-top: 2rem;">No active dispatches at this time.</p>
+{% endif %}
+
+<style>
+    .summary-section {
+        margin: 1rem 0;
+        padding: 0.5rem;
+        background: #f5f5f5;
+        border-radius: 4px;
+    }
+    .stat-chip {
+        display: inline-block;
+        margin: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        background: #e0e0e0;
+        border-radius: 3px;
+        font-size: 0.85rem;
+    }
+    .badge {
+        display: inline-block;
+        padding: 0.15rem 0.4rem;
+        border-radius: 3px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .badge-short-call { background: #fef3cd; color: #856404; }
+    .row-short-call { background: #fffbeb; }
+    .days-warning {
+        color: #dc3545;
+        font-weight: 700;
+    }
+    .status-dispatched { color: #0c5460; }
+    .status-checked_in { color: #6c757d; }
+    .status-working { color: #155724; font-weight: 600; }
+
+    .employer-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    .employer-chip {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: #f5f5f5;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+    }
+    .employer-name {
+        font-weight: 500;
+    }
+    .employer-count {
+        background: #003366;
+        color: white;
+        padding: 0.15rem 0.4rem;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}

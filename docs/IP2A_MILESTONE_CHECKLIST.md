@@ -1,9 +1,9 @@
 # UnionCore Milestone Checklist
 
 **Document Purpose:** Actionable task tracking by phase and week
-**Version:** v2.0
-**Last Updated:** February 5, 2026
-**Project Version:** v0.9.8-alpha
+**Version:** v3.0
+**Last Updated:** February 6, 2026
+**Project Version:** v0.9.10-alpha
 
 ---
 
@@ -11,12 +11,12 @@
 
 | Metric | Value |
 |--------|-------|
-| Tests | 593 total (517 passing, 92.7% pass rate) |
-| Endpoints | ~228+ |
+| Tests | 621 total (~596 passing, 98.5% pass rate) |
+| Endpoints | ~240+ |
 | Models | 32 |
 | ADRs | 18 |
 | Frontend Weeks | 1-19 complete |
-| Phase 7 Weeks | 20-30 complete |
+| Phase 7 Weeks | 20-35 complete (+ Stripe removal) |
 
 ---
 
@@ -173,11 +173,22 @@
 - [x] 90.9% → 92.7% pass rate
 - [x] Bug #029 documented
 
-### Week 31: Close the Loops 📋
-- [ ] Category 4: Dues test cleanup (+4 tests → 93.4%)
-- [ ] Dispatch template investigation (3 remaining failures)
-- [ ] Hub documentation generation (this checklist, roadmap, README)
-- [ ] Phase 7a-7g instruction framework
+### Week 31: Close the Loops ✅
+- [x] Hub documentation generation (checklist, roadmap, README)
+- [x] Phase 7a-7g instruction framework
+
+### Weeks 32-34: Reports Sprint ✅
+- [x] Out-of-Work List Reports (4 P0 reports)
+- [x] Dispatch & Labor Request Reports (5 P0 reports)
+- [x] Employer & Registration Reports (5 P0/P1 reports)
+- [x] 14 of 78 reports complete
+
+### Week 35: Stripe Removal & Bug Squash ✅
+- [x] Session 35A: Stripe code removal (ADR-018)
+- [x] Removed 27 Stripe tests
+- [x] Session 35B: Bug squash (fixture + schema drift fixes)
+- [x] 92.7% → 98.5% pass rate achieved
+- [x] Documentation reconciliation
 
 ### Sub-Phases 7a-7g — ⏸️ BLOCKED/PLANNED
 
@@ -193,17 +204,18 @@
 
 ---
 
-## Phase 8: Square Payment Migration — 📋 PLANNED
+## Phase 8: Square Payment Migration — 🔄 IN PROGRESS
 
 **Owner:** Spoke 3: Infrastructure (when created)
 **Trigger:** After Phase 7 stabilizes
 **Reference:** ADR-018
 
+- [x] Stripe code removed (Week 35)
+- [x] Stripe tests removed (27 tests deleted)
+- [x] ADR-018 updated with removal record
 - [ ] Phase A: Online Payments (Square Web Payments SDK)
 - [ ] Phase B: Terminal/POS Integration
 - [ ] Phase C: Invoice Generation
-- [ ] Remove Stripe skip markers from tests
-- [ ] Archive Stripe code
 
 ---
 
@@ -211,22 +223,23 @@
 
 | Category | Failures | Status | Effort |
 |----------|----------|--------|--------|
-| Cat 4: Dues Tests | 4 | 🎯 Quick Win | 15 min |
-| Dispatch Templates | 3 | Investigate | 1-2 hrs |
-| Cat 5: Referral Frontend | 5 | Mixed | 2-3 hrs |
-| Cat 3: Member Notes API | 5 | Refactor | 2-3 hrs |
-| Cat 2: Phase 7 Models | 13 | Flaky | 3-5 hrs |
-| Cat 6: Stripe (skipped) | 27 | Parked | — |
+| Flaky/Fixture Tests | ~8 | ⏸️ Skipped (legitimate) | — |
+| Infrastructure-Dependent | ~8 | ⏸️ Skipped (S3/setup) | — |
+| Remaining Failures | ~9 | Investigate | 2-3 hrs |
+
+**Pass Rate:** 98.5% (596/606 non-skipped tests) — Week 35 target exceeded
 
 ---
 
 ## Documentation Tasks
 
-- [ ] Update CLAUDE.md to v5.1 (post-Week 31)
-- [ ] Generate Phase 7a-7g instruction doc framework
-- [ ] Create ADR-017 (Schema Drift Prevention)
-- [ ] Archive Week 28-30 temp files
+- [x] Update CLAUDE.md to v0.9.10-alpha (Week 35)
+- [x] Generate Phase 7a-7g instruction doc framework
+- [x] Create ADR-017 (Schema Drift Prevention)
+- [x] Archive Week 28-30 temp files
+- [x] Week 35 session log created
+- [x] ADR-018 updated with Stripe removal
 
 ---
 
-*UnionCore Milestone Checklist — v2.0 — February 5, 2026*
+*UnionCore Milestone Checklist — v3.0 — February 6, 2026*

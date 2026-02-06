@@ -1,0 +1,98 @@
+<dialog id="create_exemption_modal" class="modal">
+    <div class="modal-box max-w-2xl">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">X</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4">Create New Exemption</h3>
+
+        <form hx-post="/dispatch/exemptions/create" hx-target="body">
+            <div class="space-y-4">
+                <!-- Registration Selection -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Registration ID</span>
+                    </label>
+                    <input
+                        type="number"
+                        name="registration_id"
+                        placeholder="Enter registration ID"
+                        class="input input-bordered"
+                        required
+                    />
+                    <label class="label">
+                        <span class="label-text-alt">Enter the book registration ID for the member to exempt</span>
+                    </label>
+                </div>
+
+                <!-- Exemption Type -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Exemption Type</span>
+                    </label>
+                    <select name="exempt_reason" class="select select-bordered" required>
+                        <option value="">Select type...</option>
+                        <option value="military">Military</option>
+                        <option value="union_business">Union Business</option>
+                        <option value="salting">Salting</option>
+                        <option value="medical">Medical</option>
+                        <option value="jury_duty">Jury Duty</option>
+                        <option value="under_scale">Under Scale</option>
+                        <option value="traveling">Traveling</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <!-- Date Range -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Start Date</span>
+                        </label>
+                        <input
+                            type="date"
+                            name="start_date"
+                            class="input input-bordered"
+                            required
+                        />
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">End Date (optional)</span>
+                        </label>
+                        <input
+                            type="date"
+                            name="end_date"
+                            class="input input-bordered"
+                        />
+                        <label class="label">
+                            <span class="label-text-alt">Max 6 months per rules</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Notes (optional)</span>
+                    </label>
+                    <textarea
+                        name="notes"
+                        class="textarea textarea-bordered"
+                        placeholder="Additional notes about this exemption..."
+                        rows="3"
+                    ></textarea>
+                </div>
+            </div>
+
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn btn-ghost">Cancel</button>
+                </form>
+                <button type="submit" class="btn btn-primary">Create Exemption</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>

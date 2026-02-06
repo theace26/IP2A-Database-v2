@@ -1,0 +1,65 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Out-of-Work List{% endblock %}
+{% block subtitle %}{{ book.name if book else 'Unknown Book' }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Total Registered:</span> {{ total_count }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span class="count-label">Tier 1:</span> {{ tier_counts.get(1, 0) }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span class="count-label">Tier 2:</span> {{ tier_counts.get(2, 0) }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span class="count-label">Tier 3:</span> {{ tier_counts.get(3, 0) }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span class="count-label">Tier 4:</span> {{ tier_counts.get(4, 0) }}
+</div>
+
+{% if registrations %}
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>APN</th>
+            <th>Member Name</th>
+            <th>Card #</th>
+            <th>Tier</th>
+            <th>Registered</th>
+            <th>Last Re-Sign</th>
+            <th>Re-Sign Due</th>
+            <th>Checks</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for reg in registrations %}
+        {% set re_sign_due = None %}
+        {% if reg.last_re_sign_date %}
+        {% set re_sign_due = reg.last_re_sign_date %}
+        {% elif reg.registration_date %}
+        {% set re_sign_due = reg.registration_date %}
+        {% endif %}
+        <tr class="{% if reg.check_marks >= 2 %}warning-row{% endif %}">
+            <td>{{ loop.index }}</td>
+            <td style="font-family: monospace;">{{ "%.2f"|format(reg.registration_number) }}</td>
+            <td>{{ reg.member.last_name if reg.member else '' }}, {{ reg.member.first_name if reg.member else '' }}</td>
+            <td>{{ reg.member.member_number if reg.member else '' }}</td>
+            <td>
+                <span class="tier-badge tier-{{ book.book_number or 1 }}">
+                    {{ book.book_number or 1 }}
+                </span>
+            </td>
+            <td>{{ reg.registration_date.strftime('%m/%d/%Y') if reg.registration_date else 'N/A' }}</td>
+            <td>{{ reg.last_re_sign_date.strftime('%m/%d/%Y') if reg.last_re_sign_date else 'Never' }}</td>
+            <td>{% if re_sign_due %}{{ (re_sign_due + timedelta(days=30)).strftime('%m/%d/%Y') }}{% else %}N/A{% endif %}</td>
+            <td>{{ reg.check_marks }}</td>
+            <td>{{ reg.status.value if reg.status else '' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p style="text-align: center; color: #666;">No registrations found for this book.</p>
+{% endif %}
+{% endblock %}

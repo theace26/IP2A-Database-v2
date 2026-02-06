@@ -1,0 +1,48 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Top Employers Report{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }} (Top {{ filters.limit }} by {{ summary.sort_by|capitalize }}){% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Employers Ranked:</span> {{ summary.total_employers_ranked }} |
+    <span class="count-label">Total Dispatches (All):</span> {{ summary.total_dispatches_all }} |
+    <span class="count-label">Top 5 Share:</span> <span style="font-weight: bold; color: {% if summary.top_5_share_pct > 50 %}orange{% else %}green{% endif %}">{{ summary.top_5_share_pct }}%</span>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th style="text-align: center">Rank</th>
+            <th>Employer</th>
+            <th style="text-align: right">Total Dispatches</th>
+            <th style="text-align: right">Total Requests</th>
+            <th style="text-align: right">Fill Rate %</th>
+            <th style="text-align: right">Avg Dispatch Duration</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr{% if loop.index <= 3 %} style="background: {% if loop.index == 1 %}#fef3c7{% elif loop.index == 2 %}#f3f4f6{% elif loop.index == 3 %}#fed7aa{% endif %}"{% endif %}>
+            <td style="text-align: center; font-weight: bold">
+                {% if row.rank == 1 %}🥇{% elif row.rank == 2 %}🥈{% elif row.rank == 3 %}🥉{% else %}{{ row.rank }}{% endif %}
+            </td>
+            <td><strong>{{ row.employer }}</strong></td>
+            <td style="text-align: right; font-weight: bold">{{ row.total_dispatches }}</td>
+            <td style="text-align: right">{{ row.total_requests }}</td>
+            <td style="text-align: right">{{ row.fill_rate_pct }}%</td>
+            <td style="text-align: right">{{ row.avg_dispatch_duration }} days</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align: center; color: #666;">No employer data available</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="summary-box" style="margin-top: 20px; background: #f3f4f6;">
+    <small>
+        <strong>Sorting:</strong> {{ summary.sort_by|capitalize }}<br>
+        <strong>Note:</strong> Top employers by volume help identify key contractor relationships and dispatch concentration.
+    </small>
+</div>
+{% endblock %}

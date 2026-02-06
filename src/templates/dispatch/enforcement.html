@@ -71,6 +71,45 @@
     </div>
 </div>
 
+<!-- Quick Links -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <!-- Exemptions Card -->
+    <div class="card bg-base-100 shadow-md">
+        <div class="card-body">
+            <h2 class="card-title">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                Member Exemptions
+            </h2>
+            <p class="text-base-content/60">Manage exempt status for military, union business, salting, medical, and jury duty (Rule #14)</p>
+            <div class="card-actions justify-end mt-4">
+                <a href="/dispatch/exemptions" class="btn btn-primary">
+                    Manage Exemptions
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Check Marks Card -->
+    <div class="card bg-base-100 shadow-md">
+        <div class="card-body">
+            <h2 class="card-title">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                Check Marks
+            </h2>
+            <p class="text-base-content/60">Track check marks for declined dispatches. 2 allowed per book, 3rd = roll-off (Rule #10)</p>
+            <div class="card-actions justify-end mt-4">
+                <button class="btn btn-warning" onclick="record_checkmark_modal.showModal()">
+                    Record Check Mark
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Placeholder for additional sections -->
 <div class="alert alert-info">
     <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
@@ -78,5 +117,8 @@
     </svg>
     <span>Additional enforcement sections (blackouts, violations, by-name flagged requests) will be added in future iterations.</span>
 </div>
+
+<!-- Record Check Mark Modal -->
+{% include "dispatch/partials/_checkmark_record_modal.html" %}
 
 {% endblock %}

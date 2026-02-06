@@ -30,29 +30,46 @@ client = TestClient(app)
 # ============================================================================
 
 
-@pytest.fixture
-def test_book(db):
-    """Create a test referral book."""
-    # Clean up any existing test book
-    existing = db.query(ReferralBook).filter(ReferralBook.code == "TEST_BOOK_1").first()
-    if existing:
-        db.delete(existing)
-        db.commit()
+@pytest.fixture(scope="function")
+def test_book():
+    """Create a test referral book outside of test transaction."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from src.config.settings import settings
 
-    book = ReferralBook(
-        name="Test Book",
-        code="TEST_BOOK_1",
-        classification=BookClassification.INSIDE_WIREPERSON,
-        book_number=1,
-        region=BookRegion.SEATTLE,
-        re_sign_days=30,
-        max_check_marks=2,
-        is_active=True,
-    )
-    db.add(book)
-    db.commit()
-    db.refresh(book)
-    return book
+    # Create a new session that commits to the real database
+    engine = create_engine(str(settings.DATABASE_URL), echo=False)
+    SessionLocal = sessionmaker(bind=engine)
+    db = SessionLocal()
+
+    try:
+        # Clean up any existing test book
+        existing = db.query(ReferralBook).filter(ReferralBook.code == "TEST_BOOK_1").first()
+        if existing:
+            db.delete(existing)
+            db.commit()
+
+        book = ReferralBook(
+            name="Test Book",
+            code="TEST_BOOK_1",
+            classification=BookClassification.INSIDE_WIREPERSON,
+            book_number=1,
+            region=BookRegion.SEATTLE,
+            re_sign_days=30,
+            max_check_marks=2,
+            is_active=True,
+        )
+        db.add(book)
+        db.commit()
+        db.refresh(book)
+
+        yield book
+
+        # Cleanup after test
+        db.delete(book)
+        db.commit()
+    finally:
+        db.close()
 
 
 @pytest.fixture

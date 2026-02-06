@@ -1,0 +1,78 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Book Transfer Report{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<style>
+    @page { size: landscape; }
+</style>
+
+<div class="summary-box">
+    <span class="count-label">Total Transfers:</span> {{ summary.total_transfers }} |
+    <span class="count-label">Avg Gap Days:</span> {{ summary.avg_gap_days }}
+</div>
+
+{% if summary.most_common_transfers %}
+<div class="meta" style="margin: 10px 0;">
+    <strong>Most Common Transfers:</strong>
+    {% for transfer, count in summary.most_common_transfers %}
+    {{ transfer }} ({{ count }}){% if not loop.last %}; {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if filters.source_book_id %}
+<div class="meta">Filtered by Source Book ID: {{ filters.source_book_id }}</div>
+{% endif %}
+{% if filters.destination_book_id %}
+<div class="meta">Filtered by Destination Book ID: {{ filters.destination_book_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Member</th>
+            <th>Source Book</th>
+            <th style="text-align: center">Tier</th>
+            <th>Drop Date</th>
+            <th>Drop Reason</th>
+            <th>New Book</th>
+            <th style="text-align: center">Tier</th>
+            <th>Re-Reg Date</th>
+            <th style="text-align: right">Gap Days</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td style="font-weight: bold">{{ row.member }}</td>
+            <td>{{ row.source_book }}</td>
+            <td style="text-align: center">{{ row.source_tier }}</td>
+            <td>{{ row.drop_date }}</td>
+            <td>
+                {% if row.drop_reason == 'dispatched' %}
+                <span style="color: #28a745">✓ Dispatched</span>
+                {% elif row.drop_reason == 'rolled_off' %}
+                <span style="color: #dc3545">↓ Rolled Off</span>
+                {% else %}
+                {{ row.drop_reason|replace('_', ' ')|title }}
+                {% endif %}
+            </td>
+            <td>{{ row.new_book }}</td>
+            <td style="text-align: center">{{ row.new_tier }}</td>
+            <td>{{ row.re_reg_date }}</td>
+            <td style="text-align: right; {% if row.gap_days > 30 %}color: #dc3545{% elif row.gap_days > 14 %}color: #fd7e14{% endif %}">
+                {{ row.gap_days }}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" style="text-align: center; color: #666;">No book transfers found</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div style="margin-top: 15px; font-size: 9pt; color: #666;">
+    <strong>Note:</strong> A "transfer" is defined as a member who dropped from one book and re-registered on a different book during the period.
+</div>
+{% endblock %}

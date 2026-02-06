@@ -1,0 +1,55 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Out-of-Work List - All Books{% endblock %}
+{% block subtitle %}Complete Registration Overview{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Total Across All Books:</span> {{ total_across_all }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span class="count-label">Active Books:</span> {{ books|length }}
+</div>
+
+{% for book_data in books %}
+{% if book_data.registrations %}
+<h2 style="color: #003366; margin-top: 20px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
+    {{ book_data.book.name }} ({{ book_data.count }} members)
+</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>APN</th>
+            <th>Member Name</th>
+            <th>Card #</th>
+            <th>Tier</th>
+            <th>Registered</th>
+            <th>Checks</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for reg in book_data.registrations %}
+        <tr class="{% if reg.check_marks >= 2 %}warning-row{% endif %}">
+            <td>{{ loop.index }}</td>
+            <td style="font-family: monospace;">{{ "%.2f"|format(reg.registration_number) }}</td>
+            <td>{{ reg.member.last_name if reg.member else '' }}, {{ reg.member.first_name if reg.member else '' }}</td>
+            <td>{{ reg.member.member_number if reg.member else '' }}</td>
+            <td>
+                <span class="tier-badge tier-{{ book_data.book.book_number or 1 }}">
+                    {{ book_data.book.book_number or 1 }}
+                </span>
+            </td>
+            <td>{{ reg.registration_date.strftime('%m/%d/%Y') if reg.registration_date else 'N/A' }}</td>
+            <td>{{ reg.check_marks }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endfor %}
+
+{% if not books %}
+<p style="text-align: center; color: #666;">No active books found.</p>
+{% endif %}
+{% endblock %}

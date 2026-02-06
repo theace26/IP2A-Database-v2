@@ -1,0 +1,45 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Book Turnover Report{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }} ({{ filters.granularity|capitalize }}){% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Highest Churn Book:</span> {{ summary.highest_churn_book or 'N/A' }} |
+    <span class="count-label">Steadiest Book:</span> {{ summary.steadiest_book or 'N/A' }} |
+    <span class="count-label">Total Periods:</span> {{ summary.total_periods }}
+</div>
+
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Period</th>
+            <th>Book</th>
+            <th style="text-align: right">In</th>
+            <th style="text-align: right">Out</th>
+            <th style="text-align: right">Net</th>
+            <th style="text-align: right">Turnover Rate %</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr{% if row.turnover_rate > 100 %} class="warning-row"{% endif %}>
+            <td>{{ row.period }}</td>
+            <td>{{ row.book }}</td>
+            <td style="text-align: right; color: green">+{{ row.in_total }}</td>
+            <td style="text-align: right; color: red">-{{ row.out_total }}</td>
+            <td style="text-align: right; font-weight: bold; color: {% if row.net > 0 %}green{% elif row.net < 0 %}red{% else %}#333{% endif %}">
+                {{ row.net }}
+            </td>
+            <td style="text-align: right">{{ row.turnover_rate }}%</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align: center; color: #666;">No turnover data available</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

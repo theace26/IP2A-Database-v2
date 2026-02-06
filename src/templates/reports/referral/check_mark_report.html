@@ -1,0 +1,76 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Check Mark Report{% endblock %}
+{% block subtitle %}Book Filter: {{ book_filter }}{% endblock %}
+
+{% block content %}
+<style>
+    .mark-1 { background: #fef9c3 !important; }
+    .mark-2 { background: #fed7aa !important; font-weight: bold; }
+    .warning-icon { color: #b45309; font-weight: bold; }
+    .book-section { margin-bottom: 25px; page-break-inside: avoid; }
+    .book-header { background: #e0e7ff; padding: 8px 12px; font-weight: bold; border-radius: 4px 4px 0 0; }
+    .book-summary { font-size: 9pt; color: #666; margin-left: 15px; }
+</style>
+
+<div class="summary-box">
+    <span class="count-label">Total Members with Check Marks:</span> {{ total_members_with_marks }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span class="count-label" style="color: #b45309;">Members at Limit (2 marks):</span>
+    <strong style="color: #b45309;">{{ total_at_limit }}</strong>
+</div>
+
+{% if books %}
+{% for book in books %}
+<div class="book-section">
+    <div class="book-header">
+        {{ book.book_name }}
+        <span class="book-summary">
+            ({{ book.total_with_marks }} with marks,
+            <span style="color: #b45309;">{{ book.at_limit_count }} at limit</span>)
+        </span>
+    </div>
+
+    {% if book.members_with_marks %}
+    <table style="margin-top: 0;">
+        <thead>
+            <tr>
+                <th style="width: 50px;">Marks</th>
+                <th>Member</th>
+                <th>Card #</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in book.members_with_marks %}
+            <tr class="{% if m.check_mark_count >= 2 %}mark-2{% elif m.check_mark_count == 1 %}mark-1{% endif %}">
+                <td style="text-align: center; font-weight: bold; font-size: 12pt;">
+                    {% if m.at_limit %}
+                    <span class="warning-icon">!</span>
+                    {% endif %}
+                    {{ m.check_mark_count }}
+                </td>
+                <td>{{ m.member_name }}</td>
+                <td style="font-family: monospace;">{{ m.member_card }}</td>
+                <td>
+                    {% if m.at_limit %}
+                    <span style="color: #b45309; font-weight: bold;">AT LIMIT - Next mark = Roll Off</span>
+                    {% else %}
+                    <span style="color: #059669;">{{ 2 - m.check_mark_count }} mark(s) remaining</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="padding: 10px; color: #666;">No members with check marks on this book.</p>
+    {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<p style="text-align: center; color: #059669; font-size: 12pt; padding: 30px;">
+    No members with check marks found.
+</p>
+{% endif %}
+{% endblock %}

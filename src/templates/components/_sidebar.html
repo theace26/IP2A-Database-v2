@@ -81,6 +81,8 @@
                         <li><a href="/dispatch/active" class="{% if request.url.path.startswith('/dispatch/active') %}active{% endif %}">Active Dispatches</a></li>
                         <li><a href="/dispatch/queue" class="{% if request.url.path == '/dispatch/queue' %}active{% endif %}">Queue</a></li>
                         <li><a href="/dispatch/enforcement" class="{% if request.url.path == '/dispatch/enforcement' %}active{% endif %}">Enforcement</a></li>
+                        <li><a href="/dispatch/exemptions" class="{% if request.url.path.startswith('/dispatch/exemptions') %}active{% endif %}">Exemptions</a></li>
+                        <li><a href="/dispatch/reports" class="{% if request.url.path == '/dispatch/reports' %}active{% endif %}">Reports</a></li>
                     </ul>
                 </details>
             </li>

@@ -1,0 +1,75 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Multi-Book Members{% endblock %}
+{% block subtitle %}As of {{ filters.snapshot_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<style>
+    @page { size: landscape; }
+</style>
+
+<div class="summary-box">
+    <span class="count-label">2 Books:</span> {{ summary.members_on_2_books }} |
+    <span class="count-label">3 Books:</span> {{ summary.members_on_3_books }} |
+    <span class="count-label">4+ Books:</span> {{ summary.members_on_4_plus_books }}
+</div>
+
+<div class="rule-reminder" style="background: #d1ecf1; padding: 10px; margin: 10px 0; border-left: 4px solid #17a2b8; font-size: 9pt;">
+    <strong>Rule 5:</strong> One registration per classification allowed. Multiple classifications may be held simultaneously (e.g., Wire + Sound & Comm).
+</div>
+
+{% if summary.most_common_combinations %}
+<div class="meta" style="margin: 10px 0;">
+    <strong>Most Common Combinations:</strong>
+    {% for combo, count in summary.most_common_combinations %}
+    {{ combo }} ({{ count }}){% if not loop.last %}; {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Member</th>
+            <th style="text-align: center">Total Books</th>
+            <th>Book 1</th>
+            <th>APN 1</th>
+            <th>Book 2</th>
+            <th>APN 2</th>
+            <th>Book 3</th>
+            <th>APN 3</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td style="font-weight: bold">{{ row.member }}</td>
+            <td style="text-align: center">
+                {% if row.total_books >= 4 %}
+                <span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 10px;">{{ row.total_books }}</span>
+                {% elif row.total_books == 3 %}
+                <span style="background: #17a2b8; color: white; padding: 2px 8px; border-radius: 10px;">{{ row.total_books }}</span>
+                {% else %}
+                <span style="background: #6c757d; color: white; padding: 2px 8px; border-radius: 10px;">{{ row.total_books }}</span>
+                {% endif %}
+            </td>
+            {% for i in range(3) %}
+            {% if i < row.books|length %}
+            <td>{{ row.books[i].book }}</td>
+            <td style="font-family: monospace; font-weight: bold">{{ row.books[i].apn }}</td>
+            {% else %}
+            <td></td>
+            <td></td>
+            {% endif %}
+            {% endfor %}
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align: center; color: #666;">No multi-book members found</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div style="margin-top: 15px; font-size: 9pt; color: #666;">
+    <strong>CRITICAL:</strong> APN displayed as DECIMAL(10,2) — do not truncate. Integer part is Excel serial date, decimal is dispatch order.
+</div>
+{% endblock %}

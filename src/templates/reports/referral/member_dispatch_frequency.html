@@ -1,0 +1,62 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Member Dispatch Frequency{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Members Dispatched:</span> {{ summary.total_members_dispatched }} |
+    <span class="count-label">Most Dispatched:</span> {{ summary.most_dispatched }} |
+    <span class="count-label">Avg Dispatches/Member:</span> {{ summary.avg_dispatches_per_member }} |
+    <span class="count-label">Members with 0 Dispatches:</span> {{ summary.members_with_zero }}
+</div>
+
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+{% if filters.min_dispatches > 0 %}
+<div class="meta">Minimum dispatches threshold: {{ filters.min_dispatches }}</div>
+{% endif %}
+
+<div class="summary-box" style="margin-bottom: 15px; background: #f3f4f6;">
+    <strong>Distribution:</strong>
+    {% for bucket, count in summary.distribution.items() %}
+    <span style="margin-right: 15px">{{ bucket }}: {{ count }}</span>
+    {% endfor %}
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Member</th>
+            <th style="text-align: right">Total Dispatches</th>
+            <th style="text-align: right">Avg Days/Dispatch</th>
+            <th style="text-align: right">Unique Employers</th>
+            <th style="text-align: right">Short Call %</th>
+            <th>Last Dispatch</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr{% if loop.index <= 5 %} style="background: #dcfce7"{% endif %}>
+            <td><strong>{{ row.member }}</strong></td>
+            <td style="text-align: right; font-weight: bold">{{ row.total_dispatches }}</td>
+            <td style="text-align: right">{{ row.avg_days_per_dispatch }}</td>
+            <td style="text-align: right">{{ row.unique_employers }}</td>
+            <td style="text-align: right; {% if row.short_call_pct > 50 %}color: orange{% endif %}">{{ row.short_call_pct }}%</td>
+            <td>{{ row.last_dispatch_date }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align: center; color: #666;">No dispatch frequency data available</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="summary-box" style="margin-top: 20px; background: #fff3cd;">
+    <small>
+        <strong>Privacy Note:</strong> This report contains member names and is restricted to Officer+ access.
+        Staff members see anonymized versions of member-level reports.<br>
+        <strong>Note:</strong> Top 5 dispatched members highlighted in green. Short call % > 50% shown in orange.
+    </small>
+</div>
+{% endblock %}

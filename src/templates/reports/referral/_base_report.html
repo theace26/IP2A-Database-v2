@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* WeasyPrint CSS - print-optimized */
+        @page {
+            size: letter;
+            margin: 0.75in;
+            @bottom-center {
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #003366; padding-bottom: 10px; }
+        .header h1 { font-size: 14pt; color: #003366; margin: 0; }
+        .header .subtitle { font-size: 10pt; color: #666; }
+        .header .local { font-size: 12pt; font-weight: bold; color: #003366; }
+        .meta { font-size: 8pt; color: #999; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #003366; color: white; padding: 6px 8px; text-align: left; font-size: 9pt; }
+        td { padding: 4px 8px; border-bottom: 1px solid #ddd; font-size: 9pt; }
+        tr:nth-child(even) { background: #f5f5f5; }
+        .tier-badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 8pt; font-weight: bold; }
+        .tier-1 { background: #d1fae5; color: #065f46; }
+        .tier-2 { background: #dbeafe; color: #1e40af; }
+        .tier-3 { background: #fef3c7; color: #92400e; }
+        .tier-4 { background: #fce7f3; color: #9d174d; }
+        .summary-box { background: #f0f4f8; padding: 12px; border-radius: 4px; margin-bottom: 15px; }
+        .count-label { font-weight: bold; color: #003366; }
+        .warning-row { background: #fef3c7 !important; }
+        .danger-row { background: #fed7d7 !important; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="local">IBEW Local 46</div>
+        <h1>{% block title %}Report{% endblock %}</h1>
+        <div class="subtitle">{% block subtitle %}{% endblock %}</div>
+    </div>
+    <div class="meta">
+        Generated: {{ generated_at.strftime('%B %d, %Y at %I:%M %p') }}
+        {% if generated_by %} | By: {{ generated_by }}{% endif %}
+    </div>
+    {% block content %}{% endblock %}
+</body>
+</html>

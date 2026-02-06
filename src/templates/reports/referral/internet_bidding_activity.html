@@ -1,0 +1,64 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Internet Bidding Activity{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Total Bids:</span> {{ summary.total_bids }} |
+    <span class="count-label">Accepted:</span> {{ summary.accepted }} |
+    <span class="count-label">Rejected:</span> {{ summary.rejected }} |
+    <span class="count-label">Acceptance Rate:</span> {{ summary.acceptance_rate }}% |
+    <span class="count-label" style="color: #dc3545">At Ban Threshold:</span> {{ summary.members_at_ban_threshold }}
+</div>
+
+<div class="rule-reminder" style="background: #fff3cd; padding: 10px; margin: 10px 0; border-left: 4px solid #ffc107; font-size: 9pt;">
+    <strong>Rule 8:</strong> Bidding window 5:30 PM - 7:00 AM. 2nd rejection within 12 months = lose internet bidding privileges for 1 year.
+</div>
+
+{% if filters.member_id %}
+<div class="meta">Filtered by Member ID: {{ filters.member_id }}</div>
+{% endif %}
+{% if filters.status %}
+<div class="meta">Filtered by Status: {{ filters.status }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Member</th>
+            <th>Request ID</th>
+            <th>Bid Time</th>
+            <th>Status</th>
+            <th>In Window</th>
+            <th>12mo Rejections</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr{% if row.at_ban_threshold %} style="background: #ffcccc"{% endif %}>
+            <td>{{ row.date }}</td>
+            <td>{{ row.member }}</td>
+            <td>{{ row.labor_request_id }}</td>
+            <td>{{ row.bid_time }}</td>
+            <td>
+                {% if row.status == 'accepted' %}
+                <span style="color: #28a745">✓ Accepted</span>
+                {% elif row.status == 'rejected' %}
+                <span style="color: #dc3545">✗ Rejected</span>
+                {% else %}
+                <span style="color: #6c757d">⏳ Pending</span>
+                {% endif %}
+            </td>
+            <td>{{ row.within_window }}</td>
+            <td style="{% if row.rejection_count_12mo >= 2 %}color: #dc3545; font-weight: bold{% endif %}">
+                {{ row.rejection_count_12mo }}{% if row.rejection_count_12mo >= 2 %} ⚠️{% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align: center; color: #666;">No bidding activity found</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

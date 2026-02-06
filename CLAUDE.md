@@ -1,9 +1,9 @@
 # IP2A-Database-v2: Project Context Document
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
-**Last Updated:** February 5, 2026
-**Current Version:** v0.9.8-alpha
-**Current Phase:** Phase 7 (Referral & Dispatch) IN PROGRESS — Weeks 20-27 Complete (Backend + Frontend UI) | Spoke 2
+**Last Updated:** February 6, 2026
+**Current Version:** v0.9.12-alpha
+**Current Phase:** Phase 7 (Referral & Dispatch) IN PROGRESS — Weeks 20-38 Complete (Backend + Frontend UI + All P0+P1 Reports + Stripe Removal) | Spoke 2
 
 ---
 
@@ -13,13 +13,13 @@
 
 **Who:** Xerxes - Business Representative by day, solo developer (5-10 hrs/week)
 
-**Where:** Backend COMPLETE. Frontend FEATURE-COMPLETE (Weeks 1-19). Stripe Payments LIVE (migrating to Square per ADR-018). **Deployed to Railway.**
+**Where:** Backend COMPLETE. Frontend FEATURE-COMPLETE (Weeks 1-19). Square payments planned (ADR-018, Stripe removed Week 35). **Deployed to Railway.**
 
-**Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl + Stripe (migrating to Square)
+**Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl
 
-**Status:** 593 total tests (517 passing, 35 skipped [27 Stripe + 5 setup + 3 S3], 92.7% pass rate, Week 30 as of Feb 5, 2026), ~228+ API endpoints, 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
+**Status:** 680+ total tests (~660 passing, 16 skipped, 96% pass rate, Week 38 as of Feb 6, 2026), ~260+ API endpoints, 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
-**Current:** Phase 7 — Referral & Dispatch System (~78 LaborPower reports to build). **Weeks 20-27 complete:** models, enums, schemas, 7 services, 5 API routers, 2 frontend services, 2 frontend routers, 13 pages, 15 HTMX partials. See `docs/phase7/`
+**Current:** Phase 7 — Referral & Dispatch System (~78 LaborPower reports to build, 14 complete). **Weeks 20-35 complete:** models, enums, schemas, 7 services, 6 API routers, 2 frontend services, 2 frontend routers, 13 pages, 15 HTMX partials, 14 report endpoints, Stripe removal. See `docs/phase7/`
 
 ---
 
@@ -56,8 +56,8 @@ This project uses a **Hub/Spoke model** for planning and coordination via Claude
 | Training (Students, Courses, Grades, Certs) | 7 | ~35 | 33 | Done |
 | Documents (S3/MinIO) | 1 | 8 | 11 | Done |
 | Dues (Rates, Periods, Payments, Adjustments) | 4 | ~35 | 21 | Done |
-| **Phase 7 (Referral & Dispatch)** | **6** | **~50** | **20 (7 passing, 13 errors)** | **Tables Created + Migrated** |
-| **Total** | **32** | **~200** | **185+** | Phase 7 Service Layer Complete |
+| **Phase 7 (Referral & Dispatch)** | **6** | **~50** | **51** | **Week 35 Complete** |
+| **Total** | **32** | **~240** | **~596 passing** | Phase 7 Frontend + Reports Complete |
 
 ### Frontend: PHASE 6 COMPLETE + POST-LAUNCH (Weeks 1-19)
 

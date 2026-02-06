@@ -1,0 +1,60 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Employer Request Patterns{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }} ({{ summary.months_analyzed }} months){% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Total Employers:</span> {{ summary.total_employers }} |
+    <span class="count-label">Total Requests:</span> {{ summary.total_requests }} |
+    <span class="count-label">Overall Peak Month:</span> {{ summary.overall_peak_month }}
+    {% if summary.most_active_employers %}
+    <br><small><strong>Most Active:</strong> {{ summary.most_active_employers|join(', ') }}</small>
+    {% endif %}
+</div>
+
+{% if filters.employer_id %}
+<div class="meta">Filtered by Employer ID: {{ filters.employer_id }}</div>
+{% endif %}
+{% if filters.contract_code %}
+<div class="meta">Filtered by Contract Code: {{ filters.contract_code }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Employer</th>
+            <th style="text-align: right">Requests/Month</th>
+            <th style="text-align: right">Avg Workers/Request</th>
+            <th>Peak Month</th>
+            <th>Trough Month</th>
+            <th>Peak Day</th>
+            <th style="text-align: right">Total Requests</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td><strong>{{ row.employer }}</strong></td>
+            <td style="text-align: right; font-weight: bold">{{ row.requests_per_month }}</td>
+            <td style="text-align: right">{{ row.avg_workers_per_request }}</td>
+            <td>{{ row.peak_month }}</td>
+            <td>{{ row.trough_month }}</td>
+            <td>{{ row.peak_day_of_week }}</td>
+            <td style="text-align: right">{{ row.total_requests }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align: center; color: #666;">No request pattern data available</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="summary-box" style="margin-top: 20px; background: #f3f4f6;">
+    <small>
+        <strong>Analysis Notes:</strong><br>
+        • Requests/Month = average requests per month over the analyzed period<br>
+        • Peak/Trough months indicate seasonal patterns<br>
+        • Peak Day shows day-of-week preference for submissions
+    </small>
+</div>
+{% endblock %}

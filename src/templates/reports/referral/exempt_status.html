@@ -1,0 +1,66 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Exempt Status Report{% endblock %}
+{% block subtitle %}As of {{ filters.snapshot_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Total Exempt:</span> {{ summary.total_exempt }} |
+    <span class="count-label">Longest Exemption:</span> {{ summary.longest_exemption_days }} days |
+    <span class="count-label">Expiring in 30 days:</span> {{ summary.upcoming_expirations_30d }}
+</div>
+
+<div class="rule-reminder" style="background: #d1ecf1; padding: 10px; margin: 10px 0; border-left: 4px solid #17a2b8; font-size: 9pt;">
+    <strong>Rule 14:</strong> Exempt members retain their position on the book but are not eligible for dispatch during the exemption period.
+</div>
+
+{% if summary.by_type %}
+<div class="meta" style="margin: 10px 0;">
+    <strong>By Type:</strong>
+    {% for type, count in summary.by_type.items() %}
+    {{ type|replace('_', ' ')|title }}: {{ count }}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if filters.exempt_type %}
+<div class="meta">Filtered by Type: {{ filters.exempt_type }}</div>
+{% endif %}
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Member</th>
+            <th>Exempt Type</th>
+            <th>Start Date</th>
+            <th>Expected End</th>
+            <th style="text-align: right">Days Exempt</th>
+            <th>Book</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td>{{ row.member }}</td>
+            <td>
+                {% if row.exempt_type == 'military' %}🎖️{% endif %}
+                {% if row.exempt_type == 'medical' %}🏥{% endif %}
+                {% if row.exempt_type == 'union_business' %}🏛️{% endif %}
+                {% if row.exempt_type == 'salting' %}🧂{% endif %}
+                {% if row.exempt_type == 'jury_duty' %}⚖️{% endif %}
+                {{ row.exempt_type|replace('_', ' ')|title }}
+            </td>
+            <td>{{ row.start_date }}</td>
+            <td>{{ row.expected_end_date }}</td>
+            <td style="text-align: right">{{ row.days_exempt }}</td>
+            <td>{{ row.book }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align: center; color: #666;">No exempt members found</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Weekly Dispatch Summary{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<style>
+    @page { size: landscape; }
+</style>
+
+<div class="summary-box">
+    <span class="count-label">Total Dispatches:</span> {{ summary.total_dispatches }} |
+    <span class="count-label">Weeks Covered:</span> {{ summary.weeks_covered }} |
+    <span class="count-label">Busiest Week:</span> {{ summary.busiest_week }} |
+    <span class="count-label">Top Employer:</span> {{ summary.top_employer }}
+</div>
+
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+{% if filters.employer_id %}
+<div class="meta">Filtered by Employer ID: {{ filters.employer_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Week Starting</th>
+            <th style="text-align: right">Dispatches</th>
+            <th style="text-align: right">Short Calls</th>
+            <th style="text-align: right">Long Calls</th>
+            <th style="text-align: right">Avg Duration (Days)</th>
+            <th>Top Book</th>
+            <th>Top Employer</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td>{{ row.week }}</td>
+            <td style="text-align: right; font-weight: bold">{{ row.dispatches }}</td>
+            <td style="text-align: right">{{ row.short_calls }}</td>
+            <td style="text-align: right">{{ row.long_calls }}</td>
+            <td style="text-align: right">{{ row.avg_duration_days }}</td>
+            <td>{{ row.top_book }}</td>
+            <td>{{ row.top_employer }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align: center; color: #666;">No dispatch data available</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

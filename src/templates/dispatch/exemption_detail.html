@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Exemption Detail{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <div class="text-sm breadcrumbs">
+            <ul>
+                <li><a href="/dispatch">Dispatch</a></li>
+                <li><a href="/dispatch/exemptions">Exemptions</a></li>
+                <li>{{ exemption.member.full_name if exemption.member else 'Member' }}</li>
+            </ul>
+        </div>
+        <h1 class="text-2xl font-bold">Exemption Detail</h1>
+    </div>
+    <div class="flex gap-2">
+        <a href="/dispatch/exemptions" class="btn btn-ghost">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to List
+        </a>
+        {% if exemption.is_exempt %}
+        <button
+            class="btn btn-warning"
+            hx-post="/dispatch/exemptions/{{ exemption.id }}/deactivate"
+            hx-confirm="Are you sure you want to deactivate this exemption?"
+        >
+            Deactivate Exemption
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main Info -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Member Info -->
+        <div class="card bg-base-100 shadow-md">
+            <div class="card-body">
+                <h2 class="card-title">Member Information</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <div class="text-sm text-base-content/60">Name</div>
+                        <div class="font-medium">{{ exemption.member.full_name if exemption.member else 'Unknown' }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-base-content/60">Card Number</div>
+                        <div class="font-medium">{{ exemption.member.card_number if exemption.member else 'N/A' }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-base-content/60">Book</div>
+                        <div class="font-medium">{{ exemption.book.name if exemption.book else 'Unknown' }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-base-content/60">Registration Number (APN)</div>
+                        <div class="font-medium font-mono">{{ "%.2f"|format(exemption.registration_number) }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exemption Details -->
+        <div class="card bg-base-100 shadow-md">
+            <div class="card-body">
+                <h2 class="card-title">Exemption Details</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <div class="text-sm text-base-content/60">Exemption Type</div>
+                        {% if exemption.exempt_reason %}
+                        {% set badge = format_exemption_badge(exemption.exempt_reason.value) %}
+                        <span class="badge {{ badge.class }} mt-1">{{ badge.label }}</span>
+                        {% else %}
+                        <div class="font-medium">Not specified</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="text-sm text-base-content/60">Status</div>
+                        {% if exemption.is_exempt %}
+                        <span class="badge badge-success mt-1">Active</span>
+                        {% else %}
+                        <span class="badge badge-ghost mt-1">Inactive</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="text-sm text-base-content/60">Start Date</div>
+                        <div class="font-medium">{{ exemption.exempt_start_date.strftime('%b %d, %Y') if exemption.exempt_start_date else 'Not set' }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-base-content/60">End Date</div>
+                        <div class="font-medium">{{ exemption.exempt_end_date.strftime('%b %d, %Y') if exemption.exempt_end_date else 'No end date' }}</div>
+                    </div>
+                </div>
+
+                {% if exemption.notes %}
+                <div class="mt-4">
+                    <div class="text-sm text-base-content/60">Notes</div>
+                    <div class="mt-1 p-3 bg-base-200 rounded-lg">{{ exemption.notes }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <!-- Quick Actions -->
+        <div class="card bg-base-100 shadow-md">
+            <div class="card-body">
+                <h2 class="card-title text-lg">Quick Actions</h2>
+                <div class="flex flex-col gap-2">
+                    <a href="/members/{{ exemption.member_id }}" class="btn btn-outline btn-sm">
+                        View Member Profile
+                    </a>
+                    <a href="/referral/registrations/{{ exemption.id }}" class="btn btn-outline btn-sm">
+                        View Registration
+                    </a>
+                    {% if exemption.is_exempt %}
+                    <button
+                        class="btn btn-outline btn-warning btn-sm"
+                        onclick="edit_exemption_modal.showModal()"
+                    >
+                        Edit Exemption
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Expiration Warning -->
+        {% if exemption.is_exempt and exemption.exempt_end_date %}
+        {% set days_remaining = (exemption.exempt_end_date - today).days if today else 0 %}
+        {% if days_remaining <= 7 %}
+        <div class="alert alert-warning">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>Expires in {{ days_remaining }} day{% if days_remaining != 1 %}s{% endif %}</span>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Edit Exemption Modal -->
+{% include "dispatch/partials/_exemption_edit_modal.html" %}
+{% endblock %}

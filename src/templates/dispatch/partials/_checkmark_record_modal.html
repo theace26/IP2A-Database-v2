@@ -1,0 +1,79 @@
+<dialog id="record_checkmark_modal" class="modal">
+    <div class="modal-box max-w-lg">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">X</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4">Record Check Mark</h3>
+
+        <form hx-post="/dispatch/checkmarks/record" hx-target="#checkmark-result">
+            <div class="space-y-4">
+                <!-- Registration Selection -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Registration ID</span>
+                    </label>
+                    <input
+                        type="number"
+                        name="registration_id"
+                        placeholder="Enter registration ID"
+                        class="input input-bordered"
+                        required
+                    />
+                    <label class="label">
+                        <span class="label-text-alt">The book registration to record a check mark against</span>
+                    </label>
+                </div>
+
+                <!-- Reason -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Reason</span>
+                    </label>
+                    <textarea
+                        name="reason"
+                        class="textarea textarea-bordered"
+                        placeholder="Why is this check mark being recorded?"
+                        rows="3"
+                        required
+                    ></textarea>
+                </div>
+
+                <!-- Associated Dispatch (optional) -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Associated Dispatch ID (optional)</span>
+                    </label>
+                    <input
+                        type="number"
+                        name="dispatch_id"
+                        placeholder="Link to a dispatch if applicable"
+                        class="input input-bordered"
+                    />
+                </div>
+
+                <!-- Warning -->
+                <div class="alert alert-warning">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                        <div class="font-bold">Check Mark Warning</div>
+                        <div class="text-sm">A 3rd check mark will result in the member being rolled off this book.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="checkmark-result"></div>
+
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn btn-ghost">Cancel</button>
+                </form>
+                <button type="submit" class="btn btn-warning">Record Check Mark</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>

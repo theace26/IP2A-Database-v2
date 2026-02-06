@@ -132,23 +132,111 @@ class TestMemberNoteService:
 class TestMemberNotesAPI:
     """Tests for member notes API endpoints."""
 
-    def test_create_note_endpoint(self, client, auth_headers, test_member):
+    async def test_create_note_endpoint(self, async_client_with_db):
         """Test POST /api/v1/member-notes/"""
-        response = client.post(
+        client, db_session = async_client_with_db
+
+        # Create test user in the same session
+        from src.models.user import User
+        from src.models.role import Role
+        from src.models.user_role import UserRole
+        from src.core.security import hash_password
+        admin_role = db_session.query(Role).filter(Role.name == "admin").first()
+        test_user = User(
+            email="test_api@example.com",
+            password_hash=hash_password("testpass"),
+            first_name="API",
+            last_name="Test",
+            is_active=True,
+            is_verified=True,
+        )
+        db_session.add(test_user)
+        db_session.flush()
+        user_role = UserRole(user_id=test_user.id, role_id=admin_role.id)
+        db_session.add(user_role)
+        db_session.flush()
+
+        # Create test member in the same session
+        from src.models.member import Member
+        from src.db.enums import MemberStatus, MemberClassification
+        test_member = Member(
+            first_name="Test",
+            last_name="Member",
+            member_number="API_TEST_001",
+            email="api_member@test.com",
+            status=MemberStatus.ACTIVE,
+            classification=MemberClassification.JOURNEYMAN,
+        )
+        db_session.add(test_member)
+        db_session.flush()
+
+        # Create auth headers with test_user
+        from src.core.jwt import create_access_token
+        token = create_access_token(
+            subject=test_user.id,
+            additional_claims={"email": test_user.email, "roles": ["admin"]},
+        )
+        headers = {"Authorization": f"Bearer {token}"}
+
+        response = await client.post(
             "/api/v1/member-notes/",
             json={
                 "member_id": test_member.id,
                 "note_text": "API test note",
                 "visibility": "staff_only",
             },
-            headers=auth_headers,
+            headers=headers,
         )
         assert response.status_code == 201
         data = response.json()
         assert data["note_text"] == "API test note"
 
-    def test_get_notes_for_member(self, client, auth_headers, test_member, db_session, test_user):
+    async def test_get_notes_for_member(self, async_client_with_db):
         """Test GET /api/v1/member-notes/member/{member_id}"""
+        client, db_session = async_client_with_db
+
+        # Create test user and member in the same session
+        from src.models.user import User
+        from src.models.role import Role
+        from src.models.user_role import UserRole
+        from src.core.security import hash_password
+        from src.models.member import Member
+        from src.db.enums import MemberStatus, MemberClassification
+
+        admin_role = db_session.query(Role).filter(Role.name == "admin").first()
+        test_user = User(
+            email="test_api2@example.com",
+            password_hash=hash_password("testpass"),
+            first_name="API",
+            last_name="Test",
+            is_active=True,
+            is_verified=True,
+        )
+        db_session.add(test_user)
+        db_session.flush()
+        user_role = UserRole(user_id=test_user.id, role_id=admin_role.id)
+        db_session.add(user_role)
+        db_session.flush()
+
+        test_member = Member(
+            first_name="Test",
+            last_name="Member",
+            member_number="API_TEST_002",
+            email="api_member2@test.com",
+            status=MemberStatus.ACTIVE,
+            classification=MemberClassification.JOURNEYMAN,
+        )
+        db_session.add(test_member)
+        db_session.flush()
+
+        # Create auth headers with test_user
+        from src.core.jwt import create_access_token
+        token = create_access_token(
+            subject=test_user.id,
+            additional_claims={"email": test_user.email, "roles": ["admin"]},
+        )
+        headers = {"Authorization": f"Bearer {token}"}
+
         # Create a note first
         note = MemberNote(
             member_id=test_member.id,
@@ -159,9 +247,9 @@ class TestMemberNotesAPI:
         db_session.add(note)
         db_session.commit()
 
-        response = client.get(
+        response = await client.get(
             f"/api/v1/member-notes/member/{test_member.id}",
-            headers=auth_headers,
+            headers=headers,
         )
         assert response.status_code == 200
         data = response.json()
@@ -169,8 +257,52 @@ class TestMemberNotesAPI:
         assert "total" in data
         assert data["total"] >= 1
 
-    def test_get_note_by_id(self, client, auth_headers, test_member, db_session, test_user):
+    async def test_get_note_by_id(self, async_client_with_db):
         """Test GET /api/v1/member-notes/{note_id}"""
+        client, db_session = async_client_with_db
+
+        # Create test user and member in the same session
+        from src.models.user import User
+        from src.models.role import Role
+        from src.models.user_role import UserRole
+        from src.core.security import hash_password
+        from src.models.member import Member
+        from src.db.enums import MemberStatus, MemberClassification
+
+        admin_role = db_session.query(Role).filter(Role.name == "admin").first()
+        test_user = User(
+            email="test_api3@example.com",
+            password_hash=hash_password("testpass"),
+            first_name="API",
+            last_name="Test",
+            is_active=True,
+            is_verified=True,
+        )
+        db_session.add(test_user)
+        db_session.flush()
+        user_role = UserRole(user_id=test_user.id, role_id=admin_role.id)
+        db_session.add(user_role)
+        db_session.flush()
+
+        test_member = Member(
+            first_name="Test",
+            last_name="Member",
+            member_number="API_TEST_003",
+            email="api_member3@test.com",
+            status=MemberStatus.ACTIVE,
+            classification=MemberClassification.JOURNEYMAN,
+        )
+        db_session.add(test_member)
+        db_session.flush()
+
+        # Create auth headers with test_user
+        from src.core.jwt import create_access_token
+        token = create_access_token(
+            subject=test_user.id,
+            additional_claims={"email": test_user.email, "roles": ["admin"]},
+        )
+        headers = {"Authorization": f"Bearer {token}"}
+
         # Create a note
         note = MemberNote(
             member_id=test_member.id,
@@ -181,17 +313,61 @@ class TestMemberNotesAPI:
         db_session.add(note)
         db_session.commit()
 
-        response = client.get(
+        response = await client.get(
             f"/api/v1/member-notes/{note.id}",
-            headers=auth_headers,
+            headers=headers,
         )
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == note.id
         assert data["note_text"] == "Test note"
 
-    def test_update_note_endpoint(self, client, auth_headers, test_member, db_session, test_user):
+    async def test_update_note_endpoint(self, async_client_with_db):
         """Test PATCH /api/v1/member-notes/{note_id}"""
+        client, db_session = async_client_with_db
+
+        # Create test user and member in the same session
+        from src.models.user import User
+        from src.models.role import Role
+        from src.models.user_role import UserRole
+        from src.core.security import hash_password
+        from src.models.member import Member
+        from src.db.enums import MemberStatus, MemberClassification
+
+        admin_role = db_session.query(Role).filter(Role.name == "admin").first()
+        test_user = User(
+            email="test_api4@example.com",
+            password_hash=hash_password("testpass"),
+            first_name="API",
+            last_name="Test",
+            is_active=True,
+            is_verified=True,
+        )
+        db_session.add(test_user)
+        db_session.flush()
+        user_role = UserRole(user_id=test_user.id, role_id=admin_role.id)
+        db_session.add(user_role)
+        db_session.flush()
+
+        test_member = Member(
+            first_name="Test",
+            last_name="Member",
+            member_number="API_TEST_004",
+            email="api_member4@test.com",
+            status=MemberStatus.ACTIVE,
+            classification=MemberClassification.JOURNEYMAN,
+        )
+        db_session.add(test_member)
+        db_session.flush()
+
+        # Create auth headers with test_user
+        from src.core.jwt import create_access_token
+        token = create_access_token(
+            subject=test_user.id,
+            additional_claims={"email": test_user.email, "roles": ["admin"]},
+        )
+        headers = {"Authorization": f"Bearer {token}"}
+
         # Create a note
         note = MemberNote(
             member_id=test_member.id,
@@ -202,17 +378,61 @@ class TestMemberNotesAPI:
         db_session.add(note)
         db_session.commit()
 
-        response = client.patch(
+        response = await client.patch(
             f"/api/v1/member-notes/{note.id}",
             json={"note_text": "Updated via API"},
-            headers=auth_headers,
+            headers=headers,
         )
         assert response.status_code == 200
         data = response.json()
         assert data["note_text"] == "Updated via API"
 
-    def test_delete_note_endpoint(self, client, auth_headers, test_member, db_session, test_user):
+    async def test_delete_note_endpoint(self, async_client_with_db):
         """Test DELETE /api/v1/member-notes/{note_id}"""
+        client, db_session = async_client_with_db
+
+        # Create test user and member in the same session
+        from src.models.user import User
+        from src.models.role import Role
+        from src.models.user_role import UserRole
+        from src.core.security import hash_password
+        from src.models.member import Member
+        from src.db.enums import MemberStatus, MemberClassification
+
+        admin_role = db_session.query(Role).filter(Role.name == "admin").first()
+        test_user = User(
+            email="test_api5@example.com",
+            password_hash=hash_password("testpass"),
+            first_name="API",
+            last_name="Test",
+            is_active=True,
+            is_verified=True,
+        )
+        db_session.add(test_user)
+        db_session.flush()
+        user_role = UserRole(user_id=test_user.id, role_id=admin_role.id)
+        db_session.add(user_role)
+        db_session.flush()
+
+        test_member = Member(
+            first_name="Test",
+            last_name="Member",
+            member_number="API_TEST_005",
+            email="api_member5@test.com",
+            status=MemberStatus.ACTIVE,
+            classification=MemberClassification.JOURNEYMAN,
+        )
+        db_session.add(test_member)
+        db_session.flush()
+
+        # Create auth headers with test_user
+        from src.core.jwt import create_access_token
+        token = create_access_token(
+            subject=test_user.id,
+            additional_claims={"email": test_user.email, "roles": ["admin"]},
+        )
+        headers = {"Authorization": f"Bearer {token}"}
+
         # Create a note
         note = MemberNote(
             member_id=test_member.id,
@@ -222,9 +442,9 @@ class TestMemberNotesAPI:
         db_session.add(note)
         db_session.commit()
 
-        response = client.delete(
+        response = await client.delete(
             f"/api/v1/member-notes/{note.id}",
-            headers=auth_headers,
+            headers=headers,
         )
         assert response.status_code == 204
 

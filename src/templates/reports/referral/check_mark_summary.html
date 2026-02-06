@@ -1,0 +1,56 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Check Mark Summary{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<style>
+    .cm-yellow { background: #fef3c7 !important; }
+    .cm-orange { background: #fed7aa !important; }
+    .cm-red { background: #fecaca !important; }
+</style>
+
+<div class="summary-box">
+    <span class="count-label">Total Check Marks Issued:</span> {{ summary.total_check_marks_issued }} |
+    <span class="count-label">Members at Limit (2 CMs):</span> <span style="color: orange; font-weight: bold">{{ summary.total_at_limit }}</span> |
+    <span class="count-label">Rolled Off (3rd CM):</span> <span style="color: red; font-weight: bold">{{ summary.total_rolled_off }}</span>
+</div>
+
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Book</th>
+            <th style="text-align: right">Check Marks Issued</th>
+            <th style="text-align: right; background: #fef3c7; color: #92400e">At 1 CM</th>
+            <th style="text-align: right; background: #fed7aa; color: #c2410c">At 2 CM (Warning)</th>
+            <th style="text-align: right; background: #fecaca; color: #dc2626">Rolled Off</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td><strong>{{ row.book }}</strong></td>
+            <td style="text-align: right">{{ row.check_marks_issued }}</td>
+            <td style="text-align: right" class="cm-yellow">{{ row.members_at_1_cm }}</td>
+            <td style="text-align: right" class="cm-orange">{{ row.members_at_2_cm }}</td>
+            <td style="text-align: right" class="cm-red">{{ row.members_rolled_off }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align: center; color: #666;">No check mark data available</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="summary-box" style="margin-top: 20px; background: #f3f4f6;">
+    <small>
+        <strong>Legend:</strong>
+        <span style="background: #fef3c7; padding: 2px 6px; border-radius: 3px;">1 CM = Warning</span>
+        <span style="background: #fed7aa; padding: 2px 6px; border-radius: 3px; margin-left: 10px;">2 CM = At Limit</span>
+        <span style="background: #fecaca; padding: 2px 6px; border-radius: 3px; margin-left: 10px;">3rd CM = Roll Off</span>
+    </small>
+</div>
+{% endblock %}

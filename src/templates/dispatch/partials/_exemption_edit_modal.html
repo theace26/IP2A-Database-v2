@@ -1,0 +1,92 @@
+<dialog id="edit_exemption_modal" class="modal">
+    <div class="modal-box max-w-2xl">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">X</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4">Edit Exemption</h3>
+
+        <form hx-post="/dispatch/exemptions/create" hx-target="body">
+            <input type="hidden" name="registration_id" value="{{ exemption.id }}" />
+
+            <div class="space-y-4">
+                <!-- Member Info (read-only) -->
+                <div class="bg-base-200 rounded-lg p-4">
+                    <div class="text-sm text-base-content/60">Member</div>
+                    <div class="font-medium">{{ exemption.member.full_name if exemption.member else 'Unknown' }}</div>
+                    <div class="text-sm text-base-content/60 mt-1">Book: {{ exemption.book.name if exemption.book else 'Unknown' }}</div>
+                </div>
+
+                <!-- Exemption Type -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Exemption Type</span>
+                    </label>
+                    <select name="exempt_reason" class="select select-bordered" required>
+                        <option value="">Select type...</option>
+                        <option value="military" {% if exemption.exempt_reason and exemption.exempt_reason.value == 'military' %}selected{% endif %}>Military</option>
+                        <option value="union_business" {% if exemption.exempt_reason and exemption.exempt_reason.value == 'union_business' %}selected{% endif %}>Union Business</option>
+                        <option value="salting" {% if exemption.exempt_reason and exemption.exempt_reason.value == 'salting' %}selected{% endif %}>Salting</option>
+                        <option value="medical" {% if exemption.exempt_reason and exemption.exempt_reason.value == 'medical' %}selected{% endif %}>Medical</option>
+                        <option value="jury_duty" {% if exemption.exempt_reason and exemption.exempt_reason.value == 'jury_duty' %}selected{% endif %}>Jury Duty</option>
+                        <option value="under_scale" {% if exemption.exempt_reason and exemption.exempt_reason.value == 'under_scale' %}selected{% endif %}>Under Scale</option>
+                        <option value="traveling" {% if exemption.exempt_reason and exemption.exempt_reason.value == 'traveling' %}selected{% endif %}>Traveling</option>
+                        <option value="other" {% if exemption.exempt_reason and exemption.exempt_reason.value == 'other' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+
+                <!-- Date Range -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Start Date</span>
+                        </label>
+                        <input
+                            type="date"
+                            name="start_date"
+                            class="input input-bordered"
+                            value="{{ exemption.exempt_start_date.strftime('%Y-%m-%d') if exemption.exempt_start_date else '' }}"
+                            required
+                        />
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">End Date (optional)</span>
+                        </label>
+                        <input
+                            type="date"
+                            name="end_date"
+                            class="input input-bordered"
+                            value="{{ exemption.exempt_end_date.strftime('%Y-%m-%d') if exemption.exempt_end_date else '' }}"
+                        />
+                        <label class="label">
+                            <span class="label-text-alt">Max 6 months per rules</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Notes (optional)</span>
+                    </label>
+                    <textarea
+                        name="notes"
+                        class="textarea textarea-bordered"
+                        placeholder="Additional notes about this exemption..."
+                        rows="3"
+                    >{{ exemption.notes or '' }}</textarea>
+                </div>
+            </div>
+
+            <div class="modal-action">
+                <form method="dialog">
+                    <button class="btn btn-ghost">Cancel</button>
+                </form>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>

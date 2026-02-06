@@ -1,0 +1,59 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Employer Dispatch History{% endblock %}
+{% block subtitle %}{{ employer.name if employer else 'Unknown Employer' }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <strong>Employer:</strong> {{ employer.name if employer else 'Unknown' }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>Period:</strong> {{ date_range.start.strftime('%m/%d/%Y') }} - {{ date_range.end.strftime('%m/%d/%Y') }}
+    <br><br>
+    <span class="count-label">Total Dispatches:</span> {{ total_dispatches }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span class="count-label">Unique Members:</span> {{ unique_members }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span class="count-label">Avg Duration:</span> {{ average_duration }} days
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span class="count-label">Short Call %:</span> {{ short_call_percentage }}%
+</div>
+
+{% if dispatches %}
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Member</th>
+            <th>Card #</th>
+            <th>Book</th>
+            <th>Type</th>
+            <th style="text-align: center;">Duration</th>
+            <th style="text-align: center;">Short Call</th>
+            <th>Outcome</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for d in dispatches %}
+        <tr class="{% if d.was_short_call %}warning-row{% endif %}">
+            <td>{{ d.dispatch_date.strftime('%m/%d/%Y') if d.dispatch_date else 'N/A' }}</td>
+            <td>{{ d.member_name }}</td>
+            <td style="font-family: monospace;">{{ d.member_card }}</td>
+            <td>{{ d.book_name }}</td>
+            <td>{{ d.dispatch_type }}</td>
+            <td style="text-align: center;">{{ d.duration_days if d.duration_days else '-' }}</td>
+            <td style="text-align: center;">
+                {% if d.was_short_call %}
+                <span style="color: #b45309;">Yes</span>
+                {% else %}
+                No
+                {% endif %}
+            </td>
+            <td>{{ d.outcome if d.outcome else '-' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p style="text-align: center; color: #666;">No dispatches found for this employer in the specified period.</p>
+{% endif %}
+{% endblock %}

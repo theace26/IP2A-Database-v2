@@ -1,0 +1,58 @@
+{% extends "_base_report.html" %}
+
+{% block title %}{{ report_name }}{% endblock %}
+{% block subtitle %}Book: {{ book.name }} ({{ book.code }}){% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Total Active:</span> {{ summary.total_active }} |
+    <span class="count-label">Upcoming Re-Signs (7 days):</span> {{ summary.upcoming_re_signs }}
+    <br>
+    <small>
+    {% for tier, count in summary.tier_counts.items() %}
+        {% if count > 0 %}Tier {{ tier }}: {{ count }}{% if not loop.last %} | {% endif %}{% endif %}
+    {% endfor %}
+    </small>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th style="text-align: center">#</th>
+            <th style="text-align: right">APN</th>
+            <th>Member Name</th>
+            <th style="text-align: center">Tier</th>
+            <th>Reg Date</th>
+            <th style="text-align: right">Days Waiting</th>
+            <th>Re-Sign Due</th>
+            <th style="text-align: center">Check Marks</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr{% if row.check_marks >= 2 %} class="danger-row"{% elif row.check_marks == 1 %} class="warning-row"{% endif %}>
+            <td style="text-align: center">{{ row.position }}</td>
+            <td style="text-align: right; font-family: monospace;">{{ row.apn }}</td>
+            <td>{{ row.member_name }}</td>
+            <td style="text-align: center"><span class="tier-badge tier-{{ row.tier }}">{{ row.tier }}</span></td>
+            <td>{{ row.reg_date.strftime('%m/%d/%Y') if row.reg_date else '' }}</td>
+            <td style="text-align: right">{{ row.days_waiting }}</td>
+            <td{% if row.re_sign_due %} style="{% if (row.re_sign_due - filters.snapshot_date|default(none, true) or today()).days <= 3 %}color: red; font-weight: bold{% endif %}"{% endif %}>
+                {{ row.re_sign_due.strftime('%m/%d/%Y') if row.re_sign_due else '' }}
+            </td>
+            <td style="text-align: center">
+                {% if row.check_marks >= 2 %}
+                <span style="color: red; font-weight: bold">{{ row.check_marks }} ⚠️</span>
+                {% elif row.check_marks == 1 %}
+                <span style="color: orange">{{ row.check_marks }}</span>
+                {% else %}
+                {{ row.check_marks }}
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align: center; color: #666;">No registrations on this book</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

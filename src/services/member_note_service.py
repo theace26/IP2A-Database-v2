@@ -73,7 +73,7 @@ class MemberNoteService:
         # Special case: staff can see their own staff_only notes
         from sqlalchemy import or_
 
-        if current_user.role not in ["admin", "officer"]:
+        if not (current_user.has_role("admin") or current_user.has_role("officer")):
             query = query.filter(
                 or_(
                     MemberNote.visibility.in_(visible_levels),
@@ -93,7 +93,7 @@ class MemberNoteService:
     def _get_visible_levels(user: User) -> List[str]:
         """Determine which visibility levels a user can see."""
         # Admin sees everything
-        if user.role == "admin":
+        if user.has_role("admin"):
             return [
                 NoteVisibility.STAFF_ONLY,
                 NoteVisibility.OFFICERS,
@@ -101,7 +101,7 @@ class MemberNoteService:
             ]
 
         # Officers see officers and all_authorized
-        if user.role in ["officer", "organizer"]:
+        if user.has_role("officer") or user.has_role("organizer"):
             return [NoteVisibility.OFFICERS, NoteVisibility.ALL_AUTHORIZED]
 
         # Staff sees only all_authorized (and their own staff_only notes, handled separately)

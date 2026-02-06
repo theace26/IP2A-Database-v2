@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Exemptions{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Member Exemptions</h1>
+        <p class="text-base-content/60">Manage exempt status for members (Rule #14)</p>
+    </div>
+    <button class="btn btn-primary" onclick="create_exemption_modal.showModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        New Exemption
+    </button>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="stat bg-base-100 rounded-lg shadow-sm border border-base-300">
+        <div class="stat-title">Active Exemptions</div>
+        <div class="stat-value text-primary">{{ stats.total_active }}</div>
+        <div class="stat-desc">Currently exempt members</div>
+    </div>
+
+    <div class="stat bg-base-100 rounded-lg shadow-sm border border-base-300">
+        <div class="stat-title">Expiring Soon</div>
+        <div class="stat-value text-warning">{{ stats.expiring_soon }}</div>
+        <div class="stat-desc">Within next 7 days</div>
+    </div>
+
+    <div class="stat bg-base-100 rounded-lg shadow-sm border border-base-300">
+        <div class="stat-title">By Type</div>
+        <div class="flex flex-wrap gap-1 mt-2">
+            {% for reason, count in stats.by_type.items() %}
+            {% set badge = format_exemption_badge(reason) %}
+            <span class="badge {{ badge.class }}">{{ badge.label }}: {{ count }}</span>
+            {% endfor %}
+            {% if not stats.by_type %}
+            <span class="text-base-content/60">No exemptions</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card bg-base-100 shadow-sm mb-6">
+    <div class="card-body py-4">
+        <div class="flex flex-wrap gap-4 items-end">
+            <div class="form-control">
+                <label class="label py-1">
+                    <span class="label-text">Search</span>
+                </label>
+                <input
+                    type="search"
+                    name="search"
+                    placeholder="Search by member name..."
+                    class="input input-bordered input-sm w-64"
+                    hx-get="/dispatch/exemptions"
+                    hx-trigger="input changed delay:300ms, search"
+                    hx-target="#exemptions-table"
+                    hx-include="[name='exempt_reason'], [name='status']"
+                    value="{{ filters.search or '' }}"
+                />
+            </div>
+
+            <div class="form-control">
+                <label class="label py-1">
+                    <span class="label-text">Exemption Type</span>
+                </label>
+                <select
+                    name="exempt_reason"
+                    class="select select-bordered select-sm"
+                    hx-get="/dispatch/exemptions"
+                    hx-trigger="change"
+                    hx-target="#exemptions-table"
+                    hx-include="[name='search'], [name='status']"
+                >
+                    <option value="">All Types</option>
+                    <option value="military" {% if filters.exempt_reason == 'military' %}selected{% endif %}>Military</option>
+                    <option value="union_business" {% if filters.exempt_reason == 'union_business' %}selected{% endif %}>Union Business</option>
+                    <option value="salting" {% if filters.exempt_reason == 'salting' %}selected{% endif %}>Salting</option>
+                    <option value="medical" {% if filters.exempt_reason == 'medical' %}selected{% endif %}>Medical</option>
+                    <option value="jury_duty" {% if filters.exempt_reason == 'jury_duty' %}selected{% endif %}>Jury Duty</option>
+                    <option value="under_scale" {% if filters.exempt_reason == 'under_scale' %}selected{% endif %}>Under Scale</option>
+                    <option value="traveling" {% if filters.exempt_reason == 'traveling' %}selected{% endif %}>Traveling</option>
+                    <option value="other" {% if filters.exempt_reason == 'other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+
+            <div class="form-control">
+                <label class="label py-1">
+                    <span class="label-text">Status</span>
+                </label>
+                <select
+                    name="status"
+                    class="select select-bordered select-sm"
+                    hx-get="/dispatch/exemptions"
+                    hx-trigger="change"
+                    hx-target="#exemptions-table"
+                    hx-include="[name='search'], [name='exempt_reason']"
+                >
+                    <option value="">All</option>
+                    <option value="expiring" {% if filters.status == 'expiring' %}selected{% endif %}>Expiring Soon</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Exemptions Table -->
+<div class="card bg-base-100 shadow-md">
+    <div class="card-body">
+        <div id="exemptions-table">
+            {% include "dispatch/partials/_exemptions_table.html" %}
+        </div>
+    </div>
+</div>
+
+<!-- Create Exemption Modal -->
+{% include "dispatch/partials/_exemption_create_modal.html" %}
+{% endblock %}

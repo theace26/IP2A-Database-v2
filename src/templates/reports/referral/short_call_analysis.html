@@ -1,0 +1,64 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Short Call Analysis{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Total Short Calls:</span> {{ summary.total_short_calls }} |
+    <span class="count-label">Short Call Rate:</span> <span style="color: {% if summary.short_call_rate_pct > 30 %}red{% elif summary.short_call_rate_pct > 15 %}orange{% else %}green{% endif %}">{{ summary.short_call_rate_pct }}%</span> |
+    <span class="count-label">Avg Duration:</span> {{ summary.avg_short_call_duration }} days |
+    <span class="count-label">≤3 Day (Long Call Rule):</span> {{ summary.long_call_rule_count }} |
+    <span class="count-label">Max 2/Cycle Violations:</span> <span style="color: {% if summary.max_2_violations > 0 %}red{% else %}green{% endif %}">{{ summary.max_2_violations }}</span>
+</div>
+
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+{% if filters.employer_id %}
+<div class="meta">Filtered by Employer ID: {{ filters.employer_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Period</th>
+            <th style="text-align: right">Short Calls</th>
+            <th style="text-align: right">Avg Duration (Days)</th>
+            <th style="text-align: right">≤3 Days (Long Call Rule)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td>{{ row.period }}</td>
+            <td style="text-align: right; font-weight: bold">{{ row.short_calls }}</td>
+            <td style="text-align: right">{{ row.avg_duration_days }}</td>
+            <td style="text-align: right">{{ row.long_call_rule }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" style="text-align: center; color: #666;">No short call data available</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if summary.top_short_call_employers %}
+<div class="summary-box" style="margin-top: 20px;">
+    <span class="count-label">Top Employers Using Short Calls:</span>
+    <ul style="margin: 5px 0 0 20px; padding: 0;">
+        {% for emp in summary.top_short_call_employers %}
+        <li>{{ emp.employer }}: {{ emp.count }} short calls</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<div class="summary-box" style="margin-top: 20px; background: #fff3cd;">
+    <small>
+        <strong>Business Rules:</strong><br>
+        • Short call = ≤10 business days<br>
+        • ≤3 days = treated as Long Call (Rule 9) — member may not count against cycle limit<br>
+        • Max 2 short call dispatches per registration cycle
+    </small>
+</div>
+{% endblock %}

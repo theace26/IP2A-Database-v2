@@ -342,3 +342,139 @@ class TestServiceIntegration:
         assert response.status_code == 200
         # Should show time context
         assert b"Next:" in response.content or b"next" in response.content.lower()
+
+
+# --- Week 32 Tests: Exemption Management UI ---
+
+
+class TestExemptionManagement:
+    """Tests for exemption management pages (Week 32)."""
+
+    @pytest.mark.asyncio
+    async def test_exemptions_page_loads(self, async_client: AsyncClient, auth_cookies):
+        """GET /dispatch/exemptions returns 200."""
+        response = await async_client.get("/dispatch/exemptions", cookies=auth_cookies)
+        assert response.status_code == 200
+        assert b"Member Exemptions" in response.content
+
+    @pytest.mark.asyncio
+    async def test_exemptions_page_requires_auth(self, async_client: AsyncClient):
+        """GET /dispatch/exemptions without auth returns 302 to login."""
+        response = await async_client.get(
+            "/dispatch/exemptions",
+            follow_redirects=False
+        )
+        assert response.status_code == 302
+        assert "/login" in response.headers["location"]
+
+    @pytest.mark.asyncio
+    async def test_exemptions_shows_stats(self, async_client: AsyncClient, auth_cookies):
+        """Exemptions page displays stats cards."""
+        response = await async_client.get("/dispatch/exemptions", cookies=auth_cookies)
+        assert response.status_code == 200
+        assert b"Active Exemptions" in response.content
+        assert b"Expiring Soon" in response.content
+
+    @pytest.mark.asyncio
+    async def test_exemptions_filter_by_type(self, async_client: AsyncClient, auth_cookies):
+        """Exemptions can be filtered by type."""
+        response = await async_client.get(
+            "/dispatch/exemptions?exempt_reason=military",
+            cookies=auth_cookies
+        )
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_exemption_detail_404(self, async_client: AsyncClient, auth_cookies):
+        """Exemption detail returns 404 for non-existent exemption."""
+        response = await async_client.get(
+            "/dispatch/exemptions/999999",
+            cookies=auth_cookies
+        )
+        assert response.status_code == 404
+
+
+# --- Week 32 Tests: Reports Navigation Dashboard ---
+
+
+class TestReportsNavigation:
+    """Tests for reports navigation dashboard (Week 32)."""
+
+    @pytest.mark.asyncio
+    async def test_dispatch_reports_landing_loads(self, async_client: AsyncClient, auth_cookies):
+        """GET /dispatch/reports returns 200."""
+        response = await async_client.get("/dispatch/reports", cookies=auth_cookies)
+        assert response.status_code == 200
+        assert b"Dispatch Reports" in response.content
+
+    @pytest.mark.asyncio
+    async def test_dispatch_reports_landing_requires_auth(self, async_client: AsyncClient):
+        """GET /dispatch/reports without auth returns 302."""
+        response = await async_client.get(
+            "/dispatch/reports",
+            follow_redirects=False
+        )
+        assert response.status_code == 302
+        assert "/login" in response.headers["location"]
+
+    @pytest.mark.asyncio
+    async def test_dispatch_reports_shows_categories(self, async_client: AsyncClient, auth_cookies):
+        """Reports page shows all 8 categories."""
+        response = await async_client.get("/dispatch/reports", cookies=auth_cookies)
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "Out-of-Work Lists" in content
+        assert "Dispatch Operations" in content
+        assert "Registration Reports" in content
+        assert "Employer Reports" in content
+
+    @pytest.mark.asyncio
+    async def test_dispatch_reports_shows_totals(self, async_client: AsyncClient, auth_cookies):
+        """Reports page shows total report counts."""
+        response = await async_client.get("/dispatch/reports", cookies=auth_cookies)
+        assert response.status_code == 200
+        assert b"Total Reports" in response.content
+        assert b"Available Now" in response.content
+
+
+# --- Week 32 Tests: Check Mark Tracking ---
+
+
+class TestCheckMarkTracking:
+    """Tests for check mark tracking UI (Week 32)."""
+
+    @pytest.mark.asyncio
+    async def test_checkmark_history_requires_auth(self, async_client: AsyncClient):
+        """GET /dispatch/checkmarks/{member_id}/history without auth returns 302."""
+        response = await async_client.get(
+            "/dispatch/checkmarks/1/history",
+            follow_redirects=False
+        )
+        assert response.status_code == 302
+        assert "/login" in response.headers["location"]
+
+    @pytest.mark.asyncio
+    async def test_checkmark_history_returns_partial(self, async_client: AsyncClient, auth_cookies):
+        """Check mark history endpoint returns HTML partial."""
+        response = await async_client.get(
+            "/dispatch/checkmarks/1/history",
+            cookies=auth_cookies
+        )
+        # Should return 200 even for member with no check marks
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_enforcement_shows_checkmark_section(self, async_client: AsyncClient, auth_cookies):
+        """Enforcement page includes check mark management section."""
+        response = await async_client.get("/dispatch/enforcement", cookies=auth_cookies)
+        assert response.status_code == 200
+        assert b"Check Marks" in response.content
+        assert b"Record Check Mark" in response.content
+
+    @pytest.mark.asyncio
+    async def test_enforcement_shows_exemption_link(self, async_client: AsyncClient, auth_cookies):
+        """Enforcement page includes link to exemptions."""
+        response = await async_client.get("/dispatch/enforcement", cookies=auth_cookies)
+        assert response.status_code == 200
+        assert b"Member Exemptions" in response.content
+        assert b"Manage Exemptions" in response.content

@@ -1,0 +1,45 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Out-of-Work Summary{% endblock %}
+{% block subtitle %}Registration Counts by Book and Tier{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Grand Total:</span> {{ grand_total }} members across {{ summary|length }} books
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Book Name</th>
+            <th style="text-align: center;">Tier 1</th>
+            <th style="text-align: center;">Tier 2</th>
+            <th style="text-align: center;">Tier 3</th>
+            <th style="text-align: center;">Tier 4</th>
+            <th style="text-align: center; font-weight: bold;">Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in summary %}
+        <tr>
+            <td>{{ row.book_name }}</td>
+            <td style="text-align: center;">{{ row.tier_1 }}</td>
+            <td style="text-align: center;">{{ row.tier_2 }}</td>
+            <td style="text-align: center;">{{ row.tier_3 }}</td>
+            <td style="text-align: center;">{{ row.tier_4 }}</td>
+            <td style="text-align: center; font-weight: bold;">{{ row.total }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr style="background: #e2e8f0; font-weight: bold;">
+            <td>GRAND TOTAL</td>
+            <td style="text-align: center;">{{ summary|map(attribute='tier_1')|sum }}</td>
+            <td style="text-align: center;">{{ summary|map(attribute='tier_2')|sum }}</td>
+            <td style="text-align: center;">{{ summary|map(attribute='tier_3')|sum }}</td>
+            <td style="text-align: center;">{{ summary|map(attribute='tier_4')|sum }}</td>
+            <td style="text-align: center;">{{ grand_total }}</td>
+        </tr>
+    </tfoot>
+</table>
+{% endblock %}

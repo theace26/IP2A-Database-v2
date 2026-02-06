@@ -1,0 +1,51 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Book Health Summary{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<style>
+    @page { size: letter landscape; }
+</style>
+
+<div class="summary-box">
+    <span class="count-label">Total Active Across Books:</span> {{ summary.total_active_across_books }} |
+    <span class="count-label">Total Dispatched:</span> {{ summary.total_dispatched }}
+    <br>
+    <small>
+        Healthiest Book (Highest Fill Rate): <strong>{{ summary.healthiest_book or 'N/A' }}</strong>
+        {% if summary.concerning_books %}<br>Concerning Books (Low Activity): {{ summary.concerning_books|join(', ') }}{% endif %}
+    </small>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Book Name</th>
+            <th style="text-align: right">Active</th>
+            <th style="text-align: right">Dispatched</th>
+            <th style="text-align: right">Dropped</th>
+            <th style="text-align: right">Re-Signed</th>
+            <th style="text-align: right">Avg Wait Days</th>
+            <th style="text-align: right">Fill Rate %</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr{% if row.fill_rate < 50 %} class="danger-row"{% elif row.fill_rate < 70 %} class="warning-row"{% endif %}>
+            <td><strong>{{ row.book_name }}</strong></td>
+            <td style="text-align: right">{{ row.active }}</td>
+            <td style="text-align: right">{{ row.dispatched }}</td>
+            <td style="text-align: right">{{ row.dropped }}</td>
+            <td style="text-align: right">{{ row.re_signed }}</td>
+            <td style="text-align: right">{{ row.avg_wait_days }}</td>
+            <td style="text-align: right; font-weight: bold; color: {% if row.fill_rate >= 90 %}green{% elif row.fill_rate >= 70 %}orange{% else %}red{% endif %}">
+                {{ row.fill_rate }}%
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align: center; color: #666;">No book data available</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

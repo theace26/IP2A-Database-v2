@@ -1,0 +1,55 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Check Mark Trend{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Trend:</span>
+    <span style="font-weight: bold; color: {% if summary.trend_direction == 'increasing' %}red{% elif summary.trend_direction == 'decreasing' %}green{% else %}#666{% endif %}">
+        {{ summary.trend_direction|upper }}
+        {% if summary.trend_direction == 'increasing' %}↑{% elif summary.trend_direction == 'decreasing' %}↓{% else %}→{% endif %}
+    </span> |
+    <span class="count-label">Total CMs (Period):</span> {{ summary.total_cms_period }} |
+    <span class="count-label">Currently At Risk:</span> <span style="color: orange">{{ summary.current_at_risk }}</span> |
+    <span class="count-label">Projected Next Period:</span> {{ summary.projected_at_risk_next_period }}
+</div>
+
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Period</th>
+            <th style="text-align: right">CMs Issued</th>
+            <th style="text-align: right">Cumulative</th>
+            <th style="text-align: right">Members at Risk (2 CMs)</th>
+            <th style="text-align: right">Rolling Avg</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr{% if row.cms_issued > 5 %} class="warning-row"{% endif %}>
+            <td>{{ row.period }}</td>
+            <td style="text-align: right">{{ row.cms_issued }}</td>
+            <td style="text-align: right">{{ row.cumulative }}</td>
+            <td style="text-align: right; color: {% if row.members_at_risk > 0 %}orange{% else %}#333{% endif %}">
+                {{ row.members_at_risk }}
+            </td>
+            <td style="text-align: right">{{ row.rolling_avg }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align: center; color: #666;">Insufficient data for trend analysis</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if summary.trend_direction == 'increasing' %}
+<div class="summary-box" style="margin-top: 20px; background: #fef3c7;">
+    <span style="color: #92400e; font-weight: bold">⚠️ Attention:</span>
+    Check mark issuance is trending upward. Consider reviewing dispatch procedures or member communications.
+</div>
+{% endif %}
+{% endblock %}

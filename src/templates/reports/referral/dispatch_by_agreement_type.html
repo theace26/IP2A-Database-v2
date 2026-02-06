@@ -1,0 +1,54 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Dispatch by Agreement Type{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Total Dispatches:</span> {{ summary.total_dispatches }} |
+    <span class="count-label">Dominant Type:</span> {{ summary.dominant_type }} |
+    <span class="count-label">PLA/CWA Share:</span> {{ summary.pla_cwa_share_pct }}% |
+    <span class="count-label">Agreement Types:</span> {{ summary.types_count }}
+</div>
+
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Agreement Type</th>
+            <th style="text-align: right">Dispatch Count</th>
+            <th style="text-align: right">Avg Duration (Days)</th>
+            <th style="text-align: right">Fill Rate %</th>
+            <th style="text-align: right">Unique Employers</th>
+            <th style="text-align: right">Unique Members</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td><strong>{{ row.agreement_type }}</strong></td>
+            <td style="text-align: right; font-weight: bold">{{ row.dispatch_count }}</td>
+            <td style="text-align: right">{{ row.avg_duration_days }}</td>
+            <td style="text-align: right">{{ row.fill_rate_pct }}%</td>
+            <td style="text-align: right">{{ row.unique_employers }}</td>
+            <td style="text-align: right">{{ row.unique_members }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align: center; color: #666;">No dispatch data available</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="summary-box" style="margin-top: 20px; background: #f3f4f6;">
+    <small>
+        <strong>Agreement Types:</strong>
+        <strong>STANDARD</strong> = Regular collective bargaining |
+        <strong>PLA</strong> = Project Labor Agreement |
+        <strong>CWA</strong> = Community Workforce Agreement |
+        <strong>TERO</strong> = Tribal Employment Rights Ordinance
+    </small>
+</div>
+{% endblock %}

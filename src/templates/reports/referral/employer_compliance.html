@@ -1,0 +1,81 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Employer Compliance Report{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<style>
+    .flag-red { background: #fecaca !important; color: #dc2626 !important; }
+    .flag-orange { background: #fed7aa !important; color: #c2410c !important; }
+</style>
+
+<div class="summary-box" style="background: {% if summary.total_blackout_violations > 0 %}#fecaca{% elif summary.employers_over_50_pct > 0 %}#fed7aa{% else %}#dcfce7{% endif %}">
+    <span class="count-label">Total Employers:</span> {{ summary.total_employers }} |
+    <span class="count-label">Total By-Name Requests:</span> {{ summary.total_by_name_requests }} |
+    <span class="count-label">Overall By-Name Rate:</span> {{ summary.overall_by_name_pct }}% |
+    <span class="count-label">Employers >50% By-Name:</span> <span style="color: {% if summary.employers_over_50_pct > 0 %}red{% else %}green{% endif %}; font-weight: bold">{{ summary.employers_over_50_pct }}</span> |
+    <span class="count-label">Blackout Violations:</span> <span style="color: {% if summary.total_blackout_violations > 0 %}red{% else %}green{% endif %}; font-weight: bold">{{ summary.total_blackout_violations }}</span>
+</div>
+
+{% if filters.employer_id %}
+<div class="meta">Filtered by Employer ID: {{ filters.employer_id }}</div>
+{% endif %}
+
+<div class="summary-box" style="margin-bottom: 15px; background: #fff3cd;">
+    <strong>⚠️ SENSITIVE REPORT — OFFICER+ ONLY</strong><br>
+    <small>
+        Contains anti-collusion data (Rule 13) and blackout tracking (Rule 12).
+        Do not distribute outside authorized personnel.
+    </small>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Employer</th>
+            <th style="text-align: right">By-Name Requests</th>
+            <th style="text-align: right">By-Name %</th>
+            <th style="text-align: right">Blackout Violations</th>
+            <th style="text-align: right">Agreement Violations</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr class="{% if row.blackout_violations > 0 %}flag-red{% elif row.by_name_pct > 50 %}flag-orange{% endif %}">
+            <td><strong>{{ row.employer }}</strong></td>
+            <td style="text-align: right">{{ row.by_name_requests }}</td>
+            <td style="text-align: right; font-weight: bold">{{ row.by_name_pct }}%</td>
+            <td style="text-align: right; {% if row.blackout_violations > 0 %}color: red; font-weight: bold{% endif %}">
+                {{ row.blackout_violations }}
+            </td>
+            <td style="text-align: right">{{ row.agreement_violations }}</td>
+            <td style="font-size: 11px">{{ row.notes }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align: center; color: #666;">No compliance data available</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if summary.flagged_for_review %}
+<div class="summary-box" style="margin-top: 20px; background: #fed7aa;">
+    <span class="count-label">⚠️ Flagged for Review (>50% By-Name):</span>
+    <ul style="margin: 5px 0 0 20px; padding: 0;">
+        {% for emp in summary.flagged_for_review %}
+        <li>{{ emp }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<div class="summary-box" style="margin-top: 20px; background: #f3f4f6;">
+    <small>
+        <strong>Business Rules:</strong><br>
+        • <strong>Rule 13 (Foreperson By Name):</strong> Anti-collusion — cannot be filled by registrants who communicated with employer<br>
+        • <strong>Rule 12 (Blackout):</strong> 2-week foreperson-by-name blackout after quit/discharge<br>
+        • <strong>Red rows:</strong> Blackout violations detected<br>
+        • <strong>Orange rows:</strong> By-name rate exceeds 50%
+    </small>
+</div>
+{% endblock %}

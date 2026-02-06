@@ -1,0 +1,72 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Unfilled Request Report{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Total Unfilled Positions:</span> {{ summary.total_unfilled_positions }} |
+    <span class="count-label">Avg Days Open:</span> {{ summary.avg_days_open }}
+</div>
+
+{% if summary.top_unfilled_employers %}
+<div class="meta" style="margin: 10px 0;">
+    <strong>Top Unfilled Employers:</strong>
+    {% for emp, count in summary.top_unfilled_employers %}
+    {{ emp }}: {{ count }} positions{% if not loop.last %}, {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if summary.shortfall_by_classification %}
+<div class="meta" style="margin: 10px 0;">
+    <strong>Shortfall by Classification:</strong>
+    {% for book, count in summary.shortfall_by_classification.items() %}
+    {{ book }}: {{ count }}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if filters.status %}
+<div class="meta">Filtered by Status: {{ filters.status }}</div>
+{% endif %}
+{% if filters.employer_id %}
+<div class="meta">Filtered by Employer ID: {{ filters.employer_id }}</div>
+{% endif %}
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Request Date</th>
+            <th>Employer</th>
+            <th style="text-align: right">Requested</th>
+            <th style="text-align: right">Filled</th>
+            <th style="text-align: right">Shortfall</th>
+            <th style="text-align: right">Days Open</th>
+            <th>Book</th>
+            <th>Reason</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td>{{ row.request_date }}</td>
+            <td>{{ row.employer }}</td>
+            <td style="text-align: right">{{ row.workers_requested }}</td>
+            <td style="text-align: right">{{ row.workers_filled }}</td>
+            <td style="text-align: right; color: #dc3545; font-weight: bold">{{ row.shortfall }}</td>
+            <td style="text-align: right; {% if row.days_open > 7 %}color: #dc3545{% elif row.days_open > 3 %}color: #fd7e14{% endif %}">
+                {{ row.days_open }}
+            </td>
+            <td>{{ row.book }}</td>
+            <td style="font-size: 9pt; max-width: 150px; overflow: hidden; text-overflow: ellipsis;">{{ row.reason }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align: center; color: #666;">No unfilled requests found</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

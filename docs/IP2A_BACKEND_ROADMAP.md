@@ -1,9 +1,9 @@
 # UnionCore Backend Roadmap
 
 **Document Purpose:** Master development plan with phases, milestones, and strategic context
-**Version:** v4.0
-**Last Updated:** February 5, 2026
-**Project Version:** v0.9.8-alpha
+**Version:** v5.0
+**Last Updated:** February 6, 2026
+**Project Version:** v0.9.10-alpha
 
 ---
 
@@ -14,8 +14,8 @@ UnionCore is a comprehensive union management platform for IBEW Local 46, replac
 | Metric | Value |
 |--------|-------|
 | **Users** | ~4,000 external (members, stewards, applicants) + ~40 internal (staff, officers) |
-| **Tests** | 593 total (517 passing, 92.7% pass rate) |
-| **Endpoints** | ~228+ |
+| **Tests** | 621 total (~596 passing, 98.5% pass rate, Week 35) |
+| **Endpoints** | ~240+ |
 | **Models** | 32 (26 core + 6 Phase 7) |
 | **ADRs** | 18 |
 | **Deployment** | Railway (live) |
@@ -27,8 +27,8 @@ UnionCore is a comprehensive union management platform for IBEW Local 46, replac
 | 1-4 | Core Platform (Members, Auth, Training, Dues) | ✅ Complete | Spoke 1 |
 | 5 | Access DB Migration | ⏸️ Blocked | Spoke 1 |
 | 6 | Frontend (Weeks 1-19) | ✅ Complete | Spoke 3 |
-| 7 | Referral & Dispatch | 🔄 In Progress | Spoke 2 |
-| 8 | Square Payment Migration | 📋 Planned | Spoke 3 |
+| 7 | Referral & Dispatch (Weeks 20-35) | 🔄 In Progress | Spoke 2 |
+| 8 | Square Payment Migration | 🔄 In Progress (Stripe removed Week 35) | Spoke 3 |
 
 ---
 

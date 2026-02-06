@@ -1,0 +1,59 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Monthly Dispatch Summary{% endblock %}
+{% block subtitle %}{{ filters.start_date.strftime('%m/%d/%Y') }} - {{ filters.end_date.strftime('%m/%d/%Y') }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Total Dispatches:</span> {{ summary.total_dispatches }} |
+    <span class="count-label">Peak Month:</span> {{ summary.peak_month }} |
+    <span class="count-label">Trough Month:</span> {{ summary.trough_month }} |
+    <span class="count-label">PLA/CWA Share:</span> {{ summary.pla_cwa_share_pct }}%
+</div>
+
+{% if filters.book_id %}
+<div class="meta">Filtered by Book ID: {{ filters.book_id }}</div>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Month</th>
+            <th style="text-align: right">Total Dispatches</th>
+            <th style="text-align: right">Short Calls %</th>
+            <th style="text-align: right">Standard</th>
+            <th style="text-align: right">PLA</th>
+            <th style="text-align: right">CWA</th>
+            <th style="text-align: right">TERO</th>
+            <th style="text-align: center">Trend</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in data %}
+        <tr>
+            <td>{{ row.month }}</td>
+            <td style="text-align: right; font-weight: bold">{{ row.total_dispatches }}</td>
+            <td style="text-align: right">{{ row.short_calls_pct }}%</td>
+            <td style="text-align: right">{{ row.standard }}</td>
+            <td style="text-align: right">{{ row.pla }}</td>
+            <td style="text-align: right">{{ row.cwa }}</td>
+            <td style="text-align: right">{{ row.tero }}</td>
+            <td style="text-align: center; font-size: 18px; color: {% if row.trend == '↑' %}green{% elif row.trend == '↓' %}red{% else %}#666{% endif %}">
+                {{ row.trend }}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align: center; color: #666;">No dispatch data available</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="summary-box" style="margin-top: 20px; background: #f3f4f6;">
+    <small>
+        <strong>Trend Legend:</strong>
+        <span style="color: green;">↑ = >5% increase</span> |
+        <span style="color: red;">↓ = >5% decrease</span> |
+        <span style="color: #666;">→ = within ±5%</span>
+    </small>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "_base_report.html" %}
+
+{% block title %}Employer Active List{% endblock %}
+{% block subtitle %}Contract Filter: {{ contract_code_filter }}{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+    <span class="count-label">Total Active Employers:</span> {{ total_employers }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span class="count-label">Total Open Requests:</span> {{ total_open_requests }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span class="count-label">Workers Currently Dispatched:</span> {{ total_dispatched_workers }}
+</div>
+
+{% if employers %}
+<table>
+    <thead>
+        <tr>
+            <th>Employer</th>
+            <th style="text-align: center;">Open Requests</th>
+            <th style="text-align: center;">Workers Dispatched</th>
+            <th style="text-align: center;">YTD Total</th>
+            <th>Last Dispatch</th>
+            <th>Contact</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for emp in employers %}
+        <tr class="{% if emp.open_requests > 0 %}warning-row{% endif %}">
+            <td style="font-weight: bold;">{{ emp.employer_name }}</td>
+            <td style="text-align: center;">
+                {% if emp.open_requests > 0 %}
+                <span style="color: #b45309; font-weight: bold;">{{ emp.open_requests }}</span>
+                {% else %}
+                {{ emp.open_requests }}
+                {% endif %}
+            </td>
+            <td style="text-align: center;">{{ emp.workers_currently_dispatched }}</td>
+            <td style="text-align: center;">{{ emp.total_dispatches_ytd }}</td>
+            <td>{{ emp.last_dispatch_date.strftime('%m/%d/%Y') if emp.last_dispatch_date else 'N/A' }}</td>
+            <td style="font-size: 8pt;">{{ emp.contact_info if emp.contact_info else '-' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p style="text-align: center; color: #666;">No active employers found matching the criteria.</p>
+{% endif %}
+{% endblock %}
