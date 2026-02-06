@@ -260,7 +260,7 @@ class ReferralFrontendService:
             search_term = f"%{filters['search']}%"
             query = query.filter(
                 (Member.first_name + " " + Member.last_name).ilike(search_term)
-                | Member.card_number.ilike(search_term)
+                | Member.member_number.ilike(search_term)
             )
 
         # Get total count
@@ -391,8 +391,8 @@ class ReferralFrontendService:
 
     def search_members(self, search_term: str, limit: int = 10) -> List[dict]:
         """
-        Search members by name or card number for typeahead.
-        Returns list of dicts with id, name, card_number.
+        Search members by name or member number for typeahead.
+        Returns list of dicts with id, name, member_number.
         """
         if not search_term or len(search_term) < 2:
             return []
@@ -402,7 +402,7 @@ class ReferralFrontendService:
             self.db.query(Member)
             .filter(
                 (Member.first_name + " " + Member.last_name).ilike(search_pattern)
-                | Member.card_number.ilike(search_pattern)
+                | Member.member_number.ilike(search_pattern)
             )
             .limit(limit)
             .all()
@@ -412,7 +412,7 @@ class ReferralFrontendService:
             {
                 "id": m.id,
                 "name": f"{m.first_name} {m.last_name}",
-                "card_number": m.card_number,
+                "member_number": m.member_number,
             }
             for m in members
         ]

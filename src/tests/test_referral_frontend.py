@@ -138,13 +138,13 @@ def test_book_detail_renders(auth_cookies,test_book):
     assert b"Registered Members" in response.content
 
 
-def test_book_detail_404_for_invalid(auth_headers):
+def test_book_detail_404_for_invalid(auth_cookies):
     """Invalid book ID should return 404."""
     response = client.get("/referral/books/99999", cookies=auth_cookies)
     assert response.status_code == 404
 
 
-def test_registrations_list_renders(auth_headers):
+def test_registrations_list_renders(auth_cookies):
     """Registrations list should show with filters."""
     response = client.get("/referral/registrations", cookies=auth_cookies)
     assert response.status_code == 200
@@ -169,7 +169,7 @@ def test_registration_detail_renders(auth_cookies,test_registration, test_member
     assert b"Registration Detail" in response.content
 
 
-def test_registration_detail_404_for_invalid(auth_headers):
+def test_registration_detail_404_for_invalid(auth_cookies):
     """Invalid registration ID should return 404."""
     response = client.get("/referral/registrations/99999", cookies=auth_cookies)
     assert response.status_code == 404
@@ -180,53 +180,58 @@ def test_registration_detail_404_for_invalid(auth_headers):
 # ============================================================================
 
 
-def test_stats_partial_returns_html(auth_headers):
+def test_stats_partial_returns_html(auth_cookies):
     """Stats partial should return HTML fragment."""
     response = client.get(
         "/referral/partials/stats",
-        headers={**auth_headers, "HX-Request": "true"}
+        cookies=auth_cookies,
+        headers={"HX-Request": "true"}
     )
     assert response.status_code == 200
     assert b"Active Books" in response.content or b"stat" in response.content
 
 
-def test_books_overview_partial_returns_html(auth_cookies,test_book):
+def test_books_overview_partial_returns_html(auth_cookies, test_book):
     """Books overview partial should return HTML fragment."""
     response = client.get(
         "/referral/partials/books-overview",
-        headers={**auth_headers, "HX-Request": "true"}
+        cookies=auth_cookies,
+        headers={"HX-Request": "true"}
     )
     assert response.status_code == 200
     # Should contain book information
     assert test_book.name.encode() in response.content or b"No books" in response.content
 
 
-def test_books_table_partial_filters(auth_cookies,test_book):
+def test_books_table_partial_filters(auth_cookies, test_book):
     """Books table partial should filter results."""
     response = client.get(
         "/referral/partials/books-table?active_only=true",
-        headers={**auth_headers, "HX-Request": "true"}
+        cookies=auth_cookies,
+        headers={"HX-Request": "true"}
     )
     assert response.status_code == 200
     # Active book should appear
     assert test_book.name.encode() in response.content or b"table" in response.content
 
 
-def test_register_modal_partial_loads(auth_headers):
+def test_register_modal_partial_loads(auth_cookies):
     """Register modal should return form HTML."""
     response = client.get(
         "/referral/partials/register-modal",
-        headers={**auth_headers, "HX-Request": "true"}
+        cookies=auth_cookies,
+        headers={"HX-Request": "true"}
     )
     assert response.status_code == 200
     assert b"Register Member" in response.content or b"modal" in response.content
 
 
-def test_member_search_partial(auth_cookies,test_member_for_registration):
+def test_member_search_partial(auth_cookies, test_member_for_registration):
     """Member search should return typeahead results."""
     response = client.get(
         f"/referral/partials/member-search?member_search={test_member_for_registration.first_name}",
-        headers={**auth_headers, "HX-Request": "true"}
+        cookies=auth_cookies,
+        headers={"HX-Request": "true"}
     )
     assert response.status_code == 200
     # Should contain member info or "not found" message
@@ -241,7 +246,7 @@ def test_member_search_partial(auth_cookies,test_member_for_registration):
 # ============================================================================
 
 
-def test_sidebar_shows_referral_section(auth_headers):
+def test_sidebar_shows_referral_section(auth_cookies):
     """Sidebar should include Referral & Dispatch section."""
     response = client.get("/referral", cookies=auth_cookies)
     assert response.status_code == 200

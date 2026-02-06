@@ -468,7 +468,7 @@ async def member_search_partial(
              data-member-id="{member['id']}"
              data-member-name="{member['name']}">
             <div class="font-semibold">{member['name']}</div>
-            <div class="text-xs text-base-content/60">{member['card_number']}</div>
+            <div class="text-xs text-base-content/60">{member['member_number']}</div>
         </div>
         '''
     html += '</div>'

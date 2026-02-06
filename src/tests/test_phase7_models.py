@@ -50,11 +50,18 @@ def clean_phase7_test_data():
         """Delete test data created by this module."""
         try:
             # Delete in reverse order of foreign key dependencies
+            # First delete registration_activities that reference test books (direct FK)
+            session.execute(text("DELETE FROM registration_activities WHERE book_id IN (SELECT id FROM referral_books WHERE code LIKE 'TEST_%')"))
+            # Delete registration_activities that reference test registrations
             session.execute(text("DELETE FROM registration_activities WHERE registration_id IN (SELECT id FROM book_registrations WHERE member_id IN (SELECT id FROM members WHERE member_number = 'TEST_PHASE7_001'))"))
+            # Delete book_registrations
             session.execute(text("DELETE FROM book_registrations WHERE member_id IN (SELECT id FROM members WHERE member_number = 'TEST_PHASE7_001')"))
             session.execute(text("DELETE FROM book_registrations WHERE book_id IN (SELECT id FROM referral_books WHERE code LIKE 'TEST_%')"))
+            # Delete referral_books
             session.execute(text("DELETE FROM referral_books WHERE code LIKE 'TEST_%'"))
+            # Delete test members and users
             session.execute(text("DELETE FROM members WHERE member_number = 'TEST_PHASE7_001'"))
+            session.execute(text("DELETE FROM members WHERE member_number LIKE 'TEST_REF_FRONT_%'"))
             session.execute(text("DELETE FROM users WHERE email = 'phase7_dispatcher@test.com'"))
             session.commit()
         except Exception as e:
@@ -166,9 +173,13 @@ class TestReferralBook:
 
     def test_create_referral_book(self, db_session):
         """Test creating a referral book."""
+        import uuid
+        unique_id = uuid.uuid4().hex[:8]
+        code = f"TEST_BREM_{unique_id}"
+
         book = ReferralBook(
             name="Test Wire Bremerton",
-            code="TEST_WIRE_BREM_1",
+            code=code,
             classification=BookClassification.INSIDE_WIREPERSON,
             book_number=1,
             region=BookRegion.BREMERTON,
@@ -181,7 +192,7 @@ class TestReferralBook:
 
         assert book.id is not None
         assert book.name == "Test Wire Bremerton"
-        assert book.code == "TEST_WIRE_BREM_1"
+        assert book.code == code
         assert book.classification == BookClassification.INSIDE_WIREPERSON
         assert book.region == BookRegion.BREMERTON
         assert book.is_active is True
@@ -201,9 +212,12 @@ class TestReferralBook:
 
     def test_referral_book_defaults(self, db_session):
         """Test default values for referral book."""
+        import uuid
+        unique_id = uuid.uuid4().hex[:8]
+
         book = ReferralBook(
             name="Test Book",
-            code="TEST_BOOK_1",
+            code=f"TEST_DEF_{unique_id}",
             classification=BookClassification.TRADESHOW,
             region=BookRegion.SEATTLE,
         )
@@ -222,15 +236,18 @@ class TestReferralBook:
 
     def test_referral_book_is_wire_book_property(self, db_session):
         """Test the is_wire_book property."""
+        import uuid
+        unique_id = uuid.uuid4().hex[:8]
+
         wire_book = ReferralBook(
             name="Test Wire",
-            code="TEST_WIRE",
+            code=f"TEST_WIRE_{unique_id}",
             classification=BookClassification.INSIDE_WIREPERSON,
             region=BookRegion.SEATTLE,
         )
         tradeshow_book = ReferralBook(
             name="Test Trade",
-            code="TEST_TRADE",
+            code=f"TEST_TRADE_{unique_id}",
             classification=BookClassification.TRADESHOW,
             region=BookRegion.SEATTLE,
         )
