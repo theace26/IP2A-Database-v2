@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Mark Exceptions Report</title>
+    <style>
+        @page {
+            size: letter landscape;
+            margin: 0.5in;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #1e40af;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            color: #1e40af;
+            font-size: 18pt;
+            margin: 0;
+        }
+        .header .subtitle {
+            color: #666;
+            font-size: 11pt;
+            margin: 5px 0;
+        }
+        .header .timestamp {
+            color: #999;
+            font-size: 9pt;
+            margin: 5px 0;
+        }
+        .filters {
+            background-color: #f3f4f6;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .filters h3 {
+            margin: 0 0 8px 0;
+            font-size: 11pt;
+            color: #1e40af;
+        }
+        .filters p {
+            margin: 3px 0;
+            font-size: 9pt;
+        }
+        .summary-cards {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .summary-card {
+            background-color: #dbeafe;
+            padding: 10px;
+            border-radius: 4px;
+            flex: 1;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            text-align: center;
+            min-width: 150px;
+        }
+        .summary-card:last-child {
+            margin-right: 0;
+        }
+        .summary-card .label {
+            font-size: 9pt;
+            color: #1e40af;
+            font-weight: bold;
+        }
+        .summary-card .value {
+            font-size: 16pt;
+            color: #1e40af;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th {
+            background-color: #1e40af;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-size: 9pt;
+        }
+        td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 9pt;
+        }
+        tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        .approved { color: #059669; font-weight: bold; }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 8pt;
+            color: #999;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>IBEW Local 46</h1>
+        <div class="subtitle">Check Mark Exceptions Report</div>
+        <div class="timestamp">Generated: {{ generated_at.strftime('%B %d, %Y at %I:%M %p') }}</div>
+    </div>
+
+    {% if filters %}
+    <div class="filters">
+        <h3>Report Filters</h3>
+        <p><strong>Date Range:</strong> {{ filters.get('start_date', 'All time') }} to {{ filters.get('end_date', 'Today') }}</p>
+    </div>
+    {% endif %}
+
+    {% if summary %}
+    <div class="summary-cards">
+        {% if summary.total_exceptions %}
+        <div class="summary-card">
+            <div class="label">Total Exceptions</div>
+            <div class="value">{{ summary.total_exceptions }}</div>
+        </div>
+        {% endif %}
+        {% if summary.exception_types %}
+        <div class="summary-card">
+            <div class="label">Exception Types</div>
+            <div class="value">{{ summary.exception_types }}</div>
+        </div>
+        {% endif %}
+        {% if summary.approved_count %}
+        <div class="summary-card">
+            <div class="label">Approved</div>
+            <div class="value">{{ summary.approved_count }}</div>
+        </div>
+        {% endif %}
+        {% if summary.most_common_reason %}
+        <div class="summary-card">
+            <div class="label">Most Common Reason</div>
+            <div class="value">{{ summary.most_common_reason }}</div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Member</th>
+                <th>Dispatch Date</th>
+                <th>Exception Reason</th>
+                <th>Approved By</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                <td>{{ row.member }}</td>
+                <td>{{ row.dispatch_date }}</td>
+                <td>{{ row.exception_reason }}</td>
+                <td class="approved">{{ row.approved_by }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>IBEW Local 46 - Referral & Dispatch System</p>
+        <p>This report is confidential and for internal union use only</p>
+    </div>
+</body>
+</html>

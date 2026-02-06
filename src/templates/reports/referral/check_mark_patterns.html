@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Mark Patterns Report</title>
+    <style>
+        @page {
+            size: letter landscape;
+            margin: 0.5in;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #1e40af;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            color: #1e40af;
+            font-size: 18pt;
+            margin: 0;
+        }
+        .header .subtitle {
+            color: #666;
+            font-size: 11pt;
+            margin: 5px 0;
+        }
+        .header .timestamp {
+            color: #999;
+            font-size: 9pt;
+            margin: 5px 0;
+        }
+        .filters {
+            background-color: #f3f4f6;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .filters h3 {
+            margin: 0 0 8px 0;
+            font-size: 11pt;
+            color: #1e40af;
+        }
+        .filters p {
+            margin: 3px 0;
+            font-size: 9pt;
+        }
+        .summary-cards {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .summary-card {
+            background-color: #dbeafe;
+            padding: 10px;
+            border-radius: 4px;
+            flex: 1;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            text-align: center;
+            min-width: 150px;
+        }
+        .summary-card:last-child {
+            margin-right: 0;
+        }
+        .summary-card .label {
+            font-size: 9pt;
+            color: #1e40af;
+            font-weight: bold;
+        }
+        .summary-card .value {
+            font-size: 16pt;
+            color: #1e40af;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th {
+            background-color: #1e40af;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-size: 9pt;
+        }
+        td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 9pt;
+        }
+        tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        .critical { background-color: #fed7d7 !important; color: #991b1b; font-weight: bold; }
+        .warning { background-color: #fef3c7 !important; color: #92400e; font-weight: bold; }
+        .good { color: #059669; }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 8pt;
+            color: #999;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>IBEW Local 46</h1>
+        <div class="subtitle">Check Mark Patterns Report</div>
+        <div class="timestamp">Generated: {{ generated_at.strftime('%B %d, %Y at %I:%M %p') }}</div>
+    </div>
+
+    {% if filters %}
+    <div class="filters">
+        <h3>Report Filters</h3>
+        <p><strong>Date Range:</strong> {{ filters.get('start_date', 'All time') }} to {{ filters.get('end_date', 'Today') }}</p>
+    </div>
+    {% endif %}
+
+    {% if summary %}
+    <div class="summary-cards">
+        {% if summary.total_members %}
+        <div class="summary-card">
+            <div class="label">Members with Check Marks</div>
+            <div class="value">{{ summary.total_members }}</div>
+        </div>
+        {% endif %}
+        {% if summary.critical_risk %}
+        <div class="summary-card">
+            <div class="label">Critical Risk (3+ Marks)</div>
+            <div class="value">{{ summary.critical_risk }}</div>
+        </div>
+        {% endif %}
+        {% if summary.warning_risk %}
+        <div class="summary-card">
+            <div class="label">Warning Risk (2 Marks)</div>
+            <div class="value">{{ summary.warning_risk }}</div>
+        </div>
+        {% endif %}
+        {% if summary.avg_marks %}
+        <div class="summary-card">
+            <div class="label">Avg Marks per Member</div>
+            <div class="value">{{ summary.avg_marks }}</div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Member</th>
+                <th>Book</th>
+                <th>Check Marks</th>
+                <th>Status</th>
+                <th>Risk Level</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr class="{% if row.marks|int >= 3 %}critical{% elif row.marks|int == 2 %}warning{% endif %}">
+                <td>{{ row.member }}</td>
+                <td>{{ row.book }}</td>
+                <td>{{ row.marks }}/3</td>
+                <td>{{ row.status }}</td>
+                <td class="{% if row.marks|int >= 3 %}critical{% elif row.marks|int == 2 %}warning{% else %}good{% endif %}">
+                    {% if row.marks|int >= 3 %}CRITICAL{% elif row.marks|int == 2 %}WARNING{% else %}GOOD{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>IBEW Local 46 - Referral & Dispatch System</p>
+        <p>This report is confidential and for internal union use only</p>
+    </div>
+</body>
+</html>

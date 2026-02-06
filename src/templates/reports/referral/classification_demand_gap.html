@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classification Demand Gap Analysis</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 0.5in;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #1e40af;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            color: #1e40af;
+            font-size: 18pt;
+            margin: 0;
+        }
+        .header .subtitle {
+            color: #666;
+            font-size: 11pt;
+            margin: 5px 0;
+        }
+        .header .timestamp {
+            color: #999;
+            font-size: 9pt;
+            margin: 5px 0;
+        }
+        .filters {
+            background-color: #f3f4f6;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .filters h3 {
+            margin: 0 0 8px 0;
+            font-size: 11pt;
+            color: #1e40af;
+        }
+        .filters p {
+            margin: 3px 0;
+            font-size: 9pt;
+        }
+        .summary-cards {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .summary-card {
+            background-color: #dbeafe;
+            padding: 10px;
+            border-radius: 4px;
+            flex: 1;
+            margin-right: 10px;
+            text-align: center;
+        }
+        .summary-card:last-child {
+            margin-right: 0;
+        }
+        .summary-card .label {
+            font-size: 9pt;
+            color: #1e40af;
+            font-weight: bold;
+        }
+        .summary-card .value {
+            font-size: 16pt;
+            color: #1e40af;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th {
+            background-color: #1e40af;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-size: 10pt;
+        }
+        td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 9pt;
+        }
+        tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        .status-surplus {
+            color: #059669;
+            font-weight: bold;
+        }
+        .status-balanced {
+            color: #0284c7;
+            font-weight: bold;
+        }
+        .status-shortage {
+            color: #dc2626;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 8pt;
+            color: #999;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>IBEW Local 46</h1>
+        <div class="subtitle">Classification Demand Gap Analysis</div>
+        <div class="timestamp">Generated: {{ timestamp }}</div>
+    </div>
+
+    {% if filters %}
+    <div class="filters">
+        <h3>Report Filters</h3>
+        {% for key, value in filters.items() %}
+        <p><strong>{{ key }}:</strong> {{ value }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if summary %}
+    <div class="summary-cards">
+        {% if summary.total_available %}
+        <div class="summary-card">
+            <div class="label">Total Available</div>
+            <div class="value">{{ summary.total_available }}</div>
+        </div>
+        {% endif %}
+        {% if summary.total_demand %}
+        <div class="summary-card">
+            <div class="label">Total Demand</div>
+            <div class="value">{{ summary.total_demand }}</div>
+        </div>
+        {% endif %}
+        {% if summary.overall_gap %}
+        <div class="summary-card">
+            <div class="label">Overall Gap</div>
+            <div class="value">{{ summary.overall_gap }}</div>
+        </div>
+        {% endif %}
+        {% if summary.shortages %}
+        <div class="summary-card">
+            <div class="label">Classifications with Shortages</div>
+            <div class="value">{{ summary.shortages }}</div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Classification</th>
+                <th>Available</th>
+                <th>Demand</th>
+                <th>Gap</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                <td>{{ row.classification }}</td>
+                <td>{{ row.available }}</td>
+                <td>{{ row.demand }}</td>
+                <td>{{ row.gap }}</td>
+                <td class="{% if row.status == 'Surplus' %}status-surplus{% elif row.status == 'Balanced' %}status-balanced{% else %}status-shortage{% endif %}">
+                    {{ row.status }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>IBEW Local 46 - Referral & Dispatch System</p>
+        <p>This report is confidential and for internal union use only</p>
+    </div>
+</body>
+</html>

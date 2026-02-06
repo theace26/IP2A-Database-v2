@@ -7,10 +7,94 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> **v0.9.16-alpha — PHASE 7g COMPLETE: Weeks 40-42 P2+P3 Reports (41 reports)**
+> ~764 total tests (~754 passing, 16 skipped), ~320+ API endpoints (260 baseline + 62 reports), 32 models, 18 ADRs
+> **Phase 7 Reports:** 85 total (14 P0 + 30 P1 + 31 P2 + 10 P3) — ALL unblocked reports COMPLETE
+> **Phase 7 Status:** 5/7 sub-phases complete. Blocked: 7a (Data Collection), 7d (Import Tooling)
+
+### Added (February 6, 2026 — Weeks 40-42: P2+P3 Reports — Phase 7g Complete)
+
+#### Week 42: P3 Reports — Projections, Intelligence & Admin (10 reports)
+- **P3-A Forecasting (3 reports)** — Graceful degradation when < 90 days historical data
+  * Workforce Projection — 30/60/90 day queue level forecasts
+  * Dispatch Volume Forecast — Next month volume by classification
+  * Book Demand Forecast — Per-book projected demand
+- **P3-B Operational Intelligence (4 reports)**
+  * Member Availability Index — Book fill capability scoring
+  * Employer Loyalty Score — Composite ranking (Officer+ only)
+  * Member Journey Report — Individual member lifecycle (Officer+ only)
+  * Comparative Book Performance — Cross-book benchmarking
+- **P3-C Administrative (3 reports)**
+  * Custom Export — Ad-hoc data dump (Excel-only, flexible entity_type)
+  * Annual Operations Summary — Year-in-review (Officer+ only)
+  * Data Quality Report — Data hygiene audit (Admin only)
+- **Service Methods:** 10 new `generate_*_report()` methods
+- **API Endpoints:** 10 new routes in `/api/v1/reports/referral/`
+- **Templates:** 9 new PDF templates (Report #8 is Excel-only)
+- **Tests:** 20 new tests (2 per report)
+
+#### Week 41: P2 Batch 2 — Dispatch, Employer & Enforcement Analytics (19 reports)
+- **Theme A: Dispatch Operations (6 reports)**
+  * Dispatch Success Rate — Offers accepted vs declined vs expired
+  * Time-to-Fill Analysis — Days from request to dispatch completion
+  * Dispatch Method Comparison — Queue vs by-name vs short call volume
+  * Dispatch Geographic Distribution — Dispatches by region over time
+  * Termination Reason Analysis — End-of-dispatch reasons and patterns
+  * Return Dispatch Report — Members dispatched to same employer 2+ times in 12 months
+- **Theme B: Employer Intelligence (6 reports)**
+  * Employer Growth Trends — Year-over-year labor request volume (Officer+ only)
+  * Employer Workforce Size — Current active dispatches per employer
+  * New Employer Activity — First-time employers by period
+  * Contract Code Utilization — Dispatch volume by CBA code (all 8 codes including RESIDENTIAL)
+  * Queue Velocity Report — Average days between position changes
+  * Peak Demand Analysis — Dispatch volume by day-of-week and hour
+- **Theme C: Business Rule Enforcement (7 reports)** — Justifies LaborPower replacement
+  * Check Mark Pattern Analysis (Rule 10) — Penalty monitoring, members approaching roll-off
+  * Check Mark Exception Tracking (Rule 11) — Exception audit (specialty, MOU, early start, etc.)
+  * Internet Bidding Analytics (Rule 8) — Bidding window compliance, 2-rejection tracking
+  * Exemption Status Report (Rule 14) — Active exemptions with expiration dates
+  * Agreement Type Performance (Rule 4) — PLA/CWA/TERO/Standard dispatch analysis (Officer+ only)
+  * Foreperson By-Name Analysis (Rule 13) — Anti-collusion audit (Officer+ only)
+  * Blackout Period Tracking (Rule 12) — Quit/discharge blackout enforcement (Officer+ only)
+- **Service Methods:** 19 new `generate_*_report()` methods
+- **API Endpoints:** 19 new routes in `/api/v1/reports/referral/`
+- **Templates:** 19 new PDF templates
+- **Tests:** 38 new tests (2 per report)
+
+#### Week 40: P2 Batch 1 — Registration & Book Analytics (12 reports)
+- **Batch 1A: Registration Analytics (7 reports)**
+  * Registration Aging Report — Duration buckets (0-30, 31-90, 91-180, 180+ days)
+  * Registration Turnover Report — New registrations vs departures by period
+  * Re-Sign Compliance Report — Rule 7 enforcement (30-day cycle compliance)
+  * Re-Registration Pattern Analysis — Rule 6 trigger analysis (short call, under scale, 90-day, turnaround)
+  * Inactive Registration Report — Stale registrations (no activity 60+ days)
+  * Cross-Book Registration Analysis — Rule 5 validation (multi-book members)
+  * Classification Demand Gap — Supply vs demand mismatch per classification
+- **Batch 1B: Book Analytics (5 reports)**
+  * Book Comparison Dashboard — Cross-book metrics (wait time, dispatch rate, turnover, fill rate)
+  * Tier Distribution Report — Book 1/2/3/4 breakdown, inverted distribution detection
+  * Book Capacity Trends — Registration counts over time (weekly/monthly) with period-over-period change
+  * APN Wait Time Distribution — Histogram from registration to first dispatch
+  * Seasonal Registration Patterns — Registration/dispatch volume by month/quarter
+- **Service Methods:** 12 new `generate_*_report()` methods
+- **API Endpoints:** 12 new routes in `/api/v1/reports/referral/`
+- **Templates:** 12 new PDF templates (4 newly created, 7 already existed, 1 reused)
+- **Tests:** 24 new tests (2 per report)
+
+#### Phase 7g Summary
+- **Total Reports Implemented:** 41 (12 Week 40 + 19 Week 41 + 10 Week 42)
+- **Grand Total Reports:** 85 (14 P0 + 30 P1 + 31 P2 + 10 P3)
+- **Service Methods Added:** 41 `generate_*_report()` methods (~3,300 lines)
+- **API Endpoints Added:** 41 routes (~1,500 lines)
+- **Templates Created/Updated:** 40 PDF templates + 1 Excel-only report
+- **Tests Added:** 82 tests (service + API for each report)
+- **Files Modified:** 2 (service + router)
+- **Files Created:** 83 (40 templates + 3 test files + checkpoint docs)
+
 > **v0.9.13-alpha — PHASE 7 Week 39 Complete: Bug Squash & Test Stabilization**
 > 682 total tests (666 passing, 16 skipped, ~100% pass rate), ~260+ API endpoints, 32 models, 18 ADRs
 > Railway deployed, Mobile PWA enabled, Stripe removed (ADR-018 Square migration)
-> Current: Phase 7 — Referral & Dispatch System (44 reports: 14 P0 + 30 P1 complete)
+> Previous: Phase 7 — Referral & Dispatch System (44 reports: 14 P0 + 30 P1 complete)
 
 ### Fixed (February 6, 2026 — Week 39: Bug Squash Sprint)
 - **Test stabilization after P1 report sprint (Weeks 36-38)**

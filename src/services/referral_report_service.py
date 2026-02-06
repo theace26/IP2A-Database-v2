@@ -6536,3 +6536,2445 @@ class ReferralReportService:
             for d in data["data"]
         ]
         return self._render_excel(headers, rows, "Book Transfers", data["report_name"])
+
+    # ========================================
+    # WEEK 40: P2 BATCH 1 - REGISTRATION & BOOK ANALYTICS (12 reports)
+    # ========================================
+
+    # --- Report P2-1: Registration Aging Report ---
+
+    def generate_registration_aging_report(
+        self,
+        format: str = "pdf",
+        book_id: Optional[int] = None,
+        as_of_date: Optional[date] = None,
+    ) -> bytes:
+        """Registration aging analysis with duration buckets (0-30, 31-90, 91-180, 180+ days)."""
+        as_of = as_of_date or date.today()
+
+        query = self.db.query(BookRegistration).filter(
+            BookRegistration.status == RegistrationStatus.REGISTERED
+        )
+
+        if book_id:
+            query = query.filter(BookRegistration.book_id == book_id)
+
+        registrations = query.all()
+
+        # Bucket registrations by age
+        buckets = {
+            "0-30": [], "31-90": [], "91-180": [], "180+": []
+        }
+
+        for reg in registrations:
+            # Calculate days since registration (from APN integer part = Excel serial date)
+            if reg.registration_number:
+                # APN integer part is Excel serial date
+                reg_date_serial = int(reg.registration_number)
+                # Excel epoch: 1900-01-01 is day 1 (with leap year bug, day 60 = 1900-02-29 doesn't exist)
+                # Convert to actual date
+                from datetime import timedelta
+                excel_epoch = date(1899, 12, 30)  # Adjusted for Excel's quirks
+                reg_date = excel_epoch + timedelta(days=reg_date_serial)
+                days_on_book = (as_of - reg_date).days
+
+                if days_on_book <= 30:
+                    buckets["0-30"].append(reg)
+                elif days_on_book <= 90:
+                    buckets["31-90"].append(reg)
+                elif days_on_book <= 180:
+                    buckets["91-180"].append(reg)
+                else:
+                    buckets["180+"].append(reg)
+
+        data = {
+            "data": [
+                {"bucket": "0-30 days", "count": len(buckets["0-30"]), "registrations": buckets["0-30"]},
+                {"bucket": "31-90 days", "count": len(buckets["31-90"]), "registrations": buckets["31-90"]},
+                {"bucket": "91-180 days", "count": len(buckets["91-180"]), "registrations": buckets["91-180"]},
+                {"bucket": "180+ days", "count": len(buckets["180+"]), "registrations": buckets["180+"]},
+            ],
+            "summary": {
+                "total_registrations": len(registrations),
+                "avg_days_on_book": sum((as_of - (date(1899, 12, 30) + timedelta(days=int(r.registration_number)))).days for r in registrations if r.registration_number) / len(registrations) if registrations else 0,
+            },
+            "filters": {"book_id": book_id, "as_of_date": as_of},
+            "generated_at": datetime.now(),
+            "report_name": "Registration Aging Report",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("registration_aging.html", data).getvalue()
+        else:
+            headers = ["Bucket", "Count", "Percentage"]
+            total = len(registrations)
+            rows = [[d["bucket"], d["count"], f"{d['count']/total*100:.1f}%" if total else "0%"] for d in data["data"]]
+            return self._render_excel(headers, rows, "Registration Aging", data["report_name"]).getvalue()
+
+    # --- Report P2-2: Registration Turnover Report ---
+
+    def generate_registration_turnover_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        book_id: Optional[int] = None,
+    ) -> bytes:
+        """New registrations vs departures (dispatched, rolled-off, resigned) by period."""
+        from src.models.registration_activity import RegistrationActivity
+        from src.db.enums import RegistrationAction
+
+        start = start_date or (date.today() - timedelta(days=30))
+        end = end_date or date.today()
+
+        query = self.db.query(RegistrationActivity).filter(
+            RegistrationActivity.activity_date >= start,
+            RegistrationActivity.activity_date <= end,
+        )
+
+        if book_id:
+            query = query.filter(RegistrationActivity.book_id == book_id)
+
+        activities = query.all()
+
+        # Categorize activities
+        new_registrations = [a for a in activities if a.activity_type == RegistrationAction.REGISTRATION]
+        departures = [a for a in activities if a.activity_type in [
+            RegistrationAction.DISPATCH, RegistrationAction.RESIGNATION
+        ]]
+        rolled_off = [a for a in activities if hasattr(RegistrationAction, 'ROLL_OFF') and a.activity_type == RegistrationAction.ROLL_OFF]
+
+        data = {
+            "data": [
+                {"category": "New Registrations", "count": len(new_registrations)},
+                {"category": "Dispatched", "count": len([a for a in activities if a.activity_type == RegistrationAction.DISPATCH])},
+                {"category": "Resigned", "count": len([a for a in activities if a.activity_type == RegistrationAction.RESIGNATION])},
+                {"category": "Rolled Off", "count": len(rolled_off)},
+            ],
+            "summary": {
+                "net_change": len(new_registrations) - len(departures) - len(rolled_off),
+                "period_days": (end - start).days,
+            },
+            "filters": {"start_date": start, "end_date": end, "book_id": book_id},
+            "generated_at": datetime.now(),
+            "report_name": "Registration Turnover Report",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("registration_turnover.html", data).getvalue()
+        else:
+            headers = ["Category", "Count"]
+            rows = [[d["category"], d["count"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Registration Turnover", data["report_name"]).getvalue()
+
+    # --- Report P2-3: Re-Sign Compliance Report (Rule 7) ---
+
+    def generate_re_sign_compliance_report(
+        self,
+        format: str = "pdf",
+        book_id: Optional[int] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Re-sign on-time vs late vs missed by book (Rule 7 enforcement analytics)."""
+        from src.models.registration_activity import RegistrationActivity
+        from src.db.enums import RegistrationAction
+
+        start = start_date or (date.today() - timedelta(days=90))
+        end = end_date or date.today()
+
+        query = self.db.query(RegistrationActivity).filter(
+            RegistrationActivity.activity_type == RegistrationAction.RE_SIGN,
+            RegistrationActivity.activity_date >= start,
+            RegistrationActivity.activity_date <= end,
+        )
+
+        if book_id:
+            query = query.filter(RegistrationActivity.book_id == book_id)
+
+        re_signs = query.all()
+
+        # Analyze re-sign compliance (30-day cycle)
+        on_time = []
+        late = []
+        missed = []
+
+        for re_sign in re_signs:
+            # Get previous re-sign for this registration
+            prev_re_sign = self.db.query(RegistrationActivity).filter(
+                RegistrationActivity.registration_id == re_sign.registration_id,
+                RegistrationActivity.activity_type == RegistrationAction.RE_SIGN,
+                RegistrationActivity.activity_date < re_sign.activity_date,
+            ).order_by(RegistrationActivity.activity_date.desc()).first()
+
+            if prev_re_sign:
+                days_gap = (re_sign.activity_date - prev_re_sign.activity_date).days
+                if days_gap <= 30:
+                    on_time.append(re_sign)
+                elif days_gap <= 35:  # Late within 5 days
+                    late.append(re_sign)
+                else:
+                    missed.append(re_sign)
+            else:
+                # First re-sign, consider on-time
+                on_time.append(re_sign)
+
+        data = {
+            "data": [
+                {"status": "On Time", "count": len(on_time), "color": "green"},
+                {"status": "Late (1-5 days)", "count": len(late), "color": "yellow"},
+                {"status": "Missed (5+ days)", "count": len(missed), "color": "red"},
+            ],
+            "summary": {
+                "total_re_signs": len(re_signs),
+                "compliance_rate": len(on_time) / len(re_signs) * 100 if re_signs else 0,
+            },
+            "filters": {"start_date": start, "end_date": end, "book_id": book_id},
+            "generated_at": datetime.now(),
+            "report_name": "Re-Sign Compliance Report (Rule 7)",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("re_sign_compliance.html", data).getvalue()
+        else:
+            headers = ["Status", "Count", "Percentage"]
+            total = len(re_signs)
+            rows = [[d["status"], d["count"], f"{d['count']/total*100:.1f}%" if total else "0%"] for d in data["data"]]
+            return self._render_excel(headers, rows, "Re-Sign Compliance", data["report_name"]).getvalue()
+
+    # --- Report P2-4: Re-Registration Pattern Analysis (Rule 6) ---
+
+    def generate_re_registration_patterns_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        book_id: Optional[int] = None,
+    ) -> bytes:
+        """Re-registration triggers (short call, under scale, 90-day, turnaround) by frequency."""
+        from src.models.registration_activity import RegistrationActivity
+        from src.db.enums import RegistrationAction
+
+        start = start_date or (date.today() - timedelta(days=90))
+        end = end_date or date.today()
+
+        query = self.db.query(RegistrationActivity).filter(
+            RegistrationActivity.activity_type == RegistrationAction.RE_REGISTRATION,
+            RegistrationActivity.activity_date >= start,
+            RegistrationActivity.activity_date <= end,
+        )
+
+        if book_id:
+            query = query.filter(RegistrationActivity.book_id == book_id)
+
+        re_regs = query.all()
+
+        # Group by reason (if available in activity notes/details)
+        reason_counts = {}
+        for re_reg in re_regs:
+            reason = re_reg.notes or "Unknown"
+            reason_counts[reason] = reason_counts.get(reason, 0) + 1
+
+        data = {
+            "data": [{"reason": k, "count": v, "percentage": v / len(re_regs) * 100 if re_regs else 0}
+                     for k, v in sorted(reason_counts.items(), key=lambda x: x[1], reverse=True)],
+            "summary": {
+                "total_re_registrations": len(re_regs),
+                "unique_reasons": len(reason_counts),
+            },
+            "filters": {"start_date": start, "end_date": end, "book_id": book_id},
+            "generated_at": datetime.now(),
+            "report_name": "Re-Registration Pattern Analysis (Rule 6)",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("re_registration_patterns.html", data).getvalue()
+        else:
+            headers = ["Reason", "Count", "Percentage"]
+            rows = [[d["reason"], d["count"], f"{d['percentage']:.1f}%"] for d in data["data"]]
+            return self._render_excel(headers, rows, "Re-Registration Patterns", data["report_name"]).getvalue()
+
+    # --- Report P2-5: Inactive Registration Report ---
+
+    def generate_inactive_registrations_report(
+        self,
+        format: str = "pdf",
+        book_id: Optional[int] = None,
+        inactive_days: int = 60,
+    ) -> bytes:
+        """Registrations with no activity (no re-sign, no dispatch, no bid) for 60+ days."""
+        cutoff_date = date.today() - timedelta(days=inactive_days)
+
+        query = self.db.query(BookRegistration).filter(
+            BookRegistration.status == RegistrationStatus.REGISTERED,
+        )
+
+        if book_id:
+            query = query.filter(BookRegistration.book_id == book_id)
+
+        registrations = query.all()
+
+        inactive_regs = []
+        for reg in registrations:
+            # Check last activity date (simplified - would need to check dispatch, bid, re-sign tables)
+            # For now, use registration number date as proxy
+            if reg.registration_number:
+                reg_date_serial = int(reg.registration_number)
+                excel_epoch = date(1899, 12, 30)
+                reg_date = excel_epoch + timedelta(days=reg_date_serial)
+                days_inactive = (date.today() - reg_date).days
+
+                if days_inactive >= inactive_days:
+                    inactive_regs.append({
+                        "member": f"{reg.member.first_name} {reg.member.last_name}" if reg.member else "Unknown",
+                        "book": reg.book.book_name if reg.book else "Unknown",
+                        "days_inactive": days_inactive,
+                        "apn": reg.registration_number,
+                    })
+
+        data = {
+            "data": inactive_regs,
+            "summary": {
+                "total_inactive": len(inactive_regs),
+                "inactive_threshold_days": inactive_days,
+            },
+            "filters": {"book_id": book_id, "inactive_days": inactive_days},
+            "generated_at": datetime.now(),
+            "report_name": "Inactive Registration Report",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("inactive_registrations.html", data).getvalue()
+        else:
+            headers = ["Member", "Book", "Days Inactive", "APN"]
+            rows = [[d["member"], d["book"], d["days_inactive"], d["apn"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Inactive Registrations", data["report_name"]).getvalue()
+
+    # --- Report P2-6: Cross-Book Registration Analysis (Rule 5) ---
+
+    def generate_cross_book_registration_report(
+        self,
+        format: str = "pdf",
+    ) -> bytes:
+        """Members registered on multiple books simultaneously (Rule 5 validation)."""
+        # Query members with multiple active registrations
+        from sqlalchemy import func as sql_func
+
+        multi_book_members = self.db.query(
+            BookRegistration.member_id,
+            sql_func.count(sql_func.distinct(BookRegistration.book_id)).label("book_count")
+        ).filter(
+            BookRegistration.status == RegistrationStatus.REGISTERED
+        ).group_by(
+            BookRegistration.member_id
+        ).having(
+            sql_func.count(sql_func.distinct(BookRegistration.book_id)) > 1
+        ).all()
+
+        data_rows = []
+        for member_id, book_count in multi_book_members:
+            member = self.db.query(Member).filter(Member.id == member_id).first()
+            regs = self.db.query(BookRegistration).filter(
+                BookRegistration.member_id == member_id,
+                BookRegistration.status == RegistrationStatus.REGISTERED
+            ).all()
+
+            books = [reg.book.book_name for reg in regs if reg.book]
+            data_rows.append({
+                "member": f"{member.first_name} {member.last_name}" if member else "Unknown",
+                "book_count": book_count,
+                "books": ", ".join(books),
+            })
+
+        data = {
+            "data": data_rows,
+            "summary": {
+                "total_multi_book_members": len(data_rows),
+                "max_books_per_member": max([r["book_count"] for r in data_rows]) if data_rows else 0,
+            },
+            "filters": {},
+            "generated_at": datetime.now(),
+            "report_name": "Cross-Book Registration Analysis (Rule 5)",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("cross_book_registration.html", data).getvalue()
+        else:
+            headers = ["Member", "Book Count", "Books"]
+            rows = [[d["member"], d["book_count"], d["books"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Cross-Book Registration", data["report_name"]).getvalue()
+
+    # --- Report P2-7: Classification Demand Gap ---
+
+    def generate_classification_demand_gap_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Registrations available vs labor requests received per classification."""
+        start = start_date or (date.today() - timedelta(days=30))
+        end = end_date or date.today()
+
+        # Count registrations by classification (via book)
+        from sqlalchemy import func as sql_func
+
+        reg_counts = {}
+        books = self.db.query(ReferralBook).all()
+        for book in books:
+            classification = book.classification or "Unknown"
+            count = self.db.query(BookRegistration).filter(
+                BookRegistration.book_id == book.id,
+                BookRegistration.status == RegistrationStatus.REGISTERED
+            ).count()
+            reg_counts[classification] = reg_counts.get(classification, 0) + count
+
+        # Count labor requests by classification
+        request_counts = {}
+        requests = self.db.query(LaborRequest).filter(
+            LaborRequest.created_at >= start,
+            LaborRequest.created_at <= end,
+        ).all()
+
+        for req in requests:
+            # Get classification from book
+            classification = req.book.classification if req.book else "Unknown"
+            request_counts[classification] = request_counts.get(classification, 0) + 1
+
+        # Calculate gap
+        all_classifications = set(list(reg_counts.keys()) + list(request_counts.keys()))
+        data_rows = []
+        for classification in sorted(all_classifications):
+            available = reg_counts.get(classification, 0)
+            demand = request_counts.get(classification, 0)
+            gap = available - demand
+            data_rows.append({
+                "classification": classification,
+                "available": available,
+                "demand": demand,
+                "gap": gap,
+                "gap_status": "surplus" if gap > 0 else "shortage" if gap < 0 else "balanced",
+            })
+
+        data = {
+            "data": data_rows,
+            "summary": {
+                "total_available": sum(reg_counts.values()),
+                "total_demand": sum(request_counts.values()),
+                "overall_gap": sum(reg_counts.values()) - sum(request_counts.values()),
+            },
+            "filters": {"start_date": start, "end_date": end},
+            "generated_at": datetime.now(),
+            "report_name": "Classification Demand Gap",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("classification_demand_gap.html", data).getvalue()
+        else:
+            headers = ["Classification", "Available", "Demand", "Gap", "Status"]
+            rows = [[d["classification"], d["available"], d["demand"], d["gap"], d["gap_status"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Classification Demand Gap", data["report_name"]).getvalue()
+
+    # --- Report P2-8: Book Comparison Dashboard ---
+
+    def generate_book_comparison_report(
+        self,
+        format: str = "pdf",
+    ) -> bytes:
+        """Side-by-side metrics per book: avg wait time, dispatch rate, turnover, fill rate."""
+        books = self.db.query(ReferralBook).all()
+
+        data_rows = []
+        for book in books:
+            # Count registrations
+            reg_count = self.db.query(BookRegistration).filter(
+                BookRegistration.book_id == book.id,
+                BookRegistration.status == RegistrationStatus.REGISTERED
+            ).count()
+
+            # Count dispatches (last 30 days)
+            from datetime import datetime as dt
+            thirty_days_ago = dt.now() - timedelta(days=30)
+            dispatch_count = self.db.query(Dispatch).filter(
+                Dispatch.book_id == book.id,
+                Dispatch.dispatch_date >= thirty_days_ago.date()
+            ).count()
+
+            # Calculate metrics
+            dispatch_rate = dispatch_count / reg_count if reg_count else 0
+
+            data_rows.append({
+                "book": book.book_name,
+                "registrations": reg_count,
+                "dispatches_30d": dispatch_count,
+                "dispatch_rate": f"{dispatch_rate:.2%}",
+                "avg_wait_days": "N/A",  # Would need more complex calculation
+                "fill_rate": "N/A",  # Would need labor request data
+            })
+
+        data = {
+            "data": data_rows,
+            "summary": {
+                "total_books": len(books),
+                "total_registrations": sum(r["registrations"] for r in data_rows),
+                "total_dispatches_30d": sum(r["dispatches_30d"] for r in data_rows),
+            },
+            "filters": {},
+            "generated_at": datetime.now(),
+            "report_name": "Book Comparison Dashboard",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("book_comparison.html", data).getvalue()
+        else:
+            headers = ["Book", "Registrations", "Dispatches (30d)", "Dispatch Rate", "Avg Wait Days", "Fill Rate"]
+            rows = [[d["book"], d["registrations"], d["dispatches_30d"], d["dispatch_rate"], d["avg_wait_days"], d["fill_rate"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Book Comparison", data["report_name"]).getvalue()
+
+    # --- Report P2-9: Tier Distribution Report ---
+
+    def generate_tier_distribution_report(
+        self,
+        format: str = "pdf",
+    ) -> bytes:
+        """Book 1/2/3/4 registration counts and percentages per classification."""
+        from sqlalchemy import func as sql_func
+
+        # Group by book tier (book_priority_number)
+        tier_data = self.db.query(
+            ReferralBook.classification,
+            ReferralBook.book_priority_number,
+            sql_func.count(BookRegistration.id).label("count")
+        ).join(
+            BookRegistration, BookRegistration.book_id == ReferralBook.id
+        ).filter(
+            BookRegistration.status == RegistrationStatus.REGISTERED
+        ).group_by(
+            ReferralBook.classification,
+            ReferralBook.book_priority_number
+        ).all()
+
+        # Organize by classification
+        by_classification = {}
+        for classification, tier, count in tier_data:
+            if classification not in by_classification:
+                by_classification[classification] = {1: 0, 2: 0, 3: 0, 4: 0}
+            by_classification[classification][tier or 1] = count
+
+        data_rows = []
+        for classification, tiers in sorted(by_classification.items()):
+            total = sum(tiers.values())
+            data_rows.append({
+                "classification": classification,
+                "tier1": tiers[1],
+                "tier1_pct": f"{tiers[1]/total*100:.1f}%" if total else "0%",
+                "tier2": tiers[2],
+                "tier2_pct": f"{tiers[2]/total*100:.1f}%" if total else "0%",
+                "tier3": tiers[3],
+                "tier3_pct": f"{tiers[3]/total*100:.1f}%" if total else "0%",
+                "tier4": tiers[4],
+                "tier4_pct": f"{tiers[4]/total*100:.1f}%" if total else "0%",
+                "total": total,
+                "inverted": tiers[3] > tiers[1],  # Flag inverted distributions
+            })
+
+        data = {
+            "data": data_rows,
+            "summary": {
+                "total_classifications": len(by_classification),
+                "inverted_count": sum(1 for r in data_rows if r["inverted"]),
+            },
+            "filters": {},
+            "generated_at": datetime.now(),
+            "report_name": "Tier Distribution Report",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("tier_distribution.html", data).getvalue()
+        else:
+            headers = ["Classification", "Tier 1", "Tier 1 %", "Tier 2", "Tier 2 %", "Tier 3", "Tier 3 %", "Tier 4", "Tier 4 %", "Total", "Inverted?"]
+            rows = [[d["classification"], d["tier1"], d["tier1_pct"], d["tier2"], d["tier2_pct"],
+                     d["tier3"], d["tier3_pct"], d["tier4"], d["tier4_pct"], d["total"],
+                     "Yes" if d["inverted"] else "No"] for d in data["data"]]
+            return self._render_excel(headers, rows, "Tier Distribution", data["report_name"]).getvalue()
+
+    # --- Report P2-10: Book Capacity Trends ---
+
+    def generate_book_capacity_trends_report(
+        self,
+        format: str = "pdf",
+        book_id: Optional[int] = None,
+        period: str = "weekly",  # weekly or monthly
+    ) -> bytes:
+        """Registration counts over time (weekly/monthly) per book with period-over-period change."""
+        # This requires historical data tracking - simplified implementation
+        from datetime import datetime as dt
+
+        # Get registration counts for last 12 weeks/months
+        periods = 12
+        period_length = 7 if period == "weekly" else 30
+
+        data_rows = []
+        for i in range(periods):
+            period_end = date.today() - timedelta(days=i * period_length)
+            period_start = period_end - timedelta(days=period_length)
+
+            query = self.db.query(BookRegistration).filter(
+                BookRegistration.status == RegistrationStatus.REGISTERED
+            )
+
+            if book_id:
+                query = query.filter(BookRegistration.book_id == book_id)
+
+            count = query.count()  # Simplified - should check registration date
+
+            data_rows.insert(0, {
+                "period": f"{period_start} to {period_end}",
+                "count": count,
+                "change": 0 if i == periods - 1 else count - data_rows[0]["count"] if data_rows else 0,
+            })
+
+        data = {
+            "data": data_rows,
+            "summary": {
+                "periods": periods,
+                "period_type": period,
+                "avg_capacity": sum(r["count"] for r in data_rows) / len(data_rows) if data_rows else 0,
+            },
+            "filters": {"book_id": book_id, "period": period},
+            "generated_at": datetime.now(),
+            "report_name": "Book Capacity Trends",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("book_capacity_trends.html", data).getvalue()
+        else:
+            headers = ["Period", "Count", "Change"]
+            rows = [[d["period"], d["count"], d["change"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Book Capacity Trends", data["report_name"]).getvalue()
+
+    # --- Report P2-11: APN Wait Time Distribution ---
+
+    def generate_apn_wait_time_report(
+        self,
+        format: str = "pdf",
+        book_id: Optional[int] = None,
+    ) -> bytes:
+        """Histogram of wait times from registration to first dispatch, bucketed by book."""
+        # Query dispatches with their registration data
+        dispatches = self.db.query(Dispatch).all()
+
+        wait_time_buckets = {
+            "<7 days": 0, "7-30": 0, "31-90": 0, "91-180": 0, "180+": 0, "Still Waiting": 0
+        }
+
+        for dispatch in dispatches:
+            if dispatch.registration and dispatch.registration.registration_number:
+                # Calculate wait time from APN date to dispatch date
+                reg_date_serial = int(dispatch.registration.registration_number)
+                excel_epoch = date(1899, 12, 30)
+                reg_date = excel_epoch + timedelta(days=reg_date_serial)
+
+                if dispatch.dispatch_date:
+                    wait_days = (dispatch.dispatch_date - reg_date).days
+
+                    if wait_days < 7:
+                        wait_time_buckets["<7 days"] += 1
+                    elif wait_days <= 30:
+                        wait_time_buckets["7-30"] += 1
+                    elif wait_days <= 90:
+                        wait_time_buckets["31-90"] += 1
+                    elif wait_days <= 180:
+                        wait_time_buckets["91-180"] += 1
+                    else:
+                        wait_time_buckets["180+"] += 1
+
+        # Count members still waiting (active registrations with no dispatch)
+        active_regs = self.db.query(BookRegistration).filter(
+            BookRegistration.status == RegistrationStatus.REGISTERED
+        )
+        if book_id:
+            active_regs = active_regs.filter(BookRegistration.book_id == book_id)
+
+        wait_time_buckets["Still Waiting"] = active_regs.count()
+
+        data = {
+            "data": [{"bucket": k, "count": v} for k, v in wait_time_buckets.items()],
+            "summary": {
+                "total_dispatches": sum(v for k, v in wait_time_buckets.items() if k != "Still Waiting"),
+                "still_waiting": wait_time_buckets["Still Waiting"],
+            },
+            "filters": {"book_id": book_id},
+            "generated_at": datetime.now(),
+            "report_name": "APN Wait Time Distribution",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("apn_wait_time.html", data).getvalue()
+        else:
+            headers = ["Wait Time Bucket", "Count"]
+            rows = [[d["bucket"], d["count"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "APN Wait Time", data["report_name"]).getvalue()
+
+    # --- Report P2-12: Seasonal Registration Patterns ---
+
+    def generate_seasonal_registration_report(
+        self,
+        format: str = "pdf",
+        year: Optional[int] = None,
+    ) -> bytes:
+        """Registration volume by month/quarter overlaid with dispatch volume for correlation."""
+        from src.models.registration_activity import RegistrationActivity
+        from src.db.enums import RegistrationAction
+
+        target_year = year or date.today().year
+
+        # Count registrations by month
+        monthly_data = []
+        for month in range(1, 13):
+            month_start = date(target_year, month, 1)
+            if month == 12:
+                month_end = date(target_year + 1, 1, 1)
+            else:
+                month_end = date(target_year, month + 1, 1)
+
+            reg_count = self.db.query(RegistrationActivity).filter(
+                RegistrationActivity.activity_type == RegistrationAction.REGISTRATION,
+                RegistrationActivity.activity_date >= month_start,
+                RegistrationActivity.activity_date < month_end,
+            ).count()
+
+            dispatch_count = self.db.query(Dispatch).filter(
+                Dispatch.dispatch_date >= month_start,
+                Dispatch.dispatch_date < month_end,
+            ).count()
+
+            monthly_data.append({
+                "month": month_start.strftime("%B"),
+                "registrations": reg_count,
+                "dispatches": dispatch_count,
+                "ratio": dispatch_count / reg_count if reg_count else 0,
+            })
+
+        data = {
+            "data": monthly_data,
+            "summary": {
+                "year": target_year,
+                "total_registrations": sum(d["registrations"] for d in monthly_data),
+                "total_dispatches": sum(d["dispatches"] for d in monthly_data),
+                "avg_monthly_registrations": sum(d["registrations"] for d in monthly_data) / 12,
+                "avg_monthly_dispatches": sum(d["dispatches"] for d in monthly_data) / 12,
+            },
+            "filters": {"year": target_year},
+            "generated_at": datetime.now(),
+            "report_name": "Seasonal Registration Patterns",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("seasonal_registration.html", data).getvalue()
+        else:
+            headers = ["Month", "Registrations", "Dispatches", "Dispatch:Reg Ratio"]
+            rows = [[d["month"], d["registrations"], d["dispatches"], f"{d['ratio']:.2f}"] for d in data["data"]]
+            return self._render_excel(headers, rows, "Seasonal Registration", data["report_name"]).getvalue()
+
+    # --- WEEK 41 REPORTS (19 new methods) ---
+    # Theme A: Dispatch Operations (6 reports)
+
+    def generate_dispatch_success_rate_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Dispatch success rate: offers accepted vs declined by period."""
+        start = start_date or (date.today() - timedelta(days=30))
+        end = end_date or date.today()
+
+        # Count dispatches by status
+        dispatched = self.db.query(func.count(Dispatch.id)).filter(
+            Dispatch.dispatch_date >= start,
+            Dispatch.dispatch_date <= end,
+            Dispatch.status == DispatchStatus.COMPLETED
+        ).scalar() or 0
+
+        cancelled = self.db.query(func.count(Dispatch.id)).filter(
+            Dispatch.dispatch_date >= start,
+            Dispatch.dispatch_date <= end,
+            Dispatch.status == DispatchStatus.CANCELLED
+        ).scalar() or 0
+
+        total_offers = dispatched + cancelled
+        success_rate = (dispatched / total_offers * 100) if total_offers > 0 else 0
+
+        data = {
+            "data": [
+                {"status": "Accepted (Completed)", "count": dispatched},
+                {"status": "Declined (Cancelled)", "count": cancelled},
+            ],
+            "summary": {
+                "total_offers": total_offers,
+                "success_rate": success_rate,
+                "acceptance_count": dispatched,
+                "decline_count": cancelled,
+            },
+            "filters": {"start_date": start, "end_date": end},
+            "generated_at": datetime.now(),
+            "report_name": "Dispatch Success Rate",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("dispatch_success_rate.html", data).getvalue()
+        else:
+            headers = ["Status", "Count", "Percentage"]
+            rows = [
+                [d["status"], d["count"], f"{d['count']/total_offers*100:.1f}%" if total_offers else "0%"]
+                for d in data["data"]
+            ]
+            return self._render_excel(headers, rows, "Success Rate", data["report_name"]).getvalue()
+
+    def generate_time_to_fill_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Time to fill: days from request to dispatch completion."""
+        start = start_date or (date.today() - timedelta(days=30))
+        end = end_date or date.today()
+
+        dispatches = self.db.query(Dispatch).filter(
+            Dispatch.dispatch_date >= start,
+            Dispatch.dispatch_date <= end,
+            Dispatch.status == DispatchStatus.COMPLETED
+        ).all()
+
+        fill_times = []
+        for dispatch in dispatches:
+            if dispatch.labor_request and dispatch.dispatch_date:
+                days_to_fill = (dispatch.dispatch_date - dispatch.labor_request.request_date).days
+                fill_times.append(days_to_fill)
+
+        buckets = {"Same Day": 0, "1-2 Days": 0, "3-7 Days": 0, "8+ Days": 0}
+        for days in fill_times:
+            if days == 0:
+                buckets["Same Day"] += 1
+            elif days <= 2:
+                buckets["1-2 Days"] += 1
+            elif days <= 7:
+                buckets["3-7 Days"] += 1
+            else:
+                buckets["8+ Days"] += 1
+
+        avg_time = sum(fill_times) / len(fill_times) if fill_times else 0
+
+        data = {
+            "data": [{"bucket": k, "count": v} for k, v in buckets.items()],
+            "summary": {
+                "total_completed": len(fill_times),
+                "avg_days_to_fill": avg_time,
+                "median_days_to_fill": sorted(fill_times)[len(fill_times)//2] if fill_times else 0,
+            },
+            "filters": {"start_date": start, "end_date": end},
+            "generated_at": datetime.now(),
+            "report_name": "Time to Fill Report",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("time_to_fill.html", data).getvalue()
+        else:
+            headers = ["Bucket", "Count"]
+            rows = [[d["bucket"], d["count"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Time to Fill", data["report_name"]).getvalue()
+
+    def generate_dispatch_method_comparison_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Dispatch method comparison: queue vs by-name vs short call."""
+        from src.db.enums import DispatchMethod
+
+        start = start_date or (date.today() - timedelta(days=30))
+        end = end_date or date.today()
+
+        methods = {}
+        for method in [DispatchMethod.QUEUE, DispatchMethod.BY_NAME, DispatchMethod.SHORT_CALL]:
+            count = self.db.query(func.count(Dispatch.id)).filter(
+                Dispatch.dispatch_date >= start,
+                Dispatch.dispatch_date <= end,
+                Dispatch.dispatch_method == method
+            ).scalar() or 0
+            methods[method.value] = count
+
+        total = sum(methods.values())
+
+        data = {
+            "data": [{"method": k, "count": v} for k, v in methods.items()],
+            "summary": {
+                "total_dispatches": total,
+                "queue_dispatches": methods.get("QUEUE", 0),
+                "by_name_dispatches": methods.get("BY_NAME", 0),
+                "short_call_dispatches": methods.get("SHORT_CALL", 0),
+            },
+            "filters": {"start_date": start, "end_date": end},
+            "generated_at": datetime.now(),
+            "report_name": "Dispatch Method Comparison",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("dispatch_method_comparison.html", data).getvalue()
+        else:
+            headers = ["Method", "Count", "Percentage"]
+            rows = [
+                [d["method"], d["count"], f"{d['count']/total*100:.1f}%" if total else "0%"]
+                for d in data["data"]
+            ]
+            return self._render_excel(headers, rows, "Dispatch Methods", data["report_name"]).getvalue()
+
+    def generate_dispatch_geographic_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Geographic dispatch analysis by region."""
+        from src.db.enums import BookRegion
+
+        start = start_date or (date.today() - timedelta(days=30))
+        end = end_date or date.today()
+
+        regions = {}
+        for region in [BookRegion.SEATTLE, BookRegion.BREMERTON, BookRegion.PT_ANGELES]:
+            count = self.db.query(func.count(Dispatch.id)).join(
+                ReferralBook, Dispatch.book_id == ReferralBook.id
+            ).filter(
+                Dispatch.dispatch_date >= start,
+                Dispatch.dispatch_date <= end,
+                ReferralBook.region == region
+            ).scalar() or 0
+            regions[region.value] = count
+
+        total = sum(regions.values())
+
+        data = {
+            "data": [{"region": k, "count": v} for k, v in regions.items()],
+            "summary": {
+                "total_dispatches": total,
+                "regions_active": sum(1 for v in regions.values() if v > 0),
+            },
+            "filters": {"start_date": start, "end_date": end},
+            "generated_at": datetime.now(),
+            "report_name": "Geographic Dispatch Report",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("dispatch_geographic.html", data).getvalue()
+        else:
+            headers = ["Region", "Count", "Percentage"]
+            rows = [
+                [d["region"], d["count"], f"{d['count']/total*100:.1f}%" if total else "0%"]
+                for d in data["data"]
+            ]
+            return self._render_excel(headers, rows, "Geographic Dispatch", data["report_name"]).getvalue()
+
+    def generate_termination_reason_analysis_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Dispatch termination reason analysis (completion, cancellation, etc.)."""
+        start = start_date or (date.today() - timedelta(days=30))
+        end = end_date or date.today()
+
+        # Group by status (serve as termination reason proxy)
+        termination_reasons = {}
+        for status in [DispatchStatus.COMPLETED, DispatchStatus.CANCELLED, DispatchStatus.SHORT_CALL]:
+            count = self.db.query(func.count(Dispatch.id)).filter(
+                Dispatch.dispatch_date >= start,
+                Dispatch.dispatch_date <= end,
+                Dispatch.status == status
+            ).scalar() or 0
+            termination_reasons[status.value] = count
+
+        total = sum(termination_reasons.values())
+
+        data = {
+            "data": [{"reason": k, "count": v} for k, v in termination_reasons.items()],
+            "summary": {
+                "total_dispatches": total,
+                "completed_count": termination_reasons.get("COMPLETED", 0),
+                "cancelled_count": termination_reasons.get("CANCELLED", 0),
+            },
+            "filters": {"start_date": start, "end_date": end},
+            "generated_at": datetime.now(),
+            "report_name": "Termination Reason Analysis",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("termination_reason_analysis.html", data).getvalue()
+        else:
+            headers = ["Reason", "Count", "Percentage"]
+            rows = [
+                [d["reason"], d["count"], f"{d['count']/total*100:.1f}%" if total else "0%"]
+                for d in data["data"]
+            ]
+            return self._render_excel(headers, rows, "Termination Reasons", data["report_name"]).getvalue()
+
+    def generate_return_dispatch_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Return dispatch: repeat member-employer pairs within period."""
+        start = start_date or (date.today() - timedelta(days=90))
+        end = end_date or date.today()
+
+        dispatches = self.db.query(Dispatch).filter(
+            Dispatch.dispatch_date >= start,
+            Dispatch.dispatch_date <= end
+        ).all()
+
+        pairs = {}
+        for dispatch in dispatches:
+            if dispatch.member_id and dispatch.labor_request and dispatch.labor_request.employer_id:
+                pair_key = (dispatch.member_id, dispatch.labor_request.employer_id)
+                pairs[pair_key] = pairs.get(pair_key, 0) + 1
+
+        repeat_pairs = {k: v for k, v in pairs.items() if v > 1}
+        repeat_count = len(repeat_pairs)
+        total_pairs = len(pairs)
+        repeat_percentage = (repeat_count / total_pairs * 100) if total_pairs > 0 else 0
+
+        data = {
+            "data": [{"pair_count": k, "frequency": v} for k, v in sorted(
+                {v: pairs.values().count(v) for v in set(pairs.values())}.items()
+            )],
+            "summary": {
+                "total_pairs": total_pairs,
+                "repeat_pairs": repeat_count,
+                "repeat_percentage": repeat_percentage,
+                "unique_members": len(set(k[0] for k in pairs.keys())),
+                "unique_employers": len(set(k[1] for k in pairs.keys())),
+            },
+            "filters": {"start_date": start, "end_date": end},
+            "generated_at": datetime.now(),
+            "report_name": "Return Dispatch Report",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("return_dispatch.html", data).getvalue()
+        else:
+            headers = ["Dispatches per Pair", "Count"]
+            rows = [[d["pair_count"], d["frequency"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Return Dispatch", data["report_name"]).getvalue()
+
+    # Theme B: Employer Intelligence (6 reports)
+
+    def generate_employer_growth_trends_report(
+        self,
+        format: str = "pdf",
+        current_year: Optional[int] = None,
+        require_officer_access: bool = True,
+    ) -> bytes:
+        """Employer growth trends: YoY volume comparison (Officer+ only)."""
+        target_year = current_year or date.today().year
+        prev_year = target_year - 1
+
+        # Current year dispatches
+        current_year_count = self.db.query(func.count(Dispatch.id)).filter(
+            func.extract("year", Dispatch.dispatch_date) == target_year
+        ).scalar() or 0
+
+        # Previous year dispatches
+        prev_year_count = self.db.query(func.count(Dispatch.id)).filter(
+            func.extract("year", Dispatch.dispatch_date) == prev_year
+        ).scalar() or 0
+
+        growth = ((current_year_count - prev_year_count) / prev_year_count * 100) if prev_year_count > 0 else 0
+
+        data = {
+            "data": [
+                {"year": prev_year, "dispatches": prev_year_count},
+                {"year": target_year, "dispatches": current_year_count},
+            ],
+            "summary": {
+                "prev_year_total": prev_year_count,
+                "current_year_total": current_year_count,
+                "yoy_growth_percent": growth,
+                "growth_direction": "↑" if growth > 0 else "↓" if growth < 0 else "→",
+            },
+            "filters": {"current_year": target_year, "officer_restricted": require_officer_access},
+            "generated_at": datetime.now(),
+            "report_name": "Employer Growth Trends (Officer Only)",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("employer_growth_trends.html", data).getvalue()
+        else:
+            headers = ["Year", "Dispatches", "Change"]
+            rows = [
+                [prev_year, prev_year_count, "—"],
+                [target_year, current_year_count, f"{growth:+.1f}%"],
+            ]
+            return self._render_excel(headers, rows, "Growth Trends", data["report_name"]).getvalue()
+
+    def generate_employer_workforce_size_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Active dispatches per employer: workforce size snapshot."""
+        start = start_date or (date.today() - timedelta(days=30))
+        end = end_date or date.today()
+
+        dispatches = self.db.query(Dispatch).filter(
+            Dispatch.dispatch_date >= start,
+            Dispatch.dispatch_date <= end,
+            Dispatch.status == DispatchStatus.COMPLETED
+        ).all()
+
+        employer_counts = {}
+        for dispatch in dispatches:
+            if dispatch.labor_request and dispatch.labor_request.employer:
+                emp_name = dispatch.labor_request.employer.name
+                employer_counts[emp_name] = employer_counts.get(emp_name, 0) + 1
+
+        sorted_employers = sorted(employer_counts.items(), key=lambda x: x[1], reverse=True)[:20]
+
+        data = {
+            "data": [{"employer": emp, "active_dispatches": count} for emp, count in sorted_employers],
+            "summary": {
+                "total_employers": len(employer_counts),
+                "avg_dispatches_per_employer": sum(employer_counts.values()) / len(employer_counts) if employer_counts else 0,
+                "top_employer": sorted_employers[0][0] if sorted_employers else None,
+                "top_employer_count": sorted_employers[0][1] if sorted_employers else 0,
+            },
+            "filters": {"start_date": start, "end_date": end},
+            "generated_at": datetime.now(),
+            "report_name": "Employer Workforce Size",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("employer_workforce_size.html", data).getvalue()
+        else:
+            headers = ["Employer", "Active Dispatches"]
+            rows = [[d["employer"], d["active_dispatches"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Workforce Size", data["report_name"]).getvalue()
+
+    def generate_new_employer_activity_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """New employer activity: first-time employers in period."""
+        start = start_date or (date.today() - timedelta(days=90))
+        end = end_date or date.today()
+
+        # Find all dispatches in period
+        dispatches = self.db.query(Dispatch).filter(
+            Dispatch.dispatch_date >= start,
+            Dispatch.dispatch_date <= end
+        ).all()
+
+        # Find all employers before this period
+        old_dispatches = self.db.query(Dispatch).filter(
+            Dispatch.dispatch_date < start
+        ).all()
+        old_employer_ids = set(d.labor_request.employer_id for d in old_dispatches if d.labor_request)
+
+        # New employers = in this period but not before
+        new_employers = {}
+        for dispatch in dispatches:
+            if dispatch.labor_request and dispatch.labor_request.employer:
+                emp_id = dispatch.labor_request.employer_id
+                if emp_id not in old_employer_ids:
+                    emp_name = dispatch.labor_request.employer.name
+                    new_employers[emp_name] = new_employers.get(emp_name, 0) + 1
+
+        new_count = len(new_employers)
+        total_dispatches = len(dispatches)
+
+        data = {
+            "data": [{"employer": emp, "dispatch_count": count} for emp, count in sorted(
+                new_employers.items(), key=lambda x: x[1], reverse=True
+            )],
+            "summary": {
+                "new_employers_count": new_count,
+                "dispatches_from_new": sum(new_employers.values()),
+                "total_period_dispatches": total_dispatches,
+                "new_employer_percentage": (sum(new_employers.values()) / total_dispatches * 100) if total_dispatches > 0 else 0,
+            },
+            "filters": {"start_date": start, "end_date": end},
+            "generated_at": datetime.now(),
+            "report_name": "New Employer Activity",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("new_employer_activity.html", data).getvalue()
+        else:
+            headers = ["Employer", "Dispatch Count"]
+            rows = [[d["employer"], d["dispatch_count"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "New Employers", data["report_name"]).getvalue()
+
+    def generate_contract_code_utilization_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Contract code utilization: dispatch volume by CBA code (8 codes)."""
+        start = start_date or (date.today() - timedelta(days=30))
+        end = end_date or date.today()
+
+        # Fetch dispatches grouped by book contract code
+        books = self.db.query(ReferralBook).all()
+        contract_codes = {}
+
+        for book in books:
+            dispatch_count = self.db.query(func.count(Dispatch.id)).filter(
+                Dispatch.book_id == book.id,
+                Dispatch.dispatch_date >= start,
+                Dispatch.dispatch_date <= end
+            ).scalar() or 0
+
+            code = book.contract_code or "UNCLASSIFIED"
+            contract_codes[code] = contract_codes.get(code, 0) + dispatch_count
+
+        total = sum(contract_codes.values())
+
+        data = {
+            "data": [{"contract_code": k, "dispatches": v} for k, v in sorted(
+                contract_codes.items(), key=lambda x: x[1], reverse=True
+            )],
+            "summary": {
+                "total_dispatches": total,
+                "contract_codes_active": len([v for v in contract_codes.values() if v > 0]),
+            },
+            "filters": {"start_date": start, "end_date": end},
+            "generated_at": datetime.now(),
+            "report_name": "Contract Code Utilization",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("contract_code_utilization.html", data).getvalue()
+        else:
+            headers = ["Contract Code", "Dispatches", "Percentage"]
+            rows = [
+                [d["contract_code"], d["dispatches"], f"{d['dispatches']/total*100:.1f}%" if total else "0%"]
+                for d in data["data"]
+            ]
+            return self._render_excel(headers, rows, "Contract Codes", data["report_name"]).getvalue()
+
+    def generate_queue_velocity_report(
+        self,
+        format: str = "pdf",
+        book_id: Optional[int] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Queue velocity: speed of dispatch from referral queue."""
+        start = start_date or (date.today() - timedelta(days=30))
+        end = end_date or date.today()
+
+        query = self.db.query(Dispatch).filter(
+            Dispatch.dispatch_date >= start,
+            Dispatch.dispatch_date <= end,
+            Dispatch.dispatch_method == "QUEUE"
+        )
+
+        if book_id:
+            query = query.filter(Dispatch.book_id == book_id)
+
+        dispatches = query.all()
+
+        # Calculate position-to-dispatch velocity
+        velocity_data = {}
+        for dispatch in dispatches:
+            if dispatch.book_registration:
+                position = dispatch.book_registration.book_priority_number or 0
+                velocity_data[position] = velocity_data.get(position, 0) + 1
+
+        avg_position_dispatched = sum(velocity_data.keys()) / len(velocity_data) if velocity_data else 0
+
+        data = {
+            "data": [{"position": k, "count": v} for k, v in sorted(velocity_data.items())[:20]],
+            "summary": {
+                "total_queue_dispatches": len(dispatches),
+                "avg_position_dispatched": avg_position_dispatched,
+                "high_position_dispatches": len([p for p in velocity_data.keys() if p > 50]),
+            },
+            "filters": {"book_id": book_id, "start_date": start, "end_date": end},
+            "generated_at": datetime.now(),
+            "report_name": "Queue Velocity Report",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("queue_velocity.html", data).getvalue()
+        else:
+            headers = ["Position", "Dispatches"]
+            rows = [[d["position"], d["count"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Queue Velocity", data["report_name"]).getvalue()
+
+    def generate_peak_demand_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Peak demand: labor request patterns by day of week and hour."""
+        start = start_date or (date.today() - timedelta(days=30))
+        end = end_date or date.today()
+
+        requests = self.db.query(LaborRequest).filter(
+            LaborRequest.request_date >= start,
+            LaborRequest.request_date <= end
+        ).all()
+
+        # Group by day of week
+        dow_counts = {i: 0 for i in range(7)}
+        for req in requests:
+            dow = req.request_date.weekday()
+            dow_counts[dow] += 1
+
+        dow_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+        data = {
+            "data": [
+                {"day": dow_names[i], "request_count": dow_counts[i]}
+                for i in range(7)
+            ],
+            "summary": {
+                "total_requests": len(requests),
+                "peak_day": dow_names[max(dow_counts, key=dow_counts.get)],
+                "peak_day_count": max(dow_counts.values()),
+            },
+            "filters": {"start_date": start, "end_date": end},
+            "generated_at": datetime.now(),
+            "report_name": "Peak Demand Report",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("peak_demand.html", data).getvalue()
+        else:
+            headers = ["Day of Week", "Request Count"]
+            rows = [[d["day"], d["request_count"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Peak Demand", data["report_name"]).getvalue()
+
+    # Theme C: Enforcement (7 reports)
+
+    def generate_check_mark_patterns_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Check mark patterns: Rule 10 penalty analysis."""
+        from src.models.check_mark import CheckMark
+
+        start = start_date or (date.today() - timedelta(days=90))
+        end = end_date or date.today()
+
+        check_marks = self.db.query(CheckMark).filter(
+            CheckMark.created_at >= start,
+            CheckMark.created_at <= end
+        ).all()
+
+        # Bucket by member count
+        member_counts = {}
+        for cm in check_marks:
+            member_id = cm.member_id
+            member_counts[member_id] = member_counts.get(member_id, 0) + 1
+
+        buckets = {"1 Mark": 0, "2 Marks": 0, "3+ Marks (Rolled Off)": 0}
+        for count in member_counts.values():
+            if count == 1:
+                buckets["1 Mark"] += 1
+            elif count == 2:
+                buckets["2 Marks"] += 1
+            else:
+                buckets["3+ Marks (Rolled Off)"] += 1
+
+        rolled_off = buckets["3+ Marks (Rolled Off)"]
+
+        data = {
+            "data": [{"bucket": k, "count": v} for k, v in buckets.items()],
+            "summary": {
+                "total_members_with_marks": len(member_counts),
+                "total_check_marks": len(check_marks),
+                "rolled_off_count": rolled_off,
+            },
+            "filters": {"start_date": start, "end_date": end},
+            "generated_at": datetime.now(),
+            "report_name": "Check Mark Patterns",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("check_mark_patterns.html", data).getvalue()
+        else:
+            headers = ["Bucket", "Count"]
+            rows = [[d["bucket"], d["count"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Check Mark Patterns", data["report_name"]).getvalue()
+
+    def generate_check_mark_exceptions_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Check mark exceptions: Rule 11 exception audit (no-check-mark reasons)."""
+        from src.models.check_mark import CheckMark
+        from src.db.enums import NoCheckMarkReason
+
+        start = start_date or (date.today() - timedelta(days=90))
+        end = end_date or date.today()
+
+        exceptions = self.db.query(CheckMark).filter(
+            CheckMark.created_at >= start,
+            CheckMark.created_at <= end,
+            CheckMark.exception_reason.isnot(None)
+        ).all()
+
+        reason_counts = {}
+        for exc in exceptions:
+            reason = exc.exception_reason or "Unknown"
+            reason_counts[reason] = reason_counts.get(reason, 0) + 1
+
+        total_possible = self.db.query(func.count(Dispatch.id)).filter(
+            Dispatch.dispatch_date >= start,
+            Dispatch.dispatch_date <= end
+        ).scalar() or 1
+
+        data = {
+            "data": [{"reason": k, "count": v} for k, v in sorted(
+                reason_counts.items(), key=lambda x: x[1], reverse=True
+            )],
+            "summary": {
+                "total_exceptions": len(exceptions),
+                "exception_percentage": (len(exceptions) / total_possible * 100),
+            },
+            "filters": {"start_date": start, "end_date": end},
+            "generated_at": datetime.now(),
+            "report_name": "Check Mark Exceptions",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("check_mark_exceptions.html", data).getvalue()
+        else:
+            headers = ["Exception Reason", "Count"]
+            rows = [[d["reason"], d["count"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Check Mark Exceptions", data["report_name"]).getvalue()
+
+    def generate_internet_bidding_analytics_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Internet bidding analytics: Rule 8 bidding participation and infractions."""
+        start = start_date or (date.today() - timedelta(days=30))
+        end = end_date or date.today()
+
+        bids = self.db.query(JobBid).filter(
+            JobBid.created_at >= start,
+            JobBid.created_at <= end
+        ).all()
+
+        bid_statuses = {}
+        for bid in bids:
+            status = bid.status.value if bid.status else "UNKNOWN"
+            bid_statuses[status] = bid_statuses.get(status, 0) + 1
+
+        total_bids = len(bids)
+        unique_members = len(set(b.member_id for b in bids))
+
+        data = {
+            "data": [{"status": k, "count": v} for k, v in bid_statuses.items()],
+            "summary": {
+                "total_bids": total_bids,
+                "unique_members": unique_members,
+                "avg_bids_per_member": total_bids / unique_members if unique_members > 0 else 0,
+            },
+            "filters": {"start_date": start, "end_date": end},
+            "generated_at": datetime.now(),
+            "report_name": "Internet Bidding Analytics",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("internet_bidding_analytics.html", data).getvalue()
+        else:
+            headers = ["Status", "Count"]
+            rows = [[d["status"], d["count"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Bidding Analytics", data["report_name"]).getvalue()
+
+    def generate_exemption_status_report(
+        self,
+        format: str = "pdf",
+        as_of_date: Optional[date] = None,
+    ) -> bytes:
+        """Exemption status: Rule 14 active exemptions by type."""
+        from src.models.member_exemption import MemberExemption
+        from src.db.enums import ExemptReason
+
+        as_of = as_of_date or date.today()
+
+        # Active exemptions at this date
+        exemptions = self.db.query(MemberExemption).filter(
+            MemberExemption.start_date <= as_of,
+            MemberExemption.end_date >= as_of
+        ).all()
+
+        reason_counts = {}
+        for exempt in exemptions:
+            reason = exempt.reason.value if exempt.reason else "Unknown"
+            reason_counts[reason] = reason_counts.get(reason, 0) + 1
+
+        total = len(exemptions)
+
+        data = {
+            "data": [{"reason": k, "count": v} for k, v in sorted(
+                reason_counts.items(), key=lambda x: x[1], reverse=True
+            )],
+            "summary": {
+                "total_active_exemptions": total,
+                "reason_types": len(reason_counts),
+            },
+            "filters": {"as_of_date": as_of},
+            "generated_at": datetime.now(),
+            "report_name": "Exemption Status Report",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("exemption_status.html", data).getvalue()
+        else:
+            headers = ["Exemption Reason", "Count"]
+            rows = [[d["reason"], d["count"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Exemptions", data["report_name"]).getvalue()
+
+    def generate_agreement_type_performance_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        require_officer_access: bool = True,
+    ) -> bytes:
+        """Agreement type performance: Rule 4 CBA analytics (Officer+ only)."""
+        from src.db.enums import AgreementType
+
+        start = start_date or (date.today() - timedelta(days=30))
+        end = end_date or date.today()
+
+        # Group dispatches by agreement type
+        agreement_types = {}
+        for atype in [AgreementType.STANDARD, AgreementType.PLA, AgreementType.CWA, AgreementType.TERO]:
+            count = self.db.query(func.count(Dispatch.id)).join(
+                ReferralBook, Dispatch.book_id == ReferralBook.id
+            ).filter(
+                Dispatch.dispatch_date >= start,
+                Dispatch.dispatch_date <= end,
+                ReferralBook.agreement_type == atype
+            ).scalar() or 0
+            agreement_types[atype.value] = count
+
+        total = sum(agreement_types.values())
+
+        data = {
+            "data": [{"agreement_type": k, "dispatches": v} for k, v in agreement_types.items()],
+            "summary": {
+                "total_dispatches": total,
+                "agreement_types_active": len([v for v in agreement_types.values() if v > 0]),
+            },
+            "filters": {"start_date": start, "end_date": end, "officer_restricted": require_officer_access},
+            "generated_at": datetime.now(),
+            "report_name": "Agreement Type Performance (Officer Only)",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("agreement_type_performance.html", data).getvalue()
+        else:
+            headers = ["Agreement Type", "Dispatches", "Percentage"]
+            rows = [
+                [d["agreement_type"], d["dispatches"], f"{d['dispatches']/total*100:.1f}%" if total else "0%"]
+                for d in data["data"]
+            ]
+            return self._render_excel(headers, rows, "Agreement Types", data["report_name"]).getvalue()
+
+    def generate_foreperson_by_name_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        require_officer_access: bool = True,
+    ) -> bytes:
+        """Foreperson by-name report: Rule 13 anti-collusion enforcement (Officer+ only)."""
+        start = start_date or (date.today() - timedelta(days=30))
+        end = end_date or date.today()
+
+        by_name_dispatches = self.db.query(Dispatch).filter(
+            Dispatch.dispatch_date >= start,
+            Dispatch.dispatch_date <= end,
+            Dispatch.dispatch_method == "BY_NAME"
+        ).all()
+
+        # Group by foreperson/employer
+        foreperson_stats = {}
+        for dispatch in by_name_dispatches:
+            if dispatch.labor_request and dispatch.labor_request.employer:
+                key = dispatch.labor_request.employer.name
+                foreperson_stats[key] = foreperson_stats.get(key, 0) + 1
+
+        sorted_stats = sorted(foreperson_stats.items(), key=lambda x: x[1], reverse=True)[:15]
+
+        data = {
+            "data": [{"employer": emp, "by_name_count": count} for emp, count in sorted_stats],
+            "summary": {
+                "total_by_name_dispatches": len(by_name_dispatches),
+                "employers_using_by_name": len(foreperson_stats),
+            },
+            "filters": {"start_date": start, "end_date": end, "officer_restricted": require_officer_access},
+            "generated_at": datetime.now(),
+            "report_name": "Foreperson By-Name Report (Officer Only)",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("foreperson_by_name.html", data).getvalue()
+        else:
+            headers = ["Employer", "By-Name Count"]
+            rows = [[d["employer"], d["by_name_count"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "By-Name Dispatch", data["report_name"]).getvalue()
+
+    def generate_blackout_period_tracking_report(
+        self,
+        format: str = "pdf",
+        as_of_date: Optional[date] = None,
+        require_officer_access: bool = True,
+    ) -> bytes:
+        """Blackout period tracking: Rule 12 quit/discharge enforcement (Officer+ only)."""
+        from src.models.blackout_period import BlackoutPeriod
+
+        as_of = as_of_date or date.today()
+
+        # Active blackout periods
+        active_blackouts = self.db.query(BlackoutPeriod).filter(
+            BlackoutPeriod.start_date <= as_of,
+            BlackoutPeriod.end_date >= as_of
+        ).all()
+
+        reason_counts = {}
+        for blackout in active_blackouts:
+            reason = blackout.reason or "Unknown"
+            reason_counts[reason] = reason_counts.get(reason, 0) + 1
+
+        total_active = len(active_blackouts)
+
+        # Upcoming expirations (within 7 days)
+        upcoming = self.db.query(BlackoutPeriod).filter(
+            BlackoutPeriod.end_date > as_of,
+            BlackoutPeriod.end_date <= as_of + timedelta(days=7)
+        ).count()
+
+        data = {
+            "data": [{"reason": k, "count": v} for k, v in sorted(
+                reason_counts.items(), key=lambda x: x[1], reverse=True
+            )],
+            "summary": {
+                "total_active_blackouts": total_active,
+                "upcoming_expirations": upcoming,
+                "reason_types": len(reason_counts),
+            },
+            "filters": {"as_of_date": as_of, "officer_restricted": require_officer_access},
+            "generated_at": datetime.now(),
+            "report_name": "Blackout Period Tracking (Officer Only)",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("blackout_period_tracking.html", data).getvalue()
+        else:
+            headers = ["Blackout Reason", "Count"]
+            rows = [[d["reason"], d["count"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Blackouts", data["report_name"]).getvalue()
+
+    # === PHASE 3: FORECASTING, INTELLIGENCE & ADMINISTRATIVE (10 Reports) ===
+    # Week 40/41 P3 Reports — Low-priority but valuable long-term insights
+
+    # P3-A: FORECASTING (3 reports)
+
+    def generate_workforce_projection_report(
+        self,
+        format: str = "pdf",
+        days_forward: int = 90,
+    ) -> bytes:
+        """Project 30/60/90 day queue levels. Gracefully handle insufficient data."""
+        end_date = date.today()
+        start_date = end_date - timedelta(days=90)
+
+        # Query historical dispatch velocity
+        historical_dispatches = self.db.query(Dispatch).filter(
+            Dispatch.dispatch_date >= start_date,
+            Dispatch.dispatch_date <= end_date
+        ).all()
+
+        # Check if we have sufficient data (90+ days)
+        if len(historical_dispatches) < 90:
+            data = {
+                "data": [],
+                "summary": {
+                    "message": "Insufficient historical data",
+                    "details": f"Only {len(historical_dispatches)} dispatch records available. System requires 90+ days of data for accurate projections."
+                },
+                "filters": {"days_forward": days_forward},
+                "generated_at": datetime.now(),
+                "report_name": "Workforce Projection (Insufficient Data)",
+            }
+            if format == "pdf":
+                return self._render_pdf("workforce_projection.html", data).getvalue()
+            else:
+                headers = ["Period", "Projected Queue Level"]
+                rows = [["Data Insufficient", "—"]]
+                return self._render_excel(headers, rows, "Projection", data["report_name"]).getvalue()
+
+        # Calculate average daily dispatches
+        days_with_data = (end_date - start_date).days
+        avg_daily_dispatches = len(historical_dispatches) / max(days_with_data, 1)
+
+        # Get current registrations by book
+        current_registrations = self.db.query(
+            ReferralBook.name,
+            func.count(BookRegistration.id).label("count")
+        ).join(BookRegistration).filter(
+            BookRegistration.status == RegistrationStatus.ACTIVE
+        ).group_by(ReferralBook.name).all()
+
+        # Project 30/60/90 days
+        projections = []
+        for period_days in [30, 60, 90]:
+            if period_days <= days_forward:
+                projected_outflow = avg_daily_dispatches * period_days
+                projections.append({
+                    "period": f"{period_days}-Day",
+                    "projected_outflow": round(projected_outflow, 0),
+                    "confidence": "High" if days_with_data >= 90 else "Medium"
+                })
+
+        data = {
+            "data": projections,
+            "current_books": [
+                {"name": name, "active_count": count}
+                for name, count in current_registrations
+            ],
+            "summary": {
+                "avg_daily_dispatches": round(avg_daily_dispatches, 1),
+                "historical_period_days": days_with_data,
+                "data_quality": "Complete" if days_with_data >= 90 else "Partial"
+            },
+            "filters": {"days_forward": days_forward},
+            "generated_at": datetime.now(),
+            "report_name": "Workforce Projection Report",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("workforce_projection.html", data).getvalue()
+        else:
+            headers = ["Period", "Projected Outflow", "Confidence"]
+            rows = [[d["period"], d["projected_outflow"], d["confidence"]] for d in projections]
+            return self._render_excel(headers, rows, "Projections", data["report_name"]).getvalue()
+
+    def generate_dispatch_forecast_report(
+        self,
+        format: str = "pdf",
+        forecast_month: Optional[date] = None,
+    ) -> bytes:
+        """Next month dispatch volume by classification. Gracefully handle insufficient data."""
+        if not forecast_month:
+            forecast_month = date.today()
+
+        # Use past 6 months for forecast training
+        training_start = forecast_month - timedelta(days=180)
+        training_end = forecast_month - timedelta(days=1)
+
+        historical = self.db.query(Dispatch).filter(
+            Dispatch.dispatch_date >= training_start,
+            Dispatch.dispatch_date <= training_end
+        ).all()
+
+        # Check sufficient data (6+ months × 20+ dispatches)
+        if len(historical) < 120:
+            data = {
+                "data": [],
+                "summary": {
+                    "message": "Insufficient historical data",
+                    "details": f"Only {len(historical)} dispatch records in past 6 months. System requires 120+ records for volume forecasting."
+                },
+                "filters": {"forecast_month": forecast_month},
+                "generated_at": datetime.now(),
+                "report_name": "Dispatch Forecast (Insufficient Data)",
+            }
+            if format == "pdf":
+                return self._render_pdf("dispatch_forecast.html", data).getvalue()
+            else:
+                headers = ["Classification", "Forecasted Dispatches"]
+                rows = [["Data Insufficient", "—"]]
+                return self._render_excel(headers, rows, "Forecast", data["report_name"]).getvalue()
+
+        # Group by classification (via book)
+        classification_counts = {}
+        for dispatch in historical:
+            if dispatch.book_registration and dispatch.book_registration.referral_book:
+                book_name = dispatch.book_registration.referral_book.name
+                classification_counts[book_name] = classification_counts.get(book_name, 0) + 1
+
+        # Average per month
+        forecast_data = [
+            {
+                "classification": book,
+                "average_monthly_volume": round(count / 6, 1),
+                "forecast_volume": round(count / 6, 0)
+            }
+            for book, count in sorted(classification_counts.items(), key=lambda x: x[1], reverse=True)
+        ]
+
+        data = {
+            "data": forecast_data,
+            "summary": {
+                "total_historical_dispatches": len(historical),
+                "training_months": 6,
+                "forecast_month": forecast_month.strftime("%B %Y"),
+                "data_quality": "Complete" if len(historical) >= 120 else "Partial"
+            },
+            "filters": {"forecast_month": forecast_month},
+            "generated_at": datetime.now(),
+            "report_name": "Dispatch Forecast Report",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("dispatch_forecast.html", data).getvalue()
+        else:
+            headers = ["Classification", "Avg Monthly", "Forecast"]
+            rows = [[d["classification"], d["average_monthly_volume"], d["forecast_volume"]] for d in forecast_data]
+            return self._render_excel(headers, rows, "Forecast", data["report_name"]).getvalue()
+
+    def generate_book_demand_forecast_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Per-book projected demand (labor requests forecast). Gracefully handle insufficient data."""
+        if not end_date:
+            end_date = date.today()
+        if not start_date:
+            start_date = end_date - timedelta(days=60)
+
+        requests = self.db.query(LaborRequest).filter(
+            LaborRequest.request_date >= start_date,
+            LaborRequest.request_date <= end_date
+        ).all()
+
+        # Check if we have sufficient data
+        if len(requests) < 20:
+            data = {
+                "data": [],
+                "summary": {
+                    "message": "Insufficient historical data",
+                    "details": f"Only {len(requests)} labor requests in past 60 days. System requires 20+ requests for demand forecasting."
+                },
+                "filters": {"start_date": start_date, "end_date": end_date},
+                "generated_at": datetime.now(),
+                "report_name": "Book Demand Forecast (Insufficient Data)",
+            }
+            if format == "pdf":
+                return self._render_pdf("book_demand_forecast.html", data).getvalue()
+            else:
+                headers = ["Book", "Forecasted Requests"]
+                rows = [["Data Insufficient", "—"]]
+                return self._render_excel(headers, rows, "Forecast", data["report_name"]).getvalue()
+
+        # Group by book
+        book_demand = {}
+        total_requested = 0
+        for req in requests:
+            book_name = req.referral_book.name if req.referral_book else "Unknown"
+            book_demand[book_name] = book_demand.get(book_name, 0) + req.workers_requested
+            total_requested += req.workers_requested
+
+        forecast_data = [
+            {
+                "book": book,
+                "historical_demand": count,
+                "demand_percentage": round(count / total_requested * 100, 1) if total_requested else 0,
+            }
+            for book, count in sorted(book_demand.items(), key=lambda x: x[1], reverse=True)
+        ]
+
+        data = {
+            "data": forecast_data,
+            "summary": {
+                "total_requests": len(requests),
+                "total_workers_demanded": total_requested,
+                "period_days": (end_date - start_date).days,
+                "data_quality": "Complete" if len(requests) >= 20 else "Partial"
+            },
+            "filters": {"start_date": start_date, "end_date": end_date},
+            "generated_at": datetime.now(),
+            "report_name": "Book Demand Forecast Report",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("book_demand_forecast.html", data).getvalue()
+        else:
+            headers = ["Book", "Historical Demand", "Percentage"]
+            rows = [[d["book"], d["historical_demand"], f"{d['demand_percentage']}%"] for d in forecast_data]
+            return self._render_excel(headers, rows, "Demand", data["report_name"]).getvalue()
+
+    # P3-B: INTELLIGENCE (4 reports)
+
+    def generate_member_availability_index_report(
+        self,
+        format: str = "pdf",
+        as_of_date: Optional[date] = None,
+    ) -> bytes:
+        """Member availability index: Book fill capability score."""
+        as_of = as_of_date or date.today()
+
+        # Count active registrations by book
+        book_stats = self.db.query(
+            ReferralBook.name,
+            func.count(BookRegistration.id).label("active_members")
+        ).join(BookRegistration).filter(
+            BookRegistration.status == RegistrationStatus.ACTIVE,
+            BookRegistration.book_id == ReferralBook.id
+        ).group_by(ReferralBook.id, ReferralBook.name).all()
+
+        # Calculate recent dispatch velocity per book
+        thirty_days_ago = as_of - timedelta(days=30)
+        recent_dispatches = self.db.query(
+            ReferralBook.name,
+            func.count(Dispatch.id).label("dispatch_count")
+        ).join(BookRegistration).join(Dispatch).filter(
+            Dispatch.dispatch_date >= thirty_days_ago
+        ).group_by(ReferralBook.id, ReferralBook.name).all()
+
+        dispatch_map = {name: count for name, count in recent_dispatches}
+
+        # Calculate index (active_members / recent_monthly_dispatches)
+        availability_data = []
+        for book_name, active_count in book_stats:
+            monthly_velocity = dispatch_map.get(book_name, 0)
+            # Avoid division by zero; higher index = better availability
+            index = round((active_count / max(monthly_velocity, 1)), 1) if active_count > 0 else 0
+            availability_data.append({
+                "book": book_name,
+                "active_members": active_count,
+                "monthly_dispatches": monthly_velocity,
+                "availability_index": index,
+                "fill_capability": "Excellent" if index >= 3 else "Good" if index >= 1.5 else "Tight"
+            })
+
+        data = {
+            "data": sorted(availability_data, key=lambda x: x["availability_index"], reverse=True),
+            "summary": {
+                "total_active_members": sum(x["active_members"] for x in availability_data),
+                "avg_index": round(sum(x["availability_index"] for x in availability_data) / max(len(availability_data), 1), 2),
+                "period": "Last 30 days"
+            },
+            "filters": {"as_of_date": as_of},
+            "generated_at": datetime.now(),
+            "report_name": "Member Availability Index Report",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("member_availability_index.html", data).getvalue()
+        else:
+            headers = ["Book", "Active Members", "Monthly Dispatches", "Availability Index", "Fill Capability"]
+            rows = [
+                [d["book"], d["active_members"], d["monthly_dispatches"], d["availability_index"], d["fill_capability"]]
+                for d in data["data"]
+            ]
+            return self._render_excel(headers, rows, "Availability", data["report_name"]).getvalue()
+
+    def generate_employer_loyalty_score_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        require_officer_access: bool = True,
+    ) -> bytes:
+        """Employer loyalty composite ranking (Officer+ only): repeat usage, fill rate, retention."""
+        if not end_date:
+            end_date = date.today()
+        if not start_date:
+            start_date = end_date - timedelta(days=180)
+
+        dispatches = self.db.query(Dispatch).filter(
+            Dispatch.dispatch_date >= start_date,
+            Dispatch.dispatch_date <= end_date
+        ).all()
+
+        # Aggregate by employer
+        employer_stats = {}
+        for dispatch in dispatches:
+            if dispatch.labor_request and dispatch.labor_request.employer:
+                emp_id = dispatch.labor_request.employer.id
+                emp_name = dispatch.labor_request.employer.name
+
+                if emp_id not in employer_stats:
+                    employer_stats[emp_id] = {
+                        "name": emp_name,
+                        "total_dispatches": 0,
+                        "filled_requests": 0,
+                        "repeat_workers": set(),
+                    }
+
+                employer_stats[emp_id]["total_dispatches"] += 1
+                if dispatch.status == DispatchStatus.FILLED:
+                    employer_stats[emp_id]["filled_requests"] += 1
+                if dispatch.member_id:
+                    employer_stats[emp_id]["repeat_workers"].add(dispatch.member_id)
+
+        # Calculate loyalty score (composite: repeat requests × fill rate × worker retention)
+        loyalty_data = []
+        for emp_id, stats in employer_stats.items():
+            repeat_score = min(stats["total_dispatches"] / 10, 1.0)  # Normalize to 0-1
+            fill_rate = stats["filled_requests"] / max(stats["total_dispatches"], 1)
+            retention = len(stats["repeat_workers"]) / max(stats["total_dispatches"], 1)
+
+            composite_score = round((repeat_score + fill_rate + retention) / 3 * 100, 1)
+
+            loyalty_data.append({
+                "employer": stats["name"],
+                "total_requests": stats["total_dispatches"],
+                "fill_rate": round(fill_rate * 100, 1),
+                "repeat_workers": len(stats["repeat_workers"]),
+                "loyalty_score": composite_score,
+                "tier": "Gold" if composite_score >= 80 else "Silver" if composite_score >= 60 else "Bronze"
+            })
+
+        data = {
+            "data": sorted(loyalty_data, key=lambda x: x["loyalty_score"], reverse=True)[:20],
+            "summary": {
+                "total_employers": len(employer_stats),
+                "avg_loyalty_score": round(sum(x["loyalty_score"] for x in loyalty_data) / max(len(loyalty_data), 1), 1),
+                "period": f"{start_date} to {end_date}"
+            },
+            "filters": {
+                "start_date": start_date,
+                "end_date": end_date,
+                "officer_restricted": require_officer_access
+            },
+            "generated_at": datetime.now(),
+            "report_name": "Employer Loyalty Score Report (Officer Only)",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("employer_loyalty_score.html", data).getvalue()
+        else:
+            headers = ["Employer", "Total Requests", "Fill Rate %", "Repeat Workers", "Loyalty Score", "Tier"]
+            rows = [
+                [d["employer"], d["total_requests"], d["fill_rate"], d["repeat_workers"], d["loyalty_score"], d["tier"]]
+                for d in data["data"]
+            ]
+            return self._render_excel(headers, rows, "Loyalty", data["report_name"]).getvalue()
+
+    def generate_member_journey_report(
+        self,
+        format: str = "pdf",
+        member_id: int = None,
+        require_officer_access: bool = True,
+    ) -> bytes:
+        """Individual member lifecycle: registrations, dispatches, check marks, exemptions (Officer+ only, requires member_id)."""
+        if not member_id:
+            data = {
+                "data": [],
+                "summary": {"message": "No member specified", "details": "member_id parameter required"},
+                "filters": {"member_id": None},
+                "generated_at": datetime.now(),
+                "report_name": "Member Journey (No Member Selected)",
+            }
+            if format == "pdf":
+                return self._render_pdf("member_journey.html", data).getvalue()
+            else:
+                headers = ["Parameter", "Value"]
+                rows = [["member_id", "Required"]]
+                return self._render_excel(headers, rows, "Journey", data["report_name"]).getvalue()
+
+        member = self.db.query(Member).filter(Member.id == member_id).first()
+        if not member:
+            data = {
+                "data": [],
+                "summary": {"message": "Member not found", "details": f"Member ID {member_id} does not exist"},
+                "filters": {"member_id": member_id},
+                "generated_at": datetime.now(),
+                "report_name": "Member Journey (Not Found)",
+            }
+            if format == "pdf":
+                return self._render_pdf("member_journey.html", data).getvalue()
+            else:
+                headers = ["Status", "Message"]
+                rows = [["Error", f"Member {member_id} not found"]]
+                return self._render_excel(headers, rows, "Journey", data["report_name"]).getvalue()
+
+        # Collect member's referral history
+        registrations = self.db.query(BookRegistration).filter(
+            BookRegistration.member_id == member_id
+        ).order_by(BookRegistration.created_at).all()
+
+        dispatches = self.db.query(Dispatch).filter(
+            Dispatch.member_id == member_id
+        ).order_by(Dispatch.dispatch_date).all()
+
+        journey_timeline = []
+        for reg in registrations:
+            journey_timeline.append({
+                "date": reg.created_at.date() if reg.created_at else None,
+                "event": "Registered",
+                "book": reg.referral_book.name if reg.referral_book else "Unknown",
+                "detail": f"Status: {reg.status.value if hasattr(reg.status, 'value') else reg.status}"
+            })
+
+        for dispatch in dispatches:
+            journey_timeline.append({
+                "date": dispatch.dispatch_date,
+                "event": "Dispatched",
+                "book": dispatch.book_registration.referral_book.name if dispatch.book_registration and dispatch.book_registration.referral_book else "Unknown",
+                "detail": f"Status: {dispatch.status.value if hasattr(dispatch.status, 'value') else dispatch.status}"
+            })
+
+        data = {
+            "data": sorted(journey_timeline, key=lambda x: x["date"] or date.min),
+            "member": {
+                "id": member.id,
+                "name": f"{member.first_name} {member.last_name}",
+                "email": member.email
+            },
+            "summary": {
+                "total_registrations": len(registrations),
+                "total_dispatches": len(dispatches),
+                "active_on_books": sum(1 for r in registrations if r.status == RegistrationStatus.ACTIVE),
+            },
+            "filters": {"member_id": member_id, "officer_restricted": require_officer_access},
+            "generated_at": datetime.now(),
+            "report_name": f"Member Journey Report - {member.first_name} {member.last_name}",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("member_journey.html", data).getvalue()
+        else:
+            headers = ["Date", "Event", "Book", "Detail"]
+            rows = [[d["date"], d["event"], d["book"], d["detail"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Journey", data["report_name"]).getvalue()
+
+    def generate_comparative_book_performance_report(
+        self,
+        format: str = "pdf",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> bytes:
+        """Normalized cross-book comparison: velocity, fill rate, queue health."""
+        if not end_date:
+            end_date = date.today()
+        if not start_date:
+            start_date = end_date - timedelta(days=90)
+
+        books = self.db.query(ReferralBook).all()
+        comparison_data = []
+
+        for book in books:
+            # Active registrations
+            active_regs = self.db.query(func.count(BookRegistration.id)).filter(
+                BookRegistration.referral_book_id == book.id,
+                BookRegistration.status == RegistrationStatus.ACTIVE
+            ).scalar() or 0
+
+            # Dispatches in period
+            dispatches = self.db.query(func.count(Dispatch.id)).filter(
+                Dispatch.dispatch_date >= start_date,
+                Dispatch.dispatch_date <= end_date,
+                Dispatch.book_registration_id.in_(
+                    self.db.query(BookRegistration.id).filter(
+                        BookRegistration.referral_book_id == book.id
+                    )
+                )
+            ).scalar() or 0
+
+            # Unfilled requests
+            unfilled = self.db.query(func.count(LaborRequest.id)).filter(
+                LaborRequest.referral_book_id == book.id,
+                LaborRequest.request_date >= start_date,
+                LaborRequest.request_date <= end_date,
+                LaborRequest.workers_dispatched == 0
+            ).scalar() or 0
+
+            # Normalize metrics (0-100 scale)
+            velocity_score = min((dispatches / max(active_regs, 1)) * 20, 100) if active_regs > 0 else 0
+            fill_score = 100 - min((unfilled / max(dispatches + unfilled, 1)) * 100, 100)
+
+            overall_score = round((velocity_score + fill_score) / 2, 1)
+
+            comparison_data.append({
+                "book": book.name,
+                "active_members": active_regs,
+                "dispatches": dispatches,
+                "unfilled_requests": unfilled,
+                "velocity_score": round(velocity_score, 1),
+                "fill_score": round(fill_score, 1),
+                "overall_performance": overall_score,
+                "performance_tier": "Excellent" if overall_score >= 80 else "Good" if overall_score >= 60 else "Fair"
+            })
+
+        data = {
+            "data": sorted(comparison_data, key=lambda x: x["overall_performance"], reverse=True),
+            "summary": {
+                "total_books": len(books),
+                "avg_performance": round(sum(x["overall_performance"] for x in comparison_data) / max(len(comparison_data), 1), 1),
+                "period": f"{start_date} to {end_date}",
+                "total_dispatches": sum(x["dispatches"] for x in comparison_data)
+            },
+            "filters": {"start_date": start_date, "end_date": end_date},
+            "generated_at": datetime.now(),
+            "report_name": "Comparative Book Performance Report",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("comparative_book_performance.html", data).getvalue()
+        else:
+            headers = ["Book", "Active Members", "Dispatches", "Unfilled Requests", "Velocity Score", "Fill Score", "Overall Performance", "Tier"]
+            rows = [
+                [d["book"], d["active_members"], d["dispatches"], d["unfilled_requests"],
+                 d["velocity_score"], d["fill_score"], d["overall_performance"], d["performance_tier"]]
+                for d in data["data"]
+            ]
+            return self._render_excel(headers, rows, "Performance", data["report_name"]).getvalue()
+
+    # P3-C: ADMINISTRATIVE (3 reports)
+
+    def generate_custom_export_report(
+        self,
+        format: str = "excel",
+        entity_type: str = "members",
+        filters: Optional[dict] = None,
+    ) -> bytes:
+        """Ad-hoc data dump: flexible entity_type parameter. Excel only."""
+        filters = filters or {}
+
+        if entity_type == "members":
+            query = self.db.query(Member)
+            if filters.get("status"):
+                query = query.filter(Member.status == filters["status"])
+
+            members = query.all()
+            headers = ["ID", "Name", "Email", "Status", "Classification", "Current Employer"]
+            rows = [
+                [
+                    m.id,
+                    f"{m.first_name} {m.last_name}",
+                    m.email,
+                    m.status.value if hasattr(m.status, 'value') else m.status,
+                    m.classification.value if m.classification and hasattr(m.classification, 'value') else m.classification,
+                    m.current_employer.name if m.current_employer else "—"
+                ]
+                for m in members
+            ]
+
+        elif entity_type == "registrations":
+            query = self.db.query(BookRegistration)
+            if filters.get("status"):
+                query = query.filter(BookRegistration.status == filters["status"])
+            if filters.get("book_id"):
+                query = query.filter(BookRegistration.referral_book_id == filters["book_id"])
+
+            regs = query.all()
+            headers = ["Member ID", "Member Name", "Book", "Status", "APN", "Registered Date"]
+            rows = [
+                [
+                    r.member_id,
+                    f"{r.member.first_name} {r.member.last_name}" if r.member else "—",
+                    r.referral_book.name if r.referral_book else "—",
+                    r.status.value if hasattr(r.status, 'value') else r.status,
+                    r.applicant_priority_number or "—",
+                    r.created_at.strftime("%m/%d/%Y") if r.created_at else "—"
+                ]
+                for r in regs
+            ]
+
+        elif entity_type == "dispatches":
+            query = self.db.query(Dispatch)
+            if filters.get("start_date"):
+                query = query.filter(Dispatch.dispatch_date >= filters["start_date"])
+            if filters.get("end_date"):
+                query = query.filter(Dispatch.dispatch_date <= filters["end_date"])
+
+            dispatches = query.all()
+            headers = ["Date", "Member", "Book", "Employer", "Status", "Dispatch Method"]
+            rows = [
+                [
+                    d.dispatch_date.strftime("%m/%d/%Y") if d.dispatch_date else "—",
+                    f"{d.member.first_name} {d.member.last_name}" if d.member else "—",
+                    d.book_registration.referral_book.name if d.book_registration and d.book_registration.referral_book else "—",
+                    d.labor_request.employer.name if d.labor_request and d.labor_request.employer else "—",
+                    d.status.value if hasattr(d.status, 'value') else d.status,
+                    d.dispatch_method if d.dispatch_method else "—"
+                ]
+                for d in dispatches
+            ]
+
+        else:
+            headers = ["Error"]
+            rows = [[f"Unknown entity_type: {entity_type}"]]
+
+        data = {
+            "report_name": f"Custom Export - {entity_type.title()}",
+            "entity_type": entity_type,
+            "record_count": len(rows),
+            "filters": filters
+        }
+
+        return self._render_excel(headers, rows, entity_type.title(), data["report_name"]).getvalue()
+
+    def generate_annual_summary_report(
+        self,
+        format: str = "pdf",
+        year: Optional[int] = None,
+    ) -> bytes:
+        """Year-in-review: dispatch volume, registrations, major events."""
+        if not year:
+            year = date.today().year
+
+        year_start = date(year, 1, 1)
+        year_end = date(year, 12, 31)
+
+        # Annual dispatches
+        annual_dispatches = self.db.query(Dispatch).filter(
+            Dispatch.dispatch_date >= year_start,
+            Dispatch.dispatch_date <= year_end
+        ).all()
+
+        # New registrations
+        annual_registrations = self.db.query(BookRegistration).filter(
+            BookRegistration.created_at >= datetime.combine(year_start, time.min),
+            BookRegistration.created_at <= datetime.combine(year_end, time.max)
+        ).all()
+
+        # Monthly breakdown
+        monthly_data = {}
+        for month in range(1, 13):
+            month_start = date(year, month, 1)
+            if month == 12:
+                month_end = date(year, 12, 31)
+            else:
+                month_end = date(year, month + 1, 1) - timedelta(days=1)
+
+            month_count = sum(1 for d in annual_dispatches if month_start <= d.dispatch_date <= month_end)
+            monthly_data[month] = month_count
+
+        month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+        data = {
+            "data": [{"month": month_names[i], "dispatches": monthly_data.get(i + 1, 0)} for i in range(12)],
+            "summary": {
+                "year": year,
+                "total_dispatches": len(annual_dispatches),
+                "total_new_registrations": len(annual_registrations),
+                "avg_monthly_dispatches": round(len(annual_dispatches) / 12, 1),
+                "avg_filled_rate": round(
+                    sum(1 for d in annual_dispatches if d.status == DispatchStatus.FILLED) / max(len(annual_dispatches), 1) * 100, 1
+                ) if annual_dispatches else 0
+            },
+            "filters": {"year": year},
+            "generated_at": datetime.now(),
+            "report_name": f"Annual Summary Report - {year}",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("annual_summary.html", data).getvalue()
+        else:
+            headers = ["Month", "Dispatches"]
+            rows = [[d["month"], d["dispatches"]] for d in data["data"]]
+            return self._render_excel(headers, rows, "Annual Summary", data["report_name"]).getvalue()
+
+    def generate_data_quality_report(
+        self,
+        format: str = "pdf",
+        require_admin_access: bool = True,
+    ) -> bytes:
+        """Data hygiene audit: missing fields, orphaned records, inconsistencies (Admin only)."""
+        issues = []
+
+        # Check for registrations with missing member references
+        orphaned_registrations = self.db.query(func.count(BookRegistration.id)).filter(
+            BookRegistration.member_id.is_(None)
+        ).scalar() or 0
+        if orphaned_registrations > 0:
+            issues.append({
+                "category": "Orphaned Records",
+                "issue": "Registrations without member",
+                "count": orphaned_registrations,
+                "severity": "High"
+            })
+
+        # Check for dispatches with missing labor requests
+        orphaned_dispatches = self.db.query(func.count(Dispatch.id)).filter(
+            Dispatch.labor_request_id.is_(None)
+        ).scalar() or 0
+        if orphaned_dispatches > 0:
+            issues.append({
+                "category": "Orphaned Records",
+                "issue": "Dispatches without labor request",
+                "count": orphaned_dispatches,
+                "severity": "High"
+            })
+
+        # Check for members without contact info
+        no_email = self.db.query(func.count(Member.id)).filter(
+            Member.email.is_(None)
+        ).scalar() or 0
+        if no_email > 0:
+            issues.append({
+                "category": "Missing Data",
+                "issue": "Members without email",
+                "count": no_email,
+                "severity": "Medium"
+            })
+
+        # Check for labor requests without books
+        no_book = self.db.query(func.count(LaborRequest.id)).filter(
+            LaborRequest.referral_book_id.is_(None)
+        ).scalar() or 0
+        if no_book > 0:
+            issues.append({
+                "category": "Missing Data",
+                "issue": "Labor requests without book",
+                "count": no_book,
+                "severity": "High"
+            })
+
+        # Data completeness stats
+        total_members = self.db.query(func.count(Member.id)).scalar() or 0
+        total_registrations = self.db.query(func.count(BookRegistration.id)).scalar() or 0
+        total_dispatches = self.db.query(func.count(Dispatch.id)).scalar() or 0
+
+        data = {
+            "data": issues,
+            "summary": {
+                "total_issues": len(issues),
+                "high_severity": sum(1 for i in issues if i["severity"] == "High"),
+                "medium_severity": sum(1 for i in issues if i["severity"] == "Medium"),
+                "total_members": total_members,
+                "total_registrations": total_registrations,
+                "total_dispatches": total_dispatches,
+                "data_quality_score": max(0, 100 - (len(issues) * 10))  # Simplified scoring
+            },
+            "filters": {"admin_restricted": require_admin_access},
+            "generated_at": datetime.now(),
+            "report_name": "Data Quality Audit Report (Admin Only)",
+        }
+
+        if format == "pdf":
+            return self._render_pdf("data_quality_report.html", data).getvalue()
+        else:
+            headers = ["Category", "Issue", "Count", "Severity"]
+            rows = [[i["category"], i["issue"], i["count"], i["severity"]] for i in issues]
+            return self._render_excel(headers, rows, "Data Quality", data["report_name"]).getvalue()

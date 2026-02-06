@@ -2,8 +2,8 @@
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
 **Last Updated:** February 6, 2026
-**Current Version:** v0.9.13-alpha
-**Current Phase:** Phase 7 (Referral & Dispatch) IN PROGRESS — Weeks 20-39 Complete (Backend + Frontend UI + All P0+P1 Reports + Stripe Removal + Bug Squash) | Spoke 2
+**Current Version:** v0.9.16-alpha
+**Current Phase:** Phase 7 (Referral & Dispatch) — **WEEKS 20-42 COMPLETE** — Phase 7g Reports COMPLETE (85 reports: 14 P0 + 30 P1 + 31 P2 + 10 P3) | Spoke 2
 
 ---
 
@@ -17,9 +17,9 @@
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl
 
-**Status:** 682 total tests (~666 passing, 16 skipped, ~100% pass rate, Week 39 Bug Squash as of Feb 6, 2026), ~260+ API endpoints, 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
+**Status:** ~764 total tests (682 baseline + 82 new report tests), ~320+ API endpoints (260 baseline + 62 new report endpoints), 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
-**Current:** Phase 7 — Referral & Dispatch System (~78 LaborPower reports to build, 14 complete). **Weeks 20-35 complete:** models, enums, schemas, 7 services, 6 API routers, 2 frontend services, 2 frontend routers, 13 pages, 15 HTMX partials, 14 report endpoints, Stripe removal. See `docs/phase7/`
+**Current:** Phase 7 — Referral & Dispatch System — **REPORTS COMPLETE: 85 reports (14 P0 + 30 P1 + 31 P2 + 10 P3)**. Remaining: 7a Data Collection (LaborPower access), 7d Import Tooling. See `docs/phase7/`
 
 ---
 
@@ -2000,11 +2000,13 @@ src/tests/test_phase7_models.py                  # SQLite → PostgreSQL
 
 ---
 
-## Phase 7: Referral & Dispatch System (IN PROGRESS)
+## Phase 7: Referral & Dispatch System — 5 of 7 Sub-Phases COMPLETE
 
-**Status:** 🚧 **WEEKS 20-27 COMPLETE** — Backend + Frontend Books & Dispatch UI (Models, Services, API, Frontend)
-**Effort Estimate:** 100-150 hours across 7 sub-phases (7a–7g)
-**Documentation:** `docs/phase7/` — 8+ planning documents
+**Status:** ✅ **WEEKS 20-42 COMPLETE** — Backend + Frontend + 85 Reports (14 P0 + 30 P1 + 31 P2 + 10 P3)
+**Version:** v0.9.16-alpha
+**Sub-Phases Complete:** 7b (Schema), 7c (Services/API), 7e (Frontend), 7f (P0+P1 Reports), 7g (P2+P3 Reports)
+**Sub-Phases Blocked:** 7a (Data Collection), 7d (Import Tooling) — LaborPower access required
+**Documentation:** `docs/phase7/` — 8+ planning documents + Weeks 40-42 session logs
 
 ### Overview
 

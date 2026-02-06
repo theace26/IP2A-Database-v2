@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>REPORT_TITLE - IBEW Local 46</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { text-align: center; border-bottom: 2px solid #003366; padding-bottom: 10px; margin-bottom: 20px; }
+        .header h1 { color: #003366; margin: 0; }
+        .filters { background-color: #f5f5f5; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
+        .summary { margin-bottom: 20px; }
+        .summary-card { display: inline-block; background: #e6f2ff; padding: 15px; margin-right: 15px; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #003366; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>IBEW Local 46</h1>
+        <h2>{{ report_name }}</h2>
+        <p>Generated: {{ generated_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+    </div>
+    <div class="filters"><strong>Filters:</strong> {{ filters | tojson }}</div>
+    <div class="summary">
+        {% for key, value in summary.items() %}
+        <div class="summary-card"><strong>{{ key|replace('_', ' ')|title }}:</strong> {{ value }}</div>
+        {% endfor %}
+    </div>
+    <table>
+        <thead><tr>
+            {% if data and data|length > 0 %}
+                {% for key in data[0].keys() %}
+                <th>{{ key|replace('_', ' ')|title }}</th>
+                {% endfor %}
+            {% endif %}
+        </tr></thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                {% for value in row.values() %}
+                <td>{{ value }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="footer"><p>{{ report_name }} - IBEW Local 46 Referral System</p></div>
+</body>
+</html>

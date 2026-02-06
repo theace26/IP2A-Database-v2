@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internet Bidding Analytics Report</title>
+    <style>
+        @page {
+            size: letter landscape;
+            margin: 0.5in;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #1e40af;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            color: #1e40af;
+            font-size: 18pt;
+            margin: 0;
+        }
+        .header .subtitle {
+            color: #666;
+            font-size: 11pt;
+            margin: 5px 0;
+        }
+        .header .timestamp {
+            color: #999;
+            font-size: 9pt;
+            margin: 5px 0;
+        }
+        .filters {
+            background-color: #f3f4f6;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .filters h3 {
+            margin: 0 0 8px 0;
+            font-size: 11pt;
+            color: #1e40af;
+        }
+        .filters p {
+            margin: 3px 0;
+            font-size: 9pt;
+        }
+        .summary-cards {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .summary-card {
+            background-color: #dbeafe;
+            padding: 10px;
+            border-radius: 4px;
+            flex: 1;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            text-align: center;
+            min-width: 150px;
+        }
+        .summary-card:last-child {
+            margin-right: 0;
+        }
+        .summary-card .label {
+            font-size: 9pt;
+            color: #1e40af;
+            font-weight: bold;
+        }
+        .summary-card .value {
+            font-size: 16pt;
+            color: #1e40af;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th {
+            background-color: #1e40af;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-size: 9pt;
+        }
+        td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 9pt;
+        }
+        tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        .high-rate { color: #059669; font-weight: bold; }
+        .low-rate { color: #dc2626; font-weight: bold; }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 8pt;
+            color: #999;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>IBEW Local 46</h1>
+        <div class="subtitle">Internet Bidding Analytics Report</div>
+        <div class="timestamp">Generated: {{ generated_at.strftime('%B %d, %Y at %I:%M %p') }}</div>
+    </div>
+
+    {% if filters %}
+    <div class="filters">
+        <h3>Report Filters</h3>
+        <p><strong>Date Range:</strong> {{ filters.get('start_date', 'All time') }} to {{ filters.get('end_date', 'Today') }}</p>
+    </div>
+    {% endif %}
+
+    {% if summary %}
+    <div class="summary-cards">
+        {% if summary.total_bids %}
+        <div class="summary-card">
+            <div class="label">Total Bids</div>
+            <div class="value">{{ summary.total_bids }}</div>
+        </div>
+        {% endif %}
+        {% if summary.acceptance_rate %}
+        <div class="summary-card">
+            <div class="label">Acceptance Rate</div>
+            <div class="value">{{ summary.acceptance_rate }}%</div>
+        </div>
+        {% endif %}
+        {% if summary.rejection_rate %}
+        <div class="summary-card">
+            <div class="label">Rejection Rate</div>
+            <div class="value">{{ summary.rejection_rate }}%</div>
+        </div>
+        {% endif %}
+        {% if summary.busiest_window %}
+        <div class="summary-card">
+            <div class="label">Busiest Window</div>
+            <div class="value">{{ summary.busiest_window }}</div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Time Window</th>
+                <th>Bids</th>
+                <th>Acceptances</th>
+                <th>Rejections</th>
+                <th>Acceptance Rate</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                <td>{{ row.time_window }}</td>
+                <td>{{ row.bids }}</td>
+                <td>{{ row.acceptances }}</td>
+                <td>{{ row.rejections }}</td>
+                <td class="{% if row.rate|float > 80 %}high-rate{% elif row.rate|float < 30 %}low-rate{% endif %}">{{ row.rate }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>IBEW Local 46 - Referral & Dispatch System</p>
+        <p>This report is confidential and for internal union use only</p>
+    </div>
+</body>
+</html>

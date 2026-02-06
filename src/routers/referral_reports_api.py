@@ -10,6 +10,7 @@ Endpoints for generating out-of-work list and dispatch reports (PDF/Excel).
 
 from typing import Optional
 from datetime import date
+from io import BytesIO
 
 from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.responses import StreamingResponse
@@ -1954,3 +1955,1193 @@ def get_book_transfer_report(
             media_type="application/pdf",
             headers={"Content-Disposition": "attachment; filename=book_transfers.pdf"},
         )
+
+
+# ========================================
+# WEEK 40: P2 BATCH 1 - REGISTRATION & BOOK ANALYTICS (12 endpoints)
+# ========================================
+
+
+@router.get("/registration-aging")
+def get_registration_aging_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    book_id: Optional[int] = Query(None, description="Filter by book ID"),
+    as_of_date: Optional[date] = Query(None, description="As-of date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Registration Aging Report — Duration buckets per book.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_registration_aging_report(format, book_id, as_of_date)
+
+    filename = f"registration_aging.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/registration-turnover")
+def get_registration_turnover_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    book_id: Optional[int] = Query(None, description="Filter by book ID"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Registration Turnover Report — In vs out per period.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_registration_turnover_report(format, start_date, end_date, book_id)
+
+    filename = f"registration_turnover.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/re-sign-compliance")
+def get_re_sign_compliance_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    book_id: Optional[int] = Query(None, description="Filter by book ID"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Re-Sign Compliance Report — Rule 7 analytics.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_re_sign_compliance_report(format, book_id, start_date, end_date)
+
+    filename = f"re_sign_compliance.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/re-registration-patterns")
+def get_re_registration_patterns_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    book_id: Optional[int] = Query(None, description="Filter by book ID"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Re-Registration Pattern Analysis — Rule 6 trigger analysis.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_re_registration_patterns_report(format, start_date, end_date, book_id)
+
+    filename = f"re_registration_patterns.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/inactive-registrations")
+def get_inactive_registrations_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    book_id: Optional[int] = Query(None, description="Filter by book ID"),
+    inactive_days: int = Query(60, description="Inactivity threshold in days"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Inactive Registration Report — Stale registrations.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_inactive_registrations_report(format, book_id, inactive_days)
+
+    filename = f"inactive_registrations.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/cross-book-registration")
+def get_cross_book_registration_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Cross-Book Registration Analysis — Multi-book members (Rule 5).
+
+    Access: Officer+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_cross_book_registration_report(format)
+
+    filename = f"cross_book_registration.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/classification-demand-gap")
+def get_classification_demand_gap_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Classification Demand Gap — Supply vs demand.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_classification_demand_gap_report(format, start_date, end_date)
+
+    filename = f"classification_demand_gap.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/book-comparison-dashboard")
+def get_book_comparison_dashboard_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Book Comparison Dashboard — Cross-book metrics.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_book_comparison_report(format)
+
+    filename = f"book_comparison.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/tier-distribution")
+def get_tier_distribution_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Tier Distribution Report — Book tier breakdown.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_tier_distribution_report(format)
+
+    filename = f"tier_distribution.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/book-capacity-trends")
+def get_book_capacity_trends_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    book_id: Optional[int] = Query(None, description="Filter by book ID"),
+    period: str = Query("weekly", pattern="^(weekly|monthly)$"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Book Capacity Trends — Registration trends.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_book_capacity_trends_report(format, book_id, period)
+
+    filename = f"book_capacity_trends.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/apn-wait-time")
+def get_apn_wait_time_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    book_id: Optional[int] = Query(None, description="Filter by book ID"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """APN Wait Time Distribution — Wait time histogram.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_apn_wait_time_report(format, book_id)
+
+    filename = f"apn_wait_time.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/seasonal-registration")
+def get_seasonal_registration_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    year: Optional[int] = Query(None, description="Year (YYYY)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Seasonal Registration Patterns — Seasonal patterns.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_seasonal_registration_report(format, year)
+
+    filename = f"seasonal_registration.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+# ========================================
+# WEEK 41: P2 BATCH 2 - DISPATCH & ANALYTICS (19 endpoints)
+# ========================================
+
+
+@router.get("/dispatch-success-rate")
+def get_dispatch_success_rate_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    book_id: Optional[int] = Query(None, description="Filter by book ID"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Dispatch Success Rate Report — Fill completion metrics.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_dispatch_success_rate_report(format, start_date, end_date, book_id)
+
+    filename = f"dispatch_success_rate.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/time-to-fill")
+def get_time_to_fill_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    book_id: Optional[int] = Query(None, description="Filter by book ID"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Time-to-Fill Analysis — Average days to fill requests.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_time_to_fill_report(format, start_date, end_date, book_id)
+
+    filename = f"time_to_fill.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/dispatch-method-comparison")
+def get_dispatch_method_comparison_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Dispatch Method Comparison — Web bid vs phone vs walk-in.
+
+    Access: Officer+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_dispatch_method_comparison_report(format, start_date, end_date)
+
+    filename = f"dispatch_method_comparison.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/dispatch-geographic")
+def get_dispatch_geographic_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Geographic Distribution — Dispatches by region and location.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_dispatch_geographic_report(format, start_date, end_date)
+
+    filename = f"dispatch_geographic.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/termination-reason-analysis")
+def get_termination_reason_analysis_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    book_id: Optional[int] = Query(None, description="Filter by book ID"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Termination Reason Analysis — Dispatch end reasons and patterns.
+
+    Access: Officer+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_termination_reason_analysis_report(format, start_date, end_date, book_id)
+
+    filename = f"termination_reason_analysis.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/return-dispatch")
+def get_return_dispatch_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    employer_id: Optional[int] = Query(None, description="Filter by employer ID"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Return Dispatch Report — Members returning to same employer.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_return_dispatch_report(format, start_date, end_date, employer_id)
+
+    filename = f"return_dispatch.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/employer-growth-trends")
+def get_employer_growth_trends_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    contract_code: Optional[str] = Query(None, description="Filter by contract code"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Employer Growth Trends — New and growing employers.
+
+    Access: Officer+ only
+    """
+    service = ReferralReportService(db)
+    result = service.generate_employer_growth_trends_report(format, start_date, end_date, contract_code)
+
+    filename = f"employer_growth_trends.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/employer-workforce-size")
+def get_employer_workforce_size_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Employer Workforce Size — Dispatch counts per employer.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_employer_workforce_size_report(format)
+
+    filename = f"employer_workforce_size.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/new-employer-activity")
+def get_new_employer_activity_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """New Employer Activity — First-time employers.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_new_employer_activity_report(format, start_date, end_date)
+
+    filename = f"new_employer_activity.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/contract-code-utilization")
+def get_contract_code_utilization_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Contract Code Utilization — Dispatch volume by contract type.
+
+    Access: Officer+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_contract_code_utilization_report(format, start_date, end_date)
+
+    filename = f"contract_code_utilization.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/queue-velocity")
+def get_queue_velocity_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    book_id: Optional[int] = Query(None, description="Filter by book ID"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Queue Velocity Report — Position movement rate per book.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_queue_velocity_report(format, book_id)
+
+    filename = f"queue_velocity.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/peak-demand")
+def get_peak_demand_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Peak Demand Analysis — Demand spikes and patterns.
+
+    Access: Officer+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_peak_demand_report(format, start_date, end_date)
+
+    filename = f"peak_demand.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/check-mark-patterns")
+def get_check_mark_patterns_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    book_id: Optional[int] = Query(None, description="Filter by book ID"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Check Mark Pattern Analysis — Rule 10 enforcement tracking.
+
+    Access: Officer+ (sensitive)
+    """
+    service = ReferralReportService(db)
+    result = service.generate_check_mark_patterns_report(format, start_date, end_date, book_id)
+
+    filename = f"check_mark_patterns.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/check-mark-exceptions")
+def get_check_mark_exceptions_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    book_id: Optional[int] = Query(None, description="Filter by book ID"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Check Mark Exceptions Report — Rule 11 exemptions.
+
+    Access: Officer+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_check_mark_exceptions_report(format, start_date, end_date, book_id)
+
+    filename = f"check_mark_exceptions.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/internet-bidding-analytics")
+def get_internet_bidding_analytics_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    book_id: Optional[int] = Query(None, description="Filter by book ID"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Internet Bidding Analytics — Rule 8 compliance metrics.
+
+    Access: Officer+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_internet_bidding_analytics_report(format, start_date, end_date, book_id)
+
+    filename = f"internet_bidding_analytics.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/exemption-status")
+def get_exemption_status_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    snapshot_date: Optional[date] = Query(None, description="Snapshot date (YYYY-MM-DD)"),
+    exemption_type: Optional[str] = Query(None, description="Filter by exemption type"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Exemption Status Report — Rule 14 exemptions.
+
+    Access: Staff+
+    """
+    service = ReferralReportService(db)
+    result = service.generate_exemption_status_report(format, snapshot_date, exemption_type)
+
+    filename = f"exemption_status.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/agreement-type-performance")
+def get_agreement_type_performance_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Agreement Type Performance — Rule 4 (PLA/CWA/TERO) metrics.
+
+    Access: Officer+ only
+    """
+    service = ReferralReportService(db)
+    result = service.generate_agreement_type_performance_report(format, start_date, end_date)
+
+    filename = f"agreement_type_performance.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/foreperson-by-name")
+def get_foreperson_by_name_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    employer_id: Optional[int] = Query(None, description="Filter by employer ID"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Foreperson By-Name Analysis — Rule 13 anti-collusion tracking.
+
+    Access: Officer+ only
+    """
+    service = ReferralReportService(db)
+    result = service.generate_foreperson_by_name_report(format, start_date, end_date, employer_id)
+
+    filename = f"foreperson_by_name.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/blackout-period-tracking")
+def get_blackout_period_tracking_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    member_id: Optional[int] = Query(None, description="Filter by member ID"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Blackout Period Tracking — Rule 12 enforcement.
+
+    Access: Officer+ only
+    """
+    service = ReferralReportService(db)
+    result = service.generate_blackout_period_tracking_report(format, start_date, end_date, member_id)
+
+    filename = f"blackout_period_tracking.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+# ========================================
+# WEEK 42: P3 REPORTS - PROJECTIONS & ANALYTICS (10 endpoints)
+# ========================================
+
+
+@router.get("/workforce-projection")
+def get_workforce_projection(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    projection_months: int = Query(6, ge=1, le=24, description="Months to project ahead"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Workforce Projection — Predictive staffing levels by book.
+
+    Access: Officer+ only
+    """
+    service = ReferralReportService(db)
+    result = service.generate_workforce_projection_report(format, projection_months)
+
+    filename = f"workforce_projection.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/dispatch-forecast")
+def get_dispatch_forecast(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    forecast_weeks: int = Query(12, ge=1, le=52, description="Weeks to forecast"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Dispatch Volume Forecast — Expected dispatch trends.
+
+    Access: Officer+ only
+    """
+    service = ReferralReportService(db)
+    result = service.generate_dispatch_forecast_report(format, forecast_weeks)
+
+    filename = f"dispatch_forecast.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/book-demand-forecast")
+def get_book_demand_forecast(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    forecast_period: int = Query(90, ge=1, le=365, description="Days to forecast"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Book Demand Forecast — Predicted labor request volume per book.
+
+    Access: Officer+ only
+    """
+    service = ReferralReportService(db)
+    result = service.generate_book_demand_forecast_report(format, forecast_period)
+
+    filename = f"book_demand_forecast.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/member-availability-index")
+def get_member_availability_index(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    as_of_date: Optional[date] = Query(None, description="As-of date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Member Availability Index — Real-time member supply metrics.
+
+    Access: Staff+ only
+    """
+    service = ReferralReportService(db)
+    result = service.generate_member_availability_index_report(format, as_of_date)
+
+    filename = f"member_availability_index.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/employer-loyalty-score")
+def get_employer_loyalty_score(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    lookback_days: int = Query(365, ge=30, le=1095, description="Historical period for scoring"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Employer Loyalty Score — Repeat usage frequency and reliability.
+
+    Access: Officer+ only
+    """
+    service = ReferralReportService(db)
+    result = service.generate_employer_loyalty_score_report(format, lookback_days)
+
+    filename = f"employer_loyalty_score.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/member-journey/{member_id}")
+def get_member_journey(
+    member_id: int,
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Member Journey Report — Complete career arc and dispatch history.
+
+    Access: Officer+ only
+    """
+    service = ReferralReportService(db)
+    result = service.generate_member_journey_report(member_id, format)
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="Member not found")
+
+    filename = f"member_journey_{member_id}.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/comparative-book-performance")
+def get_comparative_book_performance(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Comparative Book Performance — Side-by-side metrics across all books.
+
+    Access: Staff+ only
+    """
+    service = ReferralReportService(db)
+    result = service.generate_comparative_book_performance_report(format, start_date, end_date)
+
+    filename = f"comparative_book_performance.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/custom-export")
+def get_custom_export(
+    entity_type: str = Query("dispatch", description="Entity type: dispatch, registration, member, employer"),
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Custom Date Range Export — Flexible Excel export by entity type.
+
+    Access: Staff+ only
+    """
+    service = ReferralReportService(db)
+    result = service.generate_custom_export_report(entity_type, start_date, end_date)
+
+    if result is None:
+        raise HTTPException(status_code=400, detail="Invalid entity type or date range")
+
+    filename = f"custom_export_{entity_type}_{start_date or 'all'}.xlsx"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/annual-summary")
+def get_annual_summary(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    year: Optional[int] = Query(None, description="Year (defaults to current year)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Annual Operations Summary — Year-over-year performance snapshot.
+
+    Access: Officer+ only
+    """
+    service = ReferralReportService(db)
+    result = service.generate_annual_summary_report(format, year)
+
+    filename = f"annual_summary_{year or 'current'}.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/data-quality")
+def get_data_quality_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Data Quality Report — Audit completeness and integrity metrics.
+
+    Access: Admin only
+    """
+    service = ReferralReportService(db)
+    result = service.generate_data_quality_report(format)
+
+    filename = f"data_quality.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    return StreamingResponse(
+        BytesIO(result),
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+# ========================================
+# WEEK 42: P3 - PROJECTION, INTELLIGENCE & ADMIN (10 endpoints)
+# ========================================
+
+
+@router.get("/workforce-projection")
+def get_workforce_projection_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    projection_days: int = Query(90, ge=30, le=180),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Workforce Projection — Queue level projections. Access: Officer+"""
+    service = ReferralReportService(db)
+    result = service.generate_workforce_projection_report(format, projection_days)
+    filename = f"workforce_projection.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return StreamingResponse(BytesIO(result), media_type=media_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@router.get("/dispatch-forecast")
+def get_dispatch_forecast_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Dispatch Volume Forecast. Access: Officer+"""
+    service = ReferralReportService(db)
+    result = service.generate_dispatch_forecast_report(format)
+    filename = f"dispatch_forecast.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return StreamingResponse(BytesIO(result), media_type=media_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@router.get("/book-demand-forecast")
+def get_book_demand_forecast_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    book_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Book Demand Forecast. Access: Officer+"""
+    service = ReferralReportService(db)
+    result = service.generate_book_demand_forecast_report(format, book_id)
+    filename = f"book_demand_forecast.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return StreamingResponse(BytesIO(result), media_type=media_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@router.get("/member-availability-index")
+def get_member_availability_index_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Member Availability Index. Access: Staff+"""
+    service = ReferralReportService(db)
+    result = service.generate_member_availability_index_report(format)
+    filename = f"member_availability_index.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return StreamingResponse(BytesIO(result), media_type=media_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@router.get("/employer-loyalty-score")
+def get_employer_loyalty_score_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Employer Loyalty Score. Access: Officer+"""
+    service = ReferralReportService(db)
+    result = service.generate_employer_loyalty_score_report(format)
+    filename = f"employer_loyalty_score.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return StreamingResponse(BytesIO(result), media_type=media_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@router.get("/member-journey")
+def get_member_journey_report(
+    member_id: int = Query(..., description="Member ID"),
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Member Journey Report. Access: Officer+"""
+    service = ReferralReportService(db)
+    result = service.generate_member_journey_report(format, member_id)
+    filename = f"member_journey_{member_id}.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return StreamingResponse(BytesIO(result), media_type=media_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@router.get("/comparative-book-performance")
+def get_comparative_book_performance_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Comparative Book Performance. Access: Staff+"""
+    service = ReferralReportService(db)
+    result = service.generate_comparative_book_performance_report(format)
+    filename = f"comparative_book_performance.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return StreamingResponse(BytesIO(result), media_type=media_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@router.get("/custom-export")
+def get_custom_export_report(
+    entity_type: str = Query(..., pattern="^(members|registrations|dispatches)$"),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    book_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Custom Date Range Export. Access: Staff+"""
+    service = ReferralReportService(db)
+    result = service.generate_custom_export_report("xlsx", entity_type, start_date, end_date, book_id)
+    filename = f"custom_export_{entity_type}.xlsx"
+    media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return StreamingResponse(BytesIO(result), media_type=media_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@router.get("/annual-summary")
+def get_annual_summary_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    year: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Annual Operations Summary. Access: Officer+"""
+    service = ReferralReportService(db)
+    result = service.generate_annual_summary_report(format, year)
+    filename = f"annual_summary_{year or date.today().year}.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return StreamingResponse(BytesIO(result), media_type=media_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@router.get("/data-quality")
+def get_data_quality_report(
+    format: str = Query("pdf", pattern="^(pdf|xlsx)$"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Data Quality Report. Access: Admin only"""
+    service = ReferralReportService(db)
+    result = service.generate_data_quality_report(format)
+    filename = f"data_quality.{format}"
+    media_type = "application/pdf" if format == "pdf" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return StreamingResponse(BytesIO(result), media_type=media_type, headers={"Content-Disposition": f"attachment; filename={filename}"})
