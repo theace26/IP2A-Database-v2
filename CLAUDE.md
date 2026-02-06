@@ -2,8 +2,8 @@
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
 **Last Updated:** February 6, 2026
-**Current Version:** v0.9.12-alpha
-**Current Phase:** Phase 7 (Referral & Dispatch) IN PROGRESS — Weeks 20-38 Complete (Backend + Frontend UI + All P0+P1 Reports + Stripe Removal) | Spoke 2
+**Current Version:** v0.9.13-alpha
+**Current Phase:** Phase 7 (Referral & Dispatch) IN PROGRESS — Weeks 20-39 Complete (Backend + Frontend UI + All P0+P1 Reports + Stripe Removal + Bug Squash) | Spoke 2
 
 ---
 
@@ -17,7 +17,7 @@
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl
 
-**Status:** 680+ total tests (~660 passing, 16 skipped, 96% pass rate, Week 38 as of Feb 6, 2026), ~260+ API endpoints, 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
+**Status:** 682 total tests (~666 passing, 16 skipped, ~100% pass rate, Week 39 Bug Squash as of Feb 6, 2026), ~260+ API endpoints, 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
 **Current:** Phase 7 — Referral & Dispatch System (~78 LaborPower reports to build, 14 complete). **Weeks 20-35 complete:** models, enums, schemas, 7 services, 6 API routers, 2 frontend services, 2 frontend routers, 13 pages, 15 HTMX partials, 14 report endpoints, Stripe removal. See `docs/phase7/`
 
