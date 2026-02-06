@@ -1,7 +1,7 @@
 # ADR-018: Square Payment Integration
 
-**Status:** Accepted
-**Date:** February 5, 2026
+**Status:** In Progress — Stripe Removed, Square Phase A Pending
+**Date:** February 5, 2026 (Updated February 6, 2026)
 **Supersedes:** ADR-013 (Stripe Payment Integration)
 **Decision Makers:** Xerxes (Project Lead), Hub Project
 **Related ADRs:** ADR-008 (Audit Logging), ADR-003 (Authentication)
@@ -61,6 +61,40 @@ The deciding factor is not technical — both processors are capable. The decidi
 - **Phase B and C are independent** — they can be built in any order after Phase A
 - **Phase B and C are scope expansions** — they deliver capabilities UnionCore doesn't have today
 - **Phase B and C should not block Phase 7 stabilization** — schedule them after referral/dispatch is stable
+
+---
+
+## Stripe Removal (Week 35 — February 2026)
+
+All Stripe code was removed from the codebase in Week 35 sprint:
+
+### What Was Removed
+- Stripe SDK (`stripe` package) from requirements.txt
+- `src/services/payment_service.py` — Stripe Checkout session creation
+- `src/routers/webhooks/stripe_webhook.py` — Webhook handler and verification
+- Stripe payment routes from `src/routers/dues_frontend.py` (initiate, success, cancel)
+- Stripe configuration from `src/config/settings.py` (STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY, STRIPE_WEBHOOK_SECRET)
+- Stripe router registration from `src/main.py`
+- Stripe health check from `src/routers/health.py`
+- Stripe CSP entries from `src/middleware/security_headers.py`
+- Stripe environment variables from `.env.example`
+- Stripe test files: `src/tests/test_stripe_integration.py`, `src/tests/test_stripe_frontend.py` (~27 tests)
+
+### What Was Preserved
+- Dues tracking models (DuesPayment, DuesRate, DuesPeriod, DuesAdjustment)
+- Dues service layer (calculation, recording, querying)
+- Dues API routes and frontend routes
+- Dues frontend templates and partials
+- All non-Stripe dues tests
+- `stripe_customer_id` column on Member (historical data — to be renamed to `processor_customer_id` in Phase A)
+- `DuesPaymentMethod.STRIPE_*` enum values (historical payment records)
+- Payment success/cancel templates (generic, reusable for Square)
+- Alembic migrations (historical record — never deleted)
+- ADR-013 (marked Superseded, retained for historical reference)
+
+### Status
+- **Stripe Code Removed:** Week 35 (February 6, 2026)
+- **Square Phase A:** Pending — scheduled after Phase 7 stabilization
 
 ---
 

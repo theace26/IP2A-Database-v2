@@ -40,7 +40,6 @@ weasyprint==60.1           # PDF generation
 openpyxl==3.1.2            # Excel generation
 
 # --- Payment Processing ---
-stripe>=8.0.0              # Stripe payment integration
 
 # --- Production Server ---
 gunicorn>=21.2.0

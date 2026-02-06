@@ -94,13 +94,6 @@ def readiness_check(db: Session = Depends(get_db)) -> dict[str, Any]:
             # S3 failure is degraded, not critical
             # overall_healthy = False
 
-    # Stripe check (only verify key is configured, don't make API call)
-    if settings.STRIPE_SECRET_KEY:
-        checks["stripe"] = {
-            "status": "configured",
-            "note": "API key present",
-        }
-
     return {
         "status": "healthy" if overall_healthy else "degraded",
         "timestamp": datetime.now(timezone.utc).isoformat(),

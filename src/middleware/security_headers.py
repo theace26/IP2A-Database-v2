@@ -39,15 +39,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # - Inline scripts/styles (needed for HTMX/Alpine.js)
         # - CDN resources from jsdelivr.net and unpkg.com
         # - Images from data URIs and HTTPS sources
-        # - Connections to Stripe API
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://cdn.tailwindcss.com https://js.stripe.com; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://cdn.tailwindcss.com; "
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; "
             "img-src 'self' data: https:; "
-            "connect-src 'self' https://api.stripe.com https://*.sentry.io; "
-            "frame-src https://js.stripe.com; "
+            "connect-src 'self' https://*.sentry.io; "
         )
 
         # HSTS - only on HTTPS connections

@@ -79,9 +79,6 @@ from src.routers.audit_frontend import router as audit_frontend_router
 from src.routers.profile_frontend import router as profile_frontend_router
 from src.routers.grants_frontend import router as grants_frontend_router
 
-# Webhooks
-from src.routers.webhooks.stripe_webhook import router as stripe_webhook_router
-
 # Health checks
 from src.routers.health import router as health_router
 
@@ -99,6 +96,7 @@ from src.routers.job_bid_api import router as job_bid_api_router
 from src.routers.dispatch_api import router as dispatch_api_router
 from src.routers.referral_frontend import router as referral_frontend_router
 from src.routers.dispatch_frontend import router as dispatch_frontend_router
+from src.routers.referral_reports_api import router as referral_reports_api_router
 
 # ------------------------------------------------------------
 # Initialize FastAPI
@@ -237,9 +235,6 @@ app.include_router(audit_frontend_router)  # Frontend audit log viewer
 app.include_router(profile_frontend_router)  # User profile management
 app.include_router(grants_frontend_router)  # Grant management frontend
 
-# Webhooks (NO authentication - signature verified)
-app.include_router(stripe_webhook_router)
-
 # Health check routes (production monitoring)
 app.include_router(health_router)
 
@@ -257,6 +252,11 @@ app.include_router(job_bid_api_router)
 app.include_router(dispatch_api_router)
 app.include_router(referral_frontend_router)  # Week 26: Books & Registration UI
 app.include_router(dispatch_frontend_router)  # Week 27: Dispatch Workflow UI
+app.include_router(
+    referral_reports_api_router,
+    prefix="/api/v1/reports/referral",
+    tags=["referral-reports"],
+)  # Week 33A: Out-of-Work Reports
 
 # Frontend routes (HTML pages) - include LAST to not interfere with API routes
 app.include_router(frontend.router)
