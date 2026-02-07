@@ -1,0 +1,89 @@
+# deployment/docker-compose.demo.yml
+# Self-contained demo environment for stakeholder presentations
+# Usage: docker-compose -f deployment/docker-compose.demo.yml up -d
+#
+# Created: February 7, 2026 (Week 45)
+# Spoke: Spoke 2 (Operations)
+
+version: '3.8'
+
+services:
+  demo-db:
+    image: postgres:16-alpine
+    container_name: unioncore-demo-db
+    environment:
+      POSTGRES_DB: unioncore_demo
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: DemoPassword2026!
+    ports:
+      - "5433:5432"  # Non-standard port to avoid conflicts with dev database
+    volumes:
+      - demo-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U demo -d unioncore_demo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - demo-network
+
+  demo-api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: unioncore-demo-api
+    environment:
+      # Database connection
+      DATABASE_URL: postgresql://demo:DemoPassword2026!@demo-db:5432/unioncore_demo
+
+      # Auth configuration
+      AUTH_JWT_SECRET_KEY: demo-secret-key-not-for-production-use-only
+      AUTH_ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      AUTH_REFRESH_TOKEN_EXPIRE_DAYS: 7
+
+      # Environment settings
+      IP2A_ENV: demo
+      DEMO_MODE: "true"
+
+      # Logging
+      LOG_LEVEL: INFO
+      JSON_LOGS: "false"
+
+      # Disable production features
+      SENTRY_DSN: ""
+      RUN_PRODUCTION_SEED: "false"
+
+    ports:
+      - "8080:8000"  # Non-standard port to avoid conflicts with dev server
+    depends_on:
+      demo-db:
+        condition: service_healthy
+    networks:
+      - demo-network
+    command: >
+      sh -c "echo '🔄 Running database migrations...' &&
+             alembic upgrade head &&
+             echo '🌱 Seeding demo data...' &&
+             python -m src.db.demo_seed &&
+             echo '🚀 Starting UnionCore demo API server...' &&
+             echo '📍 Demo available at: http://localhost:8080' &&
+             echo '👤 Demo accounts:' &&
+             echo '   Dispatcher: demo_dispatcher@ibew46.demo / Demo2026!' &&
+             echo '   Officer:    demo_officer@ibew46.demo / Demo2026!' &&
+             echo '   Admin:      demo_admin@ibew46.demo / Demo2026!' &&
+             echo '' &&
+             uvicorn src.main:app --host 0.0.0.0 --port 8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+networks:
+  demo-network:
+    driver: bridge
+
+volumes:
+  demo-db-data:
+    name: unioncore-demo-db-data

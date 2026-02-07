@@ -7,10 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> **v0.9.16-alpha+ — WEEK 44: Phase 7 Close-Out Documentation**
-> Weeks 43-44 in progress (v0.9.17-18-alpha target)
+> **v0.9.19-alpha — WEEK 45: Demo Environment & Seed Data**
+> Week 45 complete (demo environment ready for stakeholder presentation)
 > ~764 total tests, ~320+ API endpoints, 32 models, 18 ADRs, 85 reports
-> **Phase 7 Status:** 5/7 sub-phases complete (7b, 7c, 7e, 7f, 7g). Blocked: 7a, 7d. **Next:** Demo Prep (Weeks 45-46)
+> **Demo Ready:** Idempotent seed data, self-contained Docker environment, 3 demo accounts
+> **Next:** Week 46 Demo Script & Stakeholder Talking Points
+
+### Added (February 7, 2026 — Week 45: Demo Environment & Seed Data)
+
+#### Demo Environment
+- **Demo Seed Script** (`src/db/demo_seed.py`)
+  * Idempotent demo data creation using get_or_create patterns
+  * 5 referral books (Wire Seattle/Bremerton, Technician, Stockperson, Sound & Comm)
+  * 30 members with realistic union electrician names, varied classifications
+  * 6 employers (general contractors, S&C specialist, stockperson, multi-contract, residential)
+  * 50+ book registrations (cross-regional Wire members, multiple classifications)
+  * 5+ labor requests (OPEN, FILLED, CANCELLED, EXPIRED statuses)
+  * 4+ dispatches (COMPLETED, ACTIVE, SHORT_CALL, QUIT — full lifecycle)
+  * Check marks (3 registrations: 1, 1, and 2 marks)
+  * Exemptions (military, medical, union business/salting)
+  * 90+ days historical depth for forecast reports
+  * APNs as DECIMAL(10,2) with realistic Excel serial date encoding
+- **Docker Compose** (`deployment/docker-compose.demo.yml`)
+  * Self-contained demo environment (isolated ports 5433/8080)
+  * Automatic database migration and seed data on startup
+  * Separate demo database and volumes (no conflicts with dev)
+  * Health checks for database and API server
+- **Demo README** (`deployment/DEMO_README.md`)
+  * Quick start guide
+  * Demo account credentials (dispatcher, officer, admin)
+  * Smoke test checklist (10 key features)
+  * Troubleshooting guide
+- **3 Demo Accounts**
+  * `demo_dispatcher@ibew46.demo` / `Demo2026!` (Staff role)
+  * `demo_officer@ibew46.demo` / `Demo2026!` (Officer role)
+  * `demo_admin@ibew46.demo` / `Demo2026!` (Admin role)
+
+#### Business Rules Demonstrated
+- **Rule 9:** Short calls (≤10 days, position restoration)
+- **Rule 10:** Check marks (2 allowed, 3rd = roll-off)
+- **Rule 12:** Quit/discharge (cascade roll-off from all books)
+- **Rule 14:** Exemptions (military, medical, union business)
+- **Cross-regional:** 87% of Wire members on multiple books
+- **Multiple classifications:** 2 members on 3+ books
+
+**Version:** v0.9.19-alpha
+
+---
 
 ### Documentation (February 7, 2026 — Weeks 43-44: Phase 7 Close-Out)
 

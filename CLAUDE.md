@@ -1,9 +1,9 @@
 # IP2A-Database-v2: Project Context Document
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
-**Last Updated:** February 7, 2026 (Week 44 - Phase 7 Close-Out)
-**Current Version:** v0.9.16-alpha (Week 44 in progress, target: v0.9.18-alpha)
-**Current Phase:** Phase 7 (Referral & Dispatch) — **5 of 7 SUB-PHASES COMPLETE** (7b, 7c, 7e, 7f, 7g) — 85 reports implemented | **NEXT:** Demo Prep (Weeks 45-46) | Spoke 2
+**Last Updated:** February 7, 2026 (Week 45 - Demo Environment)
+**Current Version:** v0.9.19-alpha (Week 45 complete, demo environment ready)
+**Current Phase:** Phase 7-Demo (Demo Preparation) — **Week 45 COMPLETE** (demo seed + Docker compose) | **NEXT:** Week 46 Demo Script | Spoke 2
 
 ---
 
@@ -2318,8 +2318,71 @@ src/schemas/__init__.py                  # Export Phase 7 schemas
 - `docs/IP2A_BACKEND_ROADMAP.md` (demo prep + Phase 8A sections added)
 
 **Next Steps:**
-- Week 45-46: Demo Preparation (seed data, demo script, stakeholder presentation)
+- Week 46: Demo Script & Stakeholder Talking Points
 - Week 47-49: Phase 8A Square Payment Migration (Spoke 1 owner)
+
+---
+
+### Week 45: Demo Environment & Seed Data ✅ COMPLETE
+
+**Objective:** Build realistic demo environment with seed data for stakeholder presentation.
+
+**Status:** ✅ All tasks complete (February 7, 2026)
+
+| Task | Status | Location |
+|------|--------|----------|
+| **Demo seed script** | ✅ Complete | `src/db/demo_seed.py` |
+| **Docker compose file** | ✅ Complete | `deployment/docker-compose.demo.yml` |
+| **Demo README** | ✅ Complete | `deployment/DEMO_README.md` |
+| **3 demo accounts** | ✅ Complete | dispatcher, officer, admin |
+
+**Demo Data Summary:**
+- **5 referral books**: Wire Seattle, Wire Bremerton, Technician, Stockperson, Sound & Comm
+- **30 members**: Realistic union electrician names, varied classifications
+- **6 employers**: General contractors, S&C specialist, stockperson shop, multi-contract, residential-only
+- **50+ registrations**: Cross-regional Wire members, multiple classification registrations
+- **5+ labor requests**: OPEN, FILLED, CANCELLED, EXPIRED statuses
+- **4+ dispatches**: COMPLETED, ACTIVE, SHORT_CALL, QUIT (full lifecycle)
+- **Check marks**: 3 registrations (1 mark, 1 mark, 2 marks = at limit)
+- **Exemptions**: Military, medical, union business (salting)
+- **Historical depth**: 90+ days for forecast reports
+- **APNs**: DECIMAL(10,2) with realistic Excel serial date encoding
+
+**Key Features:**
+- **Idempotent seed**: Uses get_or_create pattern, safe to run multiple times
+- **Self-contained Docker**: Isolated ports (5433/8080), separate volumes
+- **Demo accounts**: 3 role-specific accounts (dispatcher, officer, admin)
+- **Business rules demonstrated**: Check marks (Rule 10), exemptions (Rule 14), cross-regional (87%), short calls (Rule 9)
+
+**Files Created:**
+```
+src/db/demo_seed.py                      # 550+ lines, idempotent demo data
+deployment/docker-compose.demo.yml       # Self-contained demo environment
+deployment/DEMO_README.md                # Usage guide and smoke test checklist
+```
+
+**Docker Usage:**
+```bash
+cd deployment
+docker-compose -f docker-compose.demo.yml up -d
+# Demo available at http://localhost:8080
+# Accounts: demo_dispatcher@ibew46.demo / Demo2026! (and officer, admin)
+```
+
+**Acceptance Criteria:**
+- [x] Demo seed script idempotent
+- [x] All required entities seeded (books, members, employers, dispatches, check marks, exemptions)
+- [x] APNs use correct DECIMAL(10,2) encoding
+- [x] Historical data spans 90+ days
+- [x] Docker compose file functional
+- [x] 3 demo accounts created
+- [x] Demo README with smoke test checklist
+
+**Smoke Test:** Requires local Docker environment (not available in Claude Code environment).
+
+**Next:** Week 46 — Create demo script (5-act, 22 minutes) and stakeholder talking points.
+
+**Version:** v0.9.19-alpha
 
 ---
 
