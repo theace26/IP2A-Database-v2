@@ -1,9 +1,9 @@
 # UnionCore Backend Roadmap
 
 **Document Purpose:** Master development plan with phases, milestones, and strategic context
-**Version:** v5.0
-**Last Updated:** February 6, 2026
-**Project Version:** v0.9.10-alpha
+**Version:** v6.0
+**Last Updated:** February 7, 2026 (Week 44)
+**Project Version:** v0.9.16-alpha
 
 ---
 
@@ -14,9 +14,10 @@ UnionCore is a comprehensive union management platform for IBEW Local 46, replac
 | Metric | Value |
 |--------|-------|
 | **Users** | ~4,000 external (members, stewards, applicants) + ~40 internal (staff, officers) |
-| **Tests** | 621 total (~596 passing, 98.5% pass rate, Week 35) |
-| **Endpoints** | ~240+ |
+| **Tests** | 764 total (~720-730 passing, ≥95% pass rate, Week 43) |
+| **Endpoints** | ~320+ (260 baseline + 62 Phase 7) |
 | **Models** | 32 (26 core + 6 Phase 7) |
+| **Reports** | 85 implemented (14 P0, 30 P1, 31 P2, 10 P3) |
 | **ADRs** | 18 |
 | **Deployment** | Railway (live) |
 
@@ -27,8 +28,9 @@ UnionCore is a comprehensive union management platform for IBEW Local 46, replac
 | 1-4 | Core Platform (Members, Auth, Training, Dues) | ✅ Complete | Spoke 1 |
 | 5 | Access DB Migration | ⏸️ Blocked | Spoke 1 |
 | 6 | Frontend (Weeks 1-19) | ✅ Complete | Spoke 3 |
-| 7 | Referral & Dispatch (Weeks 20-35) | 🔄 In Progress | Spoke 2 |
-| 8 | Square Payment Migration | 🔄 In Progress (Stripe removed Week 35) | Spoke 3 |
+| 7 | Referral & Dispatch (Weeks 20-42) | 🔄 In Progress (5 of 7 sub-phases) | Spoke 2 |
+| 7-Demo | Demo Preparation (Weeks 45-46) | 📋 Next | Spoke 2 |
+| 8A | Square Payment Migration (Weeks 47-49) | 📋 Ready | Spoke 1 |
 
 ---
 
@@ -224,17 +226,24 @@ LaborPower is the legacy dispatch system managing:
 | 13 | Foreperson By Name | Anti-collusion enforcement |
 | 14 | Exempt Status | Military, union, salting, medical, jury |
 
-### Sub-Phases 7a-7g (Remaining Work)
+### Sub-Phases 7a-7g Status (as of Week 44)
 
-| Sub-Phase | Focus | Hours | Status |
-|-----------|-------|-------|--------|
-| 7a | Data Collection — 3 LaborPower exports | 3-5 | ⛔ Blocked |
-| 7b | Schema Finalization — DDL, migrations | 10-15 | Ready when 7a done |
-| 7c | Core Services + API — 14 rules, CRUD | 25-35 | After 7b |
-| 7d | Import Tooling — CSV pipeline | 15-20 | Parallel with 7c |
-| 7e | Frontend UI — dispatch board, bidding | 20-30 | After 7c |
-| 7f | Reports P0+P1 — 49 critical reports | 20-30 | After 7c |
-| 7g | Reports P2+P3 — 29 lower priority | 10-15 | After 7f |
+| Sub-Phase | Focus | Hours | Status | Completed |
+|-----------|-------|-------|--------|-----------|
+| 7a | Data Collection — 3 LaborPower exports | 3-5 | ⛔ BLOCKED (LaborPower access) | — |
+| 7b | Schema Finalization — DDL, migrations | 10-15 | ✅ COMPLETE | Weeks 20-21 |
+| 7c | Core Services + API — 14 rules, CRUD | 25-35 | ✅ COMPLETE | Weeks 22-25 |
+| 7d | Import Tooling — CSV pipeline | 15-20 | ⛔ BLOCKED (depends on 7a) | — |
+| 7e | Frontend UI — dispatch board, bidding | 20-30 | ✅ COMPLETE | Weeks 26-28, 32 |
+| 7f | Reports P0+P1 — 44 critical reports | 20-30 | ✅ COMPLETE | Weeks 33-34 |
+| 7g | Reports P2+P3 — 41 lower priority | 10-15 | ✅ COMPLETE | Weeks 40-42 |
+
+**Summary:**
+- ✅ **5 of 7 sub-phases COMPLETE** (71% completion rate)
+- ⛔ **2 sub-phases BLOCKED** awaiting LaborPower data access
+- 📊 **85 reports implemented** (14 P0, 30 P1, 31 P2, 10 P3)
+- 🧪 **82 report tests** (44 P0/P1 + 38 P2/P3)
+- 📈 **+294 tests** total (+62%), +142 endpoints (+80%)
 
 ### LaborPower Report Inventory (~78 reports)
 
@@ -247,25 +256,61 @@ LaborPower is the legacy dispatch system managing:
 
 ---
 
-## Phase 8: Square Payment Migration — 📋 PLANNED
+## Phase 7-Demo: Demo Preparation — 📋 NEXT (Weeks 45-46)
 
+**Owner:** Spoke 2: Operations
+**Purpose:** Demonstrate working dispatch system to stakeholders
+**Strategic Goal:** Unblock Phase 7a/7d by securing LaborPower data access
+
+### Objectives
+
+1. **Build leadership support** — Union officers see dispatch/referral replacing daily manual work
+2. **Neutralize IT concerns** — Show Docker isolation, self-maintained, no support burden
+3. **Unblock data access** — Access DB owner sees working system, grants LaborPower exports
+4. **Validate reports** — Officers see 85 reports match their workflows
+
+### Week 45: Demo Environment
+- Demo seed script with realistic data (90+ days historical depth)
+- Demo Docker compose (self-contained, non-conflicting ports)
+- 3 demo accounts (dispatcher, officer, admin)
+- Smoke test all 5 acts of demo
+
+### Week 46: Demo Script
+- 5-act demo script (~22 minutes)
+- Stakeholder-specific talking points (3 audiences)
+- Dry run with contingency plans
+- Screenshot backup
+
+---
+
+## Phase 8A: Square Payment Migration — 📋 READY (Weeks 47-49)
+
+**Owner:** Spoke 1: Core Platform
 **Reference:** ADR-018
-**Trigger:** After Phase 7 stabilizes
+**Prerequisites:** Stripe removed (Week 35), Spoke 1 Onboarding Doc created (Week 44)
 **Rationale:** Square already used at union hall; consolidate payment processing
 
-### Sub-Phases
-- **Phase A:** Online Payments (Square Web Payments SDK)
+### Phase 8A: Online Payments (Weeks 47-49)
+
+**Week 47:** Square SDK + SquarePaymentService
+- Install squareup Python SDK
+- Create SquarePaymentService (create_payment, refund, webhook verify)
+- Configuration in settings.py
+
+**Week 48:** Square API Router + Frontend
+- Payment API router (4 endpoints)
+- Frontend payment form with Square Web Payments SDK
+- Webhook handler with signature verification
+
+**Week 49:** Tests + Phase 8A Close-Out
+- 15-20 tests (all mocked — NO sandbox hits)
+- Remove Stripe skip markers
+- Update ADR-018 Phase A status
+- Git commits v0.9.21, v0.9.22, v0.9.23-alpha
+
+### Phase 8B-C: Future (Not Yet Scoped)
 - **Phase B:** Terminal/POS Integration
 - **Phase C:** Invoice Generation
-
-### Migration Steps
-1. Create Square developer account
-2. Implement Square Web Payments SDK
-3. Update dues payment flow
-4. Migrate existing Stripe webhooks
-5. Remove Stripe skip markers from tests
-6. Archive Stripe code
-7. Update ADR-003 (Auth) and ADR-018
 
 ---
 

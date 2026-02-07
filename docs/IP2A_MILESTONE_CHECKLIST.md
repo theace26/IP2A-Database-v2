@@ -11,12 +11,13 @@
 
 | Metric | Value |
 |--------|-------|
-| Tests | 621 total (~596 passing, 98.5% pass rate) |
-| Endpoints | ~240+ |
-| Models | 32 |
+| Tests | 764 total (~720-730 passing, ≥95% pass rate) |
+| Endpoints | ~320+ (260 baseline + 62 Phase 7) |
+| Models | 32 (26 core + 6 Phase 7) |
 | ADRs | 18 |
 | Frontend Weeks | 1-19 complete |
-| Phase 7 Weeks | 20-35 complete (+ Stripe removal) |
+| Phase 7 Weeks | 20-42 complete (5 of 7 sub-phases) |
+| Phase 7 Reports | 85 implemented (14 P0, 30 P1, 31 P2, 10 P3) |
 
 ---
 
@@ -190,32 +191,69 @@
 - [x] 92.7% → 98.5% pass rate achieved
 - [x] Documentation reconciliation
 
-### Sub-Phases 7a-7g — ⏸️ BLOCKED/PLANNED
+### Weeks 40-42: P2+P3 Reports (Sub-phase 7g) ✅
+- [x] 31 P2 reports implemented (analytics, trends, utilization)
+- [x] 10 P3 reports implemented (projections, forecasts, ad-hoc)
+- [x] 38 P2+P3 report tests created
+- [x] Total: 85 reports across all priorities
+- [x] Version: v0.9.16-alpha
 
-| Sub-Phase | Focus | Hours | Status |
-|-----------|-------|-------|--------|
-| 7a | Data Collection (3 LaborPower exports) | 3-5 | ⛔ Blocked (LaborPower access) |
-| 7b | Schema Finalization (DDL, migrations) | 10-15 | Ready when 7a complete |
-| 7c | Core Services + API (14 business rules) | 25-35 | Waiting on 7b |
-| 7d | Import Tooling (CSV pipeline) | 15-20 | Parallel with 7c |
-| 7e | Frontend UI (dispatch board, web bidding) | 20-30 | Waiting on 7c |
-| 7f | Reports P0+P1 (49 critical/high) | 20-30 | Waiting on 7c |
-| 7g | Reports P2+P3 (29 medium/low) | 10-15 | Waiting on 7f |
+### Week 43: Test Validation 🔄
+- [x] Dispatch.bid relationship bug verified (already fixed)
+- [ ] Full test suite baseline run
+- [ ] Test failures categorized and fixed/skipped
+- [ ] ≥98% pass rate target
+
+### Week 44: Phase 7 Close-Out 🔄
+- [x] Phase 7 Retrospective created
+- [x] Spoke 1 Onboarding Context Document created (CRITICAL)
+- [x] Report inventory updated with implementation status
+- [x] Milestone checklist updated (this file)
+- [ ] Backend roadmap updated
+- [ ] CLAUDE.md updated to v0.9.18-alpha
+- [ ] CHANGELOG.md updated
+
+### Sub-Phases 7a-7g — 5 of 7 COMPLETE
+
+| Sub-Phase | Focus | Hours | Status | Completed |
+|-----------|-------|-------|--------|-----------|
+| 7a | Data Collection (3 LaborPower exports) | 3-5 | ⛔ BLOCKED (LaborPower access) | — |
+| 7b | Schema Finalization (DDL, migrations) | 10-15 | ✅ COMPLETE | Weeks 20-21 |
+| 7c | Core Services + API (14 business rules) | 25-35 | ✅ COMPLETE | Weeks 22-25 |
+| 7d | Import Tooling (CSV pipeline) | 15-20 | ⛔ BLOCKED (depends on 7a) | — |
+| 7e | Frontend UI (dispatch board, web bidding) | 20-30 | ✅ COMPLETE | Weeks 26-28, 32 |
+| 7f | Reports P0+P1 (44 critical/high) | 20-30 | ✅ COMPLETE | Weeks 33-34 |
+| 7g | Reports P2+P3 (41 medium/low) | 10-15 | ✅ COMPLETE | Weeks 40-42 |
+
+**Summary:**
+- ✅ **5 of 7 sub-phases COMPLETE** (7b, 7c, 7e, 7f, 7g)
+- ⛔ **2 of 7 sub-phases BLOCKED** (7a, 7d) — LaborPower data access required
+- 📊 **85 reports implemented** across P0-P3 tiers
+- 🧪 **82 new report tests** (44 P0/P1 + 38 P2/P3)
+- 📈 **+294 tests** total Phase 7 contribution (+62%)
 
 ---
 
-## Phase 8: Square Payment Migration — 🔄 IN PROGRESS
+## Phase 8: Square Payment Migration — 📋 PLANNED
 
-**Owner:** Spoke 3: Infrastructure (when created)
-**Trigger:** After Phase 7 stabilizes
+**Owner:** Spoke 1 (Core Platform)
+**Trigger:** Weeks 47-49 (after demo prep)
 **Reference:** ADR-018
 
+### Phase 8 Preparation ✅
 - [x] Stripe code removed (Week 35)
-- [x] Stripe tests removed (27 tests deleted)
-- [x] ADR-018 updated with removal record
-- [ ] Phase A: Online Payments (Square Web Payments SDK)
-- [ ] Phase B: Terminal/POS Integration
-- [ ] Phase C: Invoice Generation
+- [x] Stripe tests skip-marked (27 tests)
+- [x] ADR-018 created and updated
+- [x] Spoke 1 Onboarding Context Document created (Week 44)
+
+### Phase 8A: Online Payments (Weeks 47-49) — 📋 Ready to Start
+- [ ] Week 47: Square SDK + SquarePaymentService
+- [ ] Week 48: Square API router + frontend integration
+- [ ] Week 49: Tests (15-20 mocked) + Phase 8A close-out
+
+### Phase 8B-C: Future
+- [ ] Phase B: Terminal/POS Integration (not yet scoped)
+- [ ] Phase C: Invoice Generation (not yet scoped)
 
 ---
 

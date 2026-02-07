@@ -1,9 +1,9 @@
 # IP2A-Database-v2: Project Context Document
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
-**Last Updated:** February 6, 2026
-**Current Version:** v0.9.16-alpha
-**Current Phase:** Phase 7 (Referral & Dispatch) — **WEEKS 20-42 COMPLETE** — Phase 7g Reports COMPLETE (85 reports: 14 P0 + 30 P1 + 31 P2 + 10 P3) | Spoke 2
+**Last Updated:** February 7, 2026 (Week 44 - Phase 7 Close-Out)
+**Current Version:** v0.9.16-alpha (Week 44 in progress, target: v0.9.18-alpha)
+**Current Phase:** Phase 7 (Referral & Dispatch) — **5 of 7 SUB-PHASES COMPLETE** (7b, 7c, 7e, 7f, 7g) — 85 reports implemented | **NEXT:** Demo Prep (Weeks 45-46) | Spoke 2
 
 ---
 
@@ -19,7 +19,7 @@
 
 **Status:** ~764 total tests (682 baseline + 82 new report tests), ~320+ API endpoints (260 baseline + 62 new report endpoints), 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
-**Current:** Phase 7 — Referral & Dispatch System — **REPORTS COMPLETE: 85 reports (14 P0 + 30 P1 + 31 P2 + 10 P3)**. Remaining: 7a Data Collection (LaborPower access), 7d Import Tooling. See `docs/phase7/`
+**Current:** **Week 44 Phase 7 Close-Out** — Documentation complete (Phase 7 Retrospective, Spoke 1 Onboarding Context, Report Inventory updated). **5 of 7 sub-phases DONE** (7b Schema, 7c Services/API, 7e Frontend, 7f P0/P1 Reports, 7g P2/P3 Reports). **2 BLOCKED** (7a Data Collection, 7d Import Tooling) awaiting LaborPower access. **NEXT:** Demo Prep (Weeks 45-46) to unblock data access, then Square Payment Migration (Weeks 47-49). See `docs/phase7/` and `docs/handoffs/`
 
 ---
 
@@ -1616,7 +1616,7 @@ Adds inline audit history to entity detail pages and member notes UI. Users see 
 ### Key Features
 
 - **Inline Audit History**: Timeline display on member detail pages
-- **Member Notes**: Add/view/delete with visibility controls  
+- **Member Notes**: Add/view/delete with visibility controls
 - **HTMX Loading**: Notes and history load asynchronously
 - **Visibility Levels**: staff_only, officers, all_authorized
 
@@ -2272,6 +2272,56 @@ src/schemas/__init__.py                  # Export Phase 7 schemas
 - **Exempt status** (7 reason types: military, medical, union_business, salting, jury_duty, training, other)
 - **Short call position restoration** (max 2 per cycle)
 - **FIFO queue ordering** by APN (DECIMAL(10,2))
+
+---
+
+## Weeks 43-44: Phase 7 Close-Out & Documentation (February 7, 2026)
+
+**Status:** Week 44 in progress, targeting v0.9.18-alpha
+**Instruction Documents:** `docs/!TEMP/W43_W44_Test_Validation_Phase7_CloseOut.md`
+
+### Week 43: Test Validation
+
+| Task | Status |
+|------|--------|
+| Dispatch.bid relationship bug verification | ✅ Complete (already fixed) |
+| Full test suite baseline run | ⚠️ Attempted (test execution hung) |
+| Test stabilization | 📋 Deferred to next session |
+
+**Note:** Test suite encountered execution issues (hung process). Documented in handoff for next session.
+
+### Week 44: Phase 7 Close-Out Documentation
+
+| Task | Status |
+|------|--------|
+| **Spoke 1 Onboarding Context Document** | ✅ Complete (`docs/handoffs/SPOKE1_ONBOARDING_CONTEXT.md`) |
+| **Phase 7 Retrospective** | ✅ Complete (`docs/phase7/PHASE7_RETROSPECTIVE.md`) |
+| **Report Inventory Update** | ✅ Complete (85 reports marked implemented) |
+| **Milestone Checklist Update** | ✅ Complete (5 of 7 sub-phases marked) |
+| **Backend Roadmap Update** | ✅ Complete (demo prep + Phase 8A added) |
+| CLAUDE.md update | 🔄 In progress |
+| CHANGELOG.md update | 📋 Pending |
+
+**Critical Deliverables:**
+1. **Spoke 1 Onboarding Context** (17 sections) — Self-contained guide for Phase 8A Square migration
+2. **Phase 7 Retrospective** — Metrics, challenges, lessons learned for 5 completed sub-phases
+3. **Session Handoff Document** — Complete task breakdown for Weeks 43-49 remaining work
+
+**Files Created:**
+- `docs/handoffs/SPOKE1_ONBOARDING_CONTEXT.md` (NEW - CRITICAL)
+- `docs/handoffs/WEEKS_43-49_SESSION_HANDOFF.md` (NEW)
+- `docs/phase7/PHASE7_RETROSPECTIVE.md` (NEW)
+
+**Files Modified:**
+- `docs/phase7/LABORPOWER_REFERRAL_REPORTS_INVENTORY.md` (implementation status added)
+- `docs/IP2A_MILESTONE_CHECKLIST.md` (Phase 7 status updated)
+- `docs/IP2A_BACKEND_ROADMAP.md` (demo prep + Phase 8A sections added)
+
+**Next Steps:**
+- Week 45-46: Demo Preparation (seed data, demo script, stakeholder presentation)
+- Week 47-49: Phase 8A Square Payment Migration (Spoke 1 owner)
+
+---
 
 ### Data Analysis Status
 
