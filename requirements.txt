@@ -40,6 +40,7 @@ weasyprint==60.1           # PDF generation
 openpyxl==3.1.2            # Excel generation
 
 # --- Payment Processing ---
+squareup>=35.0.0            # Square Payment SDK (ADR-018 Phase 8A)
 
 # --- Production Server ---
 gunicorn>=21.2.0

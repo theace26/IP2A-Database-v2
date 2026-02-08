@@ -34,6 +34,13 @@ class Settings(BaseSettings):
     S3_BUCKET_NAME: str = "ip2a-documents"
     S3_REGION: str = "us-east-1"
 
+    # Square Payment Integration (Phase 8A — ADR-018)
+    SQUARE_ENVIRONMENT: str = "sandbox"
+    SQUARE_ACCESS_TOKEN: str = ""
+    SQUARE_APPLICATION_ID: str = ""
+    SQUARE_LOCATION_ID: str = ""
+    SQUARE_WEBHOOK_SIGNATURE_KEY: str = ""
+
     # Database Pool Settings
     DB_POOL_SIZE: int = 10
     DB_MAX_OVERFLOW: int = 20

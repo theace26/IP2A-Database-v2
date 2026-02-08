@@ -1,9 +1,9 @@
 # IP2A-Database-v2: Project Context Document
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
-**Last Updated:** February 7, 2026 (Week 46 - Demo Script & Talking Points)
-**Current Version:** v0.9.20-alpha (Week 46 complete, demo presentation ready)
-**Current Phase:** Phase 7-Demo (Demo Preparation) — **Weeks 45-46 COMPLETE** (demo environment + presentation script) | **NEXT:** Stakeholder Demo Event → Square Payment Migration (Weeks 47-49) | Spoke 2
+**Last Updated:** February 8, 2026 (Week 47 - Square SDK Integration)
+**Current Version:** v0.9.21-alpha (Week 47 in progress, Square SDK + service layer implemented)
+**Current Phase:** Phase 8A (Square Payment Migration) — **Week 47 IN PROGRESS** (Square SDK installed, SquarePaymentService created) | **Weeks 45-46 COMPLETE** (demo ready) | Spoke 1 (Core Platform)
 
 ---
 
@@ -19,7 +19,7 @@
 
 **Status:** ~764 total tests (682 baseline + 82 new report tests), ~320+ API endpoints (260 baseline + 62 new report endpoints), 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
-**Current:** **Week 44 Phase 7 Close-Out** — Documentation complete (Phase 7 Retrospective, Spoke 1 Onboarding Context, Report Inventory updated). **5 of 7 sub-phases DONE** (7b Schema, 7c Services/API, 7e Frontend, 7f P0/P1 Reports, 7g P2/P3 Reports). **2 BLOCKED** (7a Data Collection, 7d Import Tooling) awaiting LaborPower access. **NEXT:** Demo Prep (Weeks 45-46) to unblock data access, then Square Payment Migration (Weeks 47-49). See `docs/phase7/` and `docs/handoffs/`
+**Current:** **Week 47 Phase 8A (Square SDK Integration)** — Square SDK installed (squareup>=35.0.0), SquarePaymentService created with payment processing, refund handling, and webhook verification. Configuration added to settings. dues_payments added to AUDITED_TABLES for 7-year NLRA compliance. **Weeks 45-46 COMPLETE** (demo environment ready). **Phase 7:** 5 of 7 sub-phases DONE, 2 BLOCKED awaiting demo event. See `docs/handoffs/` and `docs/!TEMP/Week47-49_Square_Payment_Migration_ClaudeCode.md`
 
 ---
 
@@ -1301,9 +1301,9 @@ stripe trigger checkout.session.completed
 
 ---
 
-## Square Payment Integration (February 5, 2026)
+## Square Payment Integration (February 8, 2026)
 
-**Status:** 📋 **PLANNED** - ADR-018 accepted, migration scheduled after Phase 7 stabilization
+**Status:** 🚧 **Week 47 IN PROGRESS** - Square SDK integration and service layer implemented
 
 ### Overview
 
@@ -1315,7 +1315,7 @@ Square will replace Stripe as the payment processor for UnionCore. Decision docu
 
 | Phase | Scope | Type | Hours Est. | Status |
 |-------|-------|------|------------|--------|
-| **Phase A** | Replace Stripe → Square online payments | Migration (direct swap) | 15-20 | Planned |
+| **Phase A (Week 47-49)** | Replace Stripe → Square online payments | Migration (direct swap) | 15-20 | 🚧 **Week 47 In Progress** |
 | **Phase B** | Square Terminal/POS at union hall | New feature | 10-15 | Future |
 | **Phase C** | Square Invoices for dues billing | New feature | 10-15 | Future |
 
@@ -1323,6 +1323,34 @@ Square will replace Stripe as the payment processor for UnionCore. Decision docu
 - Phase A must complete before removing Stripe code
 - Phases B & C are independent enhancements
 - Phases B & C should not block Phase 7 stabilization
+
+### Week 47 Progress (February 8, 2026)
+
+**Completed:**
+- ✅ Square SDK installed (`squareup>=35.0.0`)
+- ✅ Configuration added to `.env.example` and `src/config/settings.py`
+- ✅ `SquarePaymentService` created at `src/services/square_payment_service.py`
+  - `create_payment()` - Process payments via Square Web Payments SDK nonces
+  - `get_payment_status()` - Query payment status from Square API
+  - `process_refund()` - Refund processing with audit trails
+  - `verify_webhook()` - Webhook signature verification
+- ✅ `dues_payments` added to `AUDITED_TABLES` (7-year NLRA compliance)
+- ✅ Stripe code verified as fully archived (only in historical migrations)
+
+**Technical Notes:**
+- Square client import: `from square.client import Square` (not `Client`)
+- DuesPayment model uses existing `reference_number` field for Square payment ID
+- All payment operations logged via `audit_service.log_update()`
+
+**Next (Week 48):**
+- Create payment API router (`src/routers/square_payments.py`)
+- Build frontend payment form with Square Web Payments SDK
+- Implement webhook handler
+
+**Next (Week 49):**
+- Write comprehensive tests (service, API, webhook, frontend)
+- Remove/convert Stripe skip markers
+- Update ADR-018 with Phase A completion
 
 ### Key Decisions (from ADR-018)
 

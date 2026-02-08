@@ -29,6 +29,7 @@ AUDITED_TABLES = {
     "member_employments",
     "credentials",
     "jatc_applications",
+    "dues_payments",       # Payment transactions (7-year NLRA retention)
 }
 
 

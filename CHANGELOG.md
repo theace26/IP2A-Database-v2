@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> **v0.9.21-alpha — WEEK 47: Square SDK Integration & Service Layer** (IN PROGRESS)
+> Week 47 in progress (Phase 8A - Square Payment Migration)
+> ~764 total tests, ~320+ API endpoints, 32 models, 18 ADRs
+> **Square Integration:** SDK installed, SquarePaymentService created, configuration added
+> **Next:** Week 48 — API router + frontend integration, Week 49 — Testing + Phase 8A close-out
+
+### Added (February 8, 2026 — Week 47: Square SDK Integration & Service Layer)
+
+#### Payment Processing Infrastructure
+- **Square SDK** (`squareup>=35.0.0`)
+  * Installed Square Python SDK for online payment processing
+  * Configuration added to `.env.example` (5 Square settings)
+  * Settings added to `src/config/settings.py`:
+    - `SQUARE_ENVIRONMENT` (sandbox/production)
+    - `SQUARE_ACCESS_TOKEN`
+    - `SQUARE_APPLICATION_ID`
+    - `SQUARE_LOCATION_ID`
+    - `SQUARE_WEBHOOK_SIGNATURE_KEY`
+
+- **SquarePaymentService** (`src/services/square_payment_service.py`)
+  * **create_payment()** - Process payments using client-side nonces from Square Web Payments SDK
+    - Client-side tokenization (PCI SAQ-A compliance)
+    - Idempotency key support for duplicate prevention
+    - Automatic DuesPayment record update with Square payment ID
+    - Full audit trail logging for all payment attempts (success/failure/error)
+  * **get_payment_status()** - Query payment status from Square API
+  * **process_refund()** - Refund processing with officer-level authorization
+    - Full audit trail for all refund attempts
+    - Automatic resolution of member_id/dues_payment_id from payment record
+  * **verify_webhook()** - Webhook signature verification using Square SDK utilities
+  * **Technical Implementation:**
+    - Uses existing `DuesPayment.reference_number` field for Square payment IDs
+    - Integrates with existing audit_service pattern
+    - All Square API calls wrapped in error handling with comprehensive logging
+
+#### Audit & Compliance
+- **Added `dues_payments` to AUDITED_TABLES** (`src/services/audit_service.py`)
+  * 7-year NLRA retention requirement for financial records
+  * All payment create/update operations now automatically logged
+  * Audit trail includes: square_payment_id, amount_cents, status, detailed notes
+
+#### Stripe Cleanup
+- Verified Stripe code fully archived:
+  * No active Stripe imports in src/ (only historical migrations remain)
+  * Stripe enum values still present in `DuesPaymentMethod` (will be updated in Week 48)
+  * Member model still has `stripe_customer_id` field (future migration TBD)
+
+### Technical Notes (Week 47)
+- **Square Client Import:** Use `from square.client import Square` (not `Client`)
+- **Payment ID Storage:** Reusing `DuesPayment.reference_number` field (no migration needed)
+- **Audit Pattern:** Using `audit_service.log_update()` for payment transaction logging
+- **No Breaking Changes:** All existing tests should still pass (verified via import checks)
+
+---
+
 > **v0.9.20-alpha — WEEK 46: Demo Script & Stakeholder Talking Points**
 > Week 46 complete (demo presentation ready for stakeholder event)
 > ~764 total tests, ~320+ API endpoints, 32 models, 18 ADRs, 85 reports
