@@ -13,6 +13,7 @@ from src.db.enums import MemberClassification, DuesPaymentStatus, DuesPaymentMet
 from src.models import Member
 from src.routers.dependencies.auth_cookie import require_auth
 from src.services.dues_frontend_service import DuesFrontendService
+from src.config.settings import settings
 
 router = APIRouter(prefix="/dues", tags=["dues-frontend"])
 
@@ -632,3 +633,86 @@ async def approve_adjustment(
             url=f"/dues/adjustments/{adjustment_id}?error={str(e)}",
             status_code=303,
         )
+
+
+# Phase 8A: Square Payment Integration (Week 48)
+@router.get("/payments/initiate/{member_id}/{period_id}", response_class=HTMLResponse)
+async def initiate_payment_form(
+    request: Request,
+    member_id: int,
+    period_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_auth),
+):
+    """
+    Show Square payment form for a member's dues payment.
+    Displays the payment form with Square Web Payments SDK integration.
+    """
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
+    from src.models.dues_payment import DuesPayment
+    from src.models.dues_period import DuesPeriod
+
+    # Get member
+    member = db.query(Member).filter(Member.id == member_id).first()
+    if not member:
+        return RedirectResponse(url="/dues/payments?error=Member not found", status_code=303)
+
+    # Get period
+    period = db.query(DuesPeriod).filter(DuesPeriod.id == period_id).first()
+    if not period:
+        return RedirectResponse(url=f"/dues/payments/member/{member_id}?error=Period not found", status_code=303)
+
+    # Get or create dues payment record
+    payment = db.query(DuesPayment).filter(
+        DuesPayment.member_id == member_id,
+        DuesPayment.period_id == period_id,
+    ).first()
+
+    if not payment:
+        # Create a new payment record
+        from src.services.dues_payment_service import DuesPaymentService
+        rate = DuesFrontendService.get_rate_for_member(db, member, period)
+        if not rate:
+            return RedirectResponse(
+                url=f"/dues/payments/member/{member_id}?error=No rate found for member classification",
+                status_code=303,
+            )
+
+        payment = DuesPaymentService.create_payment(
+            db,
+            member_id=member_id,
+            period_id=period_id,
+            amount_due=float(rate.amount),
+        )
+        db.commit()
+
+    # Calculate amount
+    amount_cents = int(payment.amount_due * 100)  # Convert to cents
+    amount_display = f"{payment.amount_due:.2f}"
+
+    # Format period name
+    if period.month and period.year:
+        period_name = f"{period.month_name} {period.year}"
+    elif period.year:
+        period_name = f"Year {period.year}"
+    else:
+        period_name = f"Period {period.id}"
+
+    description = f"{period_name} Dues - {member.first_name} {member.last_name}"
+
+    return templates.TemplateResponse(
+        "dues/payments/pay.html",
+        {
+            "request": request,
+            "member": member,
+            "period": period,
+            "period_name": period_name,
+            "dues_payment_id": payment.id,
+            "amount_cents": amount_cents,
+            "amount_display": amount_display,
+            "description": description,
+            "config": settings,  # Pass settings for Square SDK config
+        },
+    )

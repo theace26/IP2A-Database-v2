@@ -98,6 +98,9 @@ from src.routers.referral_frontend import router as referral_frontend_router
 from src.routers.dispatch_frontend import router as dispatch_frontend_router
 from src.routers.referral_reports_api import router as referral_reports_api_router
 
+# Phase 8A: Square Payment Integration
+from src.routers.square_payments import router as square_payments_router
+
 # ------------------------------------------------------------
 # Initialize FastAPI
 # ------------------------------------------------------------
@@ -257,6 +260,9 @@ app.include_router(
     prefix="/api/v1/reports/referral",
     tags=["referral-reports"],
 )  # Week 33A: Out-of-Work Reports
+
+# Phase 8A: Square Payment Integration (Week 47-49)
+app.include_router(square_payments_router)  # Square online payments API
 
 # Frontend routes (HTML pages) - include LAST to not interfere with API routes
 app.include_router(frontend.router)

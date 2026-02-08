@@ -1,9 +1,9 @@
 # IP2A-Database-v2: Project Context Document
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
-**Last Updated:** February 8, 2026 (Week 47 - Square SDK Integration)
-**Current Version:** v0.9.21-alpha (Week 47 in progress, Square SDK + service layer implemented)
-**Current Phase:** Phase 8A (Square Payment Migration) — **Week 47 IN PROGRESS** (Square SDK installed, SquarePaymentService created) | **Weeks 45-46 COMPLETE** (demo ready) | Spoke 1 (Core Platform)
+**Last Updated:** February 8, 2026 (Week 48 - Square API Router & Frontend Integration)
+**Current Version:** v0.9.22-alpha (Week 48 complete, Square payment flow functional)
+**Current Phase:** Phase 8A (Square Payment Migration) — **Week 48 COMPLETE** (API router + frontend with Square Web Payments SDK) | **Week 47 COMPLETE** (Square SDK + service layer) | Spoke 1 (Core Platform)
 
 ---
 
@@ -19,7 +19,7 @@
 
 **Status:** ~764 total tests (682 baseline + 82 new report tests), ~320+ API endpoints (260 baseline + 62 new report endpoints), 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
-**Current:** **Week 47 Phase 8A (Square SDK Integration)** — Square SDK installed (squareup>=35.0.0), SquarePaymentService created with payment processing, refund handling, and webhook verification. Configuration added to settings. dues_payments added to AUDITED_TABLES for 7-year NLRA compliance. **Weeks 45-46 COMPLETE** (demo environment ready). **Phase 7:** 5 of 7 sub-phases DONE, 2 BLOCKED awaiting demo event. See `docs/handoffs/` and `docs/!TEMP/Week47-49_Square_Payment_Migration_ClaudeCode.md`
+**Current:** **Week 48 Phase 8A (Square API Router & Frontend)** — Payment API router created with 4 endpoints (process, status, refund, webhook). Frontend payment form with Square Web Payments SDK (client-side tokenization). Payment initiation flow integrated into dues management UI. **Week 47 COMPLETE** (Square SDK + service layer). **Weeks 45-46 COMPLETE** (demo ready). **NEXT:** Week 49 — Testing + Phase 8A close-out. See `docs/!TEMP/Week47-49_Square_Payment_Migration_ClaudeCode.md`
 
 ---
 
@@ -1342,15 +1342,41 @@ Square will replace Stripe as the payment processor for UnionCore. Decision docu
 - DuesPayment model uses existing `reference_number` field for Square payment ID
 - All payment operations logged via `audit_service.log_update()`
 
-**Next (Week 48):**
-- Create payment API router (`src/routers/square_payments.py`)
-- Build frontend payment form with Square Web Payments SDK
-- Implement webhook handler
+### Week 48 Progress (February 8, 2026)
+
+**Completed:**
+- ✅ Payment API router created (`src/routers/square_payments.py`)
+  - `POST /api/v1/payments/process` - Process payment with Square nonce
+  - `GET /api/v1/payments/{square_payment_id}` - Query payment status
+  - `POST /api/v1/payments/{square_payment_id}/refund` - Process refunds (Officer+ only)
+  - `POST /api/v1/payments/webhooks/square` - Webhook handler with signature verification
+- ✅ Frontend payment form with Square Web Payments SDK (`src/templates/dues/payments/pay.html`)
+  - Client-side card tokenization (PCI SAQ-A compliant)
+  - Square SDK loaded conditionally (sandbox vs production)
+  - Real-time payment processing with error handling
+  - Automatic redirect to success page after payment
+- ✅ Payment initiation route added to dues_frontend (`/dues/payments/initiate/{member_id}/{period_id}`)
+  - Creates or retrieves DuesPayment record
+  - Calculates amount from member's dues rate
+  - Passes Square config to template (APPLICATION_ID, LOCATION_ID)
+- ✅ "Pay Now Online" button updated in member payment history (`src/templates/dues/payments/member.html`)
+- ✅ Router registered in main.py (cross-cutting change)
+
+**Technical Notes:**
+- Payment flow: Member clicks "Pay Now" → Payment form with Square SDK → Card tokenized client-side → Nonce sent to `/api/v1/payments/process` → SquarePaymentService processes → Success redirect
+- All API endpoints require authentication via `require_auth` dependency
+- Webhook endpoint has NO auth (Square's signature verification replaces auth)
+- Config passed to template via `settings` object (SQUARE_ENVIRONMENT, APPLICATION_ID, LOCATION_ID)
+
+**Cross-Cutting Changes:**
+- `src/main.py` - Added square_payments_router registration
+- `src/routers/dues_frontend.py` - Added settings import + payment initiation route
 
 **Next (Week 49):**
 - Write comprehensive tests (service, API, webhook, frontend)
 - Remove/convert Stripe skip markers
 - Update ADR-018 with Phase A completion
+- Update CHANGELOG.md and documentation
 
 ### Key Decisions (from ADR-018)
 

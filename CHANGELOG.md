@@ -7,8 +7,99 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> **v0.9.21-alpha — WEEK 47: Square SDK Integration & Service Layer** (IN PROGRESS)
-> Week 47 in progress (Phase 8A - Square Payment Migration)
+> **v0.9.22-alpha — WEEK 48: Square API Router & Frontend Integration** (COMPLETE)
+> Week 48 complete (Phase 8A - Square Payment Migration)
+> ~764 total tests, ~320+ API endpoints, 32 models, 18 ADRs
+> **Square Payment Flow:** API router + frontend with Square Web Payments SDK (client-side tokenization)
+> **Next:** Week 49 — Testing + Phase 8A close-out
+
+### Added (February 8, 2026 — Week 48: Square API Router & Frontend Integration)
+
+#### Payment API Infrastructure
+- **Square Payments API Router** (`src/routers/square_payments.py`)
+  * **POST /api/v1/payments/process** - Process payment using Square Web Payments SDK nonce
+    - Accepts: nonce (from client-side tokenization), amount_cents, member_id, dues_payment_id, description
+    - Generates UUID idempotency key for duplicate prevention
+    - Calls SquarePaymentService.create_payment()
+    - Returns: payment_id on success, error detail on failure
+  * **GET /api/v1/payments/{square_payment_id}** - Query payment status from Square
+    - Returns: payment status, amount, creation timestamp
+  * **POST /api/v1/payments/{square_payment_id}/refund** - Process refund (Officer+ authorization required)
+    - Accepts: amount_cents, reason
+    - Logs refund request with user ID and audit trail
+  * **POST /api/v1/payments/webhooks/square** - Webhook event handler
+    - NO authentication (Square signature verification replaces auth)
+    - Handles events: payment.completed, payment.failed, refund.created
+    - Verifies webhook signature using Square SDK utilities
+    - Returns 200 for all events (Square retries on non-200)
+  * All endpoints require authentication except webhook (uses signature verification)
+  * Integrated with existing auth_cookie.require_auth dependency
+
+#### Frontend Payment Experience
+- **Square Payment Form** (`src/templates/dues/payments/pay.html`)
+  * **Square Web Payments SDK Integration:**
+    - Loads Square SDK from CDN (sandbox vs production based on SQUARE_ENVIRONMENT)
+    - Renders Square card input component in secure iframe
+    - Client-side tokenization (card data NEVER touches UnionCore servers)
+    - PCI compliance: SAQ-A level (card data handled entirely by Square)
+  * **Payment Summary Display:**
+    - Member information (name, member number)
+    - Period name (formatted as "Month Year")
+    - Amount due with prominent display
+  * **User Experience:**
+    - Real-time payment processing with loading state
+    - Error handling with user-friendly messages
+    - Success confirmation with auto-redirect to success page (2-second delay)
+    - Cancel button to return to payment history
+    - Security notice explaining PCI compliance
+  * **Technical Implementation:**
+    - JavaScript async/await for Square SDK initialization
+    - Fetch API for backend communication (includes auth cookies)
+    - Error message extraction from Square SDK responses
+    - Button state management (disabled during processing)
+
+- **Payment Initiation Route** (`src/routers/dues_frontend.py`)
+  * **GET /dues/payments/initiate/{member_id}/{period_id}** - Show payment form
+    - Validates member and period existence
+    - Creates or retrieves DuesPayment record
+    - Calculates dues amount from member's classification rate
+    - Passes Square config to template (SQUARE_APPLICATION_ID, SQUARE_LOCATION_ID, SQUARE_ENVIRONMENT)
+    - Renders pay.html template with payment context
+  * **Integration with DuesPaymentService:**
+    - Auto-creates payment record if none exists for member/period
+    - Uses existing `reference_number` field for Square payment ID tracking
+
+- **"Pay Now Online" Button Update** (`src/templates/dues/payments/member.html`)
+  * Changed from POST form to GET link (cleaner UX)
+  * Links to /dues/payments/initiate/{member_id}/{period_id}
+  * Visible only when member has outstanding balance for current period
+
+#### Router Registration (Cross-Cutting Change)
+- **main.py** - Added square_payments_router
+  * Registered at standard /api/v1/payments prefix
+  * Placed in Phase 8A section (after Phase 7, before frontend routes)
+  * Import added: `from src.routers.square_payments import router as square_payments_router`
+
+### Technical Notes (Week 48)
+- **Payment Flow:**
+  1. Member clicks "Pay Now Online" → /dues/payments/initiate/{member_id}/{period_id}
+  2. Backend creates/retrieves DuesPayment record, renders payment form
+  3. Square Web Payments SDK loads, renders card input (client-side)
+  4. Member enters card → Square tokenizes (client-side, generates nonce)
+  5. JavaScript sends nonce to /api/v1/payments/process
+  6. SquarePaymentService processes payment via Square API
+  7. Backend updates DuesPayment.reference_number with Square payment ID
+  8. Success → redirect to /dues/payments/success
+  9. Failure → display error message inline
+- **Security:** Card data NEVER sent to UnionCore servers (tokenized client-side by Square)
+- **PCI Compliance:** SAQ-A level (lowest compliance burden)
+- **Config Requirements:** SQUARE_APPLICATION_ID, SQUARE_LOCATION_ID, SQUARE_ENVIRONMENT must be set
+- **No Breaking Changes:** All existing routes and functionality preserved
+
+---
+
+> **v0.9.21-alpha — WEEK 47: Square SDK Integration & Service Layer** (COMPLETE)
+> Week 47 complete (Phase 8A - Square Payment Migration)
 > ~764 total tests, ~320+ API endpoints, 32 models, 18 ADRs
 > **Square Integration:** SDK installed, SquarePaymentService created, configuration added
 > **Next:** Week 48 — API router + frontend integration, Week 49 — Testing + Phase 8A close-out

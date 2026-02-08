@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Pay Dues - {{ member.first_name }} {{ member.last_name }} - IP2A{% endblock %}
+
+{% block extra_head %}
+{# Square Web Payments SDK — loaded from Square CDN #}
+{# IMPORTANT: Use sandbox URL for dev, production URL for prod #}
+{% if config.SQUARE_ENVIRONMENT == "sandbox" %}
+<script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+{% else %}
+<script src="https://web.squarecdn.com/v1/square.js"></script>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs">
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/dues">Dues</a></li>
+            <li><a href="/dues/payments">Payments</a></li>
+            <li><a href="/dues/payments/member/{{ member.id }}">{{ member.first_name }} {{ member.last_name }}</a></li>
+            <li>Pay Dues</li>
+        </ul>
+    </div>
+
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-bold">Pay Dues Online</h1>
+        <p class="text-base-content/70">
+            Secure payment via Square for {{ member.first_name }} {{ member.last_name }}
+        </p>
+    </div>
+
+    <!-- Payment Summary -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title">Payment Summary</h2>
+
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-base-content/70">Member:</span>
+                    <span class="font-semibold">{{ member.first_name }} {{ member.last_name }}</span>
+                </div>
+
+                <div class="flex justify-between">
+                    <span class="text-base-content/70">Member Number:</span>
+                    <span class="font-semibold">{{ member.member_number or 'N/A' }}</span>
+                </div>
+
+                <div class="flex justify-between">
+                    <span class="text-base-content/70">Period:</span>
+                    <span class="font-semibold">{{ period_name }}</span>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="flex justify-between items-center">
+                    <span class="text-lg font-semibold">Amount Due:</span>
+                    <span class="text-2xl font-bold text-primary">${{ amount_display }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Square Payment Form -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title">Payment Information</h2>
+
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text">Card Details</span>
+                    <span class="label-text-alt text-base-content/50">Processed securely by Square</span>
+                </label>
+                {# Square renders its card input here #}
+                <div id="card-container" class="border border-base-300 rounded-lg p-4 bg-base-200/50"></div>
+            </div>
+
+            <div id="payment-status" class="hidden mt-2">
+                <div class="alert" id="payment-alert"></div>
+            </div>
+
+            <div class="card-actions justify-between mt-4">
+                <a href="/dues/payments/member/{{ member.id }}" class="btn btn-ghost">
+                    Cancel
+                </a>
+                <button
+                    id="card-button"
+                    class="btn btn-primary"
+                    type="button"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    Pay ${{ amount_display }}
+                </button>
+            </div>
+
+            <!-- Security Notice -->
+            <div class="alert alert-info mt-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-sm">
+                    Your payment is processed securely by Square. We never see or store your card information.
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+  // Initialize Square Web Payments SDK
+  async function initializeSquare() {
+    if (!window.Square) {
+      console.error('Square SDK not loaded');
+      showStatus('error', 'Payment system unavailable. Please try again later.');
+      return;
+    }
+
+    try {
+      const payments = window.Square.payments(
+        '{{ config.SQUARE_APPLICATION_ID }}',
+        '{{ config.SQUARE_LOCATION_ID }}'
+      );
+
+      const card = await payments.card();
+      await card.attach('#card-container');
+
+      const button = document.getElementById('card-button');
+      button.addEventListener('click', async () => {
+        button.disabled = true;
+        button.innerHTML = '<span class="loading loading-spinner"></span> Processing...';
+
+        try {
+          const result = await card.tokenize();
+          if (result.status === 'OK') {
+            // Send nonce to backend
+            const response = await fetch('/api/v1/payments/process', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+              credentials: 'include',  // Include auth cookies
+              body: JSON.stringify({
+                nonce: result.token,
+                amount_cents: {{ amount_cents }},
+                member_id: {{ member.id }},
+                dues_payment_id: {{ dues_payment_id }},
+                description: '{{ description }}'
+              })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+              showStatus('success', 'Payment successful! Redirecting...');
+              // Redirect to success page after 2 seconds
+              setTimeout(() => {
+                window.location.href = '/dues/payments/success?payment_id=' + data.payment_id;
+              }, 2000);
+            } else {
+              showStatus('error', data.detail || 'Payment failed. Please try again.');
+              resetButton();
+            }
+          } else {
+            let errorMessage = 'Card validation failed. Please check your card details.';
+            if (result.errors && result.errors.length > 0) {
+              errorMessage = result.errors[0].message || errorMessage;
+            }
+            showStatus('error', errorMessage);
+            resetButton();
+          }
+        } catch (err) {
+          console.error('Payment error:', err);
+          showStatus('error', 'An error occurred. Please try again.');
+          resetButton();
+        }
+      });
+
+      function resetButton() {
+        button.disabled = false;
+        button.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+          Pay ${{ amount_display }}
+        `;
+      }
+    } catch (error) {
+      console.error('Square initialization error:', error);
+      showStatus('error', 'Payment system initialization failed. Please refresh and try again.');
+    }
+  }
+
+  function showStatus(type, message) {
+    const statusDiv = document.getElementById('payment-status');
+    const alertDiv = document.getElementById('payment-alert');
+    statusDiv.classList.remove('hidden');
+    alertDiv.className = type === 'success' ? 'alert alert-success' : 'alert alert-error';
+    alertDiv.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        ${type === 'success'
+          ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />'
+          : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />'
+        }
+      </svg>
+      <span>${message}</span>
+    `;
+  }
+
+  // Initialize when DOM ready
+  document.addEventListener('DOMContentLoaded', initializeSquare);
+</script>
+{% endblock %}
