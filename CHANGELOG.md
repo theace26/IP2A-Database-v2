@@ -7,11 +7,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> **v0.9.20-alpha — WEEK 46: Demo Script & Stakeholder Talking Points**
+> Week 46 complete (demo presentation ready for stakeholder event)
+> ~764 total tests, ~320+ API endpoints, 32 models, 18 ADRs, 85 reports
+> **Demo Ready:** 5-act presentation script (~22 min), audience-specific talking points, contingency plans
+> **Next:** Stakeholder Demo Event → Square Payment Migration (Weeks 47-49)
+
+### Added (February 7, 2026 — Week 46: Demo Script & Stakeholder Talking Points)
+
+#### Demo Presentation Materials
+- **Demo Script** (`docs/demo/DEMO_SCRIPT_v1.md`)
+  * **Act 1:** "The Problem" (2 min) — Set context with current pain points
+  * **Act 2:** "The Daily Workflow" (10 min) — Dispatch board, morning referral, book management, enforcement
+  * **Act 3:** "The Reports" (5 min) — P0 daily reports, P1 weekly/monthly, P2/P3 analytics (85 reports total)
+  * **Act 4:** "Under the Hood" (3 min) — Docker isolation, audit logs, IT containment assurances
+  * **Act 5:** "What's Next" (2 min) — LaborPower data ask, roadmap (Square payments), vision
+  * **Total Runtime:** ~22 minutes
+  * **Contingency Plans:** Docker failure, PDF generation failure, login issues, objection handling
+  * **Pre-Demo Checklist:** 10-minute startup procedure, browser pre-checks
+  * **Post-Demo Actions:** Feedback capture, follow-up messaging templates
+
+- **Stakeholder Talking Points** (`docs/demo/STAKEHOLDER_TALKING_POINTS.md`)
+  * **Access DB Owner Messaging:**
+    - Collaboration framing (complement, not replace)
+    - Expertise recognition ("You know the business rules better than anyone")
+    - Data export ask (REGLIST, RAW DISPATCH DATA, EMPLOYCONTRACT)
+    - Red flags to avoid: "replace", "migrate away from", "sunset"
+    - Green flags to use: "complement", "work alongside", "partnership"
+  * **IT Contractor Messaging:**
+    - Containment assurance (Docker isolation, self-maintained)
+    - No work created ("I maintain it. You don't.")
+    - Deployment options (Railway, Render, or on-prem VM)
+    - Technical credibility (PostgreSQL, health checks, structured logging)
+  * **Union Leadership Messaging:**
+    - Business value (time savings: 15-20 min → 2 min daily)
+    - Member service improvements (check book status, bid on jobs, pay dues online)
+    - Compliance & audit trail (7-year NLRA, immutable logs)
+    - Business rules enforcement (14 rules automated)
+    - Report parity (85 reports: 14 P0 + 24 P1 + 41 P2/P3)
+  * **Hybrid Audience Strategy:** Prioritize business value → technical credibility → partnership
+  * **Objection Handling:** Quick reference guide for 6 common objections
+  * **Post-Demo Follow-Up:** Email templates for 24-hour and Week 2 follow-ups
+
+- **Screenshots Directory** (`docs/demo/screenshots/`)
+  * Created for backup visual materials (projector failure contingency)
+
+#### Strategic Objectives
+- **Unblock Phase 7a/7d:** Gain LaborPower data access via Access DB owner buy-in
+- **Build Leadership Support:** Demonstrate operational value to union officers
+- **Neutralize IT Concerns:** Prove self-contained, zero-maintenance system
+- **Validate 85 Reports:** Officers confirm report formats match workflows
+
+**Version:** v0.9.20-alpha
+
+---
+
 > **v0.9.19-alpha — WEEK 45: Demo Environment & Seed Data**
 > Week 45 complete (demo environment ready for stakeholder presentation)
 > ~764 total tests, ~320+ API endpoints, 32 models, 18 ADRs, 85 reports
 > **Demo Ready:** Idempotent seed data, self-contained Docker environment, 3 demo accounts
-> **Next:** Week 46 Demo Script & Stakeholder Talking Points
 
 ### Added (February 7, 2026 — Week 45: Demo Environment & Seed Data)
 

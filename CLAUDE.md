@@ -1,9 +1,9 @@
 # IP2A-Database-v2: Project Context Document
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
-**Last Updated:** February 7, 2026 (Week 45 - Demo Environment)
-**Current Version:** v0.9.19-alpha (Week 45 complete, demo environment ready)
-**Current Phase:** Phase 7-Demo (Demo Preparation) — **Week 45 COMPLETE** (demo seed + Docker compose) | **NEXT:** Week 46 Demo Script | Spoke 2
+**Last Updated:** February 7, 2026 (Week 46 - Demo Script & Talking Points)
+**Current Version:** v0.9.20-alpha (Week 46 complete, demo presentation ready)
+**Current Phase:** Phase 7-Demo (Demo Preparation) — **Weeks 45-46 COMPLETE** (demo environment + presentation script) | **NEXT:** Stakeholder Demo Event → Square Payment Migration (Weeks 47-49) | Spoke 2
 
 ---
 
@@ -2383,6 +2383,57 @@ docker-compose -f docker-compose.demo.yml up -d
 **Next:** Week 46 — Create demo script (5-act, 22 minutes) and stakeholder talking points.
 
 **Version:** v0.9.19-alpha
+
+---
+
+### Week 46: Demo Script & Stakeholder Talking Points ✅ COMPLETE
+
+**Objective:** Create 5-act demo script and audience-specific talking points for stakeholder presentation.
+
+**Status:** ✅ All tasks complete (February 7, 2026)
+
+| Task | Status | Location |
+|------|--------|----------|
+| **Demo script (5-act)** | ✅ Complete | `docs/demo/DEMO_SCRIPT_v1.md` |
+| **Stakeholder talking points** | ✅ Complete | `docs/demo/STAKEHOLDER_TALKING_POINTS.md` |
+| **Screenshots directory** | ✅ Complete | `docs/demo/screenshots/` |
+
+**Demo Script Structure:**
+- **Act 1**: "The Problem" (2 min) - Set context, show current pain points
+- **Act 2**: "The Daily Workflow" (10 min) - Dispatch board, processing referrals, book management, enforcement
+- **Act 3**: "The Reports" (5 min) - P0 daily reports, P1 weekly/monthly, P2/P3 analytics
+- **Act 4**: "Under the Hood" (3 min) - Docker, audit logs, containment for IT audience
+- **Act 5**: "What's Next" (2 min) - LaborPower data ask, roadmap, vision
+
+**Total Runtime:** ~22 minutes
+
+**Stakeholder Talking Points:**
+- **Access DB Owner**: Collaboration framing, expertise recognition, complementary positioning (not replacement)
+- **IT Contractor**: Containment assurance, self-maintained, Docker isolation, no work created
+- **Union Leadership**: Business value, time savings (15-20 min → 2 min), member service, compliance
+
+**Files Created:**
+```
+docs/demo/DEMO_SCRIPT_v1.md                    # 5-act presentation script (~22 min)
+docs/demo/STAKEHOLDER_TALKING_POINTS.md        # Audience-specific messaging
+docs/demo/screenshots/                         # Directory for backup visuals
+```
+
+**Key Messages:**
+- **Access DB owner:** "This complements your database, not replaces it"
+- **IT contractor:** "Self-contained, isolated, I maintain it"
+- **Union leadership:** "85 reports built, 7-year audit compliance, member self-service"
+
+**Acceptance Criteria:**
+- [x] Demo script created with 5-act structure and timing
+- [x] Stakeholder talking points created for all 3 audiences
+- [x] Contingency plans documented
+- [x] Pre-demo checklist included
+- [x] Post-demo follow-up messaging included
+
+**Next:** Stakeholder demo event → if Access DB owner grants LaborPower data access → unblocks 7a/7d → then Square Payment Migration (Weeks 47-49)
+
+**Version:** v0.9.20-alpha
 
 ---
 
