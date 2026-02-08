@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> **v0.9.23-alpha — WEEK 49: Square Testing & Phase 8A Close-Out** (✅ COMPLETE)
+> Phase 8A complete (Square Payment Migration — Weeks 47-49)
+> ~782 total tests (+18 Square tests), ~324 API endpoints (+4), 32 models, 18 ADRs
+> **Square Integration Live:** 18 tests, 4 API endpoints, client-side tokenization, PCI SAQ-A compliant
+> **Next:** Stakeholder demo event → Phase 7 data collection (7a/7d) OR Phase 8B (Square Terminal/POS)
+
+### Added (February 8, 2026 — Week 49: Square Testing & Phase 8A Close-Out)
+
+#### Comprehensive Test Suite
+- **Square Payment Tests** (`src/tests/test_square_payments.py`) — **18 tests total**
+  * Service Tests (8): create_payment (success/failure/exception), get_payment_status, process_refund
+  * API Router Tests (4): POST /process, GET /{id}, POST /{id}/refund, webhook endpoint
+  * Webhook Tests (6): signature verification, payment.completed, payment.failed, refund.created
+  * All Square API calls fully mocked (no sandbox dependency)
+  * Error handling: payment failures, exceptions, invalid signatures
+  * Authentication: endpoints require auth except webhook (signature verification)
+
+#### Documentation Updates
+- **ADR-018** - Phase A marked COMPLETE with full implementation summary (Weeks 47-49)
+- **CLAUDE.md** - Phase 8A complete, version v0.9.23-alpha
+- **CHANGELOG.md** - This entry
+
+#### Stripe Cleanup Verification
+- Verified Stripe test files already removed (Week 35)
+- No Stripe skip markers found
+- Historical Stripe data preserved (enum values, customer IDs)
+
+### Phase 8A Summary (Weeks 47-49 — ✅ COMPLETE)
+
+**Implementation:**
+- Week 47: Square SDK + SquarePaymentService
+- Week 48: API router + frontend with Square Web Payments SDK
+- Week 49: 18 comprehensive tests + documentation
+
+**Deliverables:**
+- 4 API endpoints, 1 frontend form, 1 payment service, 18 tests
+- Payment flow: member → Square tokenization → backend processing → audit trail
+- PCI SAQ-A compliance (card data never touches server)
+
+**Files Created:** `square_payment_service.py`, `square_payments.py` (router), `pay.html` (template), `test_square_payments.py`
+
+**Version:** v0.9.23-alpha
+
+---
+
 > **v0.9.22-alpha — WEEK 48: Square API Router & Frontend Integration** (COMPLETE)
 > Week 48 complete (Phase 8A - Square Payment Migration)
 > ~764 total tests, ~320+ API endpoints, 32 models, 18 ADRs

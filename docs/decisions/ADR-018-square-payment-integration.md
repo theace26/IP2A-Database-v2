@@ -1,7 +1,7 @@
 # ADR-018: Square Payment Integration
 
-**Status:** In Progress — Stripe Removed, Square Phase A Pending
-**Date:** February 5, 2026 (Updated February 6, 2026)
+**Status:** Phase A Complete — Square Payment Integration Live
+**Date:** February 5, 2026 (Updated February 8, 2026)
 **Supersedes:** ADR-013 (Stripe Payment Integration)
 **Decision Makers:** Xerxes (Project Lead), Hub Project
 **Related ADRs:** ADR-008 (Audit Logging), ADR-003 (Authentication)
@@ -94,7 +94,98 @@ All Stripe code was removed from the codebase in Week 35 sprint:
 
 ### Status
 - **Stripe Code Removed:** Week 35 (February 6, 2026)
-- **Square Phase A:** Pending — scheduled after Phase 7 stabilization
+- **Square Phase A:** ✅ **COMPLETE** (Weeks 47-49, February 8, 2026)
+- **Square Phase B:** Pending — Terminal/POS integration
+- **Square Phase C:** Pending — Invoice automation
+
+---
+
+## Phase A Implementation (Weeks 47-49 — February 2026)
+
+### Week 47: Square SDK Integration & Service Layer
+
+**Completed:**
+- Installed Square SDK (`squareup>=35.0.0`)
+- Added configuration to `.env.example` and `src/config/settings.py`
+- Created `SquarePaymentService` at `src/services/square_payment_service.py`
+  - `create_payment()` - Process payments via Square Web Payments SDK nonces
+  - `get_payment_status()` - Query payment status from Square API
+  - `process_refund()` - Refund processing with audit trails (Officer+ role)
+  - `verify_webhook()` - Webhook signature verification
+- Added `dues_payments` to `AUDITED_TABLES` (7-year NLRA compliance)
+- Verified Stripe code fully archived (only in historical migrations)
+
+**Technical Implementation:**
+- Square client import: `from square.client import Square`
+- DuesPayment model uses existing `reference_number` field for Square payment ID
+- All payment operations logged via `audit_service.log_update()`
+- Full error handling with graceful degradation
+
+### Week 48: API Router & Frontend Integration
+
+**Completed:**
+- Created payment API router (`src/routers/square_payments.py`) with 4 endpoints:
+  - `POST /api/v1/payments/process` - Process payment with Square nonce
+  - `GET /api/v1/payments/{square_payment_id}` - Query payment status
+  - `POST /api/v1/payments/{square_payment_id}/refund` - Process refunds
+  - `POST /api/v1/payments/webhooks/square` - Webhook handler (no auth, signature verification)
+- Built frontend payment form (`src/templates/dues/payments/pay.html`)
+  - Square Web Payments SDK integration (client-side tokenization)
+  - Conditional SDK loading (sandbox vs production based on SQUARE_ENVIRONMENT)
+  - Real-time payment processing with error handling
+  - Automatic redirect to success page after payment
+- Created payment initiation route in `dues_frontend.py`
+  - `/dues/payments/initiate/{member_id}/{period_id}` - Renders payment form
+  - Creates or retrieves DuesPayment record
+  - Calculates amount from member's dues rate
+  - Passes Square config to template
+- Updated "Pay Now Online" button in member payment history
+- Registered router in `src/main.py`
+
+**Payment Flow:**
+1. Member clicks "Pay Now Online" → Payment initiation route
+2. Backend creates/retrieves DuesPayment record
+3. Payment form renders with Square Web Payments SDK
+4. Member enters card → Square tokenizes client-side (generates nonce)
+5. JavaScript sends nonce to `/api/v1/payments/process`
+6. SquarePaymentService processes payment via Square API
+7. Backend updates `DuesPayment.reference_number` with Square payment ID
+8. Success → redirect to success page
+
+### Week 49: Testing & Phase A Close-Out
+
+**Completed:**
+- Created comprehensive test suite (`src/tests/test_square_payments.py`)
+  - 8 service tests (create_payment, get_payment_status, process_refund, error handling)
+  - 4 API router tests (process endpoint, status endpoint, refund endpoint, webhooks)
+  - 6 webhook tests (signature verification, event handling)
+  - **Total: 18 tests** — all Square API calls mocked
+- Verified Stripe skip markers already removed (Week 35)
+- Updated ADR-018 with Phase A completion (this section)
+- Updated CLAUDE.md and CHANGELOG.md with implementation details
+
+**Files Created:**
+- `src/services/square_payment_service.py`
+- `src/routers/square_payments.py`
+- `src/templates/dues/payments/pay.html`
+- `src/tests/test_square_payments.py`
+
+**Files Modified:**
+- `requirements.txt` - Added squareup SDK
+- `.env.example` - Added 5 Square config vars
+- `src/config/settings.py` - Added Square settings
+- `src/services/audit_service.py` - Added dues_payments to AUDITED_TABLES
+- `src/main.py` - Registered square_payments router
+- `src/routers/dues_frontend.py` - Added payment initiation route
+- `src/templates/dues/payments/member.html` - Updated Pay Now button
+
+**Security Posture:**
+- PCI SAQ-A compliance (card data never touches UnionCore servers)
+- Client-side tokenization via Square Web Payments SDK
+- All payment endpoints require authentication (except webhook, which uses signature verification)
+- Full audit trail for all payment attempts (success, failure, error)
+
+**Version:** v0.9.23-alpha
 
 ---
 
