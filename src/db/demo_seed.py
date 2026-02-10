@@ -35,11 +35,11 @@ from src.db.enums import (
     RegistrationStatus,
     LaborRequestStatus,
     DispatchStatus,
-    DispatchTermReason,
+    TermReason,
     ExemptReason,
     OrganizationType,
 )
-from src.core.security import get_password_hash
+from src.core.security import hash_password
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +117,7 @@ def _seed_demo_users(db: Session) -> int:
     demo_users = [
         {
             "email": "demo_dispatcher@ibew46.demo",
-            "password_hash": get_password_hash("Demo2026!"),
+            "password_hash": hash_password("Demo2026!"),
             "first_name": "Demo",
             "last_name": "Dispatcher",
             "roles": ["staff"],
@@ -125,7 +125,7 @@ def _seed_demo_users(db: Session) -> int:
         },
         {
             "email": "demo_officer@ibew46.demo",
-            "password_hash": get_password_hash("Demo2026!"),
+            "password_hash": hash_password("Demo2026!"),
             "first_name": "Demo",
             "last_name": "Officer",
             "roles": ["officer"],
@@ -133,7 +133,7 @@ def _seed_demo_users(db: Session) -> int:
         },
         {
             "email": "demo_admin@ibew46.demo",
-            "password_hash": get_password_hash("Demo2026!"),
+            "password_hash": hash_password("Demo2026!"),
             "first_name": "Demo",
             "last_name": "Admin",
             "roles": ["admin"],
@@ -744,7 +744,7 @@ def _seed_demo_dispatches(db: Session) -> int:
                 "is_short_call": False,
                 "status": DispatchStatus.COMPLETED,
                 "term_date": datetime.now() - timedelta(days=10),
-                "term_reason": DispatchTermReason.LAYOFF,
+                "term_reason": TermReason.LAYOFF,
             }
         )
 
@@ -792,7 +792,7 @@ def _seed_demo_dispatches(db: Session) -> int:
                 "is_short_call": False,
                 "status": DispatchStatus.COMPLETED,
                 "term_date": datetime.now() - timedelta(days=30),
-                "term_reason": DispatchTermReason.QUIT,
+                "term_reason": TermReason.QUIT,
             }
         )
 

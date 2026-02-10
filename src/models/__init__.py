@@ -35,6 +35,7 @@ from src.models.dues_rate import DuesRate
 from src.models.dues_period import DuesPeriod
 from src.models.dues_payment import DuesPayment
 from src.models.dues_adjustment import DuesAdjustment
+from src.models.member_note import MemberNote
 
 # Phase 7 - Referral & Dispatch models (Week 20)
 from src.models.referral_book import ReferralBook
@@ -85,6 +86,7 @@ __all__ = [
     "DuesPeriod",
     "DuesPayment",
     "DuesAdjustment",
+    "MemberNote",
     # Phase 7 - Referral & Dispatch
     "ReferralBook",
     "BookRegistration",

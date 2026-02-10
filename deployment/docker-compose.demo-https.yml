@@ -1,0 +1,142 @@
+# UnionCore Demo Configuration — HTTPS via Caddy
+#
+# STANDALONE compose file for demo mode with HTTPS reverse proxy.
+# Usage: docker compose -f docker-compose.demo-https.yml --env-file .env.demo up -d
+#
+# Designed for local laptop demonstrations on macOS.
+# Provides HTTPS via Caddy with self-signed certificates.
+# All services except Caddy are internal-only (no exposed ports).
+
+services:
+  # ═══════════════════════════════════════════════════════════
+  # REVERSE PROXY — Entry point for all web traffic
+  # ═══════════════════════════════════════════════════════════
+  caddy:
+    image: caddy:2-alpine
+    container_name: unioncore-caddy
+    restart: unless-stopped
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./caddy/Caddyfile.demo:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      demo-api:
+        condition: service_healthy
+    networks:
+      - demo-network
+
+  # ═══════════════════════════════════════════════════════════
+  # APPLICATION SERVER — FastAPI via Gunicorn
+  # ═══════════════════════════════════════════════════════════
+  demo-api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: production
+    container_name: unioncore-demo-api
+    restart: unless-stopped
+    environment:
+      # Database connection
+      - DATABASE_URL=postgresql://${DB_USER:-demo}:${DB_PASSWORD}@demo-db:5432/${DB_NAME:-unioncore_demo}
+
+      # Auth configuration
+      - AUTH_JWT_SECRET_KEY=${JWT_SECRET}
+      - AUTH_ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - AUTH_REFRESH_TOKEN_EXPIRE_DAYS=7
+
+      # Environment settings
+      - IP2A_ENV=demo
+      - DEMO_MODE=true
+      - DEBUG=false
+      - TRUSTED_HOST=unioncore.ibew46.local
+
+      # Logging
+      - LOG_LEVEL=INFO
+      - JSON_LOGS=false
+
+      # Disable production features
+      - SENTRY_DSN=
+      - RUN_PRODUCTION_SEED=false
+
+      # Storage (optional for demo - MinIO disabled for simplicity)
+      # - STORAGE_ENDPOINT=minio:9000
+      # - STORAGE_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      # - STORAGE_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
+
+    depends_on:
+      demo-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - demo-network
+    # No ports exposed — Caddy handles external access
+    command: >
+      sh -c "echo '🔄 Running database migrations...' &&
+             alembic upgrade head &&
+             echo '🌱 Seeding demo data...' &&
+             python -m src.db.demo_seed &&
+             echo '🚀 Starting UnionCore demo API server...' &&
+             echo '📍 Demo available at: https://unioncore.ibew46.local' &&
+             echo '👤 Demo accounts:' &&
+             echo '   Dispatcher: demo_dispatcher@ibew46.demo / Demo2026!' &&
+             echo '   Officer:    demo_officer@ibew46.demo / Demo2026!' &&
+             echo '   Admin:      demo_admin@ibew46.demo / Demo2026!' &&
+             echo '' &&
+             gunicorn src.main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000"
+
+  # ═══════════════════════════════════════════════════════════
+  # DATABASE — PostgreSQL 16
+  # ═══════════════════════════════════════════════════════════
+  demo-db:
+    image: postgres:16-alpine
+    container_name: unioncore-demo-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DB_USER:-demo}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME:-unioncore_demo}
+    volumes:
+      - demo-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-demo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - demo-network
+    # No ports exposed — internal only
+
+  # ═══════════════════════════════════════════════════════════
+  # OBJECT STORAGE — MinIO (S3-compatible) - DISABLED FOR DEMO
+  # ═══════════════════════════════════════════════════════════
+  # minio:
+  #   image: minio/minio:latest
+  #   container_name: unioncore-demo-minio
+  #   command: server /data --console-address ":9001"
+  #   environment:
+  #     - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-minioadmin}
+  #     - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-minioadmin}
+  #   volumes:
+  #     - minio_demo_data:/data
+  #   networks:
+  #     - demo-network
+  #   # No ports exposed — internal only
+
+volumes:
+  demo-db-data:
+    name: unioncore-demo-db-https-data
+  caddy_data:
+  caddy_config:
+  # minio_demo_data:
+
+networks:
+  demo-network:
+    driver: bridge
