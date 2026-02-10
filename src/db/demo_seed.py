@@ -1331,19 +1331,37 @@ def _seed_demo_students(db: Session) -> int:
 
         email = f"{first_name.lower()}.{last_name.lower()}{i}@student.ibew46.org"
         student_number = f"S{46000 + i:05d}"
+        member_number = f"M{46000 + i:05d}"  # Unique member number for student
+        phone = f"206-{random.randint(200, 999)}-{random.randint(1000, 9999)}"
 
         # Assign to a cohort
         cohort = random.choice(cohorts)
 
-        student_data = {
-            "student_number": student_number,
+        # Step 1: Create Member first (Student requires member_id FK)
+        member_data = {
+            "member_number": member_number,
             "first_name": first_name,
             "last_name": last_name,
             "email": email,
-            "phone": f"206-{random.randint(200, 999)}-{random.randint(1000, 9999)}",
+            "phone": phone,
+            "classification": MemberClassification.APPRENTICE_1ST_YEAR,
+            "status": MemberStatus.ACTIVE,
+        }
+        member, _ = get_or_create(
+            db, Member, member_number=member_number, defaults=member_data
+        )
+
+        # Step 2: Create Student linked to Member
+        application_date = cohort.start_date - timedelta(
+            days=30
+        )  # Applied 30 days before enrollment
+        student_data = {
+            "member_id": member.id,  # Link to Member (provides name/email/phone)
+            "student_number": student_number,
             "status": status,
-            "cohort_id": cohort.id,
+            "application_date": application_date,
             "enrollment_date": cohort.start_date,
+            "cohort": cohort.code,  # String field, not FK
         }
 
         student, created = get_or_create(
@@ -1641,17 +1659,27 @@ def _seed_demo_attachments(db: Session) -> int:
         # Random file size (10KB to 5MB)
         file_size = random.randint(10240, 5242880)
 
-        # Random upload date (within past 2 years)
-        upload_date = datetime.now() - timedelta(days=random.randint(1, 730))
+        # Map extension to MIME type
+        mime_types = {
+            ".pdf": "application/pdf",
+            ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".doc": "application/msword",
+            ".jpg": "image/jpeg",
+            ".png": "image/png",
+            ".txt": "text/plain",
+            ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        }
+        mime_type = mime_types.get(extension, "application/octet-stream")
 
         attachment_data = {
-            "filename": filename,
+            "record_type": entity_type.lower(),  # "member" or "student"
+            "record_id": entity_id,
+            "file_category": att_type,  # "documents", "certifications", etc.
+            "file_name": filename,
+            "file_path": f"/uploads/{entity_type.lower()}s/{entity_id}/{filename}",  # Required field
+            "file_type": mime_type,  # MIME type (e.g., "application/pdf")
             "file_size": file_size,
-            "file_type": att_type,
-            "uploaded_at": upload_date,
-            "uploaded_by": random.randint(1, 5),  # Random user ID
-            "entity_type": entity_type,
-            "entity_id": entity_id,
+            # created_at is auto-set by TimestampMixin
         }
 
         attachment, created = get_or_create(
