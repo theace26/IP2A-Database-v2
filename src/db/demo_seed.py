@@ -1552,12 +1552,12 @@ def _seed_demo_dues_payments(db: Session) -> int:
         payment_data = {
             "member_id": member.id,
             "period_id": current_period.id,
-            "rate_id": rate.id,
+            # No rate_id field - amount is stored directly
             "amount_due": payment_amount,
             "amount_paid": payment_amount,
             "payment_date": current_date.date(),
             "payment_method": method,
-            "payment_status": DuesPaymentStatus.PAID,
+            "status": DuesPaymentStatus.PAID,
         }
 
         payment, created = get_or_create(
@@ -1635,10 +1635,10 @@ def _seed_demo_delinquent_dues(db: Session) -> int:
         payment_data = {
             "member_id": member.id,
             "period_id": prev_period.id,
-            "rate_id": rate.id,
+            # No rate_id field - amount is stored directly
             "amount_due": payment_amount,
             "amount_paid": Decimal("0.00"),
-            "payment_status": DuesPaymentStatus.PENDING,
+            "status": DuesPaymentStatus.PENDING,
         }
 
         payment, created = get_or_create(
