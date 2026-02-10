@@ -1745,6 +1745,16 @@ def _seed_demo_attachments(db: Session) -> int:
             # created_at is auto-set by TimestampMixin
         }
 
+        # DEBUG: Log what we're about to pass to get_or_create
+        kwargs_to_pass = {
+            "file_name": filename,
+            "record_type": entity_type.lower(),
+            "record_id": entity_id,
+        }
+        if i == 0:  # Log first attachment only
+            logger.info(f"DEBUG: First attachment kwargs: {kwargs_to_pass}")
+            logger.info(f"DEBUG: First attachment defaults: {attachment_data}")
+
         attachment, created = get_or_create(
             db,
             FileAttachment,
@@ -1952,7 +1962,7 @@ def _seed_demo_benevolence(db: Session) -> int:
                 # Approved amount is typically 50-100% of requested
                 approval_percentage = random.uniform(0.5, 1.0)
                 application_data["approved_amount"] = Decimal(
-                    str(int(amount_requested * approval_percentage))
+                    str(int(float(amount_requested) * approval_percentage))
                 )
 
             if status == BenevolenceStatus.PAID:
