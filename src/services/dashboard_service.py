@@ -15,11 +15,17 @@ from src.models.student import Student
 from src.models.grievance import Grievance
 from src.models.dues_payment import DuesPayment
 from src.models.audit_log import AuditLog
+from src.models.labor_request import LaborRequest
+from src.models.book_registration import BookRegistration
+from src.models.certification import Certification
 from src.db.enums import (
     MemberStatus,
     StudentStatus,
     GrievanceStatus,
     DuesPaymentStatus,
+    LaborRequestStatus,
+    RegistrationStatus,
+    CertificationStatus,
 )
 
 logger = logging.getLogger(__name__)
@@ -52,6 +58,15 @@ class DashboardService:
             # Dues collected this month
             stats["dues_mtd"] = self._get_dues_mtd()
 
+            # Open dispatch requests
+            stats["open_dispatch_requests"] = self._count_open_dispatch_requests()
+
+            # Members on referral books
+            stats["members_on_book"] = self._count_members_on_book()
+
+            # Upcoming certification expirations
+            stats["upcoming_expirations"] = self._count_upcoming_expirations()
+
         except Exception as e:
             logger.error(f"Error fetching dashboard stats: {e}")
             # Return zeros on error to prevent dashboard crash
@@ -61,6 +76,9 @@ class DashboardService:
                 "active_students": 0,
                 "pending_grievances": 0,
                 "dues_mtd": 0,
+                "open_dispatch_requests": 0,
+                "members_on_book": 0,
+                "upcoming_expirations": 0,
             }
 
         return stats
@@ -133,6 +151,47 @@ class DashboardService:
             )
         )
         return float(result.scalar() or 0)
+
+    def _count_open_dispatch_requests(self) -> int:
+        """Count labor requests with open or partially filled status."""
+        open_statuses = [
+            LaborRequestStatus.OPEN,
+            LaborRequestStatus.PARTIALLY_FILLED,
+        ]
+        result = self.db.execute(
+            select(func.count(LaborRequest.id)).where(
+                LaborRequest.status.in_(open_statuses)
+            )
+        )
+        return result.scalar() or 0
+
+    def _count_members_on_book(self) -> int:
+        """Count active registrations across all referral books."""
+        result = self.db.execute(
+            select(func.count(BookRegistration.id)).where(
+                BookRegistration.status == RegistrationStatus.REGISTERED
+            )
+        )
+        return result.scalar() or 0
+
+    def _count_upcoming_expirations(self, days: int = 30) -> int:
+        """Count certifications expiring within N days."""
+        from datetime import date, timedelta
+
+        today = date.today()
+        cutoff = today + timedelta(days=days)
+
+        result = self.db.execute(
+            select(func.count(Certification.id)).where(
+                and_(
+                    Certification.status == CertificationStatus.ACTIVE,
+                    Certification.expiration_date.isnot(None),
+                    Certification.expiration_date >= today,
+                    Certification.expiration_date <= cutoff,
+                )
+            )
+        )
+        return result.scalar() or 0
 
     async def get_recent_activity(self, limit: int = 10) -> List[Dict[str, Any]]:
         """

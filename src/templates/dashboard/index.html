@@ -29,17 +29,41 @@
     </div>
 
     <!-- Stats cards -->
-    <div id="stats-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Members card -->
+    <div id="stats-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Open Dispatch Requests card -->
         <div class="stat bg-base-100 rounded-box shadow">
-            <div class="stat-figure text-primary">
+            <div class="stat-figure text-error">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+            </div>
+            <div class="stat-title">Open Dispatch Requests</div>
+            <div class="stat-value text-error">{{ stats.open_dispatch_requests if stats else '0' }}</div>
+            <div class="stat-desc">Needs referral</div>
+        </div>
+
+        <!-- Members on Book card -->
+        <div class="stat bg-base-100 rounded-box shadow">
+            <div class="stat-figure text-info">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
             </div>
-            <div class="stat-title">Active Members</div>
-            <div class="stat-value text-primary">{{ '{:,}'.format(stats.active_members) if stats and stats.active_members else '0' }}</div>
-            <div class="stat-desc">{{ stats.members_change if stats and stats.members_change else '+0' }} this month</div>
+            <div class="stat-title">Members on Book</div>
+            <div class="stat-value text-info">{{ stats.members_on_book if stats else '0' }}</div>
+            <div class="stat-desc">Waiting for work</div>
+        </div>
+
+        <!-- Upcoming Expirations card -->
+        <div class="stat bg-base-100 rounded-box shadow">
+            <div class="stat-figure text-warning">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div class="stat-title">Upcoming Expirations</div>
+            <div class="stat-value text-warning">{{ stats.upcoming_expirations if stats else '0' }}</div>
+            <div class="stat-desc">Next 30 days</div>
         </div>
 
         <!-- Students card -->
