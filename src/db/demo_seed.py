@@ -1598,8 +1598,17 @@ def _seed_demo_delinquent_dues(db: Session) -> int:
         logger.warning("No previous period found, skipping delinquent dues")
         return 0
 
-    # Get default rate
-    rate = db.execute(select(DuesRate).where(DuesRate.is_active)).scalars().first()
+    # Get an active rate (end_date IS NULL = active)
+    rate = (
+        db.execute(
+            select(DuesRate).where(
+                DuesRate.end_date.is_(None),
+                DuesRate.classification == MemberClassification.JOURNEYMAN,
+            )
+        )
+        .scalars()
+        .first()
+    )
 
     if not rate:
         return 0
