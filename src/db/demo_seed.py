@@ -1484,8 +1484,8 @@ def _seed_demo_dues_payments(db: Session) -> int:
     current_date = datetime.now()
     current_period = db.execute(
         select(DuesPeriod).where(
-            DuesPeriod.year == current_date.year,
-            DuesPeriod.month == current_date.month,
+            DuesPeriod.period_year == current_date.year,
+            DuesPeriod.period_month == current_date.month,
         )
     ).scalar_one_or_none()
 
@@ -1579,8 +1579,8 @@ def _seed_demo_delinquent_dues(db: Session) -> int:
 
     prev_period = db.execute(
         select(DuesPeriod).where(
-            DuesPeriod.year == prev_year,
-            DuesPeriod.month == prev_month,
+            DuesPeriod.period_year == prev_year,
+            DuesPeriod.period_month == prev_month,
         )
     ).scalar_one_or_none()
 
