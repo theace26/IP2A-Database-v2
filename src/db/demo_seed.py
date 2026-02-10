@@ -1254,7 +1254,7 @@ def _seed_demo_cohorts(db: Session) -> int:
             "code": "ELEC101",
             "name": "Electrical Fundamentals",
             "description": "Core electrical training program",
-            "credit_hours": 40,
+            "hours": 40,
         },
     )
 
