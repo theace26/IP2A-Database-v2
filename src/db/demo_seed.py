@@ -1249,10 +1249,10 @@ def _seed_demo_cohorts(db: Session) -> int:
     course, _ = get_or_create(
         db,
         Course,
-        course_code="ELEC101",
+        code="ELEC101",
         defaults={
-            "course_code": "ELEC101",
-            "course_name": "Electrical Fundamentals",
+            "code": "ELEC101",
+            "name": "Electrical Fundamentals",
             "description": "Core electrical training program",
             "credit_hours": 40,
         },
