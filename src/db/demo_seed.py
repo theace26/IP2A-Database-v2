@@ -1311,9 +1311,9 @@ def _seed_demo_students(db: Session) -> int:
 
     # Student status distribution
     statuses = [
-        (StudentStatus.ACTIVE, 0.30),  # 30% active
+        (StudentStatus.ENROLLED, 0.30),  # 30% currently enrolled
         (StudentStatus.COMPLETED, 0.60),  # 60% completed
-        (StudentStatus.WITHDRAWN, 0.10),  # 10% withdrawn
+        (StudentStatus.DROPPED, 0.10),  # 10% dropped
     ]
 
     for i in range(total_students):
@@ -1322,7 +1322,7 @@ def _seed_demo_students(db: Session) -> int:
         # Determine status
         rand_status = random.random()
         cum_prob = 0
-        status = StudentStatus.ACTIVE
+        status = StudentStatus.ENROLLED
         for st, prob in statuses:
             cum_prob += prob
             if rand_status <= cum_prob:
