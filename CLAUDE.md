@@ -1,9 +1,9 @@
 # IP2A-Database-v2: Project Context Document
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
-**Last Updated:** February 8, 2026 (Week 49 - Square Testing & Phase 8A Close-Out)
-**Current Version:** v0.9.23-alpha (Phase 8A COMPLETE — Square payment integration live)
-**Current Phase:** Phase 8A (Square Payment Migration) — **✅ COMPLETE** (Weeks 47-49) | 18 tests, 4 API endpoints, client-side tokenization, PCI SAQ-A compliant | Spoke 1 (Core Platform)
+**Last Updated:** February 10, 2026 (ADR-019 Implementation)
+**Current Version:** v0.9.24-alpha (Developer Super Admin with View As Impersonation)
+**Current Phase:** Post-Phase 8A | Developer Tools | 19 ADRs | Spoke 3 (Infrastructure)
 
 ---
 
@@ -17,9 +17,9 @@
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl
 
-**Status:** ~764 total tests (682 baseline + 82 new report tests), ~320+ API endpoints (260 baseline + 62 new report endpoints), 32 models (26 existing + 6 Phase 7), 18 ADRs, Railway deployment live, Square migration planned (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
+**Status:** ~806 total tests (764 baseline + 24 developer/view-as + 18 Square), ~327 API endpoints (324 baseline + 3 view-as), 32 models, **19 ADRs**, Railway deployment live, Developer role with View As impersonation (ADR-019), Square payment integration live (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
-**Current:** **Phase 8A COMPLETE (Weeks 47-49)** — Square payment integration live with 18 comprehensive tests, 4 API endpoints, client-side tokenization (PCI SAQ-A). Full payment flow: member clicks Pay Now → Square SDK tokenizes card → backend processes → audit trail logged → success redirect. ADR-018 updated with Phase A completion. **Weeks 45-46 COMPLETE** (demo ready). **NEXT:** Stakeholder demo event, then Phase 7 data collection (7a/7d) or Phase 8B (Square Terminal/POS). See `docs/decisions/ADR-018-square-payment-integration.md`
+**Current:** **ADR-019 COMPLETE** — Developer super admin role (level 255) with View As UI impersonation. Session-based role switching for QA/development. View As dropdown in navbar, impersonation banner, 24+ tests. **DEV/DEMO ONLY - NEVER PRODUCTION.** Three API endpoints (/api/v1/view-as/*), comprehensive permission system. **NEXT:** Production deployment verification (no developer accounts in prod), stakeholder demo, Phase 7 data collection (7a/7d), or Phase 8B (Square Terminal/POS). See `docs/decisions/ADR-019-developer-super-admin.md`
 
 ---
 
@@ -1419,6 +1419,192 @@ All Stripe tests skip-marked as deprecated:
 - **Total:** 27 tests skipped (will be removed during Square migration Phase A)
 
 **Reference:** See [ADR-018](docs/decisions/ADR-018-square-payment-integration.md) for full technical architecture and migration plan.
+
+---
+
+## Developer Super Admin with View As Impersonation (February 10, 2026)
+
+**Status:** ✅ **COMPLETE** - ADR-019 fully implemented
+
+### Overview
+
+Implements a developer-only super admin role (level 255) with "View As" UI impersonation capability. This enables comprehensive QA testing across all role perspectives without maintaining 8+ separate test accounts. **CRITICAL:** Developer role must NEVER exist in production environments.
+
+**Decision Document:** [ADR-019](docs/decisions/ADR-019-developer-super-admin.md)
+
+### Key Features
+
+**Developer Role (Level 255):**
+- Highest privilege level with unrestricted access to all features
+- All audit permissions (VIEW_ALL, VIEW_USERS, VIEW_MEMBERS, VIEW_OWN, EXPORT)
+- No sensitive field redaction (sees SSN, passwords, bank accounts, etc.)
+- Cannot be assigned via UI (seed scripts or direct database manipulation only)
+- Seeded automatically in auth_seed.py and demo_seed.py
+- **Production Safety:** Deployment checklist must verify no developer accounts exist
+
+**View As Impersonation:**
+- Session-based role switching (stored in session, NOT JWT)
+- Developer can render UI as any other role (admin, officer, staff, organizer, instructor, member)
+- Visible UI indicators: dropdown in navbar, impersonation banner
+- Audit logging always records real user (developer), never impersonated role
+- API-level permissions NOT bypassed — impersonation only affects UI rendering
+
+### Implementation Status
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| Developer role enum | ✅ Complete | `src/db/enums/auth_enums.py` |
+| Developer role seed | ✅ Complete | `src/seed/auth_seed.py` |
+| Demo developer account | ✅ Complete | `src/db/demo_seed.py` |
+| Permissions updated | ✅ Complete | `src/core/permissions.py` |
+| View As API (3 endpoints) | ✅ Complete | `src/routers/view_as.py` |
+| View As dropdown (navbar) | ✅ Complete | `src/templates/components/_navbar.html` |
+| Impersonation banner | ✅ Complete | `src/templates/base.html` |
+| Session middleware | ✅ Complete | `src/main.py` (SessionMiddleware) |
+| Auth integration | ✅ Complete | `src/routers/dependencies/auth_cookie.py` |
+| Comprehensive tests (24+) | ✅ Complete | `src/tests/test_developer_view_as.py` |
+
+### View As API Endpoints
+
+| Endpoint | Method | Purpose | Auth Required |
+|----------|--------|---------|---------------|
+| `/api/v1/view-as/set/{role}` | POST | Set viewing role in session | Developer only |
+| `/api/v1/view-as/clear` | POST | Clear impersonation | Developer only |
+| `/api/v1/view-as/current` | GET | Get current viewing_as role | Developer only |
+
+**Available Roles for Impersonation:**
+- admin, officer, staff, organizer, instructor, member
+- Developer cannot impersonate self (not in the list)
+
+### Demo Accounts
+
+| Email | Password | Role | Purpose |
+|-------|----------|------|---------|
+| `demo_developer@ibew46.demo` | `Demo2026!` | developer | QA testing with View As |
+| `demo_admin@ibew46.demo` | `Demo2026!` | admin | Regular admin testing |
+| `demo_officer@ibew46.demo` | `Demo2026!` | officer | Officer role testing |
+| `demo_dispatcher@ibew46.demo` | `Demo2026!` | staff | Dispatcher/staff testing |
+| `dev@ibew46.local` | `D3v3l0p3r!` | developer | Production seed developer (dev only) |
+
+### Security Constraints
+
+1. **Production Prohibition:** Developer role MUST NOT exist in production
+   - Deployment checklist must verify no users have developer role
+   - `dev@ibew46.local` and `demo_developer@ibew46.demo` are dev/demo only
+
+2. **UI Assignment Blocked:** Developer role cannot be assigned through staff management UI
+   - Only via seed scripts or direct database manipulation
+   - Prevents accidental privilege escalation
+
+3. **Audit Trail Integrity:** When View As is active:
+   - Audit logs record real user ID (developer), not impersonated role
+   - viewing_as parameter stored in session, not JWT
+   - Impersonation banner always visible to indicate active impersonation
+
+4. **Session-Based Storage:**
+   - viewing_as stored in HTTP session cookie (`unioncore_session`)
+   - Session expires when browser closes
+   - NOT stored in JWT token (maintains token integrity)
+
+### UI Components
+
+**View As Dropdown (Navbar):**
+- Only visible to users with developer role (hidden from DOM for others)
+- Shows current viewing_as role with warning badge style
+- Alpine.js powered dropdown with auto-reload on role change
+- One-click role selection
+
+**Impersonation Banner:**
+- Sticky positioned below navbar when View As is active
+- Shows impersonated role (uppercase) and real user email
+- Warning alert style (DaisyUI `alert-warning`)
+- Quick "Clear View As" button
+
+### Testing
+
+**Test Suite:** `src/tests/test_developer_view_as.py` — **24+ tests**
+
+**Coverage:**
+- Developer role existence and enum validation
+- Developer authentication and login
+- All audit permissions granted
+- Sensitive field redaction disabled for developer
+- View As API: set role, clear role, get current
+- Invalid role rejection (400 error)
+- Non-developer access denial (403 error)
+- All roles available for impersonation
+- Navbar dropdown visibility (developer vs non-developer)
+- Impersonation banner display (active vs inactive)
+- Session-based storage (not JWT)
+- Production safety warnings in role description
+
+### Files Created
+
+```
+src/routers/view_as.py                           # View As API (3 endpoints)
+src/tests/test_developer_view_as.py              # 24+ comprehensive tests
+docs/decisions/ADR-019-developer-super-admin.md  # Architecture decision
+```
+
+### Files Modified
+
+```
+src/db/enums/auth_enums.py                       # Added DEVELOPER to RoleType
+src/seed/auth_seed.py                            # Added developer role + seed function
+src/core/permissions.py                          # Developer audit permissions + redaction
+src/routers/dependencies/auth_cookie.py          # Added viewing_as to user context
+src/main.py                                      # SessionMiddleware + view_as router
+src/templates/components/_navbar.html            # View As dropdown (developer-only)
+src/templates/base.html                          # Impersonation banner
+src/db/demo_seed.py                              # Demo developer account
+docs/decisions/README.md                         # ADR index updated to v2.6 (19 ADRs)
+```
+
+### Usage Example
+
+```python
+# 1. Login as developer
+POST /login
+{
+  "email": "demo_developer@ibew46.demo",
+  "password": "Demo2026!"
+}
+
+# 2. Set View As to staff role
+POST /api/v1/view-as/set/staff
+
+# 3. Navigate to any page — UI renders as staff would see it
+GET /dashboard
+# Sidebar shows only staff-accessible items
+# Dashboard cards show staff-scoped data
+# Impersonation banner visible at top
+
+# 4. Clear View As
+POST /api/v1/view-as/clear
+# Returns to full developer view
+```
+
+### Production Deployment Checklist
+
+**CRITICAL:** Before deploying to production, verify:
+
+1. ✅ No users in production database have `developer` role
+2. ✅ `dev@ibew46.local` account does NOT exist in production
+3. ✅ `demo_developer@ibew46.demo` account does NOT exist in production
+4. ✅ Developer role seed script is NOT run in production
+5. ✅ SessionMiddleware `https_only` set to `true` in production
+
+**Query to Check:**
+```sql
+SELECT u.email, r.name
+FROM users u
+JOIN user_roles ur ON u.id = ur.user_id
+JOIN roles r ON ur.role_id = r.id
+WHERE r.name = 'developer';
+-- Should return 0 rows in production
+```
+
+**Version:** v0.9.24-alpha
 
 ---
 

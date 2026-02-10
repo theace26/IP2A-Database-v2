@@ -6,6 +6,7 @@ from enum import Enum
 class RoleType(str, Enum):
     """Default system roles."""
 
+    DEVELOPER = "developer"  # Level 255 - dev/demo only, never production
     ADMIN = "admin"
     OFFICER = "officer"
     STAFF = "staff"

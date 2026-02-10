@@ -413,6 +413,14 @@ def _seed_demo_users(db: Session) -> int:
     """
     demo_users = [
         {
+            "email": "demo_developer@ibew46.demo",
+            "password_hash": hash_password("Demo2026!"),
+            "first_name": "Demo",
+            "last_name": "Developer",
+            "role_names": ["developer"],
+            "is_active": True,
+        },
+        {
             "email": "demo_dispatcher@ibew46.demo",
             "password_hash": hash_password("Demo2026!"),
             "first_name": "Demo",
@@ -2109,6 +2117,7 @@ if __name__ == "__main__":
             "\n✅ Demo seed complete. Environment ready for stakeholder presentation."
         )
         print("\nDemo accounts:")
+        print("  Developer:  demo_developer@ibew46.demo / Demo2026!")
         print("  Dispatcher: demo_dispatcher@ibew46.demo / Demo2026!")
         print("  Officer:    demo_officer@ibew46.demo / Demo2026!")
         print("  Admin:      demo_admin@ibew46.demo / Demo2026!")

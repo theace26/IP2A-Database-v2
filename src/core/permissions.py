@@ -1,19 +1,28 @@
 """Permission constants for role-based access control."""
+
 from enum import Enum
 from typing import Dict, List
 
 
 class AuditPermission(str, Enum):
     """Audit-specific permissions."""
-    VIEW_OWN = "audit:view_own"              # View entities user touched
-    VIEW_MEMBERS = "audit:view_members"       # View all member-related audits
-    VIEW_USERS = "audit:view_users"           # View user account audits
-    VIEW_ALL = "audit:view_all"               # View everything
-    EXPORT = "audit:export"                   # Export audit reports
+
+    VIEW_OWN = "audit:view_own"  # View entities user touched
+    VIEW_MEMBERS = "audit:view_members"  # View all member-related audits
+    VIEW_USERS = "audit:view_users"  # View user account audits
+    VIEW_ALL = "audit:view_all"  # View everything
+    EXPORT = "audit:export"  # Export audit reports
 
 
 # Map roles to their audit permissions
 ROLE_AUDIT_PERMISSIONS: Dict[str, List[AuditPermission]] = {
+    "developer": [  # Developer has ALL permissions (level 255)
+        AuditPermission.VIEW_ALL,
+        AuditPermission.VIEW_USERS,
+        AuditPermission.VIEW_MEMBERS,
+        AuditPermission.VIEW_OWN,
+        AuditPermission.EXPORT,
+    ],
     "member": [],  # No audit access
     "staff": [AuditPermission.VIEW_OWN],
     "instructor": [AuditPermission.VIEW_OWN],
@@ -22,7 +31,7 @@ ROLE_AUDIT_PERMISSIONS: Dict[str, List[AuditPermission]] = {
     "admin": [
         AuditPermission.VIEW_ALL,
         AuditPermission.VIEW_USERS,
-        AuditPermission.EXPORT
+        AuditPermission.EXPORT,
     ],
 }
 
@@ -57,13 +66,13 @@ SENSITIVE_FIELDS = {
 def redact_sensitive_fields(data: dict, user_role: str) -> dict:
     """
     Redact sensitive fields based on user role.
-    Admin users see all fields unredacted.
+    Developer and Admin users see all fields unredacted.
     """
     if data is None:
         return None
 
-    if user_role == "admin":
-        return data  # Admins see everything
+    if user_role in ["developer", "admin"]:
+        return data  # Developer and Admin see everything
 
     redacted = {}
     for key, value in data.items():

@@ -5,9 +5,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
+from starlette.middleware.sessions import SessionMiddleware
 
 # Configuration checks
 from src.config.auth_config import check_jwt_secret_configuration
+from src.config.settings import get_settings
 
 # Middleware
 from src.middleware import AuditContextMiddleware, SecurityHeadersMiddleware
@@ -101,6 +103,9 @@ from src.routers.referral_reports_api import router as referral_reports_api_rout
 # Phase 8A: Square Payment Integration
 from src.routers.square_payments import router as square_payments_router
 
+# Developer Tools: View As (ADR-019)
+from src.routers.view_as import router as view_as_router
+
 # ------------------------------------------------------------
 # Initialize FastAPI
 # ------------------------------------------------------------
@@ -114,6 +119,18 @@ app = FastAPI(
 # ------------------------------------------------------------
 # Middleware
 # ------------------------------------------------------------
+
+# Session middleware for View As feature (ADR-019)
+# Must be added before other middleware that might use session
+settings = get_settings()
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,
+    session_cookie="unioncore_session",
+    max_age=None,  # Session cookie (expires when browser closes)
+    same_site="lax",
+    https_only=False,  # Set to True in production with HTTPS
+)
 
 # Audit context middleware (must be before CORS for proper request handling)
 app.add_middleware(AuditContextMiddleware)
@@ -263,6 +280,9 @@ app.include_router(
 
 # Phase 8A: Square Payment Integration (Week 47-49)
 app.include_router(square_payments_router)  # Square online payments API
+
+# Developer Tools: View As (ADR-019)
+app.include_router(view_as_router)  # View As impersonation API
 
 # Frontend routes (HTML pages) - include LAST to not interfere with API routes
 app.include_router(frontend.router)

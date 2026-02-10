@@ -6,15 +6,13 @@ Uses HTTP-only cookies to store JWT tokens securely.
 from typing import Optional
 import logging
 
-from fastapi import Cookie, HTTPException, Request, Response, status
+from fastapi import Cookie, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
 
 from src.core.jwt import (
     verify_access_token,
     TokenExpiredError,
     TokenInvalidError,
-    create_access_token,
 )
 from src.db.session import get_db
 
@@ -63,18 +61,28 @@ class AuthenticationRequired:
             current_path = str(request.url.path)
 
             # Redirect to change password if required (except for change-password and logout)
-            if must_change_password and current_path not in ["/auth/change-password", "/logout"]:
+            if must_change_password and current_path not in [
+                "/auth/change-password",
+                "/logout",
+            ]:
                 return RedirectResponse(
                     url="/auth/change-password",
                     status_code=status.HTTP_302_FOUND,
                 )
 
+            # Get viewing_as from session if user is developer
+            viewing_as = None
+            roles = payload.get("roles", [])
+            if "developer" in roles and hasattr(request, "session"):
+                viewing_as = request.session.get("viewing_as")
+
             # Return user info from token (avoid DB call on every request)
             return {
                 "id": int(user_id),
                 "email": payload.get("email"),
-                "roles": payload.get("roles", []),
+                "roles": roles,
                 "must_change_password": must_change_password,
+                "viewing_as": viewing_as,  # None for non-developers or when not impersonating
             }
 
         except TokenExpiredError:
@@ -111,6 +119,7 @@ require_auth_api = AuthenticationRequired(redirect_to_login=False)
 
 
 async def get_current_user_from_cookie(
+    request: Request,
     access_token: Optional[str] = Cookie(default=None),
 ) -> Optional[dict]:
     """
@@ -130,10 +139,17 @@ async def get_current_user_from_cookie(
         if not user_id:
             return None
 
+        # Get viewing_as from session if user is developer
+        viewing_as = None
+        roles = payload.get("roles", [])
+        if "developer" in roles and hasattr(request, "session"):
+            viewing_as = request.session.get("viewing_as")
+
         return {
             "id": int(user_id),
             "email": payload.get("email"),
-            "roles": payload.get("roles", []),
+            "roles": roles,
+            "viewing_as": viewing_as,
         }
     except (TokenExpiredError, TokenInvalidError):
         return None
@@ -159,7 +175,6 @@ async def get_current_user_model(
             ...
     """
     from src.models.user import User
-    from src.routers.dependencies.auth import get_current_user
 
     # First verify the cookie
     if not access_token:
@@ -208,5 +223,5 @@ async def get_current_user_model(
         logger.error(f"Error fetching user model: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error fetching user information"
+            detail="Error fetching user information",
         )

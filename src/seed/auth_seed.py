@@ -18,8 +18,22 @@ DEFAULT_ADMIN = {
     "last_name": "Admin",
 }
 
+# Default developer user - DEV/DEMO ONLY - NEVER PRODUCTION
+DEFAULT_DEVELOPER = {
+    "email": "dev@ibew46.local",
+    "password": "D3v3l0p3r!",
+    "first_name": "Developer",
+    "last_name": "Account",
+}
+
 
 DEFAULT_ROLES = [
+    {
+        "name": RoleType.DEVELOPER.value,
+        "display_name": "Developer",
+        "description": "Developer super admin with View As impersonation. DEV/DEMO ONLY - NEVER PRODUCTION.",
+        "is_system_role": True,
+    },
     {
         "name": RoleType.ADMIN.value,
         "display_name": "Administrator",
@@ -117,14 +131,56 @@ def seed_admin_user(db: Session) -> User | None:
     return user
 
 
+def seed_developer_user(db: Session) -> User | None:
+    """Seed developer user if not exists. DEV/DEMO ONLY."""
+    # Check if developer user already exists
+    existing = db.query(User).filter(User.email == DEFAULT_DEVELOPER["email"]).first()
+    if existing:
+        print(
+            f"  Developer user '{DEFAULT_DEVELOPER['email']}' already exists, skipping..."
+        )
+        return None
+
+    # Get developer role
+    developer_role = (
+        db.query(Role).filter(Role.name == RoleType.DEVELOPER.value).first()
+    )
+    if not developer_role:
+        print("  Warning: Developer role not found, creating user without role...")
+
+    # Create developer user
+    user = User(
+        email=DEFAULT_DEVELOPER["email"],
+        password_hash=hash_password(DEFAULT_DEVELOPER["password"]),
+        first_name=DEFAULT_DEVELOPER["first_name"],
+        last_name=DEFAULT_DEVELOPER["last_name"],
+        is_active=True,
+        is_verified=True,  # Pre-verified for developer
+        must_change_password=False,  # No password change required for dev account
+    )
+    db.add(user)
+    db.flush()  # Get the user ID
+
+    # Assign developer role
+    if developer_role:
+        user_role = UserRole(user_id=user.id, role_id=developer_role.id)
+        db.add(user_role)
+
+    db.commit()
+    print(f"  Created developer user: {DEFAULT_DEVELOPER['email']}")
+    return user
+
+
 def run_auth_seed(db: Session) -> dict:
     """Run all auth seed operations."""
     print("\n=== Seeding Auth Data ===")
 
     roles = seed_roles(db)
     admin = seed_admin_user(db)
+    developer = seed_developer_user(db)
 
     return {
         "roles_created": len(roles),
         "admin_created": admin is not None,
+        "developer_created": developer is not None,
     }

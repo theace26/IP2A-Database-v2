@@ -7,6 +7,119 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> **v0.9.24-alpha — ADR-019: Developer Super Admin with View As Impersonation** (✅ COMPLETE)
+> Developer role with UI impersonation for QA and development
+> ~806 total tests (+24 developer/view-as tests), ~327 API endpoints (+3 view-as), 32 models, **19 ADRs**
+> **Developer Tools:** View As dropdown, impersonation banner, session-based role switching, dev/demo only
+> **Next:** Production deployment (verify no developer accounts in prod)
+
+### Added (February 10, 2026 — ADR-019: Developer Super Admin with View As)
+
+#### Developer Role & View As Impersonation (ADR-019)
+- **Developer Role** (`RoleType.DEVELOPER`) — Level 255, dev/demo environments only
+  * Highest privilege level with unrestricted access to all features
+  * All audit permissions (VIEW_ALL, VIEW_USERS, VIEW_MEMBERS, VIEW_OWN, EXPORT)
+  * No sensitive field redaction (sees SSN, passwords, etc.)
+  * Cannot be assigned via UI (seed scripts or direct DB only)
+  * Seeded in auth_seed.py and demo_seed.py
+  * **CRITICAL:** Must never exist in production (deployment checklist required)
+
+#### View As Impersonation Feature
+- **View As API** (`src/routers/view_as.py`) — **3 endpoints:**
+  * **POST /api/v1/view-as/set/{role}** - Set viewing role in session
+    - Only developer role can access
+    - Validates role against available roles (admin, officer, staff, organizer, instructor, member)
+    - Stores viewing_as in session (NOT JWT)
+  * **POST /api/v1/view-as/clear** - Clear impersonation, return to developer view
+  * **GET /api/v1/view-as/current** - Get current viewing_as role and available roles
+  * All endpoints require developer role (403 for non-developers)
+
+- **View As UI Components:**
+  * **Navbar Dropdown** (`_navbar.html`) - Developer-only dropdown with role selector
+    - Shows current viewing_as role with warning button style
+    - Alpine.js powered role switching with auto-reload
+    - Hidden from DOM for non-developer users
+  * **Impersonation Banner** (`base.html`) - Alert banner when View As is active
+    - Shows impersonated role and real user email
+    - Sticky positioned below navbar
+    - One-click "Clear View As" button
+    - Only visible when viewing_as is set
+
+- **Session Middleware:**
+  * **SessionMiddleware** added to main.py for View As state
+  * Uses SECRET_KEY from settings
+  * Session cookie: "unioncore_session" (expires when browser closes)
+  * Same-site: lax, https_only: false (set to true in production)
+
+- **Auth Integration:**
+  * Updated `auth_cookie.py` to include `viewing_as` in user context
+  * Both `require_auth` and `get_current_user_from_cookie` support viewing_as
+  * Viewing_as read from request.session (only for developers)
+  * Audit logging always records real user, never impersonated role
+
+#### Permissions & Security
+- **Updated Permissions** (`src/core/permissions.py`)
+  * Developer role has all audit permissions
+  * Developer and Admin see unredacted sensitive fields
+  * Other roles see [REDACTED] for SSN, passwords, etc.
+
+- **Security Constraints:**
+  * Developer role MUST NOT exist in production (documented in ADR-019)
+  * Deployment checklist must verify no developer accounts
+  * View As only affects UI rendering, not API-level permissions
+  * Audit trail integrity maintained (real user always logged)
+
+#### Demo Environment
+- **Demo Developer Account** (`demo_developer@ibew46.demo / Demo2026!`)
+  * Added to demo_seed.py
+  * Listed in deployment README with other demo accounts
+  * 4 demo accounts total: developer, dispatcher, officer, admin
+
+#### Testing
+- **Comprehensive Test Suite** (`src/tests/test_developer_view_as.py`) — **24+ tests:**
+  * Developer role existence and enum tests
+  * Developer login and authentication
+  * All audit permissions granted
+  * No sensitive field redaction
+  * View As API: set role, clear role, get current
+  * Invalid role rejection
+  * Non-developer access denial
+  * All roles available for impersonation
+  * Navbar dropdown visibility (developer vs non-developer)
+  * Impersonation banner display (active vs inactive)
+  * Session-based storage (not JWT)
+  * Production safety warnings
+
+#### Documentation
+- **ADR-019** - Developer Super Admin with View As Impersonation (Implemented)
+- **ADR README** - Updated to v2.6 with ADR-019 entry (19 total ADRs)
+- **CLAUDE.md** - Updated with ADR-019 implementation details
+- **CHANGELOG.md** - This entry
+
+#### Files Created
+```
+src/routers/view_as.py                           # View As API (3 endpoints)
+src/tests/test_developer_view_as.py              # 24+ tests
+docs/decisions/ADR-019-developer-super-admin.md  # Architecture decision
+```
+
+#### Files Modified
+```
+src/db/enums/auth_enums.py                       # Added DEVELOPER to RoleType
+src/seed/auth_seed.py                            # Added developer role + seed function
+src/core/permissions.py                          # Developer audit permissions + redaction
+src/routers/dependencies/auth_cookie.py          # Added viewing_as to user context
+src/main.py                                      # SessionMiddleware + view_as router
+src/templates/components/_navbar.html            # View As dropdown (developer-only)
+src/templates/base.html                          # Impersonation banner
+src/db/demo_seed.py                              # Demo developer account
+docs/decisions/README.md                         # ADR index updated to v2.6
+```
+
+**Version:** v0.9.24-alpha
+
+---
+
 > **v0.9.23-alpha — WEEK 49: Square Testing & Phase 8A Close-Out** (✅ COMPLETE)
 > Phase 8A complete (Square Payment Migration — Weeks 47-49)
 > ~782 total tests (+18 Square tests), ~324 API endpoints (+4), 32 models, 18 ADRs
