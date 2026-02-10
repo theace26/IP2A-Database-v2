@@ -63,11 +63,14 @@ services:
     command: >
       sh -c "echo '🔄 Running database migrations...' &&
              alembic upgrade head &&
+             echo '🔑 Seeding roles and auth data...' &&
+             python -c 'from src.db.session import get_db_session; from src.seed.auth_seed import run_auth_seed; db = get_db_session(); run_auth_seed(db); db.close()' &&
              echo '🌱 Seeding demo data...' &&
              python -m src.db.demo_seed &&
              echo '🚀 Starting UnionCore demo API server...' &&
              echo '📍 Demo available at: http://localhost:8080' &&
              echo '👤 Demo accounts:' &&
+             echo '   Developer:  demo_developer@ibew46.demo / Demo2026!' &&
              echo '   Dispatcher: demo_dispatcher@ibew46.demo / Demo2026!' &&
              echo '   Officer:    demo_officer@ibew46.demo / Demo2026!' &&
              echo '   Admin:      demo_admin@ibew46.demo / Demo2026!' &&
