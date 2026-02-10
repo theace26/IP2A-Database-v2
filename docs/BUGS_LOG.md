@@ -2661,3 +2661,217 @@ Fixed 4 referral frontend test failures:
 - Week 39 Bug Squash: `docs/reports/session-logs/2026-02-06-week39-bug-squash.md`
 
 ---
+
+## Bug #030: Demo Seed Student & FileAttachment Field Mismatches
+
+**Date Discovered:** 2026-02-09
+**Date Fixed:** 2026-02-09
+**Severity:** High (blocking demo seed completion)
+**Status:** RESOLVED
+
+### Symptoms
+- Demo seed fails with "Student has no attribute 'first_name'" error
+- FileAttachment creation fails with "no attribute 'entity_type'" error
+
+### Root Cause
+demo_seed.py was written from documentation instead of actual model definitions.
+
+**Student Model Issues:**
+- Tried to set `first_name`, `last_name`, `email`, `phone` directly on Student
+- Student model links to Member via `member_id` FK for this data
+- Used `cohort_id` FK when Student.cohort is a string field
+- Missing required `application_date` field
+
+**FileAttachment Model Issues:**
+- Wrong field names: `filename` → `file_name`, `entity_type` → `record_type`, `entity_id` → `record_id`
+- Missing required `file_path` field
+- Tried to use non-existent `uploaded_at` and `uploaded_by` fields
+
+### Fix
+**Student:**
+1. Create Member first with name/email/phone
+2. Link Student to Member via `member_id`
+3. Use `cohort.code` string for cohort field
+4. Add `application_date` (30 days before enrollment)
+
+**FileAttachment:**
+1. Rename all fields to match model
+2. Add required `file_path`
+3. Remove non-existent fields
+4. Use MIME type for `file_type`
+
+### Commit
+- `cb59609` - fix(demo-seed): correct Student and FileAttachment field mappings
+
+### Prevention
+- Write seed code from actual model definitions, not documentation
+- Use IDE autocomplete to catch field name errors
+- Run full seed locally before committing
+
+---
+
+## Bug #031: Demo Seed DuesRate Field Mismatches
+
+**Date Discovered:** 2026-02-09
+**Date Fixed:** 2026-02-09 (3 commits)
+**Severity:** High (blocking demo seed completion)
+**Status:** RESOLVED
+
+### Symptoms
+- Demo seed fails with "DuesRate has no property 'rate_code'" error
+- Later: "DuesRate has no attribute 'is_active'" error
+
+### Root Cause
+demo_seed.py tried to use fields that don't exist on DuesRate model.
+
+**Wrong Fields Used:**
+- `rate_code` (doesn't exist)
+- `rate_name` (doesn't exist)
+- `is_active` (doesn't exist - active rates have `end_date IS NULL`)
+
+**Actual Fields:**
+- `classification` (enum, required)
+- `monthly_amount` (required)
+- `effective_date` (required)
+- `end_date` (nullable - NULL = active)
+- `description` (nullable)
+
+**Unique Constraint:** `(classification, effective_date)`
+
+### Fix
+1. Removed non-existent fields
+2. Created 7 rates (one per MemberClassification)
+3. Used `classification + effective_date` as lookup key
+4. Changed active rate queries from `is_active` to `end_date IS NULL`
+
+### Commits
+- `835b4a6` - fix(demo-seed): correct DuesRate field names
+- `cb89067` - fix(demo-seed): use end_date IS NULL to find active rates
+- `3da0229` - fix(demo-seed): fix second DuesRate.is_active reference
+
+### Prevention
+- Query model directly instead of assuming field names
+- Check model relationships and constraints before writing seed
+
+---
+
+## Bug #032: Demo Seed DuesPeriod Field Mismatches
+
+**Date Discovered:** 2026-02-09
+**Date Fixed:** 2026-02-09 (2 commits)
+**Severity:** High (blocking demo seed completion)
+**Status:** RESOLVED
+
+### Symptoms
+- Demo seed fails with "DuesPeriod has no property 'year'" error
+
+### Root Cause
+demo_seed.py used wrong field names and missing required fields.
+
+**Wrong Fields Used:**
+- `year` → should be `period_year`
+- `month` → should be `period_month`
+- `period_name` → is a `@property`, not a database field
+- `start_date` → doesn't exist
+
+**Missing Required Fields:**
+- `due_date` (required)
+- `grace_period_end` (required)
+
+**Unique Constraint:** `(period_year, period_month)`
+
+### Fix
+1. Renamed `year` → `period_year`, `month` → `period_month`
+2. Added required `due_date` (5th of month) and `grace_period_end` (15th of month)
+3. Removed `period_name` from data dict (it's a property)
+4. Updated all WHERE clauses to use correct field names
+
+### Commits
+- `9f90cac` - fix(demo-seed): correct DuesPeriod field names
+- `e80c87b` - fix(demo-seed): use period_year/period_month in queries
+
+### Prevention
+- Distinguish between database columns and @property methods
+- Check model for required fields before seeding
+
+---
+
+## Bug #033: Demo Seed DuesPaymentMethod Enum Value Mismatch
+
+**Date Discovered:** 2026-02-09
+**Date Fixed:** 2026-02-09
+**Severity:** Medium (blocking demo seed completion)
+**Status:** RESOLVED
+
+### Symptoms
+- Demo seed fails with "DuesPaymentMethod has no attribute 'BANK_TRANSFER'"
+- Error suggests: "Did you mean: 'ACH_TRANSFER'?"
+
+### Root Cause
+Used incorrect enum value name.
+
+**Wrong:** `DuesPaymentMethod.BANK_TRANSFER`
+**Correct:** `DuesPaymentMethod.ACH_TRANSFER`
+
+### Fix
+Changed `BANK_TRANSFER` → `ACH_TRANSFER` in payment method distribution
+
+### Commit
+- `742d577` - fix(demo-seed): use ACH_TRANSFER instead of BANK_TRANSFER
+
+### Prevention
+- Import enums and use IDE autocomplete
+- Verify enum values against actual enum definition
+
+---
+
+## Bug #034: Demo Seed DuesPayment Field Mismatches
+
+**Date Discovered:** 2026-02-09
+**Date Fixed:** 2026-02-09
+**Severity:** High (blocking demo seed completion)
+**Status:** RESOLVED
+
+### Symptoms
+- Demo seed fails with "'rate_id' is an invalid keyword argument for DuesPayment"
+
+### Root Cause
+demo_seed.py tried to use fields that don't exist on DuesPayment model.
+
+**Wrong Fields Used:**
+- `rate_id` (doesn't exist - amount stored directly in `amount_due`)
+- `payment_status` → should be `status`
+
+**Actual Fields:**
+- `member_id` (FK to members)
+- `period_id` (FK to dues_periods)
+- `amount_due` (stores the amount, no FK to rate)
+- `amount_paid`
+- `payment_date`
+- `payment_method`
+- `status` (not payment_status)
+- `reference_number`
+- `receipt_number`
+- `processed_by_id`
+- `processed_at`
+- `notes`
+
+### Fix
+1. Removed `rate_id` field (amount is stored directly)
+2. Renamed `payment_status` → `status`
+
+### Commit
+- `a336c28` - fix(demo-seed): remove rate_id and fix status field in DuesPayment
+
+### Prevention
+- Check foreign key relationships before assuming FK exists
+- Verify field names against model definition
+
+---
+
+**Session:** 2026-02-09 Demo Seed Field Fixes
+**Total Bugs:** 5 (Bugs #030-#034)
+**Pattern:** Systematic schema drift from writing seed code from documentation instead of models
+**Resolution:** Comprehensive field mapping and batch fixes
+
+---
