@@ -1532,7 +1532,7 @@ def _seed_demo_dues_payments(db: Session) -> int:
         (DuesPaymentMethod.CHECK, 0.30),
         (DuesPaymentMethod.CASH, 0.10),
         (DuesPaymentMethod.CREDIT_CARD, 0.40),
-        (DuesPaymentMethod.BANK_TRANSFER, 0.20),
+        (DuesPaymentMethod.ACH_TRANSFER, 0.20),
     ]
 
     created_count = 0
