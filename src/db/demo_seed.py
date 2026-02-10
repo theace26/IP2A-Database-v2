@@ -667,9 +667,8 @@ def _seed_demo_members(db: Session) -> int:
     # Classification distribution (realistic mix)
     classifications = [
         (MemberClassification.JOURNEYMAN, 0.70),  # 70% journeyman
-        (MemberClassification.APPRENTICE, 0.15),  # 15% apprentice
-        (MemberClassification.FOREMAN, 0.10),  # 10% foreman
-        (MemberClassification.GENERAL_FOREMAN, 0.05),  # 5% general foreman
+        (MemberClassification.APPRENTICE_3RD_YEAR, 0.15),  # 15% apprentice (3rd year)
+        (MemberClassification.FOREMAN, 0.15),  # 15% foreman
     ]
 
     # Status distribution
