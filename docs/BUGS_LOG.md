@@ -2875,3 +2875,108 @@ demo_seed.py tried to use fields that don't exist on DuesPayment model.
 **Resolution:** Comprehensive field mapping and batch fixes
 
 ---
+
+## Bug #035: Demo Seed Benevolence Decimal/Float Type Mismatch
+
+**Date Discovered:** 2026-02-09
+**Date Fixed:** 2026-02-09
+**Severity:** High (blocking demo seed completion)
+**Status:** RESOLVED
+
+### Symptoms
+- Demo seed fails with "TypeError: unsupported operand type(s) for *: 'decimal.Decimal' and 'float'"
+- Error occurs at line 1965 in _seed_demo_benevolence
+
+### Root Cause
+Python doesn't allow direct multiplication between Decimal and float types.
+
+**Problem Code:**
+```python
+approval_percentage = random.uniform(0.5, 1.0)  # Returns float
+application_data["approved_amount"] = Decimal(
+    str(int(amount_requested * approval_percentage))  # amount_requested is Decimal
+)
+```
+
+**Type Conflict:**
+- `amount_requested` is `Decimal` (from database NUMERIC field)
+- `approval_percentage` is `float` (from `random.uniform()`)
+- Python raises TypeError when multiplying these types
+
+### Fix
+Convert Decimal to float before multiplication:
+```python
+str(int(float(amount_requested) * approval_percentage))
+```
+
+### Commit
+- `ef43305` - fix(demo): convert Decimal to float before multiplication in benevolence seeding
+
+### Prevention
+- Be aware of type differences between Decimal (database) and float (Python)
+- Always convert types explicitly when performing arithmetic operations
+- Consider using Decimal throughout if precision is critical
+
+---
+
+## Bug #036: Demo Seed Organization Field Name Mismatch
+
+**Date Discovered:** 2026-02-09
+**Date Fixed:** 2026-02-09
+**Severity:** High (blocking demo seed completion)
+**Status:** RESOLVED
+
+### Symptoms
+- Demo seed fails with "AttributeError: type object 'Organization' has no attribute 'organization_type'"
+- Error occurs at line 2013 in _seed_demo_salting
+
+### Root Cause
+demo_seed.py used wrong field name when querying Organization model.
+
+**Wrong Field Used:** `Organization.organization_type`
+**Actual Field:** `Organization.org_type`
+
+**Problem Code:**
+```python
+employers = (
+    db.execute(
+        select(Organization)
+        .where(Organization.organization_type == OrganizationType.EMPLOYER)
+        .limit(8)
+    )
+    .scalars()
+    .all()
+)
+```
+
+### Fix
+Changed `organization_type` to `org_type`:
+```python
+.where(Organization.org_type == OrganizationType.EMPLOYER)
+```
+
+### Commit
+- `3b91299` - fix(demo): correct Organization field name in SALTing seeding
+
+### Prevention
+- Always verify field names against model definitions
+- Use IDE autocomplete or type hints to catch field name errors early
+- Consider adding model field name constants to prevent typos
+
+---
+
+**Session Update:** 2026-02-09 Demo Seed Field Fixes (Continued)
+**Additional Bugs:** 2 (Bugs #035-#036)
+**Total Session Bugs:** 7 (Bugs #030-#036)
+**Pattern:** Systematic schema drift from writing seed code from documentation instead of models
+**Resolution:** Iterative debugging with complete Docker cache clearing + comprehensive field mapping
+
+**Final Outcome:** ✅ Demo seed completed successfully with all union operations data:
+- 10 grievances
+- 20 benevolence applications
+- 15 SALTing activities
+- 2000 members with 7749 registrations
+- 5 labor requests with 4 dispatches
+- 10,000 file attachments
+
+---
