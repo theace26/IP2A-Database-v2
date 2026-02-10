@@ -54,7 +54,6 @@ from src.db.enums import (
     StudentStatus,
     DuesPaymentMethod,
     DuesPaymentStatus,
-    AttachmentType,
     GrievanceStatus,
     GrievanceStep,
     BenevolenceStatus,
@@ -1597,20 +1596,20 @@ def _seed_demo_attachments(db: Session) -> int:
 
     logger.info(f"  Creating {total_attachments} file attachments...")
 
-    # Attachment type distribution
+    # Attachment type distribution (file_category values)
     types = [
-        (AttachmentType.DOCUMENT, 0.40),
-        (AttachmentType.CERTIFICATION, 0.30),
-        (AttachmentType.PHOTO, 0.20),
-        (AttachmentType.OTHER, 0.10),
+        ("documents", 0.40),
+        ("certifications", 0.30),
+        ("photos", 0.20),
+        ("general", 0.10),
     ]
 
     # File extensions by type
     extensions = {
-        AttachmentType.DOCUMENT: [".pdf", ".docx", ".doc"],
-        AttachmentType.CERTIFICATION: [".pdf", ".jpg"],
-        AttachmentType.PHOTO: [".jpg", ".png"],
-        AttachmentType.OTHER: [".pdf", ".txt", ".xlsx"],
+        "documents": [".pdf", ".docx", ".doc"],
+        "certifications": [".pdf", ".jpg"],
+        "photos": [".jpg", ".png"],
+        "general": [".pdf", ".txt", ".xlsx"],
     }
 
     for i in range(total_attachments):
@@ -1629,7 +1628,7 @@ def _seed_demo_attachments(db: Session) -> int:
         # Determine attachment type
         rand_type = random.random()
         cum_prob = 0
-        att_type = AttachmentType.DOCUMENT
+        att_type = "documents"
         for typ, prob in types:
             cum_prob += prob
             if rand_type <= cum_prob:
