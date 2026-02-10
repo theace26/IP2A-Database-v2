@@ -1493,8 +1493,18 @@ def _seed_demo_dues_payments(db: Session) -> int:
         logger.warning("No current dues period found, skipping payments")
         return 0
 
-    # Get default rate
-    rate = db.execute(select(DuesRate).where(DuesRate.is_active)).scalars().first()
+    # Get an active rate (end_date IS NULL = active)
+    # Just get the first active rate (Journeyman)
+    rate = (
+        db.execute(
+            select(DuesRate).where(
+                DuesRate.end_date.is_(None),
+                DuesRate.classification == MemberClassification.JOURNEYMAN,
+            )
+        )
+        .scalars()
+        .first()
+    )
 
     if not rate:
         logger.warning("No active dues rate found, skipping payments")
