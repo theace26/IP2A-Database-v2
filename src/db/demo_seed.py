@@ -1477,24 +1477,16 @@ def _seed_demo_dues_setup(db: Session) -> int:
 
 def _seed_demo_dues_payments(db: Session) -> int:
     """
-    Create dues payments totaling ~$500,000 for the current month.
-    Distribute across members with varied payment methods.
+    Create realistic dues payments across the last 6 months with varied statuses.
+
+    Payment distribution:
+    - Older months (4-6 months ago): 90% PAID, 5% PARTIAL, 5% OVERDUE
+    - Recent months (2-3 months ago): 70% PAID, 15% PARTIAL, 10% PENDING, 5% OVERDUE
+    - Current month: 50% PAID, 40% PENDING, 10% PARTIAL
     """
-    # Get current period
     current_date = datetime.now()
-    current_period = db.execute(
-        select(DuesPeriod).where(
-            DuesPeriod.period_year == current_date.year,
-            DuesPeriod.period_month == current_date.month,
-        )
-    ).scalar_one_or_none()
 
-    if not current_period:
-        logger.warning("No current dues period found, skipping payments")
-        return 0
-
-    # Get an active rate (end_date IS NULL = active)
-    # Just get the first active rate (Journeyman)
+    # Get active rate
     rate = (
         db.execute(
             select(DuesRate).where(
@@ -1521,11 +1513,7 @@ def _seed_demo_dues_payments(db: Session) -> int:
         logger.warning("No active members found, skipping payments")
         return 0
 
-    target_amount = Decimal("500000.00")
     payment_amount = rate.monthly_amount
-    num_payments = min(int(target_amount / payment_amount), len(members))
-
-    logger.info(f"  Creating {num_payments} dues payments totaling ${target_amount}...")
 
     # Payment method distribution
     methods = [
@@ -1535,127 +1523,132 @@ def _seed_demo_dues_payments(db: Session) -> int:
         (DuesPaymentMethod.ACH_TRANSFER, 0.20),
     ]
 
-    created_count = 0
-    selected_members = random.sample(members, num_payments)
+    total_created = 0
+    total_collected = Decimal("0.00")
 
-    for i, member in enumerate(selected_members):
-        # Determine payment method
-        rand_method = random.random()
-        cum_prob = 0
-        method = DuesPaymentMethod.CHECK
-        for meth, prob in methods:
-            cum_prob += prob
-            if rand_method <= cum_prob:
-                method = meth
-                break
-
-        payment_data = {
-            "member_id": member.id,
-            "period_id": current_period.id,
-            # No rate_id field - amount is stored directly
-            "amount_due": payment_amount,
-            "amount_paid": payment_amount,
-            "payment_date": current_date.date(),
-            "payment_method": method,
-            "status": DuesPaymentStatus.PAID,
-        }
-
-        payment, created = get_or_create(
-            db,
-            DuesPayment,
-            member_id=member.id,
-            period_id=current_period.id,
-            defaults=payment_data,
+    # Create payments for the last 6 months
+    for months_ago in range(6):
+        # Calculate the period date
+        month = ((current_date.month - months_ago - 1) % 12) + 1
+        year = (
+            current_date.year
+            if (current_date.month - months_ago) > 0
+            else current_date.year - 1
         )
-        if created:
-            created_count += 1
 
-    total_collected = created_count * payment_amount
-    logger.info(f"  Completed: {created_count} payments, ${total_collected} collected")
-    return created_count
+        # Get the period
+        period = db.execute(
+            select(DuesPeriod).where(
+                DuesPeriod.period_year == year,
+                DuesPeriod.period_month == month,
+            )
+        ).scalar_one_or_none()
+
+        if not period:
+            continue
+
+        # Define status distribution based on period age
+        if months_ago >= 4:
+            # Older months: mostly paid
+            status_dist = [
+                (DuesPaymentStatus.PAID, 0.90),
+                (DuesPaymentStatus.PARTIAL, 0.05),
+                (DuesPaymentStatus.OVERDUE, 0.05),
+            ]
+            num_payments = int(len(members) * 0.85)  # 85% of members
+        elif months_ago >= 2:
+            # Recent months: mixed
+            status_dist = [
+                (DuesPaymentStatus.PAID, 0.70),
+                (DuesPaymentStatus.PARTIAL, 0.15),
+                (DuesPaymentStatus.PENDING, 0.10),
+                (DuesPaymentStatus.OVERDUE, 0.05),
+            ]
+            num_payments = int(len(members) * 0.80)  # 80% of members
+        else:
+            # Current/last month: lots of pending
+            status_dist = [
+                (DuesPaymentStatus.PAID, 0.50),
+                (DuesPaymentStatus.PENDING, 0.40),
+                (DuesPaymentStatus.PARTIAL, 0.10),
+            ]
+            num_payments = int(len(members) * 0.75)  # 75% of members
+
+        # Select random members for this period
+        selected_members = random.sample(members, min(num_payments, len(members)))
+        period_created = 0
+
+        for member in selected_members:
+            # Determine payment status
+            rand_status = random.random()
+            cum_prob = 0
+            status = DuesPaymentStatus.PAID
+            for stat, prob in status_dist:
+                cum_prob += prob
+                if rand_status <= cum_prob:
+                    status = stat
+                    break
+
+            # Determine payment method
+            rand_method = random.random()
+            cum_prob = 0
+            method = DuesPaymentMethod.CHECK
+            for meth, prob in methods:
+                cum_prob += prob
+                if rand_method <= cum_prob:
+                    method = meth
+                    break
+
+            # Calculate amounts based on status
+            if status == DuesPaymentStatus.PAID:
+                amount_paid = payment_amount
+                payment_date = date(year, month, random.randint(1, 28))
+            elif status == DuesPaymentStatus.PARTIAL:
+                amount_paid = payment_amount * Decimal(str(random.uniform(0.3, 0.8)))
+                payment_date = date(year, month, random.randint(1, 28))
+            else:  # PENDING or OVERDUE
+                amount_paid = Decimal("0.00")
+                payment_date = None
+                method = None
+
+            payment_data = {
+                "member_id": member.id,
+                "period_id": period.id,
+                "amount_due": payment_amount,
+                "amount_paid": amount_paid,
+                "payment_date": payment_date,
+                "payment_method": method,
+                "status": status,
+            }
+
+            payment, created = get_or_create(
+                db,
+                DuesPayment,
+                member_id=member.id,
+                period_id=period.id,
+                defaults=payment_data,
+            )
+            if created:
+                period_created += 1
+                total_collected += amount_paid
+
+        if period_created > 0:
+            logger.info(f"    {period.period_name}: {period_created} payments")
+        total_created += period_created
+
+    logger.info(
+        f"  Completed: {total_created} payments across 6 months, ${total_collected:.2f} collected"
+    )
+    return total_created
 
 
 def _seed_demo_delinquent_dues(db: Session) -> int:
     """
-    Create delinquent dues payments totaling ~$10,000.
-    These are unpaid or partially paid for previous periods.
+    This function is now integrated into _seed_demo_dues_payments.
+    Kept for backwards compatibility but does nothing.
     """
-    # Get a previous period (2 months ago)
-    current_date = datetime.now()
-    prev_month = ((current_date.month - 3) % 12) + 1
-    prev_year = (
-        current_date.year if (current_date.month - 3) > 0 else current_date.year - 1
-    )
-
-    prev_period = db.execute(
-        select(DuesPeriod).where(
-            DuesPeriod.period_year == prev_year,
-            DuesPeriod.period_month == prev_month,
-        )
-    ).scalar_one_or_none()
-
-    if not prev_period:
-        logger.warning("No previous period found, skipping delinquent dues")
-        return 0
-
-    # Get an active rate (end_date IS NULL = active)
-    rate = (
-        db.execute(
-            select(DuesRate).where(
-                DuesRate.end_date.is_(None),
-                DuesRate.classification == MemberClassification.JOURNEYMAN,
-            )
-        )
-        .scalars()
-        .first()
-    )
-
-    if not rate:
-        return 0
-
-    # Get active members
-    members = (
-        db.execute(select(Member).where(Member.status == MemberStatus.ACTIVE))
-        .scalars()
-        .all()
-    )
-
-    target_amount = Decimal("10000.00")
-    payment_amount = rate.monthly_amount
-    num_delinquent = min(int(target_amount / payment_amount), 200)  # Cap at 200 members
-
-    logger.info(
-        f"  Creating {num_delinquent} delinquent dues records totaling ${target_amount}..."
-    )
-
-    created_count = 0
-    selected_members = random.sample(members, num_delinquent)
-
-    for member in selected_members:
-        payment_data = {
-            "member_id": member.id,
-            "period_id": prev_period.id,
-            # No rate_id field - amount is stored directly
-            "amount_due": payment_amount,
-            "amount_paid": Decimal("0.00"),
-            "status": DuesPaymentStatus.PENDING,
-        }
-
-        payment, created = get_or_create(
-            db,
-            DuesPayment,
-            member_id=member.id,
-            period_id=prev_period.id,
-            defaults=payment_data,
-        )
-        if created:
-            created_count += 1
-
-    total_delinquent = created_count * payment_amount
-    logger.info(
-        f"  Completed: {created_count} delinquent records, ${total_delinquent} overdue"
-    )
-    return created_count
+    logger.info("  Delinquent dues already included in main payments seeding")
+    return 0
 
 
 def _seed_demo_attachments(db: Session) -> int:
