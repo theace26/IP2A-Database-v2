@@ -1445,19 +1445,24 @@ def _seed_demo_dues_setup(db: Session) -> int:
         month = ((base_month - i - 1) % 12) + 1
         year = base_year if (base_month - i) > 0 else base_year - 1
 
+        # Calculate due date (5th of the month) and grace period (15th)
+        due_date_val = date(year, month, 5)
+        grace_period_end_val = date(year, month, 15)
+
         period_data = {
-            "year": year,
-            "month": month,
-            "period_name": f"{year}-{month:02d}",
-            "start_date": date(year, month, 1),
+            "period_year": year,
+            "period_month": month,
+            "due_date": due_date_val,
+            "grace_period_end": grace_period_end_val,
             "is_closed": True if i > 0 else False,  # Current month is open
+            # period_name is a @property, not a database field
         }
 
         period, created = get_or_create(
             db,
             DuesPeriod,
-            year=year,
-            month=month,
+            period_year=year,
+            period_month=month,
             defaults=period_data,
         )
         if created:
