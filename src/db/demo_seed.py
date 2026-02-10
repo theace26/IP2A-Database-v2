@@ -1275,7 +1275,8 @@ def _seed_demo_cohorts(db: Session) -> int:
         end_date = start_date + timedelta(days=180)  # 6-month programs
 
         cohort_data = {
-            "cohort_number": cohort_number,
+            "code": cohort_number,
+            "name": f"Cohort {cohort_number}",
             "course_id": course.id,
             "start_date": start_date.date(),
             "end_date": end_date.date(),
@@ -1283,7 +1284,7 @@ def _seed_demo_cohorts(db: Session) -> int:
         }
 
         cohort, created = get_or_create(
-            db, Cohort, cohort_number=cohort_number, defaults=cohort_data
+            db, Cohort, code=cohort_number, defaults=cohort_data
         )
         if created:
             created_count += 1
