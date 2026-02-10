@@ -1383,22 +1383,59 @@ def _seed_demo_dues_setup(db: Session) -> int:
     Create dues periods and rates for the past 12 months.
     Required for dues payment seeding.
     """
-    # Create a default dues rate
-    rate, rate_created = get_or_create(
-        db,
-        DuesRate,
-        rate_code="STANDARD_2026",
-        defaults={
-            "rate_code": "STANDARD_2026",
-            "rate_name": "Standard 2026 Rate",
-            "monthly_amount": Decimal("50.00"),
-            "effective_date": date(2026, 1, 1),
-            "is_active": True,
-        },
-    )
+    # Create default dues rates for each classification
+    # DuesRate uses (classification, effective_date) as unique key
+    created_count = 0
+    effective_date = date(2026, 1, 1)
+
+    # Standard rates by classification
+    rates_config = [
+        (MemberClassification.JOURNEYMAN, Decimal("75.00"), "Journeyman standard rate"),
+        (MemberClassification.FOREMAN, Decimal("85.00"), "Foreman standard rate"),
+        (
+            MemberClassification.APPRENTICE_1ST_YEAR,
+            Decimal("30.00"),
+            "1st year apprentice rate",
+        ),
+        (
+            MemberClassification.APPRENTICE_2ND_YEAR,
+            Decimal("40.00"),
+            "2nd year apprentice rate",
+        ),
+        (
+            MemberClassification.APPRENTICE_3RD_YEAR,
+            Decimal("50.00"),
+            "3rd year apprentice rate",
+        ),
+        (
+            MemberClassification.APPRENTICE_4TH_YEAR,
+            Decimal("60.00"),
+            "4th year apprentice rate",
+        ),
+        (
+            MemberClassification.APPRENTICE_5TH_YEAR,
+            Decimal("70.00"),
+            "5th year apprentice rate",
+        ),
+    ]
+
+    for classification, monthly_amount, description in rates_config:
+        rate, rate_created = get_or_create(
+            db,
+            DuesRate,
+            classification=classification,
+            effective_date=effective_date,
+            defaults={
+                "monthly_amount": monthly_amount,
+                "description": description,
+                # end_date is NULL (currently active)
+            },
+        )
+        if rate_created:
+            created_count += 1
 
     # Create periods for the past 12 months
-    created_count = 0
+    periods_created = 0
     current_date = datetime.now()
     base_year = current_date.year
     base_month = current_date.month
@@ -1424,11 +1461,13 @@ def _seed_demo_dues_setup(db: Session) -> int:
             defaults=period_data,
         )
         if created:
-            created_count += 1
+            periods_created += 1
 
-    setup_count = created_count + (1 if rate_created else 0)
-    logger.info(f"  Created {setup_count} dues setup records (rates + periods)")
-    return setup_count
+    total_created = created_count + periods_created  # rates + periods
+    logger.info(
+        f"  Created {total_created} dues setup records ({created_count} rates + {periods_created} periods)"
+    )
+    return total_created
 
 
 def _seed_demo_dues_payments(db: Session) -> int:
