@@ -81,7 +81,7 @@ services:
     command: >
       sh -c "echo '🔄 Running database migrations...' &&
              alembic upgrade head &&
-             echo '🌱 Seeding demo data...' &&
+             echo '🌱 Seeding large-scale demo data (2000 members, 1000 students, 10k attachments)...' &&
              python -m src.db.demo_seed &&
              echo '🚀 Starting UnionCore demo API server...' &&
              echo '📍 Demo available at: https://unioncore.ibew46.local' &&

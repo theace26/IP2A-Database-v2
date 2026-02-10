@@ -12,7 +12,8 @@ Spoke: Spoke 2 (Operations)
 """
 
 import logging
-from datetime import datetime, timedelta, time
+import random
+from datetime import datetime, timedelta, time, date
 from decimal import Decimal
 from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
@@ -28,6 +29,13 @@ from src.models import (
     BookRegistration,
     LaborRequest,
     Dispatch,
+    Student,
+    Cohort,
+    Course,
+    DuesPayment,
+    DuesPeriod,
+    DuesRate,
+    FileAttachment,
 )
 from src.db.enums import (
     MemberClassification,
@@ -40,10 +48,245 @@ from src.db.enums import (
     TermReason,
     ExemptReason,
     OrganizationType,
+    StudentStatus,
+    DuesPaymentMethod,
+    DuesPaymentStatus,
+    AttachmentType,
 )
 from src.core.security import hash_password
 
 logger = logging.getLogger(__name__)
+
+# Name pools for generating realistic member/student names
+FIRST_NAMES = [
+    "James",
+    "Mary",
+    "John",
+    "Patricia",
+    "Robert",
+    "Jennifer",
+    "Michael",
+    "Linda",
+    "William",
+    "Barbara",
+    "David",
+    "Elizabeth",
+    "Richard",
+    "Susan",
+    "Joseph",
+    "Jessica",
+    "Thomas",
+    "Sarah",
+    "Charles",
+    "Karen",
+    "Christopher",
+    "Nancy",
+    "Daniel",
+    "Lisa",
+    "Matthew",
+    "Betty",
+    "Anthony",
+    "Margaret",
+    "Mark",
+    "Sandra",
+    "Donald",
+    "Ashley",
+    "Steven",
+    "Kimberly",
+    "Paul",
+    "Emily",
+    "Andrew",
+    "Donna",
+    "Joshua",
+    "Michelle",
+    "Kenneth",
+    "Dorothy",
+    "Kevin",
+    "Carol",
+    "Brian",
+    "Amanda",
+    "George",
+    "Melissa",
+    "Timothy",
+    "Deborah",
+    "Ronald",
+    "Stephanie",
+    "Edward",
+    "Rebecca",
+    "Jason",
+    "Sharon",
+    "Jeffrey",
+    "Laura",
+    "Ryan",
+    "Cynthia",
+    "Jacob",
+    "Kathleen",
+    "Gary",
+    "Amy",
+    "Nicholas",
+    "Shirley",
+    "Eric",
+    "Angela",
+    "Jonathan",
+    "Helen",
+    "Stephen",
+    "Anna",
+    "Larry",
+    "Brenda",
+    "Justin",
+    "Pamela",
+    "Scott",
+    "Nicole",
+    "Brandon",
+    "Emma",
+    "Benjamin",
+    "Samantha",
+    "Samuel",
+    "Katherine",
+    "Raymond",
+    "Christine",
+    "Gregory",
+    "Debra",
+    "Frank",
+    "Rachel",
+    "Alexander",
+    "Catherine",
+    "Patrick",
+    "Carolyn",
+    "Raymond",
+    "Janet",
+    "Jack",
+    "Ruth",
+    "Dennis",
+    "Maria",
+    "Jerry",
+    "Heather",
+    "Tyler",
+    "Diane",
+    "Aaron",
+    "Virginia",
+    "Jose",
+    "Julie",
+    "Adam",
+    "Joyce",
+    "Nathan",
+    "Victoria",
+    "Henry",
+    "Olivia",
+    "Douglas",
+    "Kelly",
+    "Zachary",
+    "Christina",
+    "Peter",
+    "Lauren",
+]
+
+LAST_NAMES = [
+    "Smith",
+    "Johnson",
+    "Williams",
+    "Brown",
+    "Jones",
+    "Garcia",
+    "Miller",
+    "Davis",
+    "Rodriguez",
+    "Martinez",
+    "Hernandez",
+    "Lopez",
+    "Gonzalez",
+    "Wilson",
+    "Anderson",
+    "Thomas",
+    "Taylor",
+    "Moore",
+    "Jackson",
+    "Martin",
+    "Lee",
+    "Perez",
+    "Thompson",
+    "White",
+    "Harris",
+    "Sanchez",
+    "Clark",
+    "Ramirez",
+    "Lewis",
+    "Robinson",
+    "Walker",
+    "Young",
+    "Allen",
+    "King",
+    "Wright",
+    "Scott",
+    "Torres",
+    "Nguyen",
+    "Hill",
+    "Flores",
+    "Green",
+    "Adams",
+    "Nelson",
+    "Baker",
+    "Hall",
+    "Rivera",
+    "Campbell",
+    "Mitchell",
+    "Carter",
+    "Roberts",
+    "Gomez",
+    "Phillips",
+    "Evans",
+    "Turner",
+    "Diaz",
+    "Parker",
+    "Cruz",
+    "Edwards",
+    "Collins",
+    "Reyes",
+    "Stewart",
+    "Morris",
+    "Morales",
+    "Murphy",
+    "Cook",
+    "Rogers",
+    "Gutierrez",
+    "Ortiz",
+    "Morgan",
+    "Cooper",
+    "Peterson",
+    "Bailey",
+    "Reed",
+    "Kelly",
+    "Howard",
+    "Ramos",
+    "Kim",
+    "Cox",
+    "Ward",
+    "Richardson",
+    "Watson",
+    "Brooks",
+    "Chavez",
+    "Wood",
+    "James",
+    "Bennett",
+    "Gray",
+    "Mendoza",
+    "Ruiz",
+    "Hughes",
+    "Price",
+    "Alvarez",
+    "Castillo",
+    "Sanders",
+    "Patel",
+    "Myers",
+    "Long",
+    "Ross",
+    "Foster",
+    "Jimenez",
+    "Powell",
+    "Jenkins",
+    "Perry",
+    "Russell",
+]
 
 
 def get_or_create(
@@ -68,6 +311,23 @@ def get_or_create(
     db.flush()
 
     return instance, True
+
+
+def generate_person_name(index: int) -> tuple[str, str]:
+    """Generate a unique first/last name combination using index."""
+    first_idx = index % len(FIRST_NAMES)
+    last_idx = (index // len(FIRST_NAMES)) % len(LAST_NAMES)
+
+    # Add numeric suffix for uniqueness when we run out of combinations
+    suffix_num = index // (len(FIRST_NAMES) * len(LAST_NAMES))
+
+    first_name = FIRST_NAMES[first_idx]
+    last_name = LAST_NAMES[last_idx]
+
+    if suffix_num > 0:
+        last_name = f"{last_name}{suffix_num}"
+
+    return first_name, last_name
 
 
 def seed_demo_data(db: Session) -> dict:
@@ -104,6 +364,24 @@ def seed_demo_data(db: Session) -> dict:
 
     # Phase 9: Exemptions
     summary["exemptions"] = _seed_demo_exemptions(db)
+
+    # Phase 10: Cohorts (100 total)
+    summary["cohorts"] = _seed_demo_cohorts(db)
+
+    # Phase 11: Students (1000 total)
+    summary["students"] = _seed_demo_students(db)
+
+    # Phase 12: Dues periods and rates
+    summary["dues_setup"] = _seed_demo_dues_setup(db)
+
+    # Phase 13: Dues payments ($500k monthly collected)
+    summary["dues_payments"] = _seed_demo_dues_payments(db)
+
+    # Phase 14: Delinquent dues ($10k overdue)
+    summary["delinquent_dues"] = _seed_demo_delinquent_dues(db)
+
+    # Phase 15: File attachments (10,000 total)
+    summary["attachments"] = _seed_demo_attachments(db)
 
     db.commit()
     logger.info("Demo seed data creation complete")
@@ -365,72 +643,83 @@ def _seed_demo_employers(db: Session) -> int:
 
 def _seed_demo_members(db: Session) -> int:
     """
-    Create 20-30 members with varied classifications.
-    Use realistic names for union electricians.
-    Some members registered on multiple books (cross-regional Wire members).
+    Create 2000 members with varied classifications.
+    Use realistic generated names for union electricians.
+    Mix of active, inactive, and suspended statuses.
     """
-    # Realistic union electrician names
-    demo_members = [
-        # Wire members (will be on multiple regional books)
-        ("John", "Martinez", MemberClassification.JOURNEYMAN),
-        ("Sarah", "Chen", MemberClassification.JOURNEYMAN),
-        ("Mike", "O'Brien", MemberClassification.JOURNEYMAN),
-        ("Jennifer", "Washington", MemberClassification.JOURNEYMAN),
-        ("David", "Kowalski", MemberClassification.JOURNEYMAN),
-        ("Maria", "Rodriguez", MemberClassification.JOURNEYMAN),
-        ("James", "Thompson", MemberClassification.JOURNEYMAN),
-        ("Lisa", "Anderson", MemberClassification.JOURNEYMAN),
-        ("Robert", "Jackson", MemberClassification.JOURNEYMAN),
-        ("Amanda", "Williams", MemberClassification.JOURNEYMAN),
-        ("Thomas", "Brown", MemberClassification.JOURNEYMAN),
-        ("Patricia", "Davis", MemberClassification.JOURNEYMAN),
-        ("Christopher", "Miller", MemberClassification.JOURNEYMAN),
-        ("Jessica", "Wilson", MemberClassification.JOURNEYMAN),
-        ("Daniel", "Moore", MemberClassification.JOURNEYMAN),
-        # Technicians
-        ("Kevin", "Taylor", MemberClassification.JOURNEYMAN),
-        ("Michelle", "Anderson", MemberClassification.JOURNEYMAN),
-        ("Steven", "Thomas", MemberClassification.JOURNEYMAN),
-        ("Rebecca", "Martinez", MemberClassification.JOURNEYMAN),
-        ("Brian", "Garcia", MemberClassification.JOURNEYMAN),
-        # Sound & Comm
-        ("Andrew", "Johnson", MemberClassification.JOURNEYMAN),
-        ("Nicole", "Lee", MemberClassification.JOURNEYMAN),
-        ("Jason", "White", MemberClassification.JOURNEYMAN),
-        # Stockperson
-        ("Ryan", "Harris", MemberClassification.JOURNEYMAN),
-        ("Stephanie", "Clark", MemberClassification.JOURNEYMAN),
-        ("Eric", "Lewis", MemberClassification.JOURNEYMAN),
-        # Additional Wire (Book 2/3 tiers)
-        ("Mark", "Robinson", MemberClassification.JOURNEYMAN),
-        ("Laura", "Walker", MemberClassification.JOURNEYMAN),
-        ("Paul", "Hall", MemberClassification.JOURNEYMAN),
-        ("Kimberly", "Allen", MemberClassification.JOURNEYMAN),
+    # Classification distribution (realistic mix)
+    classifications = [
+        (MemberClassification.JOURNEYMAN, 0.70),  # 70% journeyman
+        (MemberClassification.APPRENTICE, 0.15),  # 15% apprentice
+        (MemberClassification.FOREMAN, 0.10),  # 10% foreman
+        (MemberClassification.GENERAL_FOREMAN, 0.05),  # 5% general foreman
     ]
 
+    # Status distribution
+    statuses = [
+        (MemberStatus.ACTIVE, 0.85),  # 85% active
+        (MemberStatus.INACTIVE, 0.10),  # 10% inactive
+        (MemberStatus.SUSPENDED, 0.05),  # 5% suspended
+    ]
+
+    total_members = 2000
     created_count = 0
-    for first_name, last_name, classification in demo_members:
-        email = f"{first_name.lower()}.{last_name.lower()}@demo.local"
-        member_number = f"DEMO{46000 + created_count:05d}"  # DEMO46001, DEMO46002, etc.
+
+    logger.info(f"  Creating {total_members} members...")
+
+    for i in range(total_members):
+        first_name, last_name = generate_person_name(i)
+
+        # Determine classification based on distribution
+        rand_class = random.random()
+        cum_prob = 0
+        classification = MemberClassification.JOURNEYMAN
+        for cls, prob in classifications:
+            cum_prob += prob
+            if rand_class <= cum_prob:
+                classification = cls
+                break
+
+        # Determine status based on distribution
+        rand_status = random.random()
+        cum_prob = 0
+        status = MemberStatus.ACTIVE
+        for st, prob in statuses:
+            cum_prob += prob
+            if rand_status <= cum_prob:
+                status = st
+                break
+
+        email = f"{first_name.lower()}.{last_name.lower()}{i}@ibew46.org"
+        member_number = f"{46000 + i:06d}"  # 046000, 046001, etc.
 
         member_data = {
             "member_number": member_number,
             "first_name": first_name,
             "last_name": last_name,
             "classification": classification,
-            "status": MemberStatus.ACTIVE,
+            "status": status,
             "email": email,
-            "phone": f"206-555-{created_count:04d}",
-            "address": f"{1000 + created_count} Demo St",
-            "city": "Seattle",
+            "phone": f"206-{random.randint(200, 999)}-{random.randint(1000, 9999)}",
+            "address": f"{random.randint(100, 9999)} {random.choice(['Main', 'Oak', 'Maple', 'Cedar', 'Pine'])} St",
+            "city": random.choice(
+                ["Seattle", "Tacoma", "Bellevue", "Everett", "Renton", "Kent"]
+            ),
             "state": "WA",
-            "zip_code": "98101",
+            "zip_code": f"98{random.randint(100, 199)}",
         }
 
-        member, created = get_or_create(db, Member, email=email, defaults=member_data)
+        member, created = get_or_create(
+            db, Member, member_number=member_number, defaults=member_data
+        )
         if created:
             created_count += 1
 
+        # Log progress every 500 members
+        if (i + 1) % 500 == 0:
+            logger.info(f"    Created {i + 1}/{total_members} members...")
+
+    logger.info(f"  Completed: {created_count} new members created")
     return created_count
 
 
@@ -933,6 +1222,439 @@ def _seed_demo_exemptions(db: Session) -> int:
     db.flush()
 
     return 3
+
+
+def _seed_demo_cohorts(db: Session) -> int:
+    """
+    Create 100 cohorts with varied start dates and statuses.
+    Mix of active, completed, and upcoming cohorts.
+    """
+    # Get or create a default course
+    course, _ = get_or_create(
+        db,
+        Course,
+        course_code="ELEC101",
+        defaults={
+            "course_code": "ELEC101",
+            "course_name": "Electrical Fundamentals",
+            "description": "Core electrical training program",
+            "credit_hours": 40,
+        },
+    )
+
+    total_cohorts = 100
+    created_count = 0
+
+    logger.info(f"  Creating {total_cohorts} cohorts...")
+
+    base_date = datetime.now() - timedelta(days=365 * 3)  # Start 3 years ago
+
+    for i in range(total_cohorts):
+        cohort_number = (
+            f"C{2022 + (i // 25)}-{(i % 25) + 1:02d}"  # C2022-01, C2022-02, etc.
+        )
+        start_date = base_date + timedelta(
+            days=i * 30
+        )  # Each cohort starts ~30 days apart
+        end_date = start_date + timedelta(days=180)  # 6-month programs
+
+        cohort_data = {
+            "cohort_number": cohort_number,
+            "course_id": course.id,
+            "start_date": start_date.date(),
+            "end_date": end_date.date(),
+            "max_students": random.randint(15, 25),
+        }
+
+        cohort, created = get_or_create(
+            db, Cohort, cohort_number=cohort_number, defaults=cohort_data
+        )
+        if created:
+            created_count += 1
+
+    logger.info(f"  Completed: {created_count} new cohorts created")
+    return created_count
+
+
+def _seed_demo_students(db: Session) -> int:
+    """
+    Create 1000 students enrolled in cohorts.
+    Mix of active, completed, and withdrawn students.
+    """
+    # Get all cohorts
+    cohorts = db.execute(select(Cohort)).scalars().all()
+
+    if not cohorts:
+        logger.warning("No cohorts found, skipping student creation")
+        return 0
+
+    total_students = 1000
+    created_count = 0
+
+    logger.info(f"  Creating {total_students} students...")
+
+    # Student status distribution
+    statuses = [
+        (StudentStatus.ACTIVE, 0.30),  # 30% active
+        (StudentStatus.COMPLETED, 0.60),  # 60% completed
+        (StudentStatus.WITHDRAWN, 0.10),  # 10% withdrawn
+    ]
+
+    for i in range(total_students):
+        first_name, last_name = generate_person_name(i + 10000)  # Offset from members
+
+        # Determine status
+        rand_status = random.random()
+        cum_prob = 0
+        status = StudentStatus.ACTIVE
+        for st, prob in statuses:
+            cum_prob += prob
+            if rand_status <= cum_prob:
+                status = st
+                break
+
+        email = f"{first_name.lower()}.{last_name.lower()}{i}@student.ibew46.org"
+        student_number = f"S{46000 + i:05d}"
+
+        # Assign to a cohort
+        cohort = random.choice(cohorts)
+
+        student_data = {
+            "student_number": student_number,
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": email,
+            "phone": f"206-{random.randint(200, 999)}-{random.randint(1000, 9999)}",
+            "status": status,
+            "cohort_id": cohort.id,
+            "enrollment_date": cohort.start_date,
+        }
+
+        student, created = get_or_create(
+            db, Student, student_number=student_number, defaults=student_data
+        )
+        if created:
+            created_count += 1
+
+        # Log progress every 250 students
+        if (i + 1) % 250 == 0:
+            logger.info(f"    Created {i + 1}/{total_students} students...")
+
+    logger.info(f"  Completed: {created_count} new students created")
+    return created_count
+
+
+def _seed_demo_dues_setup(db: Session) -> int:
+    """
+    Create dues periods and rates for the past 12 months.
+    Required for dues payment seeding.
+    """
+    # Create a default dues rate
+    rate, rate_created = get_or_create(
+        db,
+        DuesRate,
+        rate_code="STANDARD_2026",
+        defaults={
+            "rate_code": "STANDARD_2026",
+            "rate_name": "Standard 2026 Rate",
+            "monthly_amount": Decimal("50.00"),
+            "effective_date": date(2026, 1, 1),
+            "is_active": True,
+        },
+    )
+
+    # Create periods for the past 12 months
+    created_count = 0
+    current_date = datetime.now()
+    base_year = current_date.year
+    base_month = current_date.month
+
+    for i in range(12):
+        # Calculate month/year going backwards
+        month = ((base_month - i - 1) % 12) + 1
+        year = base_year if (base_month - i) > 0 else base_year - 1
+
+        period_data = {
+            "year": year,
+            "month": month,
+            "period_name": f"{year}-{month:02d}",
+            "start_date": date(year, month, 1),
+            "is_closed": True if i > 0 else False,  # Current month is open
+        }
+
+        period, created = get_or_create(
+            db,
+            DuesPeriod,
+            year=year,
+            month=month,
+            defaults=period_data,
+        )
+        if created:
+            created_count += 1
+
+    setup_count = created_count + (1 if rate_created else 0)
+    logger.info(f"  Created {setup_count} dues setup records (rates + periods)")
+    return setup_count
+
+
+def _seed_demo_dues_payments(db: Session) -> int:
+    """
+    Create dues payments totaling ~$500,000 for the current month.
+    Distribute across members with varied payment methods.
+    """
+    # Get current period
+    current_date = datetime.now()
+    current_period = db.execute(
+        select(DuesPeriod).where(
+            DuesPeriod.year == current_date.year,
+            DuesPeriod.month == current_date.month,
+        )
+    ).scalar_one_or_none()
+
+    if not current_period:
+        logger.warning("No current dues period found, skipping payments")
+        return 0
+
+    # Get default rate
+    rate = db.execute(select(DuesRate).where(DuesRate.is_active)).scalars().first()
+
+    if not rate:
+        logger.warning("No active dues rate found, skipping payments")
+        return 0
+
+    # Get active members
+    members = (
+        db.execute(select(Member).where(Member.status == MemberStatus.ACTIVE))
+        .scalars()
+        .all()
+    )
+
+    if not members:
+        logger.warning("No active members found, skipping payments")
+        return 0
+
+    target_amount = Decimal("500000.00")
+    payment_amount = rate.monthly_amount
+    num_payments = min(int(target_amount / payment_amount), len(members))
+
+    logger.info(f"  Creating {num_payments} dues payments totaling ${target_amount}...")
+
+    # Payment method distribution
+    methods = [
+        (DuesPaymentMethod.CHECK, 0.30),
+        (DuesPaymentMethod.CASH, 0.10),
+        (DuesPaymentMethod.CREDIT_CARD, 0.40),
+        (DuesPaymentMethod.BANK_TRANSFER, 0.20),
+    ]
+
+    created_count = 0
+    selected_members = random.sample(members, num_payments)
+
+    for i, member in enumerate(selected_members):
+        # Determine payment method
+        rand_method = random.random()
+        cum_prob = 0
+        method = DuesPaymentMethod.CHECK
+        for meth, prob in methods:
+            cum_prob += prob
+            if rand_method <= cum_prob:
+                method = meth
+                break
+
+        payment_data = {
+            "member_id": member.id,
+            "period_id": current_period.id,
+            "rate_id": rate.id,
+            "amount_due": payment_amount,
+            "amount_paid": payment_amount,
+            "payment_date": current_date.date(),
+            "payment_method": method,
+            "payment_status": DuesPaymentStatus.PAID,
+        }
+
+        payment, created = get_or_create(
+            db,
+            DuesPayment,
+            member_id=member.id,
+            period_id=current_period.id,
+            defaults=payment_data,
+        )
+        if created:
+            created_count += 1
+
+    total_collected = created_count * payment_amount
+    logger.info(f"  Completed: {created_count} payments, ${total_collected} collected")
+    return created_count
+
+
+def _seed_demo_delinquent_dues(db: Session) -> int:
+    """
+    Create delinquent dues payments totaling ~$10,000.
+    These are unpaid or partially paid for previous periods.
+    """
+    # Get a previous period (2 months ago)
+    current_date = datetime.now()
+    prev_month = ((current_date.month - 3) % 12) + 1
+    prev_year = (
+        current_date.year if (current_date.month - 3) > 0 else current_date.year - 1
+    )
+
+    prev_period = db.execute(
+        select(DuesPeriod).where(
+            DuesPeriod.year == prev_year,
+            DuesPeriod.month == prev_month,
+        )
+    ).scalar_one_or_none()
+
+    if not prev_period:
+        logger.warning("No previous period found, skipping delinquent dues")
+        return 0
+
+    # Get default rate
+    rate = db.execute(select(DuesRate).where(DuesRate.is_active)).scalars().first()
+
+    if not rate:
+        return 0
+
+    # Get active members
+    members = (
+        db.execute(select(Member).where(Member.status == MemberStatus.ACTIVE))
+        .scalars()
+        .all()
+    )
+
+    target_amount = Decimal("10000.00")
+    payment_amount = rate.monthly_amount
+    num_delinquent = min(int(target_amount / payment_amount), 200)  # Cap at 200 members
+
+    logger.info(
+        f"  Creating {num_delinquent} delinquent dues records totaling ${target_amount}..."
+    )
+
+    created_count = 0
+    selected_members = random.sample(members, num_delinquent)
+
+    for member in selected_members:
+        payment_data = {
+            "member_id": member.id,
+            "period_id": prev_period.id,
+            "rate_id": rate.id,
+            "amount_due": payment_amount,
+            "amount_paid": Decimal("0.00"),
+            "payment_status": DuesPaymentStatus.PENDING,
+        }
+
+        payment, created = get_or_create(
+            db,
+            DuesPayment,
+            member_id=member.id,
+            period_id=prev_period.id,
+            defaults=payment_data,
+        )
+        if created:
+            created_count += 1
+
+    total_delinquent = created_count * payment_amount
+    logger.info(
+        f"  Completed: {created_count} delinquent records, ${total_delinquent} overdue"
+    )
+    return created_count
+
+
+def _seed_demo_attachments(db: Session) -> int:
+    """
+    Create 10,000 file attachment records for members and students.
+    Mix of documents, certifications, and photos.
+    """
+    # Get all members and students
+    members = db.execute(select(Member)).scalars().all()
+    students = db.execute(select(Student)).scalars().all()
+
+    if not members and not students:
+        logger.warning("No members or students found, skipping attachments")
+        return 0
+
+    total_attachments = 10000
+    created_count = 0
+
+    logger.info(f"  Creating {total_attachments} file attachments...")
+
+    # Attachment type distribution
+    types = [
+        (AttachmentType.DOCUMENT, 0.40),
+        (AttachmentType.CERTIFICATION, 0.30),
+        (AttachmentType.PHOTO, 0.20),
+        (AttachmentType.OTHER, 0.10),
+    ]
+
+    # File extensions by type
+    extensions = {
+        AttachmentType.DOCUMENT: [".pdf", ".docx", ".doc"],
+        AttachmentType.CERTIFICATION: [".pdf", ".jpg"],
+        AttachmentType.PHOTO: [".jpg", ".png"],
+        AttachmentType.OTHER: [".pdf", ".txt", ".xlsx"],
+    }
+
+    for i in range(total_attachments):
+        # Randomly choose member or student (70% members, 30% students)
+        if random.random() < 0.7 and members:
+            entity = random.choice(members)
+            entity_type = "Member"
+            entity_id = entity.id
+        elif students:
+            entity = random.choice(students)
+            entity_type = "Student"
+            entity_id = entity.id
+        else:
+            continue
+
+        # Determine attachment type
+        rand_type = random.random()
+        cum_prob = 0
+        att_type = AttachmentType.DOCUMENT
+        for typ, prob in types:
+            cum_prob += prob
+            if rand_type <= cum_prob:
+                att_type = typ
+                break
+
+        # Generate filename
+        extension = random.choice(extensions[att_type])
+        filename = f"{entity_type.lower()}_{entity_id}_doc_{i}{extension}"
+
+        # Random file size (10KB to 5MB)
+        file_size = random.randint(10240, 5242880)
+
+        # Random upload date (within past 2 years)
+        upload_date = datetime.now() - timedelta(days=random.randint(1, 730))
+
+        attachment_data = {
+            "filename": filename,
+            "file_size": file_size,
+            "file_type": att_type,
+            "uploaded_at": upload_date,
+            "uploaded_by": random.randint(1, 5),  # Random user ID
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+        }
+
+        attachment, created = get_or_create(
+            db,
+            FileAttachment,
+            filename=filename,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            defaults=attachment_data,
+        )
+        if created:
+            created_count += 1
+
+        # Log progress every 2000 attachments
+        if (i + 1) % 2000 == 0:
+            logger.info(f"    Created {i + 1}/{total_attachments} attachments...")
+
+    logger.info(f"  Completed: {created_count} new attachments created")
+    return created_count
 
 
 if __name__ == "__main__":
