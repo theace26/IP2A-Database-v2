@@ -2010,7 +2010,7 @@ def _seed_demo_salting(db: Session) -> int:
     employers = (
         db.execute(
             select(Organization)
-            .where(Organization.organization_type == OrganizationType.EMPLOYER)
+            .where(Organization.org_type == OrganizationType.EMPLOYER)
             .limit(8)
         )
         .scalars()
