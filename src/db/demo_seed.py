@@ -38,6 +38,7 @@ from src.models import (
     FileAttachment,
     Grievance,
     BenevolenceApplication,
+    SALTingActivity,
 )
 from src.db.enums import (
     MemberClassification,
@@ -58,6 +59,8 @@ from src.db.enums import (
     GrievanceStep,
     BenevolenceStatus,
     BenevolenceReason,
+    SALTingActivityType,
+    SALTingOutcome,
 )
 from src.core.security import hash_password
 
@@ -394,6 +397,9 @@ def seed_demo_data(db: Session) -> dict:
 
     # Phase 17: Benevolence applications (20 total in various states)
     summary["benevolence"] = _seed_demo_benevolence(db)
+
+    # Phase 18: SALTing activities (15 total tied to existing members)
+    summary["salting"] = _seed_demo_salting(db)
 
     db.commit()
     logger.info("Demo seed data creation complete")
@@ -1882,6 +1888,119 @@ def _seed_demo_benevolence(db: Session) -> int:
             app_num += 1
 
     logger.info(f"  Completed: {created_count} new benevolence applications created")
+    return created_count
+
+
+def _seed_demo_salting(db: Session) -> int:
+    """
+    Create 15 SALTing/organizing activities tied to existing members.
+    Mix of activity types and outcomes at non-union employers.
+    """
+    # Get active members
+    members = (
+        db.execute(select(Member).where(Member.status == MemberStatus.ACTIVE).limit(10))
+        .scalars()
+        .all()
+    )
+
+    if not members:
+        logger.warning("No active members found, skipping SALTing activities")
+        return 0
+
+    # Get non-union employers (OrganizationType.EMPLOYER)
+    employers = (
+        db.execute(
+            select(Organization)
+            .where(Organization.organization_type == OrganizationType.EMPLOYER)
+            .limit(8)
+        )
+        .scalars()
+        .all()
+    )
+
+    if not employers:
+        logger.warning("No employers found, skipping SALTing activities")
+        return 0
+
+    total_activities = 15
+    created_count = 0
+
+    logger.info(f"  Creating {total_activities} SALTing activities...")
+
+    # Activity type distribution with outcomes
+    activities_config = [
+        # Early outreach activities
+        (SALTingActivityType.OUTREACH, SALTingOutcome.POSITIVE, 2, 0),
+        (SALTingActivityType.SITE_VISIT, SALTingOutcome.NEUTRAL, 0, 0),
+        (SALTingActivityType.LEAFLETING, SALTingOutcome.POSITIVE, 5, 0),
+        # Deeper engagement
+        (SALTingActivityType.ONE_ON_ONE, SALTingOutcome.POSITIVE, 8, 2),
+        (SALTingActivityType.ONE_ON_ONE, SALTingOutcome.NEGATIVE, 3, 0),
+        (SALTingActivityType.MEETING, SALTingOutcome.POSITIVE, 12, 4),
+        # Advanced organizing
+        (SALTingActivityType.INFORMATION_SESSION, SALTingOutcome.POSITIVE, 15, 8),
+        (SALTingActivityType.CARD_SIGNING, SALTingOutcome.POSITIVE, 10, 10),
+        (SALTingActivityType.PETITION_DRIVE, SALTingOutcome.POSITIVE, 8, 5),
+        # Mixed outcomes
+        (SALTingActivityType.OUTREACH, SALTingOutcome.NO_CONTACT, 0, 0),
+        (SALTingActivityType.SITE_VISIT, SALTingOutcome.NEGATIVE, 2, 0),
+        (SALTingActivityType.ONE_ON_ONE, SALTingOutcome.NEUTRAL, 4, 1),
+        # Successful follow-ups
+        (SALTingActivityType.MEETING, SALTingOutcome.POSITIVE, 18, 12),
+        (SALTingActivityType.CARD_SIGNING, SALTingOutcome.POSITIVE, 15, 15),
+        (SALTingActivityType.INFORMATION_SESSION, SALTingOutcome.POSITIVE, 20, 15),
+    ]
+
+    for idx, (activity_type, outcome, workers_contacted, cards_signed) in enumerate(
+        activities_config
+    ):
+        member = members[idx % len(members)]
+        employer = employers[idx % len(employers)]
+
+        # Calculate activity date (spread over past 90 days)
+        activity_date = (datetime.now() - timedelta(days=random.randint(1, 90))).date()
+
+        # Build description based on activity type
+        descriptions = {
+            SALTingActivityType.OUTREACH: f"Initial contact with workers at {employer.name}. Distributed union information and contact cards.",
+            SALTingActivityType.SITE_VISIT: f"Site visit to {employer.name} worksite. Observed working conditions and made initial assessments.",
+            SALTingActivityType.LEAFLETING: f"Distributed informational leaflets to workers at {employer.name} during shift change.",
+            SALTingActivityType.ONE_ON_ONE: f"One-on-one conversation with {employer.name} worker about union benefits and organizing campaign.",
+            SALTingActivityType.MEETING: f"Organizing meeting with interested workers from {employer.name}. Discussed next steps and addressed concerns.",
+            SALTingActivityType.INFORMATION_SESSION: f"Formal information session for {employer.name} workers. Covered union benefits, rights, and organizing process.",
+            SALTingActivityType.CARD_SIGNING: f"Authorization card signing event for {employer.name} workers. Progress toward representation election.",
+            SALTingActivityType.PETITION_DRIVE: f"Petition drive at {employer.name} for improved working conditions and safety standards.",
+            SALTingActivityType.OTHER: f"Follow-up activity with {employer.name} workers. Maintained momentum and addressed questions.",
+        }
+
+        activity_data = {
+            "member_id": member.id,
+            "organization_id": employer.id,
+            "activity_type": activity_type,
+            "activity_date": activity_date,
+            "outcome": outcome,
+            "location": f"{employer.name} worksite",
+            "workers_contacted": workers_contacted,
+            "cards_signed": cards_signed,
+            "description": descriptions.get(
+                activity_type, f"SALTing activity at {employer.name}"
+            ),
+            "notes": f"Outcome: {outcome.value.replace('_', ' ').title()}. {'Strong interest from workers.' if outcome == SALTingOutcome.POSITIVE else 'Follow-up needed.' if outcome == SALTingOutcome.NEUTRAL else 'Encountered resistance.' if outcome == SALTingOutcome.NEGATIVE else 'Unable to make contact.'}",
+        }
+
+        # Create unique key (member can have multiple activities at same employer)
+        salting, created = get_or_create(
+            db,
+            SALTingActivity,
+            member_id=member.id,
+            organization_id=employer.id,
+            activity_date=activity_date,
+            defaults=activity_data,
+        )
+        if created:
+            created_count += 1
+
+    logger.info(f"  Completed: {created_count} new SALTing activities created")
     return created_count
 
 
