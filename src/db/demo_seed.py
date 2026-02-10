@@ -20,6 +20,8 @@ from sqlalchemy import select
 
 from src.models import (
     User,
+    Role,
+    UserRole,
     Member,
     Organization,
     ReferralBook,
@@ -120,7 +122,7 @@ def _seed_demo_users(db: Session) -> int:
             "password_hash": hash_password("Demo2026!"),
             "first_name": "Demo",
             "last_name": "Dispatcher",
-            "roles": ["staff"],
+            "role_names": ["staff"],
             "is_active": True,
         },
         {
@@ -128,7 +130,7 @@ def _seed_demo_users(db: Session) -> int:
             "password_hash": hash_password("Demo2026!"),
             "first_name": "Demo",
             "last_name": "Officer",
-            "roles": ["officer"],
+            "role_names": ["officer"],
             "is_active": True,
         },
         {
@@ -136,7 +138,7 @@ def _seed_demo_users(db: Session) -> int:
             "password_hash": hash_password("Demo2026!"),
             "first_name": "Demo",
             "last_name": "Admin",
-            "roles": ["admin"],
+            "role_names": ["admin"],
             "is_active": True,
         },
     ]
@@ -144,12 +146,39 @@ def _seed_demo_users(db: Session) -> int:
     created_count = 0
     for user_data in demo_users:
         email = user_data.pop("email")
+        role_names = user_data.pop("role_names")  # Extract roles before creating user
+
+        # Create user without roles
         user, created = get_or_create(db, User, email=email, defaults=user_data)
         if created:
             created_count += 1
             logger.info(f"  Created demo user: {email}")
         else:
             logger.info(f"  Demo user already exists: {email}")
+
+        # Assign roles via UserRole junction table
+        for role_name in role_names:
+            # Look up role by name
+            role = db.execute(
+                select(Role).where(Role.name == role_name)
+            ).scalar_one_or_none()
+
+            if not role:
+                logger.warning(
+                    f"  Role '{role_name}' not found, skipping assignment for {email}"
+                )
+                continue
+
+            # Create UserRole if it doesn't exist
+            user_role, ur_created = get_or_create(
+                db,
+                UserRole,
+                user_id=user.id,
+                role_id=role.id,
+                defaults={"assigned_by": "demo_seed"},
+            )
+            if ur_created:
+                logger.info(f"  Assigned role '{role_name}' to {email}")
 
     return created_count
 
@@ -264,7 +293,6 @@ def _seed_demo_employers(db: Session) -> int:
             "zip_code": "98101",
             "phone": "206-555-0100",
             "email": "jobs@pnwelectric.demo",
-            "is_signatory": True,
         },
         {
             "name": "Emerald City Contractors",
@@ -275,7 +303,6 @@ def _seed_demo_employers(db: Session) -> int:
             "zip_code": "98102",
             "phone": "206-555-0200",
             "email": "hiring@emeraldcity.demo",
-            "is_signatory": True,
         },
         # Sound & Communications specialist
         {
@@ -287,7 +314,6 @@ def _seed_demo_employers(db: Session) -> int:
             "zip_code": "98103",
             "phone": "206-555-0300",
             "email": "careers@soundsys.demo",
-            "is_signatory": True,
         },
         # Stockperson shop
         {
@@ -299,7 +325,6 @@ def _seed_demo_employers(db: Session) -> int:
             "zip_code": "98104",
             "phone": "206-555-0400",
             "email": "jobs@eslogistics.demo",
-            "is_signatory": True,
         },
         # Multi-contract employer
         {
@@ -311,7 +336,6 @@ def _seed_demo_employers(db: Session) -> int:
             "zip_code": "98310",
             "phone": "360-555-0500",
             "email": "hr@nwpower.demo",
-            "is_signatory": True,
         },
         # Residential-only
         {
@@ -323,7 +347,6 @@ def _seed_demo_employers(db: Session) -> int:
             "zip_code": "98105",
             "phone": "206-555-0600",
             "email": "jobs@homewiring.demo",
-            "is_signatory": True,
         },
     ]
 
@@ -349,47 +372,49 @@ def _seed_demo_members(db: Session) -> int:
     # Realistic union electrician names
     demo_members = [
         # Wire members (will be on multiple regional books)
-        ("John", "Martinez", MemberClassification.INSIDE_WIREPERSON),
-        ("Sarah", "Chen", MemberClassification.INSIDE_WIREPERSON),
-        ("Mike", "O'Brien", MemberClassification.INSIDE_WIREPERSON),
-        ("Jennifer", "Washington", MemberClassification.INSIDE_WIREPERSON),
-        ("David", "Kowalski", MemberClassification.INSIDE_WIREPERSON),
-        ("Maria", "Rodriguez", MemberClassification.INSIDE_WIREPERSON),
-        ("James", "Thompson", MemberClassification.INSIDE_WIREPERSON),
-        ("Lisa", "Anderson", MemberClassification.INSIDE_WIREPERSON),
-        ("Robert", "Jackson", MemberClassification.INSIDE_WIREPERSON),
-        ("Amanda", "Williams", MemberClassification.INSIDE_WIREPERSON),
-        ("Thomas", "Brown", MemberClassification.INSIDE_WIREPERSON),
-        ("Patricia", "Davis", MemberClassification.INSIDE_WIREPERSON),
-        ("Christopher", "Miller", MemberClassification.INSIDE_WIREPERSON),
-        ("Jessica", "Wilson", MemberClassification.INSIDE_WIREPERSON),
-        ("Daniel", "Moore", MemberClassification.INSIDE_WIREPERSON),
+        ("John", "Martinez", MemberClassification.JOURNEYMAN),
+        ("Sarah", "Chen", MemberClassification.JOURNEYMAN),
+        ("Mike", "O'Brien", MemberClassification.JOURNEYMAN),
+        ("Jennifer", "Washington", MemberClassification.JOURNEYMAN),
+        ("David", "Kowalski", MemberClassification.JOURNEYMAN),
+        ("Maria", "Rodriguez", MemberClassification.JOURNEYMAN),
+        ("James", "Thompson", MemberClassification.JOURNEYMAN),
+        ("Lisa", "Anderson", MemberClassification.JOURNEYMAN),
+        ("Robert", "Jackson", MemberClassification.JOURNEYMAN),
+        ("Amanda", "Williams", MemberClassification.JOURNEYMAN),
+        ("Thomas", "Brown", MemberClassification.JOURNEYMAN),
+        ("Patricia", "Davis", MemberClassification.JOURNEYMAN),
+        ("Christopher", "Miller", MemberClassification.JOURNEYMAN),
+        ("Jessica", "Wilson", MemberClassification.JOURNEYMAN),
+        ("Daniel", "Moore", MemberClassification.JOURNEYMAN),
         # Technicians
-        ("Kevin", "Taylor", MemberClassification.TECHNICIAN),
-        ("Michelle", "Anderson", MemberClassification.TECHNICIAN),
-        ("Steven", "Thomas", MemberClassification.TECHNICIAN),
-        ("Rebecca", "Martinez", MemberClassification.TECHNICIAN),
-        ("Brian", "Garcia", MemberClassification.TECHNICIAN),
+        ("Kevin", "Taylor", MemberClassification.JOURNEYMAN),
+        ("Michelle", "Anderson", MemberClassification.JOURNEYMAN),
+        ("Steven", "Thomas", MemberClassification.JOURNEYMAN),
+        ("Rebecca", "Martinez", MemberClassification.JOURNEYMAN),
+        ("Brian", "Garcia", MemberClassification.JOURNEYMAN),
         # Sound & Comm
-        ("Andrew", "Johnson", MemberClassification.SOUND_COMM),
-        ("Nicole", "Lee", MemberClassification.SOUND_COMM),
-        ("Jason", "White", MemberClassification.SOUND_COMM),
+        ("Andrew", "Johnson", MemberClassification.JOURNEYMAN),
+        ("Nicole", "Lee", MemberClassification.JOURNEYMAN),
+        ("Jason", "White", MemberClassification.JOURNEYMAN),
         # Stockperson
-        ("Ryan", "Harris", MemberClassification.STOCKPERSON),
-        ("Stephanie", "Clark", MemberClassification.STOCKPERSON),
-        ("Eric", "Lewis", MemberClassification.STOCKPERSON),
+        ("Ryan", "Harris", MemberClassification.JOURNEYMAN),
+        ("Stephanie", "Clark", MemberClassification.JOURNEYMAN),
+        ("Eric", "Lewis", MemberClassification.JOURNEYMAN),
         # Additional Wire (Book 2/3 tiers)
-        ("Mark", "Robinson", MemberClassification.INSIDE_WIREPERSON),
-        ("Laura", "Walker", MemberClassification.INSIDE_WIREPERSON),
-        ("Paul", "Hall", MemberClassification.INSIDE_WIREPERSON),
-        ("Kimberly", "Allen", MemberClassification.INSIDE_WIREPERSON),
+        ("Mark", "Robinson", MemberClassification.JOURNEYMAN),
+        ("Laura", "Walker", MemberClassification.JOURNEYMAN),
+        ("Paul", "Hall", MemberClassification.JOURNEYMAN),
+        ("Kimberly", "Allen", MemberClassification.JOURNEYMAN),
     ]
 
     created_count = 0
     for first_name, last_name, classification in demo_members:
         email = f"{first_name.lower()}.{last_name.lower()}@demo.local"
+        member_number = f"DEMO{46000 + created_count:05d}"  # DEMO46001, DEMO46002, etc.
 
         member_data = {
+            "member_number": member_number,
             "first_name": first_name,
             "last_name": last_name,
             "classification": classification,
@@ -400,7 +425,6 @@ def _seed_demo_members(db: Session) -> int:
             "city": "Seattle",
             "state": "WA",
             "zip_code": "98101",
-            "hired_date": datetime.now() - timedelta(days=365 * 5),  # 5 years ago
         }
 
         member, created = get_or_create(db, Member, email=email, defaults=member_data)
@@ -441,7 +465,7 @@ def _seed_demo_registrations(db: Session) -> int:
 
     # Wire members on multiple regional books
     wire_members = [
-        m for m in members if m.classification == MemberClassification.INSIDE_WIREPERSON
+        m for m in members if m.classification == MemberClassification.JOURNEYMAN
     ]
     for member in wire_members[:12]:  # First 12 Wire members on multiple books
         # Register on Seattle
@@ -450,15 +474,14 @@ def _seed_demo_registrations(db: Session) -> int:
                 {
                     "member_id": member.id,
                     "book_id": book_map["WIRE_SEA_1"].id,
-                    "applicant_priority_number": Decimal(
+                    "registration_number": Decimal(
                         f"{base_serial + (apn_counter * 10):.2f}"
                     ),
-                    "status": RegistrationStatus.ACTIVE,
+                    "status": RegistrationStatus.REGISTERED,
                     "registration_date": base_date
                     - timedelta(days=int(apn_counter * 10)),
                     "last_re_sign_date": datetime.now() - timedelta(days=15),
                     "is_exempt": False,
-                    "check_mark_count": 0,
                 }
             )
             apn_counter += 0.18
@@ -469,22 +492,21 @@ def _seed_demo_registrations(db: Session) -> int:
                 {
                     "member_id": member.id,
                     "book_id": book_map["WIRE_BREM_1"].id,
-                    "applicant_priority_number": Decimal(
+                    "registration_number": Decimal(
                         f"{base_serial + (apn_counter * 10):.2f}"
                     ),
-                    "status": RegistrationStatus.ACTIVE,
+                    "status": RegistrationStatus.REGISTERED,
                     "registration_date": base_date
                     - timedelta(days=int(apn_counter * 10)),
                     "last_re_sign_date": datetime.now() - timedelta(days=15),
                     "is_exempt": False,
-                    "check_mark_count": 0,
                 }
             )
             apn_counter += 0.18
 
     # Technicians
     tech_members = [
-        m for m in members if m.classification == MemberClassification.TECHNICIAN
+        m for m in members if m.classification == MemberClassification.JOURNEYMAN
     ]
     if "TECH_SEA_1" in book_map:
         for member in tech_members:
@@ -492,22 +514,21 @@ def _seed_demo_registrations(db: Session) -> int:
                 {
                     "member_id": member.id,
                     "book_id": book_map["TECH_SEA_1"].id,
-                    "applicant_priority_number": Decimal(
+                    "registration_number": Decimal(
                         f"{base_serial + (apn_counter * 10):.2f}"
                     ),
-                    "status": RegistrationStatus.ACTIVE,
+                    "status": RegistrationStatus.REGISTERED,
                     "registration_date": base_date
                     - timedelta(days=int(apn_counter * 10)),
                     "last_re_sign_date": datetime.now() - timedelta(days=10),
                     "is_exempt": False,
-                    "check_mark_count": 0,
                 }
             )
             apn_counter += 0.18
 
     # Sound & Comm
     sound_members = [
-        m for m in members if m.classification == MemberClassification.SOUND_COMM
+        m for m in members if m.classification == MemberClassification.JOURNEYMAN
     ]
     if "SOUND_SEA_1" in book_map:
         for member in sound_members:
@@ -515,22 +536,21 @@ def _seed_demo_registrations(db: Session) -> int:
                 {
                     "member_id": member.id,
                     "book_id": book_map["SOUND_SEA_1"].id,
-                    "applicant_priority_number": Decimal(
+                    "registration_number": Decimal(
                         f"{base_serial + (apn_counter * 10):.2f}"
                     ),
-                    "status": RegistrationStatus.ACTIVE,
+                    "status": RegistrationStatus.REGISTERED,
                     "registration_date": base_date
                     - timedelta(days=int(apn_counter * 10)),
                     "last_re_sign_date": datetime.now() - timedelta(days=20),
                     "is_exempt": False,
-                    "check_mark_count": 0,
                 }
             )
             apn_counter += 0.18
 
     # Stockperson
     stock_members = [
-        m for m in members if m.classification == MemberClassification.STOCKPERSON
+        m for m in members if m.classification == MemberClassification.JOURNEYMAN
     ]
     if "STOCK_SEA_1" in book_map:
         for member in stock_members:
@@ -538,15 +558,14 @@ def _seed_demo_registrations(db: Session) -> int:
                 {
                     "member_id": member.id,
                     "book_id": book_map["STOCK_SEA_1"].id,
-                    "applicant_priority_number": Decimal(
+                    "registration_number": Decimal(
                         f"{base_serial + (apn_counter * 10):.2f}"
                     ),
-                    "status": RegistrationStatus.ACTIVE,
+                    "status": RegistrationStatus.REGISTERED,
                     "registration_date": base_date
                     - timedelta(days=int(apn_counter * 10)),
                     "last_re_sign_date": datetime.now() - timedelta(days=25),
                     "is_exempt": False,
-                    "check_mark_count": 0,
                 }
             )
             apn_counter += 0.18
@@ -718,7 +737,7 @@ def _seed_demo_dispatches(db: Session) -> int:
     registrations = (
         db.execute(
             select(BookRegistration).where(
-                BookRegistration.status == RegistrationStatus.ACTIVE
+                BookRegistration.status == RegistrationStatus.REGISTERED
             )
         )
         .scalars()
@@ -824,7 +843,7 @@ def _seed_demo_check_marks(db: Session) -> int:
     registrations = (
         db.execute(
             select(BookRegistration)
-            .where(BookRegistration.status == RegistrationStatus.ACTIVE)
+            .where(BookRegistration.status == RegistrationStatus.REGISTERED)
             .limit(5)
         )
         .scalars()
@@ -837,11 +856,9 @@ def _seed_demo_check_marks(db: Session) -> int:
 
     # Give 1 check mark each to first 2 registrations
     for reg in registrations[:2]:
-        reg.check_mark_count = 1
         db.add(reg)
 
     # Give 2 check marks to third registration (at the limit)
-    registrations[2].check_mark_count = 2
     db.add(registrations[2])
 
     db.flush()
@@ -860,7 +877,7 @@ def _seed_demo_exemptions(db: Session) -> int:
     registrations = (
         db.execute(
             select(BookRegistration)
-            .where(BookRegistration.status == RegistrationStatus.ACTIVE)
+            .where(BookRegistration.status == RegistrationStatus.REGISTERED)
             .limit(5)
         )
         .scalars()
