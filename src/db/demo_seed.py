@@ -1748,9 +1748,9 @@ def _seed_demo_attachments(db: Session) -> int:
         attachment, created = get_or_create(
             db,
             FileAttachment,
-            filename=filename,
-            entity_type=entity_type,
-            entity_id=entity_id,
+            file_name=filename,
+            record_type=entity_type.lower(),
+            record_id=entity_id,
             defaults=attachment_data,
         )
         if created:
