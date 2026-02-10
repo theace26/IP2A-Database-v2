@@ -1277,7 +1277,6 @@ def _seed_demo_cohorts(db: Session) -> int:
         cohort_data = {
             "code": cohort_number,
             "name": f"Cohort {cohort_number}",
-            "course_id": course.id,
             "start_date": start_date.date(),
             "end_date": end_date.date(),
             "max_students": random.randint(15, 25),
