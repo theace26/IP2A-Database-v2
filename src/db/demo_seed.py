@@ -36,6 +36,8 @@ from src.models import (
     DuesPeriod,
     DuesRate,
     FileAttachment,
+    Grievance,
+    BenevolenceApplication,
 )
 from src.db.enums import (
     MemberClassification,
@@ -52,6 +54,10 @@ from src.db.enums import (
     DuesPaymentMethod,
     DuesPaymentStatus,
     AttachmentType,
+    GrievanceStatus,
+    GrievanceStep,
+    BenevolenceStatus,
+    BenevolenceReason,
 )
 from src.core.security import hash_password
 
@@ -382,6 +388,12 @@ def seed_demo_data(db: Session) -> dict:
 
     # Phase 15: File attachments (10,000 total)
     summary["attachments"] = _seed_demo_attachments(db)
+
+    # Phase 16: Grievances (10 total in various states)
+    summary["grievances"] = _seed_demo_grievances(db)
+
+    # Phase 17: Benevolence applications (20 total in various states)
+    summary["benevolence"] = _seed_demo_benevolence(db)
 
     db.commit()
     logger.info("Demo seed data creation complete")
@@ -1654,6 +1666,222 @@ def _seed_demo_attachments(db: Session) -> int:
             logger.info(f"    Created {i + 1}/{total_attachments} attachments...")
 
     logger.info(f"  Completed: {created_count} new attachments created")
+    return created_count
+
+
+def _seed_demo_grievances(db: Session) -> int:
+    """
+    Create 10 grievances in various states.
+    Mix of open, settled, withdrawn, and arbitration cases.
+    """
+    # Get active members and employers
+    members = (
+        db.execute(select(Member).where(Member.status == MemberStatus.ACTIVE).limit(10))
+        .scalars()
+        .all()
+    )
+    employers = db.execute(select(Organization).limit(6)).scalars().all()
+
+    if not members or not employers:
+        logger.warning("No members or employers found, skipping grievances")
+        return 0
+
+    total_grievances = 10
+    created_count = 0
+
+    logger.info(f"  Creating {total_grievances} grievances...")
+
+    # Grievance status distribution
+    statuses = [
+        (GrievanceStatus.OPEN, 3),  # 3 open
+        (GrievanceStatus.INVESTIGATION, 2),  # 2 under investigation
+        (GrievanceStatus.HEARING, 1),  # 1 at hearing
+        (GrievanceStatus.SETTLED, 2),  # 2 settled
+        (GrievanceStatus.WITHDRAWN, 1),  # 1 withdrawn
+        (GrievanceStatus.ARBITRATION, 1),  # 1 arbitration
+    ]
+
+    # Contract articles commonly violated
+    contract_articles = [
+        "Article 3 - Union Security",
+        "Article 7 - Hours of Work",
+        "Article 8 - Overtime",
+        "Article 11 - Wages",
+        "Article 12 - Working Conditions",
+        "Article 15 - Seniority",
+    ]
+
+    grievance_num = 1
+    for status, count in statuses:
+        for i in range(count):
+            member = random.choice(members)
+            employer = random.choice(employers)
+
+            # Calculate dates based on status
+            base_date = datetime.now() - timedelta(days=random.randint(30, 180))
+            filed_date = base_date.date()
+            incident_date = (base_date - timedelta(days=random.randint(1, 30))).date()
+
+            grievance_data = {
+                "grievance_number": f"GRV-2026-{grievance_num:03d}",
+                "member_id": member.id,
+                "employer_id": employer.id,
+                "filed_date": filed_date,
+                "incident_date": incident_date,
+                "contract_article": random.choice(contract_articles),
+                "violation_description": f"Alleged violation of contract terms by employer. {random.choice(['Improper termination', 'Wage discrepancy', 'Safety violation', 'Overtime dispute'])}.",
+                "remedy_sought": random.choice(
+                    [
+                        "Reinstatement with back pay",
+                        "Wage adjustment and compensation",
+                        "Safety improvements and training",
+                        "Policy clarification and compliance",
+                    ]
+                ),
+                "current_step": GrievanceStep.STEP_1
+                if status == GrievanceStatus.OPEN
+                else random.choice(
+                    [
+                        GrievanceStep.STEP_2,
+                        GrievanceStep.STEP_3,
+                        GrievanceStep.ARBITRATION,
+                    ]
+                ),
+                "status": status,
+                "assigned_rep": random.choice(
+                    [
+                        "John Smith (Business Rep)",
+                        "Sarah Johnson (Organizer)",
+                        "Michael Brown (Officer)",
+                    ]
+                ),
+            }
+
+            # Add resolution details for settled cases
+            if status in [GrievanceStatus.SETTLED, GrievanceStatus.WITHDRAWN]:
+                grievance_data["resolution_date"] = (
+                    base_date + timedelta(days=random.randint(30, 90))
+                ).date()
+                if status == GrievanceStatus.SETTLED:
+                    grievance_data["settlement_amount"] = Decimal(
+                        str(random.randint(500, 5000))
+                    )
+                    grievance_data["resolution"] = (
+                        "Parties reached mutual agreement. Employer agreed to remedy."
+                    )
+
+            grievance, created = get_or_create(
+                db,
+                Grievance,
+                grievance_number=grievance_data["grievance_number"],
+                defaults=grievance_data,
+            )
+            if created:
+                created_count += 1
+
+            grievance_num += 1
+
+    logger.info(f"  Completed: {created_count} new grievances created")
+    return created_count
+
+
+def _seed_demo_benevolence(db: Session) -> int:
+    """
+    Create 20 benevolence applications in various states.
+    Mix of draft, submitted, approved, denied, and paid applications.
+    """
+    # Get active members
+    members = (
+        db.execute(select(Member).where(Member.status == MemberStatus.ACTIVE).limit(20))
+        .scalars()
+        .all()
+    )
+
+    if not members:
+        logger.warning("No active members found, skipping benevolence applications")
+        return 0
+
+    total_applications = 20
+    created_count = 0
+
+    logger.info(f"  Creating {total_applications} benevolence applications...")
+
+    # Status distribution
+    statuses = [
+        (BenevolenceStatus.DRAFT, 2),  # 2 drafts
+        (BenevolenceStatus.SUBMITTED, 4),  # 4 submitted
+        (BenevolenceStatus.UNDER_REVIEW, 3),  # 3 under review
+        (BenevolenceStatus.APPROVED, 5),  # 5 approved
+        (BenevolenceStatus.DENIED, 3),  # 3 denied
+        (BenevolenceStatus.PAID, 3),  # 3 paid
+    ]
+
+    # Reason distribution
+    reasons = [
+        BenevolenceReason.MEDICAL,
+        BenevolenceReason.DEATH_IN_FAMILY,
+        BenevolenceReason.HARDSHIP,
+        BenevolenceReason.DISASTER,
+        BenevolenceReason.OTHER,
+    ]
+
+    app_num = 1
+    member_index = 0
+
+    for status, count in statuses:
+        for i in range(count):
+            member = members[member_index % len(members)]
+            member_index += 1
+
+            # Calculate dates based on status
+            base_date = datetime.now() - timedelta(days=random.randint(30, 120))
+            application_date = base_date.date()
+
+            reason = random.choice(reasons)
+            amount_requested = Decimal(str(random.randint(500, 5000)))
+
+            application_data = {
+                "member_id": member.id,
+                "application_date": application_date,
+                "reason": reason,
+                "description": f"Request for financial assistance due to {reason.value.replace('_', ' ')}. {random.choice(['Unexpected medical expenses', 'Family emergency', 'Financial hardship', 'Recovery from disaster'])}.",
+                "amount_requested": amount_requested,
+                "status": status,
+            }
+
+            # Add approval/payment details for approved and paid applications
+            if status in [
+                BenevolenceStatus.APPROVED,
+                BenevolenceStatus.PAID,
+            ]:
+                # Approved amount is typically 50-100% of requested
+                approval_percentage = random.uniform(0.5, 1.0)
+                application_data["approved_amount"] = Decimal(
+                    str(int(amount_requested * approval_percentage))
+                )
+
+            if status == BenevolenceStatus.PAID:
+                application_data["payment_date"] = (
+                    base_date + timedelta(days=random.randint(14, 45))
+                ).date()
+                application_data["payment_method"] = random.choice(
+                    ["Check", "Direct Deposit", "Wire Transfer"]
+                )
+
+            # Create unique key (member can have multiple applications)
+            benevolence, created = get_or_create(
+                db,
+                BenevolenceApplication,
+                member_id=member.id,
+                application_date=application_date,
+                defaults=application_data,
+            )
+            if created:
+                created_count += 1
+
+            app_num += 1
+
+    logger.info(f"  Completed: {created_count} new benevolence applications created")
     return created_count
 
 
