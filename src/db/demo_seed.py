@@ -615,15 +615,16 @@ def _seed_demo_labor_requests(db: Session) -> int:
     labor_requests.append(
         {
             "employer_id": employers[0].id,
-            "requested_date": cutoff_3pm
+            "employer_name": employers[0].name,
+            "request_date": cutoff_3pm
             - timedelta(days=1, hours=2),  # Yesterday before 3 PM
-            "needed_date": now.date() + timedelta(days=1),
-            "classification_requested": BookClassification.INSIDE_WIREPERSON,
-            "quantity": 3,
-            "job_description": "Commercial build-out — Westlake Center",
-            "shift_start_time": time(7, 0),
+            "start_date": now.date() + timedelta(days=1),
+            "classification": BookClassification.INSIDE_WIREPERSON,
+            "workers_requested": 3,
+            "worksite_name": "Commercial build-out — Westlake Center",
+            "start_time": time(7, 0),
             "estimated_duration_days": 45,
-            "hourly_rate": Decimal("58.50"),
+            "wage_rate": Decimal("58.50"),
             "status": LaborRequestStatus.OPEN,
         }
     )
@@ -631,14 +632,15 @@ def _seed_demo_labor_requests(db: Session) -> int:
     labor_requests.append(
         {
             "employer_id": employers[1].id,
-            "requested_date": cutoff_3pm - timedelta(days=2),
-            "needed_date": now.date(),
-            "classification_requested": BookClassification.TECHNICIAN,
-            "quantity": 2,
-            "job_description": "Data center cabling — Amazon campus",
-            "shift_start_time": time(6, 30),
+            "employer_name": employers[1].name,
+            "request_date": cutoff_3pm - timedelta(days=2),
+            "start_date": now.date(),
+            "classification": BookClassification.TECHNICIAN,
+            "workers_requested": 2,
+            "worksite_name": "Data center cabling — Amazon campus",
+            "start_time": time(6, 30),
             "estimated_duration_days": 30,
-            "hourly_rate": Decimal("54.25"),
+            "wage_rate": Decimal("54.25"),
             "status": LaborRequestStatus.OPEN,
         }
     )
@@ -647,14 +649,15 @@ def _seed_demo_labor_requests(db: Session) -> int:
     labor_requests.append(
         {
             "employer_id": employers[0].id,
-            "requested_date": now - timedelta(days=10),
-            "needed_date": (now - timedelta(days=9)).date(),
-            "classification_requested": BookClassification.INSIDE_WIREPERSON,
-            "quantity": 2,
-            "job_description": "Hospital expansion — Swedish Medical",
-            "shift_start_time": time(7, 0),
+            "employer_name": employers[0].name,
+            "request_date": now - timedelta(days=10),
+            "start_date": (now - timedelta(days=9)).date(),
+            "classification": BookClassification.INSIDE_WIREPERSON,
+            "workers_requested": 2,
+            "worksite_name": "Hospital expansion — Swedish Medical",
+            "start_time": time(7, 0),
             "estimated_duration_days": 60,
-            "hourly_rate": Decimal("58.50"),
+            "wage_rate": Decimal("58.50"),
             "status": LaborRequestStatus.FILLED,
         }
     )
@@ -663,44 +666,46 @@ def _seed_demo_labor_requests(db: Session) -> int:
     labor_requests.append(
         {
             "employer_id": employers[2].id,
-            "requested_date": now - timedelta(days=5),
-            "needed_date": (now - timedelta(days=4)).date(),
-            "classification_requested": BookClassification.SOUND_COMM,
-            "quantity": 1,
-            "job_description": "Conference room installation",
-            "shift_start_time": time(8, 0),
+            "employer_name": employers[2].name,
+            "request_date": now - timedelta(days=5),
+            "start_date": (now - timedelta(days=4)).date(),
+            "classification": BookClassification.SOUND_COMM,
+            "workers_requested": 1,
+            "worksite_name": "Conference room installation",
+            "start_time": time(8, 0),
             "estimated_duration_days": 10,
-            "hourly_rate": Decimal("52.00"),
+            "wage_rate": Decimal("52.00"),
             "status": LaborRequestStatus.CANCELLED,
-            "cancelled_reason": "Project postponed by client",
+            "comments": "Project postponed by client",
         }
     )
 
-    # EXPIRED request (past needed_date, never filled)
+    # EXPIRED request (past start_date, never filled)
     labor_requests.append(
         {
             "employer_id": employers[3].id,
-            "requested_date": now - timedelta(days=15),
-            "needed_date": (now - timedelta(days=14)).date(),
-            "classification_requested": BookClassification.STOCKPERSON,
-            "quantity": 1,
-            "job_description": "Warehouse inventory reorganization",
-            "shift_start_time": time(9, 0),
+            "employer_name": employers[3].name,
+            "request_date": now - timedelta(days=15),
+            "start_date": (now - timedelta(days=14)).date(),
+            "classification": BookClassification.STOCKPERSON,
+            "workers_requested": 1,
+            "worksite_name": "Warehouse inventory reorganization",
+            "start_time": time(9, 0),
             "estimated_duration_days": 5,
-            "hourly_rate": Decimal("48.00"),
+            "wage_rate": Decimal("48.00"),
             "status": LaborRequestStatus.EXPIRED,
         }
     )
 
     created_count = 0
     for lr_data in labor_requests:
-        # Create unique key from employer + requested_date + classification
+        # Create unique key from employer + request_date + classification
         lr, created = get_or_create(
             db,
             LaborRequest,
             employer_id=lr_data["employer_id"],
-            requested_date=lr_data["requested_date"],
-            classification_requested=lr_data["classification_requested"],
+            request_date=lr_data["request_date"],
+            classification=lr_data["classification"],
             defaults=lr_data,
         )
         if created:
@@ -748,6 +753,15 @@ def _seed_demo_dispatches(db: Session) -> int:
         logger.warning("No active registrations found, skipping dispatches")
         return 0
 
+    # Get demo dispatcher user for dispatched_by_id
+    dispatcher_user = db.execute(
+        select(User).where(User.email == "demo_dispatcher@ibew46.demo")
+    ).scalar_one_or_none()
+
+    if not dispatcher_user:
+        logger.warning("Demo dispatcher user not found, skipping dispatches")
+        return 0
+
     dispatches = []
 
     # COMPLETED dispatch (member returned to book)
@@ -756,14 +770,16 @@ def _seed_demo_dispatches(db: Session) -> int:
         dispatches.append(
             {
                 "labor_request_id": labor_requests[0].id,
-                "book_registration_id": reg.id,
+                "registration_id": reg.id,
                 "member_id": reg.member_id,
+                "employer_id": labor_requests[0].employer_id,
+                "dispatched_by_id": dispatcher_user.id,
                 "dispatch_date": datetime.now() - timedelta(days=45),
-                "actual_start_date": datetime.now() - timedelta(days=44),
+                "start_date": (datetime.now() - timedelta(days=44)).date(),
                 "is_short_call": False,
-                "status": DispatchStatus.COMPLETED,
-                "term_date": datetime.now() - timedelta(days=10),
-                "term_reason": TermReason.LAYOFF,
+                "dispatch_status": DispatchStatus.COMPLETED,
+                "term_date": (datetime.now() - timedelta(days=10)).date(),
+                "term_reason": TermReason.LAID_OFF,
             }
         )
 
@@ -773,12 +789,14 @@ def _seed_demo_dispatches(db: Session) -> int:
         dispatches.append(
             {
                 "labor_request_id": labor_requests[0].id,
-                "book_registration_id": reg.id,
+                "registration_id": reg.id,
                 "member_id": reg.member_id,
+                "employer_id": labor_requests[0].employer_id,
+                "dispatched_by_id": dispatcher_user.id,
                 "dispatch_date": datetime.now() - timedelta(days=30),
-                "actual_start_date": datetime.now() - timedelta(days=29),
+                "start_date": (datetime.now() - timedelta(days=29)).date(),
                 "is_short_call": False,
-                "status": DispatchStatus.ACTIVE,
+                "dispatch_status": DispatchStatus.WORKING,
             }
         )
 
@@ -788,13 +806,14 @@ def _seed_demo_dispatches(db: Session) -> int:
         dispatches.append(
             {
                 "labor_request_id": labor_requests[0].id,
-                "book_registration_id": reg.id,
+                "registration_id": reg.id,
                 "member_id": reg.member_id,
+                "employer_id": labor_requests[0].employer_id,
+                "dispatched_by_id": dispatcher_user.id,
                 "dispatch_date": datetime.now() - timedelta(days=8),
-                "actual_start_date": datetime.now() - timedelta(days=7),
+                "start_date": (datetime.now() - timedelta(days=7)).date(),
                 "is_short_call": True,
-                "estimated_duration_days": 5,
-                "status": DispatchStatus.ACTIVE,
+                "dispatch_status": DispatchStatus.WORKING,
             }
         )
 
@@ -804,13 +823,15 @@ def _seed_demo_dispatches(db: Session) -> int:
         dispatches.append(
             {
                 "labor_request_id": labor_requests[0].id,
-                "book_registration_id": reg.id,
+                "registration_id": reg.id,
                 "member_id": reg.member_id,
+                "employer_id": labor_requests[0].employer_id,
+                "dispatched_by_id": dispatcher_user.id,
                 "dispatch_date": datetime.now() - timedelta(days=60),
-                "actual_start_date": datetime.now() - timedelta(days=59),
+                "start_date": (datetime.now() - timedelta(days=59)).date(),
                 "is_short_call": False,
-                "status": DispatchStatus.COMPLETED,
-                "term_date": datetime.now() - timedelta(days=30),
+                "dispatch_status": DispatchStatus.COMPLETED,
+                "term_date": (datetime.now() - timedelta(days=30)).date(),
                 "term_reason": TermReason.QUIT,
             }
         )

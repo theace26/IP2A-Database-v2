@@ -81,10 +81,11 @@ services:
     command: >
       sh -c "echo '🔄 Running database migrations...' &&
              alembic upgrade head &&
-             echo '⚠️  Skipping demo seed (schema mismatches - needs fixing)' &&
+             echo '🌱 Seeding demo data...' &&
+             python -m src.db.demo_seed &&
              echo '🚀 Starting UnionCore demo API server...' &&
              echo '📍 Demo available at: https://unioncore.ibew46.local' &&
-             echo '👤 Create users via /auth/register or admin panel' &&
+             echo '👤 Demo accounts: demo_dispatcher@ibew46.demo / Demo2026!' &&
              echo '' &&
              gunicorn src.main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000"
 
