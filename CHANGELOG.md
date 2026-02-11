@@ -7,11 +7,86 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> **v0.9.25-alpha — UI Enhancement Bundle** (✅ COMPLETE)
+> 5 cross-cutting UI improvements: Flattened sidebar, Sortable sticky headers, Developer role, View As, Operational dashboard
+> ~806 total tests, ~327 API endpoints, 32 models, **19 ADRs**
+> **Spoke 3: Infrastructure** — Sortable header macro (HTMX server-side), improved navigation UX, QA tooling
+> **Next:** Rollout sortable headers to remaining tables
+
 > **v0.9.24-alpha — ADR-019: Developer Super Admin with View As Impersonation** (✅ COMPLETE)
 > Developer role with UI impersonation for QA and development
 > ~806 total tests (+24 developer/view-as tests), ~327 API endpoints (+3 view-as), 32 models, **19 ADRs**
 > **Developer Tools:** View As dropdown, impersonation banner, session-based role switching, dev/demo only
 > **Next:** Production deployment (verify no developer accounts in prod)
+
+### Added (February 10, 2026 — UI Enhancement Bundle)
+
+#### UI Enhancement Bundle (Spoke 3: Infrastructure)
+**5 cross-cutting UI improvements completed in 3 sessions (~10 hours total)**
+
+**Item 1: Flatten Sidebar Navigation**
+- Removed "Union Operations" category grouping header
+- Unwrapped collapsible "Operations" section
+- Promoted 3 items to top-level: Grievances, SALTing, Benevolence
+- Each item now has full icon + link, no nesting
+- Files Modified: `src/templates/components/_sidebar.html`
+
+**Item 2: Sortable + Sticky Table Headers (HTMX Server-Side)**
+- **Reusable Macro** (`src/templates/components/_sortable_th.html`)
+  * Jinja2 macro for sortable column headers
+  * HTMX attributes: hx-get, hx-target, hx-swap, hx-push-url
+  * Sticky positioning: `top-32 z-10` (128px offset for navbar + banner)
+  * Visual indicators: ▲ (asc), ▼ (desc), ⇅ (neutral)
+  * Preserves search/filter/pagination state via hx-include
+
+- **First Implementation (SALTing Activities Table)**
+  * Created tbody partial: `src/templates/operations/salting/partials/_table_body.html`
+  * Updated main table to use sortable_header macro
+  * Router accepts sort/order query params with validation
+  * Service applies dynamic sorting with column whitelist
+  * Sortable columns: activity_date, member_id, organization_id, activity_type, workers_contacted, cards_signed, outcome
+  * HTMX returns partial tbody for efficient re-rendering
+  * Pagination preserves sort state
+
+- **Files Created:**
+  * `src/templates/components/_sortable_th.html` — Reusable macro
+  * `src/templates/operations/salting/partials/_table_body.html` — Table body partial
+
+- **Files Modified:**
+  * `src/templates/operations/salting/partials/_table.html` — Uses sortable_header macro
+  * `src/routers/operations_frontend.py` — Accepts sort/order params
+  * `src/services/operations_frontend_service.py` — Dynamic sorting logic
+
+- **Rollout Plan:** Apply to remaining tables incrementally (Members, Referral Books, Dues, Dispatch, Grievances, Students) — ~30 min per table
+
+**Item 3A & 3B: Developer Role + View As Impersonation**
+- See separate section below (ADR-019)
+- Backend: Developer role (level 255) with all permissions
+- Frontend: View As dropdown, impersonation banner, session-based role switching
+
+**Item 4: Dashboard Operational Cards**
+- **Replaced** "Active Members" card with 3 operational metrics:
+  1. **Open Dispatch Requests** (error/red) - LaborRequest status: OPEN/PARTIALLY_FILLED
+  2. **Members on Book** (info/blue) - BookRegistration status: REGISTERED
+  3. **Upcoming Expirations** (warning/yellow) - Certification expiring within 30 days
+
+- **Service Layer** (`src/services/dashboard_service.py`)
+  * Added 3 counting methods: `_count_open_dispatch_requests()`, `_count_members_on_book()`, `_count_upcoming_expirations()`
+  * Imports: LaborRequest, BookRegistration, Certification models + enums
+  * Each method uses COUNT queries (no full table scans)
+
+- **Template** (`src/templates/dashboard/index.html`)
+  * Changed grid from `lg:grid-cols-4` to `lg:grid-cols-3`
+  * Replaced 1 card with 3 new stat cards using DaisyUI stat component
+
+**Cross-Cutting Impact:**
+- SessionMiddleware now available for future session-based features
+- Sortable header pattern established for new tables
+- Dashboard dependencies on Phase 7 models (LaborRequest, BookRegistration, Certification)
+
+**Version:** v0.9.25-alpha
+
+---
 
 ### Added (February 10, 2026 — ADR-019: Developer Super Admin with View As)
 

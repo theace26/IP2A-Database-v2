@@ -1,9 +1,9 @@
 # IP2A-Database-v2: Project Context Document
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
-**Last Updated:** February 10, 2026 (ADR-019 Implementation)
-**Current Version:** v0.9.24-alpha (Developer Super Admin with View As Impersonation)
-**Current Phase:** Post-Phase 8A | Developer Tools | 19 ADRs | Spoke 3 (Infrastructure)
+**Last Updated:** February 10, 2026 (UI Enhancement Bundle + ADR-019)
+**Current Version:** v0.9.25-alpha (UI Enhancement Bundle Complete)
+**Current Phase:** Post-Phase 8A | UI Enhancements | 19 ADRs | Spoke 3 (Infrastructure)
 
 ---
 
@@ -17,9 +17,9 @@
 
 **Stack:** FastAPI + PostgreSQL + SQLAlchemy + Jinja2 + HTMX + DaisyUI + Alpine.js + WeasyPrint + openpyxl
 
-**Status:** ~806 total tests (764 baseline + 24 developer/view-as + 18 Square), ~327 API endpoints (324 baseline + 3 view-as), 32 models, **19 ADRs**, Railway deployment live, Developer role with View As impersonation (ADR-019), Square payment integration live (ADR-018), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
+**Status:** ~806 total tests (764 baseline + 24 developer/view-as + 18 Square), ~327 API endpoints (324 baseline + 3 view-as), 32 models, **19 ADRs**, Railway deployment live, **UI Enhancement Bundle complete (5 items)**, Developer role with View As impersonation (ADR-019), Square payment integration live (ADR-018), Sortable sticky table headers (HTMX), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
-**Current:** **ADR-019 COMPLETE** — Developer super admin role (level 255) with View As UI impersonation. Session-based role switching for QA/development. View As dropdown in navbar, impersonation banner, 24+ tests. **DEV/DEMO ONLY - NEVER PRODUCTION.** Three API endpoints (/api/v1/view-as/*), comprehensive permission system. **NEXT:** Production deployment verification (no developer accounts in prod), stakeholder demo, Phase 7 data collection (7a/7d), or Phase 8B (Square Terminal/POS). See `docs/decisions/ADR-019-developer-super-admin.md`
+**Current:** **UI ENHANCEMENT BUNDLE COMPLETE** — 5 cross-cutting UI improvements: (1) Flattened sidebar navigation, (2) Sortable + sticky table headers with HTMX server-side sorting, (3A) Developer super admin role backend, (3B) View As impersonation frontend, (4) Dashboard operational cards. Sortable header macro reusable across all tables. First implementation on SALTing activities table. Sticky headers at top-32 offset (128px) to account for navbar + impersonation banner. **NEXT:** Rollout sortable headers to remaining tables, stakeholder demo, Phase 7 data collection (7a/7d), or Phase 8B (Square Terminal/POS).
 
 ---
 
@@ -1605,6 +1605,253 @@ WHERE r.name = 'developer';
 ```
 
 **Version:** v0.9.24-alpha
+
+---
+
+## UI Enhancement Bundle (February 10, 2026)
+
+**Status:** ✅ **COMPLETE** - All 5 items implemented
+**Spoke:** Spoke 3: Infrastructure (Cross-Cutting UI)
+**Estimated Effort:** 8–12 hours (actual: ~10 hours across 3 sessions)
+**Version:** v0.9.25-alpha
+
+### Overview
+
+Cross-cutting UI improvements affecting multiple modules. All items delivered as standalone commits for easy rollback if needed. Focus on role-driven navigation, operational dashboard metrics, developer QA tools, and sortable data tables.
+
+**Source:** Hub Handoff Document (February 10, 2026)
+
+### Items Completed
+
+| # | Item | Description | Commit | Status |
+|---|------|-------------|--------|--------|
+| 1 | Flatten Sidebar | Removed "Union Operations" grouping header, promoted 3 items to top-level | [commit hash] | ✅ |
+| 2 | Sortable + Sticky Headers | Reusable macro for HTMX server-side sorting, implemented on SALTing table | `aae26c6` | ✅ |
+| 3A | Developer Role Backend | Developer super admin role (level 255) with all permissions (ADR-019) | [ADR-019] | ✅ |
+| 3B | View As Frontend | Session-based role impersonation UI for QA testing (ADR-019) | [ADR-019] | ✅ |
+| 4 | Dashboard Operational Cards | Replaced member counts with dispatch, book, and certification metrics | [commit hash] | ✅ |
+
+### Item 1: Flatten Sidebar Navigation
+
+**Objective:** Remove category grouping, make sidebar role-driven instead of feature-driven
+
+**Changes:**
+- Removed "Union Operations" menu-title header
+- Unwrapped collapsible "Operations" section
+- Promoted 3 items to top-level: Grievances, SALTing, Benevolence
+- Each item now has full icon + link, no nesting
+
+**Files Modified:**
+- `src/templates/components/_sidebar.html`
+
+**Impact:** Simpler navigation hierarchy, faster access to operational features
+
+---
+
+### Item 2: Sortable + Sticky Table Headers
+
+**Objective:** Reusable HTMX server-side sorting for all data tables, with sticky headers that remain visible when scrolling
+
+**Implementation:**
+
+**Sortable Header Macro (`src/templates/components/_sortable_th.html`):**
+- Jinja2 macro accepting column name, label, current sort/order
+- HTMX attributes: `hx-get`, `hx-target`, `hx-swap`, `hx-push-url`
+- Sticky positioning: `top-32 z-10` (128px offset for navbar + impersonation banner)
+- Visual indicators: ▲ (asc), ▼ (desc), ⇅ (neutral)
+- Preserves search/filter/pagination state via `hx-include`
+
+**First Implementation (SALTing Activities Table):**
+- Created tbody partial: `src/templates/operations/salting/partials/_table_body.html`
+- Updated main table: `src/templates/operations/salting/partials/_table.html`
+- Router accepts `sort` and `order` query params: `src/routers/operations_frontend.py`
+- Service validates and applies sorting: `src/services/operations_frontend_service.py`
+- Allowed columns: activity_date, member_id, organization_id, activity_type, workers_contacted, cards_signed, outcome
+- HTMX returns partial tbody for efficient re-rendering
+- Pagination preserves sort state
+
+**Files Created:**
+- `src/templates/components/_sortable_th.html` — Reusable macro
+- `src/templates/operations/salting/partials/_table_body.html` — Table body partial
+
+**Files Modified:**
+- `src/templates/operations/salting/partials/_table.html` — Uses sortable_header macro
+- `src/routers/operations_frontend.py` — Accepts sort/order params
+- `src/services/operations_frontend_service.py` — Dynamic sorting logic
+
+**Usage Pattern:**
+```html
+{% from 'components/_sortable_th.html' import sortable_header %}
+
+<thead>
+  <tr>
+    {{ sortable_header('date', 'Date', current_sort, current_order) }}
+    {{ sortable_header('name', 'Name', current_sort, current_order) }}
+    <th class="sticky top-32 z-10 bg-base-200">Actions</th>
+  </tr>
+</thead>
+<tbody id="table-body">
+  {% include 'path/to/_table_body.html' %}
+</tbody>
+```
+
+**Rollout Plan:** Apply macro to remaining tables incrementally (Members, Referral Books, Dues, Dispatch, Grievances, Students). Each table ~30 min effort.
+
+**Anti-Patterns Avoided:**
+- ❌ Client-side JavaScript sorting (instruction required server-side)
+- ❌ Arbitrary column names in sort param (whitelist validation)
+- ❌ Table inside `overflow-y: auto` div (breaks sticky positioning)
+
+---
+
+### Item 3A & 3B: Developer Super Admin with View As Impersonation
+
+**See:** [Developer Super Admin with View As Impersonation](#developer-super-admin-with-view-as-impersonation-february-10-2026) section above
+
+**Delivered:** ADR-019, 24+ tests, 3 API endpoints, session-based impersonation
+
+---
+
+### Item 4: Dashboard Operational Cards
+
+**Objective:** Replace member-centric dashboard cards with operational metrics for daily dispatch workflow
+
+**Changes:**
+
+**Removed:**
+- "Active Members" card
+
+**Added (3 new cards):**
+1. **Open Dispatch Requests** (error/red)
+   - Counts LaborRequest with status: OPEN or PARTIALLY_FILLED
+   - Indicates unfilled job requests needing referral
+   - Icon: Clipboard list
+
+2. **Members on Book** (info/blue)
+   - Counts BookRegistration with status: REGISTERED
+   - Shows workers waiting for dispatch across all referral books
+   - Icon: Users
+
+3. **Upcoming Expirations** (warning/yellow)
+   - Counts Certification with expiration_date within 30 days
+   - Status: ACTIVE, expiration_date not null, between today and 30 days from now
+   - Helps proactive renewal outreach
+   - Icon: Calendar
+
+**Service Layer:**
+- Added 3 counting methods to `DashboardService` (`src/services/dashboard_service.py`)
+- Imports: LaborRequest, BookRegistration, Certification models + enums
+- Each method uses COUNT queries (no full table scans)
+
+**Template:**
+- Changed grid from `lg:grid-cols-4` to `lg:grid-cols-3`
+- Replaced 1 card with 3 new stat cards using DaisyUI stat component
+
+**Files Modified:**
+- `src/services/dashboard_service.py` — 3 new methods + imports
+- `src/templates/dashboard/index.html` — Grid layout + card content
+
+**Rationale:** Dashboard now serves daily operational workflow (dispatch focus) instead of member statistics
+
+---
+
+### Cross-Cutting Impact
+
+**main.py:** View As router registration + SessionMiddleware (Item 3B)
+**base.html:** Impersonation banner (Item 3B)
+**_navbar.html:** View As dropdown (Item 3B) + sidebar changes affect mobile drawer
+
+**Session Support:** `SessionMiddleware` now available for future session-based features across all modules
+
+---
+
+### Testing
+
+**Sortable Headers:**
+- Manual verification: Sort works, sticky headers stay visible, search preserved
+- HTMX partial rendering tested
+- Invalid sort columns fall back to default safely
+
+**Dashboard Cards:**
+- Cards display correct counts from Phase 7 models
+- Empty states handled (0 values)
+
+**Developer Role + View As:**
+- See ADR-019 section — 24+ comprehensive tests
+
+---
+
+### Rollout Notes for Other Tables
+
+To apply sortable headers to additional tables:
+
+1. **Create tbody partial** (extract `<tbody>` content from main table template)
+2. **Update route handler:**
+   - Add `sort: str = Query("default_column")` and `order: str = Query("desc")`
+   - Validate sort column against whitelist
+   - Pass to service method
+   - Detect HTMX request → return tbody partial
+3. **Update service method:**
+   - Add `sort` and `order` parameters
+   - Map column names to model attributes (dict of allowed columns)
+   - Apply `order_by(column.asc())` or `order_by(column.desc())`
+4. **Update template:**
+   - Import sortable_header macro
+   - Replace `<th>` with `{{ sortable_header(...) }}`
+   - Add `<tbody id="table-body">` and include partial
+5. **Update pagination** (if exists):
+   - Add `&sort={{ current_sort }}&order={{ current_order }}` to pagination links
+
+**Estimated Effort Per Table:** ~30 minutes
+
+**Recommended Rollout Order:**
+1. ✅ SALTing Activities (done)
+2. Members list
+3. Referral Books / Registrations
+4. Dispatch requests
+5. Dues payments
+6. Students
+7. Grievances
+
+---
+
+### Files Summary
+
+**Created:**
+- `src/templates/components/_sortable_th.html` — Sortable header macro
+- `src/templates/operations/salting/partials/_table_body.html` — SALTing tbody partial
+- `src/routers/view_as.py` — View As API (Item 3B)
+- `src/tests/test_developer_view_as.py` — 24+ tests (Item 3B)
+- `docs/decisions/ADR-019-developer-super-admin.md` — Architecture decision
+
+**Modified:**
+- `src/templates/components/_sidebar.html` — Flattened Operations section (Item 1)
+- `src/templates/components/_navbar.html` — View As dropdown (Item 3B)
+- `src/templates/base.html` — Impersonation banner (Item 3B)
+- `src/templates/operations/salting/partials/_table.html` — Sortable headers (Item 2)
+- `src/templates/dashboard/index.html` — Operational cards (Item 4)
+- `src/services/dashboard_service.py` — 3 new counting methods (Item 4)
+- `src/services/operations_frontend_service.py` — Dynamic sorting (Item 2)
+- `src/routers/operations_frontend.py` — Sort/order params (Item 2)
+- `src/main.py` — SessionMiddleware + view_as router (Item 3B)
+- `src/db/enums/auth_enums.py` — DEVELOPER role (Item 3A)
+- `src/seed/auth_seed.py` — Developer role seed (Item 3A)
+- `src/core/permissions.py` — Developer permissions (Item 3A)
+- `src/routers/dependencies/auth_cookie.py` — viewing_as context (Item 3B)
+- `src/db/demo_seed.py` — Demo developer account (Item 3B)
+- `docs/decisions/README.md` — ADR index v2.6 (19 ADRs)
+
+---
+
+### Known Limitations
+
+1. **Sortable Headers Rollout:** Only SALTing table has sorting so far. Remaining tables will be converted incrementally.
+2. **Sticky Header Offset:** Assumes navbar height = 64px and impersonation banner height = 64px (top-32 = 128px). If banner height changes, adjust `top-32` in macro.
+3. **Developer Role Production Safety:** Deployment checklist must verify no developer accounts exist before go-live.
+
+---
+
+**Version:** v0.9.25-alpha
 
 ---
 
