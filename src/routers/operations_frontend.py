@@ -103,8 +103,10 @@ async def salting_search_partial(
     activity_type: Optional[str] = Query(None),
     outcome: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
+    sort: str = Query("activity_date"),
+    order: str = Query("desc"),
 ):
-    """HTMX partial: SALTing activities table body."""
+    """HTMX partial: SALTing activities table body with sorting."""
     if isinstance(current_user, RedirectResponse):
         return HTMLResponse(
             "Session expired",
@@ -112,16 +114,43 @@ async def salting_search_partial(
             headers={"HX-Redirect": "/auth/login?next=/operations/salting"},
         )
 
+    # Validate sort column
+    allowed_sort_columns = [
+        "activity_date",
+        "member_id",
+        "organization_id",
+        "activity_type",
+        "workers_contacted",
+        "cards_signed",
+        "outcome",
+    ]
+    if sort not in allowed_sort_columns:
+        sort = "activity_date"
+
+    # Validate order
+    if order not in ("asc", "desc"):
+        order = "desc"
+
     service = OperationsFrontendService(db)
     activities, total, total_pages = await service.search_salting_activities(
         query=q,
         activity_type=activity_type,
         outcome=outcome,
         page=page,
+        sort=sort,
+        order=order,
+    )
+
+    # Determine if HTMX request (only return tbody) or full table
+    is_htmx = request.headers.get("HX-Request") == "true"
+    template = (
+        "operations/salting/partials/_table_body.html"
+        if is_htmx and request.headers.get("HX-Target") == "table-body"
+        else "operations/salting/partials/_table.html"
     )
 
     return templates.TemplateResponse(
-        "operations/salting/partials/_table.html",
+        template,
         {
             "request": request,
             "activities": activities,
@@ -131,6 +160,8 @@ async def salting_search_partial(
             "query": q or "",
             "type_filter": activity_type or "all",
             "outcome_filter": outcome or "all",
+            "current_sort": sort,
+            "current_order": order,
             "get_outcome_badge_class": service.get_salting_outcome_badge_class,
             "get_type_badge_class": service.get_salting_type_badge_class,
         },

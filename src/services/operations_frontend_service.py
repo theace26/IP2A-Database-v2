@@ -176,8 +176,10 @@ class OperationsFrontendService:
         outcome: Optional[str] = None,
         page: int = 1,
         per_page: int = 20,
+        sort: str = "activity_date",
+        order: str = "desc",
     ) -> Tuple[List[SALTingActivity], int, int]:
-        """Search SALTing activities with filters."""
+        """Search SALTing activities with filters and sorting."""
         stmt = (
             select(SALTingActivity)
             .options(
@@ -225,8 +227,24 @@ class OperationsFrontendService:
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = (self.db.execute(count_stmt)).scalar() or 0
 
-        # Sort and paginate
-        stmt = stmt.order_by(SALTingActivity.activity_date.desc())
+        # Sort - validate column against allowed columns
+        allowed_columns = {
+            "activity_date": SALTingActivity.activity_date,
+            "member_id": SALTingActivity.member_id,
+            "organization_id": SALTingActivity.organization_id,
+            "activity_type": SALTingActivity.activity_type,
+            "workers_contacted": SALTingActivity.workers_contacted,
+            "cards_signed": SALTingActivity.cards_signed,
+            "outcome": SALTingActivity.outcome,
+        }
+
+        sort_column = allowed_columns.get(sort, SALTingActivity.activity_date)
+        if order == "asc":
+            stmt = stmt.order_by(sort_column.asc())
+        else:
+            stmt = stmt.order_by(sort_column.desc())
+
+        # Paginate
         stmt = stmt.offset((page - 1) * per_page).limit(per_page)
 
         result = self.db.execute(stmt)

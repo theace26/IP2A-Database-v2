@@ -1,0 +1,88 @@
+{# SALTing activities table body - partial for HTMX updates #}
+
+{% if activities %}
+    {% for act in activities %}
+    <tr class="hover">
+        <!-- Date -->
+        <td>
+            <span class="font-mono text-sm">{{ act.activity_date.strftime('%b %d, %Y') if act.activity_date else '—' }}</span>
+        </td>
+
+        <!-- Organizer -->
+        <td>
+            <div class="flex items-center gap-2">
+                <div class="avatar placeholder">
+                    <div class="bg-neutral text-neutral-content rounded-full w-8">
+                        <span class="text-xs">
+                            {{ act.member.first_name[0] | upper if act.member else '?' }}{{ act.member.last_name[0] | upper if act.member else '' }}
+                        </span>
+                    </div>
+                </div>
+                <span class="text-sm">
+                    {{ act.member.first_name if act.member else 'N/A' }} {{ act.member.last_name if act.member else '' }}
+                </span>
+            </div>
+        </td>
+
+        <!-- Employer -->
+        <td>
+            <span class="text-sm font-medium">{{ act.organization.name if act.organization else 'Unknown' }}</span>
+            {% if act.location %}
+            <br><span class="text-xs text-base-content/50">{{ act.location }}</span>
+            {% endif %}
+        </td>
+
+        <!-- Type -->
+        <td>
+            <span class="badge {{ get_type_badge_class(act.activity_type) }} badge-sm">
+                {{ act.activity_type.value.replace('_', ' ') | title }}
+            </span>
+        </td>
+
+        <!-- Workers Contacted -->
+        <td>
+            <span class="font-mono">{{ act.workers_contacted or 0 }}</span>
+        </td>
+
+        <!-- Cards Signed -->
+        <td>
+            <span class="font-mono {{ 'text-success font-bold' if act.cards_signed and act.cards_signed > 0 else '' }}">
+                {{ act.cards_signed or 0 }}
+            </span>
+        </td>
+
+        <!-- Outcome -->
+        <td>
+            {% if act.outcome %}
+            <span class="badge {{ get_outcome_badge_class(act.outcome) }}">
+                {{ act.outcome.value.replace('_', ' ') | title }}
+            </span>
+            {% else %}
+            <span class="text-base-content/40">—</span>
+            {% endif %}
+        </td>
+
+        <!-- Actions -->
+        <td>
+            <a href="/operations/salting/{{ act.id }}" class="btn btn-ghost btn-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+            </a>
+        </td>
+    </tr>
+    {% endfor %}
+{% else %}
+<tr>
+    <td colspan="8" class="text-center py-12">
+        <div class="text-base-content/50">
+            <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            <p class="text-lg">No SALTing activities found</p>
+            <p class="text-sm mt-1">Start organizing by logging an activity</p>
+        </div>
+    </td>
+</tr>
+{% endif %}
