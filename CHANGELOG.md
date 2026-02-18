@@ -7,18 +7,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> **v0.9.26-alpha — Sortable Headers Rollout** (✅ COMPLETE — February 17, 2026)
+> Phase A: Global sticky headers via CSS for all tables. Phase B: HTMX server-side sortable headers rolled out to Benevolence, Grievances, Students, Members, Staff tables.
+> ~806 total tests, ~327 API endpoints, 32 models, **19 ADRs**
+> **Next:** Rollout sortable headers to remaining tables (Referral Books, Dues, Dispatch, Audit Log), stakeholder demo, Phase 7 data collection (7a/7d), Phase 8B (Square Terminal)
+
 > **v0.9.25-alpha — UI Enhancement Bundle** (✅ COMPLETE — Documented February 17, 2026)
 > 5 cross-cutting UI improvements: Flattened sidebar, Sortable sticky headers, Developer role, View As, Operational dashboard
 > ~806 total tests, ~327 API endpoints, 32 models, **19 ADRs**
 > **Spoke 3: Infrastructure** — Sortable header macro (HTMX server-side), improved navigation UX, QA tooling
 > **Documentation:** ADR-019 updated with full implementation summary. Consolidated instruction doc archived to `docs/historical/`. ADR decisions README updated to v2.7.
-> **Next:** Rollout sortable headers to remaining tables (Members, Referral Books, Dues, Dispatch, Grievances, Students, Staff, Benevolence, Audit Log)
 
 > **v0.9.24-alpha — ADR-019: Developer Super Admin with View As Impersonation** (✅ COMPLETE)
 > Developer role with UI impersonation for QA and development
 > ~806 total tests (+24 developer/view-as tests), ~327 API endpoints (+3 view-as), 32 models, **19 ADRs**
 > **Developer Tools:** View As dropdown, impersonation banner, session-based role switching, dev/demo only
 > **Next:** Production deployment (verify no developer accounts in prod)
+
+### Added (February 17, 2026 — Sortable Headers Rollout)
+
+#### Phase A: Global Sticky Table Headers
+- Added `position: sticky; top: 64px; z-index: 10` CSS rule to all `.table th` globally via `custom.css`
+- Added `body.impersonation-active .table th { top: 128px }` for when View As banner is active
+- Added `impersonation-active` CSS class to `<body>` in `base.html` when View As is active
+- Every table now has sticky headers with no per-table code changes required
+
+#### Phase B: HTMX Server-Side Sortable Headers Rollout
+Applied sortable headers pattern (established in UI Enhancement Bundle) to 5 additional tables:
+
+**Benevolence Applications Table**
+- Sortable columns: `application_date`, `amount_requested`, `status`, `reason`
+- Created `_table_body.html` partial for HTMX tbody-only responses
+- Updated `_table.html` with `sortable_header` macro + sort-aware pagination
+
+**Grievances Table**
+- Sortable columns: `filed_date`, `status`, `current_step`
+- Created `_table_body.html` partial for HTMX tbody-only responses
+- Updated `_table.html` with `sortable_header` macro + sort-aware pagination
+
+**Students Table** (`/training/students`)
+- Sortable columns: `enrollment_date`, `status`
+- Created `_table_body.html` partial for HTMX tbody-only responses
+- Updated `_table.html` with `sortable_header` macro + sort-aware pagination
+
+**Members Table** (`/members`)
+- Sortable columns: `last_name`, `first_name`, `member_number`, `status`, `classification`
+- Created `_table_body.html` partial for HTMX tbody-only responses
+- Updated `_table.html` with `sortable_header` macro + sort-aware pagination
+
+**Staff Table** (`/staff`)
+- Sortable columns: `email`, `first_name`, `last_name`, `created_at`
+- Created `_rows_only.html` partial for HTMX tbody-only responses
+- Updated `_table_body.html` (full table partial) with `sortable_header` macro + sort-aware pagination
+- Wired to existing `StaffService.search_users(sort_by, sort_order)` params
+
+**Files Modified (Phase B):**
+- `src/services/operations_frontend_service.py` — dynamic sort for benevolence + grievances
+- `src/services/training_frontend_service.py` — dynamic sort for students
+- `src/services/member_frontend_service.py` — dynamic sort for members
+- `src/routers/operations_frontend.py` — sort/order params + HTMX detection
+- `src/routers/training_frontend.py` — sort/order params + HTMX detection
+- `src/routers/member_frontend.py` — sort/order params + HTMX detection
+- `src/routers/staff.py` — sort/order params + HTMX detection
+
+**Files Created (Phase B):**
+- `src/templates/operations/benevolence/partials/_table_body.html`
+- `src/templates/operations/grievances/partials/_table_body.html`
+- `src/templates/training/students/partials/_table_body.html`
+- `src/templates/members/partials/_table_body.html`
+- `src/templates/staff/partials/_rows_only.html`
+
+---
 
 ### Added (February 10, 2026 — UI Enhancement Bundle)
 

@@ -19,7 +19,7 @@
 
 **Status:** ~806 total tests (764 baseline + 24 developer/view-as + 18 Square), ~327 API endpoints (324 baseline + 3 view-as), 32 models, **19 ADRs**, Railway deployment live, **UI Enhancement Bundle complete (5 items)**, Developer role with View As impersonation (ADR-019), Square payment integration live (ADR-018), Sortable sticky table headers (HTMX), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
-**Current:** **UI ENHANCEMENT BUNDLE COMPLETE** — 5 cross-cutting UI improvements: (1) Flattened sidebar navigation, (2) Sortable + sticky table headers with HTMX server-side sorting, (3A) Developer super admin role backend, (3B) View As impersonation frontend, (4) Dashboard operational cards. Sortable header macro reusable across all tables. First implementation on SALTing activities table. Sticky headers at top-32 offset (128px) to account for navbar + impersonation banner. **NEXT:** Rollout sortable headers to remaining tables, stakeholder demo, Phase 7 data collection (7a/7d), or Phase 8B (Square Terminal/POS).
+**Current:** **SORTABLE HEADERS ROLLOUT COMPLETE (v0.9.26-alpha)** — Phase A: Global sticky headers for ALL tables via single CSS rule. Phase B: HTMX server-side sortable headers on 6 tables: SALTing, Benevolence, Grievances, Students, Members, Staff. Sticky offset: `top-32` (128px = 64px navbar + 64px impersonation banner). **NEXT:** Rollout sortable headers to remaining tables (Referral Books, Dues, Dispatch, Audit Log), stakeholder demo, Phase 7 data collection (7a/7d), Phase 8B (Square Terminal/POS).
 
 ---
 
