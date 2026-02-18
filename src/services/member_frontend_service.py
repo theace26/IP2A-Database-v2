@@ -140,6 +140,8 @@ class MemberFrontendService:
         classification: Optional[str] = None,
         page: int = 1,
         per_page: int = 20,
+        sort: str = "last_name",
+        order: str = "asc",
     ) -> Tuple[List[Member], int, int]:
         """
         Search members with filters and pagination.
@@ -192,7 +194,15 @@ class MemberFrontendService:
         total = (self.db.execute(count_stmt)).scalar() or 0
 
         # Apply sorting and pagination
-        stmt = stmt.order_by(Member.last_name, Member.first_name)
+        allowed_sort_columns = {
+            "last_name": Member.last_name,
+            "first_name": Member.first_name,
+            "member_number": Member.member_number,
+            "status": Member.status,
+            "classification": Member.classification,
+        }
+        sort_col = allowed_sort_columns.get(sort, Member.last_name)
+        stmt = stmt.order_by(sort_col.asc() if order == "asc" else sort_col.desc())
         stmt = stmt.offset((page - 1) * per_page).limit(per_page)
 
         result = self.db.execute(stmt)

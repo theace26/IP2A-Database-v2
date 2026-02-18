@@ -34,6 +34,8 @@ async def staff_list_page(
     role: Optional[str] = Query(None, description="Filter by role"),
     status: Optional[str] = Query("all", description="Filter by status"),
     page: int = Query(1, ge=1, description="Page number"),
+    sort: str = Query("email"),
+    order: str = Query("asc"),
 ):
     """Render the staff list page."""
     # Handle auth redirect
@@ -45,9 +47,18 @@ async def staff_list_page(
     if not any(r in ["admin", "officer", "staff"] for r in user_roles):
         return templates.TemplateResponse(
             "errors/403.html",
-            {"request": request, "message": "You don't have permission to access staff management."},
+            {
+                "request": request,
+                "message": "You don't have permission to access staff management.",
+            },
             status_code=403,
         )
+
+    allowed_sort_columns = ["email", "first_name", "last_name", "created_at"]
+    if sort not in allowed_sort_columns:
+        sort = "email"
+    if order not in ("asc", "desc"):
+        order = "asc"
 
     service = StaffService(db)
 
@@ -58,6 +69,8 @@ async def staff_list_page(
         status=status,
         page=page,
         per_page=20,
+        sort_by=sort,
+        sort_order=order,
     )
 
     # Get all roles for filter dropdown
@@ -78,6 +91,8 @@ async def staff_list_page(
             "query": q or "",
             "role_filter": role or "all",
             "status_filter": status or "all",
+            "current_sort": sort,
+            "current_order": order,
             "all_roles": all_roles,
             "counts": counts,
             "service": service,  # Pass service for is_user_locked helper
@@ -99,6 +114,8 @@ async def staff_search_partial(
     role: Optional[str] = Query(None),
     status: Optional[str] = Query("all"),
     page: int = Query(1, ge=1),
+    sort: str = Query("email"),
+    order: str = Query("asc"),
 ):
     """
     HTMX partial: Return just the table body for search results.
@@ -110,6 +127,12 @@ async def staff_search_partial(
             status_code=401,
         )
 
+    allowed_sort_columns = ["email", "first_name", "last_name", "created_at"]
+    if sort not in allowed_sort_columns:
+        sort = "email"
+    if order not in ("asc", "desc"):
+        order = "asc"
+
     service = StaffService(db)
 
     users, total, total_pages = service.search_users(
@@ -118,10 +141,19 @@ async def staff_search_partial(
         status=status,
         page=page,
         per_page=20,
+        sort_by=sort,
+        sort_order=order,
+    )
+
+    is_htmx = request.headers.get("HX-Request") == "true"
+    template = (
+        "staff/partials/_rows_only.html"
+        if is_htmx and request.headers.get("HX-Target") == "table-body"
+        else "staff/partials/_table_body.html"
     )
 
     return templates.TemplateResponse(
-        "staff/partials/_table_body.html",
+        template,
         {
             "request": request,
             "users": users,
@@ -131,6 +163,8 @@ async def staff_search_partial(
             "query": q or "",
             "role_filter": role or "all",
             "status_filter": status or "all",
+            "current_sort": sort,
+            "current_order": order,
             "service": service,
         },
     )
@@ -286,7 +320,9 @@ async def update_user_roles(
                 if role.name == "staff"
                 else "ghost"
             )
-            badges_html += f'<span class="badge badge-{badge_class} badge-sm">{role.name}</span>'
+            badges_html += (
+                f'<span class="badge badge-{badge_class} badge-sm">{role.name}</span>'
+            )
 
         if not updated_user.roles:
             badges_html = '<span class="badge badge-ghost badge-sm">No roles</span>'
@@ -321,7 +357,9 @@ async def lock_user_account(
         )
 
     service = StaffService(db)
-    user = service.toggle_lock(user_id, lock=True, updated_by=current_user.get("email", "unknown"))
+    user = service.toggle_lock(
+        user_id, lock=True, updated_by=current_user.get("email", "unknown")
+    )
 
     if not user:
         return HTMLResponse(content="User not found", status_code=404)
@@ -345,7 +383,9 @@ async def unlock_user_account(
         return HTMLResponse(content="Session expired", status_code=401)
 
     service = StaffService(db)
-    user = service.toggle_lock(user_id, lock=False, updated_by=current_user.get("email", "unknown"))
+    user = service.toggle_lock(
+        user_id, lock=False, updated_by=current_user.get("email", "unknown")
+    )
 
     if not user:
         return HTMLResponse(content="User not found", status_code=404)
@@ -454,7 +494,10 @@ async def user_detail_page(
     if not any(r in ["admin", "officer", "staff"] for r in user_roles):
         return templates.TemplateResponse(
             "errors/403.html",
-            {"request": request, "message": "You don't have permission to view user details."},
+            {
+                "request": request,
+                "message": "You don't have permission to view user details.",
+            },
             status_code=403,
         )
 

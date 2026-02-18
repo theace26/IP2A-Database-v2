@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends, Request, Query, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session as SyncSession
 from typing import Optional
 
 from src.db.session import get_db
@@ -104,6 +103,8 @@ async def members_search_partial(
     status: Optional[str] = Query(None, description="Filter by status"),
     classification: Optional[str] = Query(None, description="Filter by classification"),
     page: int = Query(1, ge=1, description="Page number"),
+    sort: str = Query("last_name"),
+    order: str = Query("asc"),
 ):
     """
     HTMX partial: Return member table body for search results.
@@ -116,6 +117,18 @@ async def members_search_partial(
             headers={"HX-Redirect": "/auth/login?next=/members"},
         )
 
+    allowed_sort_columns = [
+        "last_name",
+        "first_name",
+        "member_number",
+        "status",
+        "classification",
+    ]
+    if sort not in allowed_sort_columns:
+        sort = "last_name"
+    if order not in ("asc", "desc"):
+        order = "asc"
+
     service = MemberFrontendService(db)
 
     members, total, total_pages = await service.search_members(
@@ -124,6 +137,8 @@ async def members_search_partial(
         classification=classification,
         page=page,
         per_page=20,
+        sort=sort,
+        order=order,
     )
 
     # Get current employer for each member
@@ -137,8 +152,15 @@ async def members_search_partial(
             }
         )
 
+    is_htmx = request.headers.get("HX-Request") == "true"
+    template = (
+        "members/partials/_table_body.html"
+        if is_htmx and request.headers.get("HX-Target") == "table-body"
+        else "members/partials/_table.html"
+    )
+
     return templates.TemplateResponse(
-        "members/partials/_table.html",
+        template,
         {
             "request": request,
             "members_data": members_with_employer,
@@ -148,6 +170,8 @@ async def members_search_partial(
             "query": q or "",
             "status_filter": status or "all",
             "classification_filter": classification or "all",
+            "current_sort": sort,
+            "current_order": order,
             "format_classification": service.format_classification,
             "get_status_badge_class": service.get_status_badge_class,
             "get_classification_badge_class": service.get_classification_badge_class,
@@ -323,7 +347,6 @@ def member_notes_list(
 ):
     """HTMX endpoint: Return member notes list."""
     from src.services.member_note_service import member_note_service
-    from src.models.user import User
 
     # Handle redirect response
     if isinstance(current_user, RedirectResponse):
@@ -339,15 +362,19 @@ def member_notes_list(
     # Format notes for template
     notes = []
     for note in notes_models:
-        notes.append({
-            "id": note.id,
-            "note_text": note.note_text,
-            "visibility": note.visibility,
-            "category": note.category,
-            "created_by_id": note.created_by_id,
-            "created_by_name": note.created_by.email if note.created_by else "Unknown",
-            "created_at": note.created_at,
-        })
+        notes.append(
+            {
+                "id": note.id,
+                "note_text": note.note_text,
+                "visibility": note.visibility,
+                "category": note.category,
+                "created_by_id": note.created_by_id,
+                "created_by_name": note.created_by.email
+                if note.created_by
+                else "Unknown",
+                "created_at": note.created_at,
+            }
+        )
 
     return templates.TemplateResponse(
         "members/partials/_notes_list.html",
@@ -400,15 +427,19 @@ def add_member_note(
     # Format notes for template
     notes = []
     for note in notes_models:
-        notes.append({
-            "id": note.id,
-            "note_text": note.note_text,
-            "visibility": note.visibility,
-            "category": note.category,
-            "created_by_id": note.created_by_id,
-            "created_by_name": note.created_by.email if note.created_by else "Unknown",
-            "created_at": note.created_at,
-        })
+        notes.append(
+            {
+                "id": note.id,
+                "note_text": note.note_text,
+                "visibility": note.visibility,
+                "category": note.category,
+                "created_by_id": note.created_by_id,
+                "created_by_name": note.created_by.email
+                if note.created_by
+                else "Unknown",
+                "created_at": note.created_at,
+            }
+        )
 
     return templates.TemplateResponse(
         "members/partials/_notes_list.html",

@@ -35,9 +35,7 @@ class TrainingFrontendService:
         Returns counts and recent changes.
         """
         # Total students
-        total_students = (
-            self.db.execute(select(func.count(Student.id)))
-        ).scalar() or 0
+        total_students = (self.db.execute(select(func.count(Student.id)))).scalar() or 0
 
         # Active students (ENROLLED status)
         active_students = (
@@ -68,9 +66,7 @@ class TrainingFrontendService:
         ).scalar() or 0
 
         # Total courses
-        total_courses = (
-            self.db.execute(select(func.count(Course.id)))
-        ).scalar() or 0
+        total_courses = (self.db.execute(select(func.count(Course.id)))).scalar() or 0
 
         # Active courses
         active_courses = (
@@ -156,6 +152,8 @@ class TrainingFrontendService:
         cohort: Optional[str] = None,
         page: int = 1,
         per_page: int = 20,
+        sort: str = "enrollment_date",
+        order: str = "desc",
     ) -> Tuple[List[Student], int, int]:
         """
         Search and filter students with pagination.
@@ -197,7 +195,15 @@ class TrainingFrontendService:
         # Need to re-join for ordering if we haven't already
         if not query or not query.strip():
             stmt = stmt.join(Student.member)
-        stmt = stmt.order_by(Member.last_name, Member.first_name)
+        allowed_sort_columns = {
+            "enrollment_date": Student.enrollment_date,
+            "status": Student.status,
+        }
+        sort_col = allowed_sort_columns.get(sort)
+        if sort_col is not None:
+            stmt = stmt.order_by(sort_col.asc() if order == "asc" else sort_col.desc())
+        else:
+            stmt = stmt.order_by(Member.last_name, Member.first_name)
         offset = (page - 1) * per_page
         stmt = stmt.offset(offset).limit(per_page)
 

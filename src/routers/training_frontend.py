@@ -116,12 +116,20 @@ async def student_search_partial(
     status: Optional[str] = Query("all"),
     cohort: Optional[str] = Query("all"),
     page: int = Query(1, ge=1),
+    sort: str = Query("enrollment_date"),
+    order: str = Query("desc"),
 ):
     """HTMX partial: Return just the student table body."""
     if isinstance(current_user, RedirectResponse):
         return HTMLResponse(
             content="<tr><td colspan='6'>Session expired</td></tr>", status_code=401
         )
+
+    allowed_sort_columns = ["enrollment_date", "status"]
+    if sort not in allowed_sort_columns:
+        sort = "enrollment_date"
+    if order not in ("asc", "desc"):
+        order = "desc"
 
     service = TrainingFrontendService(db)
 
@@ -131,10 +139,19 @@ async def student_search_partial(
         cohort=cohort,
         page=page,
         per_page=20,
+        sort=sort,
+        order=order,
+    )
+
+    is_htmx = request.headers.get("HX-Request") == "true"
+    template = (
+        "training/students/partials/_table_body.html"
+        if is_htmx and request.headers.get("HX-Target") == "table-body"
+        else "training/students/partials/_table.html"
     )
 
     return templates.TemplateResponse(
-        "training/students/partials/_table.html",
+        template,
         {
             "request": request,
             "students": students,
@@ -144,6 +161,8 @@ async def student_search_partial(
             "query": q or "",
             "status_filter": status or "all",
             "cohort_filter": cohort or "all",
+            "current_sort": sort,
+            "current_order": order,
             "get_status_badge": TrainingFrontendService.get_status_badge_class,
         },
     )

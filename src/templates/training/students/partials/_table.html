@@ -1,68 +1,19 @@
+{# Students table with sortable headers #}
+{% from 'components/_sortable_th.html' import sortable_header %}
+
 <div class="overflow-x-auto">
     <table class="table">
         <thead>
             <tr>
-                <th>Student</th>
-                <th>Cohort</th>
-                <th>Status</th>
-                <th>Enrolled</th>
-                <th class="text-right">Actions</th>
+                <th class="sticky top-32 z-10 bg-base-200">Student</th>
+                <th class="sticky top-32 z-10 bg-base-200">Cohort</th>
+                {{ sortable_header('status', 'Status', current_sort, current_order, extra_params="[name='q'], [name='status'], [name='cohort'], [name='page']") }}
+                {{ sortable_header('enrollment_date', 'Enrolled', current_sort, current_order, extra_params="[name='q'], [name='status'], [name='cohort'], [name='page']") }}
+                <th class="sticky top-32 z-10 bg-base-200 text-right">Actions</th>
             </tr>
         </thead>
-        <tbody>
-            {% if students %}
-                {% for student in students %}
-                <tr class="hover">
-                    <td>
-                        <div class="flex items-center gap-3">
-                            <div class="avatar placeholder">
-                                <div class="bg-neutral text-neutral-content rounded-full w-10">
-                                    <span class="text-sm">{{ student.member.first_name[0] }}{{ student.member.last_name[0] }}</span>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="font-bold">{{ student.member.first_name }} {{ student.member.last_name }}</div>
-                                <div class="text-sm text-base-content/60">{{ student.student_number }}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        {% if student.cohort %}
-                        <span class="badge badge-ghost badge-sm">{{ student.cohort }}</span>
-                        {% else %}
-                        <span class="text-base-content/40">-</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <span class="badge {{ get_status_badge(student.status) }} badge-sm">
-                            {{ student.status.value | title }}
-                        </span>
-                    </td>
-                    <td>
-                        {% if student.enrollment_date %}
-                        {{ student.enrollment_date.strftime('%b %d, %Y') }}
-                        {% else %}
-                        <span class="text-base-content/40">Not enrolled</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-right">
-                        <a href="/training/students/{{ student.id }}" class="btn btn-ghost btn-sm">
-                            View
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            {% else %}
-            <tr>
-                <td colspan="5" class="text-center py-8 text-base-content/50">
-                    {% if query %}
-                    No students matching "{{ query }}"
-                    {% else %}
-                    No students found
-                    {% endif %}
-                </td>
-            </tr>
-            {% endif %}
+        <tbody id="table-body">
+            {% include 'training/students/partials/_table_body.html' %}
         </tbody>
     </table>
 </div>
@@ -74,7 +25,7 @@
         {% if current_page > 1 %}
         <button
             class="join-item btn btn-sm"
-            hx-get="/training/students/search?page={{ current_page - 1 }}&q={{ query }}&status={{ status_filter }}&cohort={{ cohort_filter }}"
+            hx-get="/training/students/search?page={{ current_page - 1 }}&q={{ query }}&status={{ status_filter }}&cohort={{ cohort_filter }}&sort={{ current_sort }}&order={{ current_order }}"
             hx-target="#student-table-container"
         >
             Previous
@@ -88,7 +39,7 @@
         {% if current_page < total_pages %}
         <button
             class="join-item btn btn-sm"
-            hx-get="/training/students/search?page={{ current_page + 1 }}&q={{ query }}&status={{ status_filter }}&cohort={{ cohort_filter }}"
+            hx-get="/training/students/search?page={{ current_page + 1 }}&q={{ query }}&status={{ status_filter }}&cohort={{ cohort_filter }}&sort={{ current_sort }}&order={{ current_order }}"
             hx-target="#student-table-container"
         >
             Next
