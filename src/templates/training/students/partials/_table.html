@@ -2,14 +2,14 @@
 {% from 'components/_sortable_th.html' import sortable_header %}
 
 <div class="overflow-x-auto">
-    <table class="table">
+    <table class="table table-pin-rows">
         <thead>
             <tr>
-                <th class="sticky top-32 z-10 bg-base-200">Student</th>
-                <th class="sticky top-32 z-10 bg-base-200">Cohort</th>
+                <th class="bg-base-200">Student</th>
+                <th class="bg-base-200">Cohort</th>
                 {{ sortable_header('status', 'Status', current_sort, current_order, extra_params="[name='q'], [name='status'], [name='cohort'], [name='page']") }}
                 {{ sortable_header('enrollment_date', 'Enrolled', current_sort, current_order, extra_params="[name='q'], [name='status'], [name='cohort'], [name='page']") }}
-                <th class="sticky top-32 z-10 bg-base-200 text-right">Actions</th>
+                <th class="bg-base-200 text-right">Actions</th>
             </tr>
         </thead>
         <tbody id="table-body">

@@ -65,11 +65,8 @@
     }
 }
 
-/* Table improvements — sticky headers + global styling */
+/* Table improvements — global <th> styling (NO sticky here — see table-pin-rows below) */
 .table th {
-    position: sticky;
-    top: 64px;               /* navbar height (DaisyUI navbar = 64px) */
-    z-index: 10;
     background-color: hsl(var(--b2));
     color: #ffffff;          /* white text on dark header background */
     font-weight: 600;
@@ -78,8 +75,20 @@
     letter-spacing: 0.05em;
 }
 
+/*
+ * Sticky header offset for tables with sortable/pinned headers.
+ * DaisyUI table-pin-rows applies position:sticky to thead tr at top:0.
+ * We override top to clear the navbar (64px) so headers land below it.
+ * Per-cell sticky (position:sticky on <th>) caused column-width collapse
+ * inside overflow-x:auto containers and has been removed.
+ */
+.table.table-pin-rows thead tr {
+    top: 64px;               /* navbar height */
+    z-index: 10;
+}
+
 /* When View As impersonation banner is active, offset includes banner height (~64px) */
-body.impersonation-active .table th {
+body.impersonation-active .table.table-pin-rows thead tr {
     top: 128px;              /* navbar (64px) + impersonation banner (64px) */
 }
 
@@ -137,5 +146,11 @@ body.impersonation-active .table th {
 
     .card {
         break-inside: avoid;
+    }
+
+    /* Remove sticky positioning in print — WeasyPrint and print layout don't need it */
+    .table th, .table.table-pin-rows thead tr {
+        position: static !important;
+        top: auto !important;
     }
 }

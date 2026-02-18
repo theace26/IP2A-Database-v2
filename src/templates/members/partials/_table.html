@@ -2,10 +2,10 @@
 {% from 'components/_sortable_th.html' import sortable_header %}
 
 <div class="overflow-x-auto">
-    <table class="table table-zebra">
+    <table class="table table-zebra table-pin-rows">
         <thead>
             <tr class="bg-base-200">
-                <th class="sticky top-32 z-10 bg-base-200 w-12">
+                <th class="bg-base-200 w-12">
                     <label>
                         <input type="checkbox" class="checkbox checkbox-sm" id="select-all" />
                     </label>
@@ -14,9 +14,9 @@
                 {{ sortable_header('last_name', 'Name', current_sort, current_order, extra_params="[name='q'], [name='status'], [name='classification'], [name='page']") }}
                 {{ sortable_header('classification', 'Classification', current_sort, current_order, extra_params="[name='q'], [name='status'], [name='classification'], [name='page']") }}
                 {{ sortable_header('status', 'Status', current_sort, current_order, extra_params="[name='q'], [name='status'], [name='classification'], [name='page']") }}
-                <th class="sticky top-32 z-10 bg-base-200">Current Employer</th>
-                <th class="sticky top-32 z-10 bg-base-200">Dues</th>
-                <th class="sticky top-32 z-10 bg-base-200 w-24">Actions</th>
+                <th class="bg-base-200">Current Employer</th>
+                <th class="bg-base-200">Dues</th>
+                <th class="bg-base-200 w-24">Actions</th>
             </tr>
         </thead>
         <tbody id="table-body">

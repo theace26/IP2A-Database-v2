@@ -2,16 +2,16 @@
 {% from 'components/_sortable_th.html' import sortable_header %}
 
 <div class="overflow-x-auto">
-    <table class="table table-zebra">
+    <table class="table table-zebra table-pin-rows">
         <thead>
             <tr class="bg-base-200">
-                <th class="sticky top-32 z-10 bg-base-200">Grievance #</th>
-                <th class="sticky top-32 z-10 bg-base-200">Member</th>
-                <th class="sticky top-32 z-10 bg-base-200">Employer</th>
-                <th class="sticky top-32 z-10 bg-base-200">Step Progress</th>
+                <th class="bg-base-200">Grievance #</th>
+                <th class="bg-base-200">Member</th>
+                <th class="bg-base-200">Employer</th>
+                <th class="bg-base-200">Step Progress</th>
                 {{ sortable_header('status', 'Status', current_sort, current_order, extra_params="[name='q'], [name='status'], [name='step'], [name='page']") }}
                 {{ sortable_header('filed_date', 'Filed', current_sort, current_order, extra_params="[name='q'], [name='status'], [name='step'], [name='page']") }}
-                <th class="sticky top-32 z-10 bg-base-200 w-24">Actions</th>
+                <th class="bg-base-200 w-24">Actions</th>
             </tr>
         </thead>
         <tbody id="table-body">

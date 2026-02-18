@@ -2,19 +2,19 @@
 {% from 'components/_sortable_th.html' import sortable_header %}
 
 <div class="overflow-x-auto">
-    <table class="table table-zebra">
+    <table class="table table-zebra table-pin-rows">
         <thead>
             <tr class="bg-base-200">
-                <th class="sticky top-32 z-10 bg-base-200 w-12">
+                <th class="bg-base-200 w-12">
                     <label>
                         <input type="checkbox" class="checkbox checkbox-sm" id="select-all" />
                     </label>
                 </th>
                 {{ sortable_header('last_name', 'User', current_sort, current_order, extra_params="[name='q'], [name='role'], [name='status'], [name='page']") }}
-                <th class="sticky top-32 z-10 bg-base-200">Roles</th>
-                <th class="sticky top-32 z-10 bg-base-200">Status</th>
+                <th class="bg-base-200">Roles</th>
+                <th class="bg-base-200">Status</th>
                 {{ sortable_header('created_at', 'Last Login', current_sort, current_order, extra_params="[name='q'], [name='role'], [name='status'], [name='page']") }}
-                <th class="sticky top-32 z-10 bg-base-200 w-32">Actions</th>
+                <th class="bg-base-200 w-32">Actions</th>
             </tr>
         </thead>
         <tbody id="table-body">
