@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > **Developer Tools:** View As dropdown, impersonation banner, session-based role switching, dev/demo only
 > **Next:** Production deployment (verify no developer accounts in prod)
 
+### Fixed (February 17, 2026 — Sticky Header Text Color)
+- Set sticky table header text color to `#ffffff` (white) in `custom.css` for legibility on dark `--b2` background
+
 ### Added (February 17, 2026 — Sortable Headers Rollout)
 
 #### Phase A: Global Sticky Table Headers
