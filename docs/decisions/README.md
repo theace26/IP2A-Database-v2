@@ -1,9 +1,9 @@
 # Architecture Decision Records
 
 > **Document Created:** January 2026
-> **Last Updated:** February 10, 2026
-> **Version:** 2.6
-> **Status:** Active — 19 ADRs documented through v0.9.24-alpha
+> **Last Updated:** February 17, 2026
+> **Version:** 2.7
+> **Status:** Active — 19 ADRs documented through v0.9.25-alpha
 
 This directory contains Architecture Decision Records (ADRs) documenting significant technical decisions made during the development of IP2A Database v2 (UnionCore) — the union operations management platform for IBEW Local 46.
 
@@ -32,8 +32,8 @@ An ADR captures an important architectural decision along with its context and c
 | [ADR-015](ADR-015-referral-dispatch-architecture.md) | Referral & Dispatch Architecture | Implemented (partial) | 2026-02-04 | Weeks 20-25 — backend complete |
 | [ADR-016](ADR-016-phase7-frontend-ui-patterns.md) | Phase 7 Frontend UI Patterns | Implemented | 2026-02-04 | Weeks 26-27 — Books & Dispatch UI |
 | [ADR-017](ADR-017-schema-drift-prevention.md) | Schema Drift Prevention Strategy | Accepted | 2026-02-05 | Post-ISSUE-001 follow-up |
-| [ADR-018](ADR-018-square-payment-integration.md) | Square Payment Integration | **In Progress** | 2026-02-05 | Supersedes ADR-013. Stripe removed Week 35, Square Phase A pending. |
-| [ADR-019](ADR-019-developer-super-admin.md) | Developer Super Admin with View As | Implemented | 2026-02-10 | Dev/demo only role with UI impersonation |
+| [ADR-018](ADR-018-square-payment-integration.md) | Square Payment Integration | Implemented (partial) | 2026-02-05 | Phase A complete (online payments). Phases B (Terminal/POS) + C (Invoices) pending. |
+| [ADR-019](ADR-019-developer-super-admin.md) | Developer Super Admin with View As | Implemented | 2026-02-10 | Dev/demo only role with UI impersonation. 24+ tests. See implementation summary in ADR. |
 
 ### Status Legend
 
@@ -122,6 +122,14 @@ Create an ADR when making decisions about:
 
 ADR-015 documents the Referral & Dispatch system architecture decisions made during Weeks 20-22. This covers the 6 Phase 7 models, 19 enums, and key schema decisions including APN as DECIMAL(10,2) and the dual audit pattern. The remaining Phase 7 work (API routers, frontend UI, 78 reports) may warrant additional ADRs as implementation progresses. See `docs/phase7/` for detailed planning documentation.
 
+## UI Enhancement Bundle Note (February 17, 2026)
+
+The UI Enhancement Bundle (v0.9.25-alpha) introduced two cross-cutting patterns documented in ADR-019:
+1. **Developer Super Admin Role** — level 255, dev/demo only, View As impersonation
+2. **Sortable + Sticky Table Headers** — HTMX server-side sorting macro (`_sortable_th.html`), first applied to SALTing activities table
+
+The sortable headers pattern is documented in ADR-016 (Phase 7 Frontend UI Patterns) and the implementation notes in CLAUDE.md. A dedicated ADR for the sortable header pattern may be warranted if it becomes a foundational pattern for all tables during the sortable headers rollout. See `docs/historical/week44-item2-sortable-sticky-headers.md` for the full instruction specification.
+
 ---
 
 ## 🔄 End-of-Session Documentation (REQUIRED)
@@ -130,6 +138,6 @@ ADR-015 documents the Referral & Dispatch system architecture decisions made dur
 
 ---
 
-Document Version: 2.6
-Last Updated: February 10, 2026
-Previous Version: 2.5 (February 6, 2026 — 18 ADRs through v0.9.10-alpha)
+Document Version: 2.7
+Last Updated: February 17, 2026
+Previous Version: 2.6 (February 10, 2026 — 19 ADRs through v0.9.24-alpha)

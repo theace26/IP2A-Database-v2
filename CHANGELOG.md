@@ -7,11 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> **v0.9.25-alpha — UI Enhancement Bundle** (✅ COMPLETE)
+> **v0.9.25-alpha — UI Enhancement Bundle** (✅ COMPLETE — Documented February 17, 2026)
 > 5 cross-cutting UI improvements: Flattened sidebar, Sortable sticky headers, Developer role, View As, Operational dashboard
 > ~806 total tests, ~327 API endpoints, 32 models, **19 ADRs**
 > **Spoke 3: Infrastructure** — Sortable header macro (HTMX server-side), improved navigation UX, QA tooling
-> **Next:** Rollout sortable headers to remaining tables
+> **Documentation:** ADR-019 updated with full implementation summary. Consolidated instruction doc archived to `docs/historical/`. ADR decisions README updated to v2.7.
+> **Next:** Rollout sortable headers to remaining tables (Members, Referral Books, Dues, Dispatch, Grievances, Students, Staff, Benevolence, Audit Log)
 
 > **v0.9.24-alpha — ADR-019: Developer Super Admin with View As Impersonation** (✅ COMPLETE)
 > Developer role with UI impersonation for QA and development
