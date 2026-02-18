@@ -1679,28 +1679,32 @@ Cross-cutting UI improvements affecting multiple modules. All items delivered as
 - `src/routers/operations_frontend.py` — Accepts sort/order params
 - `src/services/operations_frontend_service.py` — Dynamic sorting logic
 
-**Usage Pattern:**
+**Usage Pattern (UPDATED — use `table-pin-rows`, NOT per-cell sticky):**
 ```html
 {% from 'components/_sortable_th.html' import sortable_header %}
 
-<thead>
-  <tr>
-    {{ sortable_header('date', 'Date', current_sort, current_order) }}
-    {{ sortable_header('name', 'Name', current_sort, current_order) }}
-    <th class="sticky top-32 z-10 bg-base-200">Actions</th>
-  </tr>
-</thead>
-<tbody id="table-body">
-  {% include 'path/to/_table_body.html' %}
-</tbody>
+{# CRITICAL: table-pin-rows handles sticky at row level — do NOT add sticky to <th> #}
+<table class="table table-zebra table-pin-rows">
+  <thead>
+    <tr>
+      {{ sortable_header('date', 'Date', current_sort, current_order) }}
+      {{ sortable_header('name', 'Name', current_sort, current_order) }}
+      <th class="bg-base-200">Actions</th>  {# No sticky class — table-pin-rows covers it #}
+    </tr>
+  </thead>
+  <tbody id="table-body">
+    {% include 'path/to/_table_body.html' %}
+  </tbody>
+</table>
 ```
 
-**Rollout Plan:** Apply macro to remaining tables incrementally (Members, Referral Books, Dues, Dispatch, Grievances, Students). Each table ~30 min effort.
+**HOTFIX (February 17, 2026):** Per-cell `sticky top-32 z-10` on `<th>` elements inside `overflow-x-auto` containers caused column-width collapse (only the first column was visible). Fixed by switching to DaisyUI `table-pin-rows` (row-level sticky), which avoids the CSS overflow stacking context conflict. See CHANGELOG for full root cause analysis.
 
 **Anti-Patterns Avoided:**
 - ❌ Client-side JavaScript sorting (instruction required server-side)
 - ❌ Arbitrary column names in sort param (whitelist validation)
-- ❌ Table inside `overflow-y: auto` div (breaks sticky positioning)
+- ❌ `position:sticky` on individual `<th>` cells inside `overflow-x-auto` containers (causes column collapse)
+- ❌ Both `table-pin-rows` AND `sticky` on `<th>` simultaneously (pick one — use `table-pin-rows`)
 
 ---
 

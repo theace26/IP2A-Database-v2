@@ -24,6 +24,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > **Developer Tools:** View As dropdown, impersonation banner, session-based role switching, dev/demo only
 > **Next:** Production deployment (verify no developer accounts in prod)
 
+### Fixed (February 17, 2026 — Table Column Collapse Hotfix)
+- **P1 Hotfix:** Fixed collapsed table columns on SALTing and Benevolence pages (and prevented same on Grievances, Members, Students, Staff)
+- **Root cause:** `position:sticky` on individual `<th>` cells inside `overflow-x:auto` containers caused browser column-width collapse. CSS overflow spreading forces `overflow-y:auto` on the wrapper, creating a scroll context that disrupts the table layout algorithm — only the first column (Date) survived.
+- **Fix:** Replaced per-cell sticky with DaisyUI `table-pin-rows` class on all 6 converted tables. `table-pin-rows` applies row-level sticky (`thead tr`) which avoids the column-width calculation conflict. Custom CSS overrides `top` to account for navbar (64px) and impersonation banner (128px) offsets.
+- **Files changed:** `custom.css`, `_sortable_th.html` macro, all 6 converted table templates (salting, benevolence, grievances, members, students, staff)
+- **Added:** `@media print` rule removes sticky positioning for WeasyPrint/PDF rendering
+- **Pattern going forward:** New sortable tables must use `table-pin-rows` on `<table>`, NOT `sticky` on individual `<th>` elements
+
 ### Fixed (February 17, 2026 — Sticky Header Text Color)
 - Set sticky table header text color to `#ffffff` (white) in `custom.css` for legibility on dark `--b2` background
 
