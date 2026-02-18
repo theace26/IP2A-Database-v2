@@ -65,13 +65,21 @@
     }
 }
 
-/* Table improvements */
+/* Table improvements — sticky headers + global styling */
 .table th {
+    position: sticky;
+    top: 64px;               /* navbar height (DaisyUI navbar = 64px) */
+    z-index: 10;
     background-color: hsl(var(--b2));
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 0.05em;
+}
+
+/* When View As impersonation banner is active, offset includes banner height (~64px) */
+body.impersonation-active .table th {
+    top: 128px;              /* navbar (64px) + impersonation banner (64px) */
 }
 
 .table tr:hover {
