@@ -1,0 +1,76 @@
+{# Benevolence applications table body rows (HTMX partial) #}
+{% if applications %}
+    {% for app in applications %}
+    <tr class="hover">
+        <!-- Date -->
+        <td>
+            <span class="font-mono text-sm">{{ app.application_date.strftime('%b %d, %Y') if app.application_date else '—' }}</span>
+        </td>
+
+        <!-- Member -->
+        <td>
+            <div class="flex items-center gap-2">
+                <div class="avatar placeholder">
+                    <div class="bg-neutral text-neutral-content rounded-full w-8">
+                        <span class="text-xs">
+                            {{ app.member.first_name[0] | upper if app.member else '?' }}{{ app.member.last_name[0] | upper if app.member else '' }}
+                        </span>
+                    </div>
+                </div>
+                <span class="text-sm">
+                    {{ app.member.first_name if app.member else 'N/A' }} {{ app.member.last_name if app.member else '' }}
+                </span>
+            </div>
+        </td>
+
+        <!-- Reason -->
+        <td>
+            <span class="badge {{ get_reason_badge_class(app.reason) }} badge-sm">
+                {{ app.reason.value.replace('_', ' ') | title }}
+            </span>
+        </td>
+
+        <!-- Requested Amount -->
+        <td>
+            <span class="font-mono">${{ app.amount_requested | default(0) }}</span>
+        </td>
+
+        <!-- Approved Amount -->
+        <td>
+            {% if app.approved_amount %}
+            <span class="font-mono text-success font-bold">${{ app.approved_amount }}</span>
+            {% else %}
+            <span class="text-base-content/40">—</span>
+            {% endif %}
+        </td>
+
+        <!-- Status -->
+        <td>
+            <span class="badge {{ get_status_badge_class(app.status) }}">
+                {{ app.status.value.replace('_', ' ') | title }}
+            </span>
+        </td>
+
+        <!-- Actions -->
+        <td>
+            <a href="/operations/benevolence/{{ app.id }}" class="btn btn-ghost btn-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+            </a>
+        </td>
+    </tr>
+    {% endfor %}
+{% else %}
+<tr>
+    <td colspan="7" class="text-center py-12">
+        <div class="text-base-content/50">
+            <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+            <p class="text-lg">No applications found</p>
+        </div>
+    </td>
+</tr>
+{% endif %}

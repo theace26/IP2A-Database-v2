@@ -249,6 +249,8 @@ async def benevolence_search_partial(
     status: Optional[str] = Query(None),
     reason: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
+    sort: str = Query("application_date"),
+    order: str = Query("desc"),
 ):
     """HTMX partial: Benevolence applications table body."""
     if isinstance(current_user, RedirectResponse):
@@ -258,16 +260,31 @@ async def benevolence_search_partial(
             headers={"HX-Redirect": "/auth/login?next=/operations/benevolence"},
         )
 
+    allowed_sort_columns = ["application_date", "amount_requested", "status", "reason"]
+    if sort not in allowed_sort_columns:
+        sort = "application_date"
+    if order not in ("asc", "desc"):
+        order = "desc"
+
     service = OperationsFrontendService(db)
     applications, total, total_pages = await service.search_benevolence_applications(
         query=q,
         status=status,
         reason=reason,
         page=page,
+        sort=sort,
+        order=order,
+    )
+
+    is_htmx = request.headers.get("HX-Request") == "true"
+    template = (
+        "operations/benevolence/partials/_table_body.html"
+        if is_htmx and request.headers.get("HX-Target") == "table-body"
+        else "operations/benevolence/partials/_table.html"
     )
 
     return templates.TemplateResponse(
-        "operations/benevolence/partials/_table.html",
+        template,
         {
             "request": request,
             "applications": applications,
@@ -277,6 +294,8 @@ async def benevolence_search_partial(
             "query": q or "",
             "status_filter": status or "all",
             "reason_filter": reason or "all",
+            "current_sort": sort,
+            "current_order": order,
             "get_status_badge_class": service.get_benevolence_status_badge_class,
             "get_reason_badge_class": service.get_benevolence_reason_badge_class,
         },
@@ -362,6 +381,8 @@ async def grievances_search_partial(
     status: Optional[str] = Query(None),
     step: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
+    sort: str = Query("filed_date"),
+    order: str = Query("desc"),
 ):
     """HTMX partial: Grievances table body."""
     if isinstance(current_user, RedirectResponse):
@@ -372,16 +393,31 @@ async def grievances_search_partial(
             headers={"HX-Redirect": "/auth/login?next=/operations/grievances"},
         )
 
+    allowed_sort_columns = ["filed_date", "status", "current_step"]
+    if sort not in allowed_sort_columns:
+        sort = "filed_date"
+    if order not in ("asc", "desc"):
+        order = "desc"
+
     service = OperationsFrontendService(db)
     grievances, total, total_pages = await service.search_grievances(
         query=q,
         status=status,
         step=step,
         page=page,
+        sort=sort,
+        order=order,
+    )
+
+    is_htmx = request.headers.get("HX-Request") == "true"
+    template = (
+        "operations/grievances/partials/_table_body.html"
+        if is_htmx and request.headers.get("HX-Target") == "table-body"
+        else "operations/grievances/partials/_table.html"
     )
 
     return templates.TemplateResponse(
-        "operations/grievances/partials/_table.html",
+        template,
         {
             "request": request,
             "grievances": grievances,
@@ -391,6 +427,8 @@ async def grievances_search_partial(
             "query": q or "",
             "status_filter": status or "all",
             "step_filter": step or "all",
+            "current_sort": sort,
+            "current_order": order,
             "get_status_badge_class": service.get_grievance_status_badge_class,
             "get_step_badge_class": service.get_grievance_step_badge_class,
         },

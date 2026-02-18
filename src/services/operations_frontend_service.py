@@ -342,6 +342,8 @@ class OperationsFrontendService:
         reason: Optional[str] = None,
         page: int = 1,
         per_page: int = 20,
+        sort: str = "application_date",
+        order: str = "desc",
     ) -> Tuple[List[BenevolenceApplication], int, int]:
         """Search benevolence applications with filters."""
         stmt = (
@@ -388,7 +390,16 @@ class OperationsFrontendService:
         total = (self.db.execute(count_stmt)).scalar() or 0
 
         # Sort and paginate
-        stmt = stmt.order_by(BenevolenceApplication.application_date.desc())
+        allowed_sort_columns = {
+            "application_date": BenevolenceApplication.application_date,
+            "amount_requested": BenevolenceApplication.amount_requested,
+            "status": BenevolenceApplication.status,
+            "reason": BenevolenceApplication.reason,
+        }
+        sort_col = allowed_sort_columns.get(
+            sort, BenevolenceApplication.application_date
+        )
+        stmt = stmt.order_by(sort_col.asc() if order == "asc" else sort_col.desc())
         stmt = stmt.offset((page - 1) * per_page).limit(per_page)
 
         result = self.db.execute(stmt)
@@ -497,6 +508,8 @@ class OperationsFrontendService:
         step: Optional[str] = None,
         page: int = 1,
         per_page: int = 20,
+        sort: str = "filed_date",
+        order: str = "desc",
     ) -> Tuple[List[Grievance], int, int]:
         """Search grievances with filters."""
         stmt = (
@@ -546,7 +559,13 @@ class OperationsFrontendService:
         total = (self.db.execute(count_stmt)).scalar() or 0
 
         # Sort and paginate
-        stmt = stmt.order_by(Grievance.filed_date.desc())
+        allowed_sort_columns = {
+            "filed_date": Grievance.filed_date,
+            "status": Grievance.status,
+            "current_step": Grievance.current_step,
+        }
+        sort_col = allowed_sort_columns.get(sort, Grievance.filed_date)
+        stmt = stmt.order_by(sort_col.asc() if order == "asc" else sort_col.desc())
         stmt = stmt.offset((page - 1) * per_page).limit(per_page)
 
         result = self.db.execute(stmt)
