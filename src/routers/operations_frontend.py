@@ -70,12 +70,64 @@ async def salting_list_page(
     request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_auth),
+    q: Optional[str] = Query(None),
+    activity_type: Optional[str] = Query(None),
+    outcome: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    sort: str = Query("activity_date"),
+    order: str = Query("desc"),
 ):
     """Render SALTing activities list page."""
     if isinstance(current_user, RedirectResponse):
         return current_user
 
+    # Validate sort/order (same whitelist as search endpoint)
+    allowed_sort_columns = [
+        "activity_date",
+        "member_id",
+        "organization_id",
+        "activity_type",
+        "workers_contacted",
+        "cards_signed",
+        "outcome",
+    ]
+    if sort not in allowed_sort_columns:
+        sort = "activity_date"
+    if order not in ("asc", "desc"):
+        order = "desc"
+
     service = OperationsFrontendService(db)
+
+    # HTMX sort request: return only tbody partial (sort headers use hx-target="#table-body")
+    is_htmx = request.headers.get("HX-Request") == "true"
+    if is_htmx and request.headers.get("HX-Target") == "table-body":
+        activities, total, total_pages = await service.search_salting_activities(
+            query=q,
+            activity_type=activity_type,
+            outcome=outcome,
+            page=page,
+            sort=sort,
+            order=order,
+        )
+        return templates.TemplateResponse(
+            "operations/salting/partials/_table_body.html",
+            {
+                "request": request,
+                "activities": activities,
+                "total": total,
+                "total_pages": total_pages,
+                "current_page": page,
+                "query": q or "",
+                "type_filter": activity_type or "all",
+                "outcome_filter": outcome or "all",
+                "current_sort": sort,
+                "current_order": order,
+                "get_outcome_badge_class": service.get_salting_outcome_badge_class,
+                "get_type_badge_class": service.get_salting_type_badge_class,
+            },
+        )
+
+    # Full page load
     stats = await service.get_salting_stats()
     all_types = [t.value for t in SALTingActivityType]
     all_outcomes = [o.value for o in SALTingOutcome]
@@ -88,6 +140,8 @@ async def salting_list_page(
             "stats": stats,
             "all_types": all_types,
             "all_outcomes": all_outcomes,
+            "current_sort": sort,
+            "current_order": order,
             "get_outcome_badge_class": service.get_salting_outcome_badge_class,
             "get_type_badge_class": service.get_salting_type_badge_class,
         },

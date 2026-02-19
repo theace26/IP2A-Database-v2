@@ -24,6 +24,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > **Developer Tools:** View As dropdown, impersonation banner, session-based role switching, dev/demo only
 > **Next:** Production deployment (verify no developer accounts in prod)
 
+### Fixed (February 18, 2026 — Sticky Table Headers Complete Fix, All 6 Tables)
+- **Bug #039 (complete fix):** Sticky table headers now pin to viewport below navbar on all 6 sortable tables (SALTing, Benevolence, Grievances, Students, Members, Staff)
+  - **Root cause:** Two overflow ancestors were trapping `position: sticky`: (1) `overflow-hidden` on card wrapper div — clips sticky elements and creates a boundary they cannot escape; (2) `overflow-x-auto` on the table wrapper div — per CSS spec, setting `overflow-x` to any non-`visible` value forces `overflow-y` to `auto`, creating a vertical scroll context that defeats sticky relative to the viewport
+  - **Previous partial fix** (Feb 18 earlier): Removed `overflow-hidden` from SALTing card wrapper only — insufficient because `overflow-x-auto` was still the second blocker
+  - **Complete fix:** Removed `overflow-x-auto` from all 6 table wrapper `<div>` elements; removed `overflow-hidden` from card wrappers on Benevolence, Grievances, Members, and Staff (SALTing was fixed earlier)
+  - **Macro unchanged:** `_sortable_th.html` has no `sticky` class on `<th>` (uses `table-pin-rows` approach); `custom.css` already sets correct top offset (`64px` / `128px` with impersonation banner)
+  - **Files changed:** 6 `_table.html` / `_table_body.html` partials (removed `overflow-x-auto`), 4 `index.html` page templates (removed `overflow-hidden` from card wrappers)
+
+### Fixed (February 18, 2026 — SALTing Table Sort, Text Color, Sticky Hotfix)
+- **Bug 1 (P1):** Fixed SALTing table layout destruction when clicking sort headers
+  - **Root cause:** Sortable header macro used relative URL `?sort=...` which resolved to the full-page route `/operations/salting`. That route returned `index.html` (stats cards + search bar + full layout) and HTMX swapped the entire page into `<tbody id="table-body">`, destroying the table.
+  - **Fix:** Updated `salting_list_page` route to accept `sort`/`order` query params and detect HTMX requests. When `HX-Request: true` + `HX-Target: table-body`, returns `_table_body.html` partial (just `<tr>` rows) instead of the full page.
+  - **Bonus:** Full-page loads with `?sort=...` now preserve sort state on refresh — `index.html` passes `current_sort`/`current_order` into the initial HTMX load URL.
+- **Bug 2:** Fixed sortable table header text invisible unless hovered
+  - **Root cause:** `_sortable_th.html` macro had no permanent text color class — only `hover:bg-base-300`. `custom.css` sets `color: #ffffff` on `.table th` but was being overridden in some contexts.
+  - **Fix:** Added `text-white` explicitly to `<th>` base class in the macro (high-specificity, explicit). Also added `text-white` to the non-sortable "Actions" `<th>` in `_table.html`.
+- **Bug 3:** Fixed sticky table header not pinning to top of viewport on scroll
+  - **Root cause:** Card wrapper div had `overflow-hidden` class (`class="card bg-base-100 shadow overflow-hidden"`). `overflow: hidden` on any ancestor of a sticky element creates a clipping context that prevents `position: sticky` from working relative to the scroll container.
+  - **Fix:** Removed `overflow-hidden` from the SALTing card wrapper in `index.html`.
+- **Files changed:** `src/routers/operations_frontend.py`, `src/templates/operations/salting/index.html`, `src/templates/components/_sortable_th.html`, `src/templates/operations/salting/partials/_table.html`
+- **Pattern note:** The `overflow-hidden` bug will affect any future table pages that use a card wrapper with that class — remove it wherever tables with `table-pin-rows` are present.
+
 ### Fixed (February 17, 2026 — Table Column Collapse Hotfix)
 - **P1 Hotfix:** Fixed collapsed table columns on SALTing and Benevolence pages (and prevented same on Grievances, Members, Students, Staff)
 - **Root cause:** `position:sticky` on individual `<th>` cells inside `overflow-x:auto` containers caused browser column-width collapse. CSS overflow spreading forces `overflow-y:auto` on the wrapper, creating a scroll context that disrupts the table layout algorithm — only the first column (Date) survived.

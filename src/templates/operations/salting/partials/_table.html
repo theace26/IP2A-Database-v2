@@ -1,7 +1,7 @@
 {# SALTing activities table with sortable headers #}
 {% from 'components/_sortable_th.html' import sortable_header %}
 
-<div class="overflow-x-auto">
+<div>
     <table class="table table-zebra table-pin-rows">
         <thead>
             <tr class="bg-base-200">
@@ -12,7 +12,7 @@
                 {{ sortable_header('workers_contacted', 'Workers', current_sort, current_order, extra_params="[name='q'], [name='activity_type'], [name='outcome'], [name='page']") }}
                 {{ sortable_header('cards_signed', 'Cards', current_sort, current_order, extra_params="[name='q'], [name='activity_type'], [name='outcome'], [name='page']") }}
                 {{ sortable_header('outcome', 'Outcome', current_sort, current_order, extra_params="[name='q'], [name='activity_type'], [name='outcome'], [name='page']") }}
-                <th class="bg-base-200 w-24">Actions</th>
+                <th class="bg-base-200 text-white w-24">Actions</th>
             </tr>
         </thead>
         <tbody id="table-body">

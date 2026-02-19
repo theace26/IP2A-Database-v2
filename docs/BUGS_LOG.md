@@ -2980,3 +2980,187 @@ Changed `organization_type` to `org_type`:
 - 10,000 file attachments
 
 ---
+
+## Bug #037: SALTing Sort Click Returns Full Page Into Table Body
+
+**Date Discovered:** 2026-02-18
+**Date Fixed:** 2026-02-18
+**Severity:** P1 — Table becomes unusable after any sort click
+**Status:** RESOLVED
+
+### Symptoms
+- Clicking any sortable column header on the SALTing Activities table causes the layout to collapse
+- After sorting, only a narrow "Date" column is visible; all other columns disappear
+- Sidebar content bleeds into the table area
+- The table is entirely unusable after the first sort click
+
+### Root Cause
+
+The `_sortable_th.html` macro generates a relative URL with only query parameters:
+```html
+hx-get="?sort={{ column }}&order=asc"
+```
+
+On the SALTing page (`/operations/salting`), HTMX resolves this relative URL to `/operations/salting?sort=activity_date&order=asc`. That request hits the `salting_list_page` route handler, which:
+1. Did NOT accept `sort`/`order` params (they were silently ignored)
+2. Had NO HTMX detection logic
+3. Always returned the full `index.html` page (stats cards + search bar + layout + table)
+
+HTMX then swapped the entire page HTML into `<tbody id="table-body">`. A full page worth of `<div>` layout inside a `<tbody>` causes the browser's table layout algorithm to collapse all columns, leaving only the first visible.
+
+### Fix
+
+Updated `salting_list_page` route in `src/routers/operations_frontend.py`:
+1. Added `sort`, `order`, `q`, `activity_type`, `outcome`, `page` query parameters
+2. Added HTMX detection: when `HX-Request: true` AND `HX-Target: table-body`, calls the service and returns `_table_body.html` partial (only `<tr>` rows) instead of the full page
+3. Passes `current_sort` and `current_order` to the full-page template context
+
+Also updated `src/templates/operations/salting/index.html` to inject sort params into the initial HTMX load URL:
+```html
+hx-get="/operations/salting/search?sort={{ current_sort }}&order={{ current_order }}"
+```
+This preserves sort state when the user refreshes the page.
+
+### Files Changed
+- `src/routers/operations_frontend.py` — route updated with sort params + HTMX detection
+
+### Prevention
+- Every full-page route that has a sortable table MUST also handle the HTMX sort partial case
+- The route must check both `HX-Request: true` AND `HX-Target: table-body` to distinguish sort requests from search/filter requests (which return the full `_table.html`)
+- Pattern documented in `docs/table-sortable-rollout.md`
+
+---
+
+## Bug #038: Sortable Table Header Text Invisible Without Hover
+
+**Date Discovered:** 2026-02-18
+**Date Fixed:** 2026-02-18
+**Severity:** Medium — headers unreadable; users cannot see column names without hovering
+**Status:** RESOLVED
+
+### Symptoms
+- Column header labels (DATE, ORGANIZER, EMPLOYER, etc.) are not visible on initial render
+- Text becomes white/readable only when the mouse hovers over a header
+- Sort direction indicators (▲/▼/⇅) are also invisible at rest
+
+### Root Cause
+
+The `_sortable_th.html` macro `<th>` had no permanent text color class:
+```html
+<th class="bg-base-200 cursor-pointer select-none hover:bg-base-300 transition-colors"
+```
+
+`custom.css` sets `color: #ffffff` on `.table th` globally, but the Tailwind CDN Play script can generate competing styles. In DaisyUI's "light" theme, `base-200` is a very light gray — white text on very light gray is effectively invisible. On hover, `bg-base-300` (slightly darker) provides marginally better contrast, making text appear to "show up" on hover.
+
+The non-sortable "Actions" `<th>` in `_table.html` had the same problem (no explicit text color class).
+
+### Fix
+
+Added `text-white` as an explicit base class (not hover-only) to:
+- `src/templates/components/_sortable_th.html` — macro `<th>`
+- `src/templates/operations/salting/partials/_table.html` — non-sortable "Actions" `<th>`
+
+The explicit Tailwind utility class has higher specificity in the CDN context than the CSS rule in `custom.css`.
+
+### Files Changed
+- `src/templates/components/_sortable_th.html`
+- `src/templates/operations/salting/partials/_table.html`
+
+### Prevention
+- Any `<th>` in a table with a dark header background must have an explicit `text-white` class, not rely solely on `custom.css`
+- Non-sortable columns must match the same text color class as sortable ones
+
+---
+
+## Bug #039: Sticky Table Header Trapped by Overflow Ancestors
+
+**Date Discovered:** 2026-02-18
+**Date Fixed (complete):** 2026-02-18
+**Severity:** Medium — sticky header doesn't work; rows scroll under column labels
+**Status:** RESOLVED (required two fix attempts)
+
+### Symptoms
+- Table header rows do not pin to the top when scrolling
+- Headers scroll away with the table body instead of remaining visible
+- The `table-pin-rows` DaisyUI class appeared to have no effect
+- Affected all 6 sortable tables: SALTing, Benevolence, Grievances, Students, Members, Staff
+
+### Root Cause (Two Overflow Ancestors)
+
+**Blocker 1: `overflow-hidden` on card wrapper**
+
+The card wrapper `<div>` enclosing the table container had `overflow-hidden`:
+```html
+<div class="card bg-base-100 shadow overflow-hidden">
+```
+
+`overflow: hidden` on any ancestor creates a new scroll/clip context. `position: sticky` descendants within that context cannot escape the clipping boundary, so the sticky element sticks relative to the ancestor (and is immediately clipped away) rather than the viewport.
+
+**Blocker 2: `overflow-x-auto` on table wrapper**
+
+The inner table wrapper `<div>` had `overflow-x-auto`:
+```html
+<div class="overflow-x-auto">
+    <table class="table table-zebra table-pin-rows">
+```
+
+Per CSS spec, setting `overflow-x: auto` on an element forces `overflow-y: auto` as well (you cannot set one overflow axis without the other becoming non-`visible`). This creates a vertical scroll context on the table wrapper, trapping `position: sticky` within it. The `thead` then sticks relative to the table wrapper's scroll container — which starts at the top of the table, not the viewport — so the sticky behavior is undetectable for any visible scroll position.
+
+There is **no CSS-only workaround** for this. `overflow-x: auto` cannot coexist with viewport-relative sticky headers.
+
+DaisyUI's `table-pin-rows` applies `position: sticky; top: 0` to `thead tr`. Our `custom.css` override sets `top: 64px` (navbar height). Both blockers independently defeat this.
+
+### Fix Attempt 1 (Insufficient — 2026-02-18, initial hotfix)
+
+Removed `overflow-hidden` from the card wrapper in `src/templates/operations/salting/index.html` only. Blocker 2 (`overflow-x-auto`) remained on all 6 table wrapper divs, so sticky still did not work.
+
+### Fix Attempt 2 (Complete — 2026-02-18, second session)
+
+Removed both overflow blockers across all 6 affected tables:
+
+**Removed `overflow-x-auto` from 6 table wrapper divs:**
+```html
+<!-- Before -->
+<div class="overflow-x-auto">
+    <table class="table table-zebra table-pin-rows">
+
+<!-- After -->
+<div>
+    <table class="table table-zebra table-pin-rows">
+```
+
+**Removed `overflow-hidden` from 4 remaining card wrappers (SALTing was fixed in Attempt 1):**
+```html
+<!-- Before -->
+<div class="card bg-base-100 shadow overflow-hidden">
+
+<!-- After -->
+<div class="card bg-base-100 shadow">
+```
+
+### Files Changed
+
+**Fix Attempt 1:**
+- `src/templates/operations/salting/index.html` — removed `overflow-hidden` from card wrapper
+
+**Fix Attempt 2:**
+- `src/templates/operations/salting/partials/_table.html` — removed `overflow-x-auto`
+- `src/templates/operations/benevolence/partials/_table.html` — removed `overflow-x-auto`
+- `src/templates/operations/grievances/partials/_table.html` — removed `overflow-x-auto`
+- `src/templates/training/students/partials/_table.html` — removed `overflow-x-auto`
+- `src/templates/members/partials/_table.html` — removed `overflow-x-auto`
+- `src/templates/staff/partials/_table_body.html` — removed `overflow-x-auto`
+- `src/templates/operations/benevolence/index.html` — removed `overflow-hidden`
+- `src/templates/operations/grievances/index.html` — removed `overflow-hidden`
+- `src/templates/members/index.html` — removed `overflow-hidden`
+- `src/templates/staff/index.html` — removed `overflow-hidden`
+
+### Prevention
+- NEVER add `overflow-hidden` to a card or container wrapping a table with sticky headers
+- NEVER add `overflow-x-auto` to a div wrapping a `table-pin-rows` table — it creates a vertical scroll context that traps sticky
+- Standard card wrapper for sticky tables: `class="card bg-base-100 shadow"` (no overflow modifier)
+- Standard table wrapper for sticky tables: `<div>` with no overflow classes
+- If horizontal scrolling is needed: investigate `overflow-x` on an ancestor above the sticky boundary, or accept that horizontal overflow requires a non-sticky header
+- Pattern documented in `docs/table-sortable-rollout.md` under Critical Rules
+
+---

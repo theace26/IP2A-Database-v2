@@ -23,7 +23,7 @@
 #}
 
 {% macro sortable_header(column, label, current_sort, current_order, target_id='table-body', extra_params='') %}
-<th class="bg-base-200 cursor-pointer select-none hover:bg-base-300 transition-colors"
+<th class="bg-base-200 text-white cursor-pointer select-none hover:bg-base-300 transition-colors"
     hx-get="?sort={{ column }}&order={% if current_sort == column and current_order == 'asc' %}desc{% else %}asc{% endif %}"
     hx-target="#{{ target_id }}"
     hx-swap="innerHTML"

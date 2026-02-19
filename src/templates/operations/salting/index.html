@@ -131,10 +131,10 @@
     </div>
 
     <!-- Activities Table -->
-    <div class="card bg-base-100 shadow overflow-hidden">
+    <div class="card bg-base-100 shadow">
         <div
             id="table-container"
-            hx-get="/operations/salting/search"
+            hx-get="/operations/salting/search?sort={{ current_sort }}&order={{ current_order }}"
             hx-trigger="load"
         >
             <div class="flex justify-center py-12">
