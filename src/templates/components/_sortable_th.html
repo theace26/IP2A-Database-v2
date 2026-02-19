@@ -1,41 +1,40 @@
 {#
-  Sortable Table Header Macro
+Sortable Table Header Macro
 
-  Usage:
-    {% from 'components/_sortable_th.html' import sortable_header %}
+Usage:
+{% from 'components/_sortable_th.html' import sortable_header %}
 
-    <thead>
-      <tr>
-        {{ sortable_header('date', 'Date', current_sort, current_order) }}
-        {{ sortable_header('name', 'Name', current_sort, current_order) }}
-        {{ sortable_header('status', 'Status', current_sort, current_order) }}
-        <th>Actions</th>  {# Non-sortable column — use plain <th> #}
-      </tr>
-    </thead>
+<thead>
+  <tr>
+    {{ sortable_header('date', 'Date', current_sort, current_order) }}
+    {{ sortable_header('name', 'Name', current_sort, current_order) }}
+    {{ sortable_header('status', 'Status', current_sort, current_order) }}
+    <th>Actions</th> {# Non-sortable column — use plain <th> #}
+  </tr>
+</thead>
 
-  Parameters:
-    column        - The backend sort field name (e.g., 'date', 'last_name', 'status')
-    label         - Display text for the column header
-    current_sort  - The currently active sort column (from query params)
-    current_order - The current sort direction: 'asc' or 'desc'
-    target_id     - (optional) HTMX target element ID, defaults to 'table-body'
-    extra_params  - (optional) Additional hx-include selectors to preserve filters
+Parameters:
+column - The backend sort field name (e.g., 'date', 'last_name', 'status')
+label - Display text for the column header
+current_sort - The currently active sort column (from query params)
+current_order - The current sort direction: 'asc' or 'desc'
+target_id - (optional) HTMX target element ID, defaults to 'table-body'
+extra_params - (optional) Additional hx-include selectors to preserve filters
 #}
 
 {% macro sortable_header(column, label, current_sort, current_order, target_id='table-body', extra_params='') %}
-<th class="bg-base-200 text-white cursor-pointer select-none hover:bg-base-300 transition-colors"
-    hx-get="?sort={{ column }}&order={% if current_sort == column and current_order == 'asc' %}desc{% else %}asc{% endif %}"
-    hx-target="#{{ target_id }}"
-    hx-swap="innerHTML"
-    hx-push-url="true"
-    {% if extra_params %}hx-include="{{ extra_params }}"{% else %}hx-include="[name='search'], [name='filter_type'], [name='filter_status'], [name='page_size']"{% endif %}>
-    <div class="flex items-center gap-1">
-        {{ label }}
-        {% if current_sort == column %}
-            <span class="text-xs opacity-70">{% if current_order == 'asc' %}▲{% else %}▼{% endif %}</span>
-        {% else %}
-            <span class="text-xs opacity-20">⇅</span>
-        {% endif %}
-    </div>
+<th class="sticky top-16 z-10 bg-base-200 text-white cursor-pointer select-none hover:bg-base-300 transition-colors"
+  hx-get="?sort={{ column }}&order={% if current_sort == column and current_order == 'asc' %}desc{% else %}asc{% endif %}"
+  hx-target="#{{ target_id }}" hx-swap="innerHTML" hx-push-url="true" {% if extra_params
+  %}hx-include="{{ extra_params }}" {% else
+  %}hx-include="[name='search'], [name='filter_type'], [name='filter_status'], [name='page_size']" {% endif %}>
+  <div class="flex items-center gap-1">
+    {{ label }}
+    {% if current_sort == column %}
+    <span class="text-xs opacity-70">{% if current_order == 'asc' %}▲{% else %}▼{% endif %}</span>
+    {% else %}
+    <span class="text-xs opacity-20">⇅</span>
+    {% endif %}
+  </div>
 </th>
 {% endmacro %}
