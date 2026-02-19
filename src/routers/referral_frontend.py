@@ -54,13 +54,46 @@ async def books_list(
     request: Request,
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_auth),
+    sort: str = Query("name"),
+    order: str = Query("asc"),
 ):
     """All referral books list."""
     if isinstance(current_user, RedirectResponse):
         return current_user
 
+    # Validate sort/order
+    allowed_sort_columns = [
+        "name",
+        "classification",
+        "region",
+        "book_number",
+        "active_count",
+        "dispatched_count",
+        "is_active",
+    ]
+    if sort not in allowed_sort_columns:
+        sort = "name"
+    if order not in ("asc", "desc"):
+        order = "asc"
+
     service = ReferralFrontendService(db)
-    books = service.get_books_overview()
+    books = service.get_books_overview(sort=sort, order=order)
+
+    # HTMX request — return partial only
+    if (
+        request.headers.get("HX-Request")
+        and request.headers.get("HX-Target") == "books-table-container"
+    ):
+        return templates.TemplateResponse(
+            "partials/referral/_books_table.html",
+            {
+                "request": request,
+                "current_user": current_user,
+                "books": books,
+                "current_sort": sort,
+                "current_order": order,
+            },
+        )
 
     return templates.TemplateResponse(
         "referral/books.html",
@@ -68,6 +101,8 @@ async def books_list(
             "request": request,
             "current_user": current_user,
             "books": books,
+            "current_sort": sort,
+            "current_order": order,
         },
     )
 
@@ -116,10 +151,27 @@ async def registrations_list(
     search: Optional[str] = Query(None),
     filter: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
+    sort: str = Query("registration_number"),
+    order: str = Query("asc"),
 ):
     """Registration list with filtering."""
     if isinstance(current_user, RedirectResponse):
         return current_user
+
+    # Validate sort/order
+    allowed_sort_columns = [
+        "member_name",
+        "card_number",
+        "book_name",
+        "registration_number",
+        "registration_date",
+        "status",
+        "check_marks",
+    ]
+    if sort not in allowed_sort_columns:
+        sort = "registration_number"
+    if order not in ("asc", "desc"):
+        order = "asc"
 
     service = ReferralFrontendService(db)
     filters = {
@@ -128,7 +180,9 @@ async def registrations_list(
         "search": search,
         "filter": filter,
     }
-    registrations = service.get_registrations(filters=filters, page=page)
+    registrations = service.get_registrations(
+        filters=filters, page=page, sort=sort, order=order
+    )
 
     # Get all books for filter dropdown
     books = service.get_books_overview()
@@ -142,6 +196,8 @@ async def registrations_list(
                 "current_user": current_user,
                 "registrations": registrations,
                 "service": service,
+                "current_sort": sort,
+                "current_order": order,
             },
         )
 
@@ -154,6 +210,8 @@ async def registrations_list(
             "books": books,
             "filters": filters,
             "service": service,
+            "current_sort": sort,
+            "current_order": order,
         },
     )
 
@@ -252,6 +310,8 @@ async def books_table_partial(
     current_user: dict = Depends(require_auth),
     active_only: bool = Query(True),
     search: Optional[str] = Query(None),
+    sort: str = Query("name"),
+    order: str = Query("asc"),
 ):
     """HTMX partial: filtered books table."""
     if isinstance(current_user, RedirectResponse):
@@ -261,21 +321,43 @@ async def books_table_partial(
             headers={"HX-Redirect": "/login?next=/referral"},
         )
 
+    # Validate sort/order
+    allowed_sort_columns = [
+        "name",
+        "classification",
+        "region",
+        "book_number",
+        "active_count",
+        "dispatched_count",
+        "is_active",
+    ]
+    if sort not in allowed_sort_columns:
+        sort = "name"
+    if order not in ("asc", "desc"):
+        order = "asc"
+
     service = ReferralFrontendService(db)
-    books = service.get_books_overview(active_only=active_only)
+    books = service.get_books_overview(active_only=active_only, sort=sort, order=order)
 
     # Apply search filter if provided
     if search:
         search_lower = search.lower()
         books = [
-            b for b in books
+            b
+            for b in books
             if search_lower in b.get("name", "").lower()
             or search_lower in b.get("code", "").lower()
         ]
 
     return templates.TemplateResponse(
         "partials/referral/_books_table.html",
-        {"request": request, "current_user": current_user, "books": books},
+        {
+            "request": request,
+            "current_user": current_user,
+            "books": books,
+            "current_sort": sort,
+            "current_order": order,
+        },
     )
 
 
@@ -335,7 +417,8 @@ async def book_queue_partial(
     if search:
         search_lower = search.lower()
         queue = [
-            q for q in queue
+            q
+            for q in queue
             if search_lower in q.get("member_name", "").lower()
             or search_lower in q.get("member_number", "").lower()
         ]
@@ -344,7 +427,9 @@ async def book_queue_partial(
         if status_filter == "exempt":
             queue = [q for q in queue if q.get("is_exempt")]
         else:
-            queue = [q for q in queue if str(q.get("status", "")).lower() == status_filter]
+            queue = [
+                q for q in queue if str(q.get("status", "")).lower() == status_filter
+            ]
 
     return templates.TemplateResponse(
         "partials/referral/_queue_table.html",
@@ -459,19 +544,21 @@ async def member_search_partial(
     members = service.search_members(member_search)
 
     if not members:
-        return HTMLResponse('<div class="text-sm text-base-content/60">No members found</div>')
+        return HTMLResponse(
+            '<div class="text-sm text-base-content/60">No members found</div>'
+        )
 
     html = '<div class="menu bg-base-200 rounded-box mt-1 shadow">'
     for member in members:
-        html += f'''
+        html += f"""
         <div class="menu-item p-2 hover:bg-base-300 cursor-pointer"
              data-member-id="{member['id']}"
              data-member-name="{member['name']}">
             <div class="font-semibold">{member['name']}</div>
             <div class="text-xs text-base-content/60">{member['member_number']}</div>
         </div>
-        '''
-    html += '</div>'
+        """
+    html += "</div>"
 
     return HTMLResponse(html)
 
@@ -500,31 +587,33 @@ async def create_registration(
         )
 
     service = ReferralFrontendService(db)
-    result = service.register_member({
-        "member_id": member_id,
-        "book_id": book_id,
-        "registration_method": registration_method,
-        "notes": notes,
-        "performed_by_id": current_user["id"],
-    })
+    result = service.register_member(
+        {
+            "member_id": member_id,
+            "book_id": book_id,
+            "registration_method": registration_method,
+            "notes": notes,
+            "performed_by_id": current_user["id"],
+        }
+    )
 
     if result.get("success"):
         # Close modal and show success message
-        return HTMLResponse('''
+        return HTMLResponse("""
             <script>
                 document.getElementById('register-modal').close();
                 showToast('Member registered successfully', 'success');
                 window.location.reload();
             </script>
-        ''')
+        """)
     else:
         # Show error in modal
         error_msg = result.get("error", "Registration failed")
-        return HTMLResponse(f'''
+        return HTMLResponse(f"""
             <div class="alert alert-error">
                 <span>{error_msg}</span>
             </div>
-        ''')
+        """)
 
 
 @router.post("/registrations/{registration_id}/re-sign", response_class=HTMLResponse)
@@ -546,20 +635,20 @@ async def re_sign_registration(
     result = service.re_sign_member(registration_id, current_user["id"])
 
     if result.get("success"):
-        return HTMLResponse('''
+        return HTMLResponse("""
             <script>
                 document.getElementById('re-sign-modal').close();
                 showToast('Member re-signed successfully', 'success');
                 window.location.reload();
             </script>
-        ''')
+        """)
     else:
         error_msg = result.get("error", "Re-sign failed")
-        return HTMLResponse(f'''
+        return HTMLResponse(f"""
             <div class="alert alert-error">
                 <span>{error_msg}</span>
             </div>
-        ''')
+        """)
 
 
 @router.post("/registrations/{registration_id}/resign", response_class=HTMLResponse)
@@ -582,17 +671,17 @@ async def resign_registration(
     result = service.resign_member(registration_id, current_user["id"], reason)
 
     if result.get("success"):
-        return HTMLResponse('''
+        return HTMLResponse("""
             <script>
                 document.getElementById('resign-modal').close();
                 showToast('Member resigned from book', 'success');
                 window.location.reload();
             </script>
-        ''')
+        """)
     else:
         error_msg = result.get("error", "Resignation failed")
-        return HTMLResponse(f'''
+        return HTMLResponse(f"""
             <div class="alert alert-error">
                 <span>{error_msg}</span>
             </div>
-        ''')
+        """)

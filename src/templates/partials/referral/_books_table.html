@@ -1,17 +1,18 @@
 <!-- Books Table -->
+{% from 'components/_sortable_th.html' import sortable_header %}
 {% if books %}
-<div class="overflow-x-auto">
+<div>
     <table class="table table-sm">
         <thead>
-            <tr>
-                <th>Book</th>
-                <th>Classification</th>
-                <th>Region</th>
-                <th>Book #</th>
-                <th>Active</th>
-                <th>Dispatched</th>
-                <th>Status</th>
-                <th>Actions</th>
+            <tr class="bg-base-200">
+                {{ sortable_header('name', 'Book', current_sort, current_order, target_id='books-table-container', extra_params="[name='active_only'], [name='search']") }}
+                {{ sortable_header('classification', 'Classification', current_sort, current_order, target_id='books-table-container', extra_params="[name='active_only'], [name='search']") }}
+                {{ sortable_header('region', 'Region', current_sort, current_order, target_id='books-table-container', extra_params="[name='active_only'], [name='search']") }}
+                {{ sortable_header('book_number', 'Book #', current_sort, current_order, target_id='books-table-container', extra_params="[name='active_only'], [name='search']") }}
+                {{ sortable_header('active_count', 'Active', current_sort, current_order, target_id='books-table-container', extra_params="[name='active_only'], [name='search']") }}
+                {{ sortable_header('dispatched_count', 'Dispatched', current_sort, current_order, target_id='books-table-container', extra_params="[name='active_only'], [name='search']") }}
+                {{ sortable_header('is_active', 'Status', current_sort, current_order, target_id='books-table-container', extra_params="[name='active_only'], [name='search']") }}
+                <th class="sticky top-16 z-10 bg-base-200">Actions</th>
             </tr>
         </thead>
         <tbody>

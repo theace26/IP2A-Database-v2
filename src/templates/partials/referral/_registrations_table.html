@@ -1,17 +1,18 @@
 <!-- Registrations Table -->
+{% from 'components/_sortable_th.html' import sortable_header %}
 {% if registrations %}
-<div class="overflow-x-auto">
+<div>
     <table class="table table-sm">
         <thead>
-            <tr>
-                <th>Member</th>
-                <th>Card #</th>
-                <th>Book</th>
-                <th>Position</th>
-                <th>Registered</th>
-                <th>Status</th>
-                <th>Check Marks</th>
-                <th>Actions</th>
+            <tr class="bg-base-200">
+                {{ sortable_header('member_name', 'Member', current_sort, current_order, target_id='registrations-container', extra_params="[name='search'], [name='book_id'], [name='status'], [name='filter']") }}
+                {{ sortable_header('card_number', 'Card #', current_sort, current_order, target_id='registrations-container', extra_params="[name='search'], [name='book_id'], [name='status'], [name='filter']") }}
+                {{ sortable_header('book_name', 'Book', current_sort, current_order, target_id='registrations-container', extra_params="[name='search'], [name='book_id'], [name='status'], [name='filter']") }}
+                {{ sortable_header('registration_number', 'Position', current_sort, current_order, target_id='registrations-container', extra_params="[name='search'], [name='book_id'], [name='status'], [name='filter']") }}
+                {{ sortable_header('registration_date', 'Registered', current_sort, current_order, target_id='registrations-container', extra_params="[name='search'], [name='book_id'], [name='status'], [name='filter']") }}
+                {{ sortable_header('status', 'Status', current_sort, current_order, target_id='registrations-container', extra_params="[name='search'], [name='book_id'], [name='status'], [name='filter']") }}
+                {{ sortable_header('check_marks', 'Check Marks', current_sort, current_order, target_id='registrations-container', extra_params="[name='search'], [name='book_id'], [name='status'], [name='filter']") }}
+                <th class="sticky top-16 z-10 bg-base-200">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -68,17 +69,17 @@
 <div class="flex justify-center mt-4">
     <div class="join">
         {% if registrations.has_prev %}
-        <a href="?page={{ registrations.page - 1 }}" class="join-item btn btn-sm">«</a>
+        <a href="?page={{ registrations.page - 1 }}&sort={{ current_sort }}&order={{ current_order }}" class="join-item btn btn-sm">«</a>
         {% endif %}
         {% for p in range(1, registrations.total_pages + 1) %}
             {% if p == registrations.page %}
         <button class="join-item btn btn-sm btn-active">{{ p }}</button>
             {% else %}
-        <a href="?page={{ p }}" class="join-item btn btn-sm">{{ p }}</a>
+        <a href="?page={{ p }}&sort={{ current_sort }}&order={{ current_order }}" class="join-item btn btn-sm">{{ p }}</a>
             {% endif %}
         {% endfor %}
         {% if registrations.has_next %}
-        <a href="?page={{ registrations.page + 1 }}" class="join-item btn btn-sm">»</a>
+        <a href="?page={{ registrations.page + 1 }}&sort={{ current_sort }}&order={{ current_order }}" class="join-item btn btn-sm">»</a>
         {% endif %}
     </div>
 </div>

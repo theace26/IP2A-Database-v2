@@ -8,9 +8,9 @@ Wraps backend ReferralBookService and BookRegistrationService
 calls and formats data for Jinja2 template rendering.
 """
 
-from typing import Optional, List, Dict, Any
+from typing import Optional, List
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, asc as sa_asc, desc as sa_desc
 
 from src.services import referral_book_service
 from src.services import book_registration_service
@@ -109,11 +109,24 @@ class ReferralFrontendService:
 
     # --- Book Methods ---
 
+    # Map URL sort param names to actual dict keys from get_all_books_summary
+    BOOKS_SORT_KEY_MAP = {
+        "name": "name",
+        "classification": "classification",
+        "region": "region",
+        "book_number": "book_number",
+        "active_count": "active_registrations",
+        "dispatched_count": "total_registrations",
+        "is_active": "is_active",
+    }
+
     def get_books_overview(
         self,
         classification: Optional[BookClassification] = None,
         region: Optional[BookRegion] = None,
         active_only: bool = True,
+        sort: str = "name",
+        order: str = "asc",
     ) -> List[dict]:
         """
         Get all books with summary stats for the landing/list page.
@@ -125,21 +138,28 @@ class ReferralFrontendService:
         # Apply filters if provided
         if classification:
             books_summary = [
-                b for b in books_summary
-                if b.get("classification") == classification
+                b for b in books_summary if b.get("classification") == classification
             ]
 
         if region:
-            books_summary = [
-                b for b in books_summary
-                if b.get("region") == region
-            ]
+            books_summary = [b for b in books_summary if b.get("region") == region]
 
         if active_only:
-            books_summary = [
-                b for b in books_summary
-                if b.get("is_active", True)
-            ]
+            books_summary = [b for b in books_summary if b.get("is_active", True)]
+
+        # Sort results
+        actual_key = self.BOOKS_SORT_KEY_MAP.get(sort, "name")
+        reverse = order == "desc"
+        try:
+            books_summary.sort(
+                key=lambda b: (b.get(actual_key) is None, b.get(actual_key, "")),
+                reverse=reverse,
+            )
+        except TypeError:
+            books_summary.sort(
+                key=lambda b: (b.get("name") is None, b.get("name", "")),
+                reverse=reverse,
+            )
 
         return books_summary
 
@@ -191,28 +211,42 @@ class ReferralFrontendService:
         Get overall referral system stats for landing page.
         """
         # Count active books
-        active_books = self.db.query(func.count(ReferralBook.id)).filter(
-            ReferralBook.is_active == True
-        ).scalar() or 0
+        active_books = (
+            self.db.query(func.count(ReferralBook.id))
+            .filter(ReferralBook.is_active.is_(True))
+            .scalar()
+            or 0
+        )
 
         # Count total registered members (across all books)
-        total_registered = self.db.query(func.count(BookRegistration.id)).filter(
-            BookRegistration.status == RegistrationStatus.REGISTERED
-        ).scalar() or 0
+        total_registered = (
+            self.db.query(func.count(BookRegistration.id))
+            .filter(BookRegistration.status == RegistrationStatus.REGISTERED)
+            .scalar()
+            or 0
+        )
 
         # Count dispatched today (would need dispatch table for actual count)
         # For now, just count all dispatched
-        dispatched_count = self.db.query(func.count(BookRegistration.id)).filter(
-            BookRegistration.status == RegistrationStatus.DISPATCHED
-        ).scalar() or 0
+        dispatched_count = (
+            self.db.query(func.count(BookRegistration.id))
+            .filter(BookRegistration.status == RegistrationStatus.DISPATCHED)
+            .scalar()
+            or 0
+        )
 
         # Count members with check marks
-        with_check_marks = self.db.query(func.count(BookRegistration.id)).filter(
-            and_(
-                BookRegistration.status == RegistrationStatus.REGISTERED,
-                BookRegistration.has_check_mark == True,
+        with_check_marks = (
+            self.db.query(func.count(BookRegistration.id))
+            .filter(
+                and_(
+                    BookRegistration.status == RegistrationStatus.REGISTERED,
+                    BookRegistration.has_check_mark.is_(True),
+                )
             )
-        ).scalar() or 0
+            .scalar()
+            or 0
+        )
 
         return {
             "active_books": active_books,
@@ -228,6 +262,8 @@ class ReferralFrontendService:
         filters: Optional[dict] = None,
         page: int = 1,
         per_page: int = 25,
+        sort: str = "registration_number",
+        order: str = "asc",
     ) -> dict:
         """
         Get paginated registration list with optional filters.
@@ -266,16 +302,24 @@ class ReferralFrontendService:
         # Get total count
         total = query.count()
 
+        # Map sort param to actual column
+        sort_columns = {
+            "member_name": Member.last_name,
+            "card_number": Member.member_number,
+            "book_name": ReferralBook.name,
+            "registration_number": BookRegistration.registration_number,
+            "registration_date": BookRegistration.registration_date,
+            "status": BookRegistration.status,
+            "check_marks": BookRegistration.check_marks,
+        }
+
+        sort_col = sort_columns.get(sort, BookRegistration.registration_number)
+        order_func = sa_desc if order == "desc" else sa_asc
+
         # Paginate
         offset = (page - 1) * per_page
         registrations = (
-            query.order_by(
-                ReferralBook.name,
-                BookRegistration.registration_number
-            )
-            .offset(offset)
-            .limit(per_page)
-            .all()
+            query.order_by(order_func(sort_col)).offset(offset).limit(per_page).all()
         )
 
         # Calculate pagination
@@ -291,6 +335,8 @@ class ReferralFrontendService:
             "total_pages": total_pages,
             "has_prev": has_prev,
             "has_next": has_next,
+            "current_sort": sort,
+            "current_order": order,
         }
 
     def get_registration_detail(self, registration_id: int) -> Optional[dict]:
@@ -302,13 +348,17 @@ class ReferralFrontendService:
             return None
 
         # Get member
-        member = self.db.query(Member).filter(Member.id == registration.member_id).first()
+        member = (
+            self.db.query(Member).filter(Member.id == registration.member_id).first()
+        )
 
         # Get book
         book = referral_book_service.get_by_id(self.db, registration.book_id)
 
         # Get member's queue status
-        queue_status = queue_service.get_member_queue_status(self.db, registration.member_id)
+        queue_status = queue_service.get_member_queue_status(
+            self.db, registration.member_id
+        )
 
         # Get member's all registrations (history)
         all_registrations = book_registration_service.get_member_registrations(
@@ -384,10 +434,7 @@ class ReferralFrontendService:
     def get_active_books_for_dropdown(self) -> List[dict]:
         """Get active books formatted for dropdown select options."""
         books = referral_book_service.get_all_active(self.db)
-        return [
-            {"id": book.id, "name": book.name, "code": book.code}
-            for book in books
-        ]
+        return [{"id": book.id, "name": book.name, "code": book.code} for book in books]
 
     def search_members(self, search_term: str, limit: int = 10) -> List[dict]:
         """
