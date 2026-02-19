@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> **v0.9.27-alpha — Sortable Headers: Referral Tables** (February 18, 2026)
+> HTMX server-side sortable + sticky headers added to Referral Books and Registrations tables.
+> ~806 total tests, ~327 API endpoints, 32 models, **19 ADRs**
+> **Next:** Rollout sortable headers to remaining tables (Dues, Dispatch, Audit Log), stakeholder demo, Phase 7 data collection (7a/7d), Phase 8B (Square Terminal)
+
 > **v0.9.26-alpha — Sortable Headers Rollout** (✅ COMPLETE — February 17, 2026)
 > Phase A: Global sticky headers via CSS for all tables. Phase B: HTMX server-side sortable headers rolled out to Benevolence, Grievances, Students, Members, Staff tables.
 > ~806 total tests, ~327 API endpoints, 32 models, **19 ADRs**
@@ -23,6 +28,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > ~806 total tests (+24 developer/view-as tests), ~327 API endpoints (+3 view-as), 32 models, **19 ADRs**
 > **Developer Tools:** View As dropdown, impersonation banner, session-based role switching, dev/demo only
 > **Next:** Production deployment (verify no developer accounts in prod)
+
+### Added (February 18, 2026 — Referral Tables Sortable Headers)
+- Sortable + sticky headers on Referral Books table (`/referral/books`)
+  - 7 sortable columns: Book, Classification, Region, Book #, Active, Dispatched, Status
+  - Python-side sorting for dict-based book data with key mapping
+  - HTMX detection added to `books_list` for partial rendering on sort requests
+  - Filter bar preserved alongside sorting (active_only, search)
+- Sortable + sticky headers on Registrations table (`/referral/registrations`)
+  - 7 sortable columns: Member, Card #, Book, Position, Registered, Status, Check Marks
+  - SQL-level sorting via column mapping dict (Member, ReferralBook, BookRegistration)
+  - Pagination links preserve sort state across page changes
+  - Existing HTMX filter branching extended with sort context
+- Removed `overflow-x-auto` from both table wrappers (blocks sticky positioning)
+- Fixed pre-existing ruff E712 lint errors in `referral_frontend_service.py`
+- Build stamp updated to `referral-sort-20260218`
+- **Sortable headers rollout: 8/12 tables complete** (SALTing, Benevolence, Grievances, Students, Members, Staff, Referral Books, Registrations). Remaining: Dues, Dispatch, Audit Log, Queue.
 
 ### Fixed (February 18, 2026 — Sticky Table Headers Complete Fix, All 6 Tables)
 - **Bug #039 (complete fix):** Sticky table headers now pin to viewport below navbar on all 6 sortable tables (SALTing, Benevolence, Grievances, Students, Members, Staff)

@@ -1,8 +1,8 @@
 # IP2A-Database-v2: Project Context Document
 
 **Document Purpose:** Bring Claude (Code or AI) up to speed for development sessions
-**Last Updated:** February 10, 2026 (UI Enhancement Bundle + ADR-019)
-**Current Version:** v0.9.25-alpha (UI Enhancement Bundle Complete)
+**Last Updated:** February 18, 2026 (Sortable Headers: Referral Tables)
+**Current Version:** v0.9.27-alpha (Sortable Headers: 8/12 Tables)
 **Current Phase:** Post-Phase 8A | UI Enhancements | 19 ADRs | Spoke 3 (Infrastructure)
 
 ---
@@ -19,7 +19,7 @@
 
 **Status:** ~806 total tests (764 baseline + 24 developer/view-as + 18 Square), ~327 API endpoints (324 baseline + 3 view-as), 32 models, **19 ADRs**, Railway deployment live, **UI Enhancement Bundle complete (5 items)**, Developer role with View As impersonation (ADR-019), Square payment integration live (ADR-018), Sortable sticky table headers (HTMX), Grant compliance complete, Mobile PWA enabled, Analytics dashboard live
 
-**Current:** **SORTABLE HEADERS ROLLOUT COMPLETE (v0.9.26-alpha)** — Phase A: Global sticky headers for ALL tables via single CSS rule. Phase B: HTMX server-side sortable headers on 6 tables: SALTing, Benevolence, Grievances, Students, Members, Staff. Sticky offset: `top-32` (128px = 64px navbar + 64px impersonation banner). **NEXT:** Rollout sortable headers to remaining tables (Referral Books, Dues, Dispatch, Audit Log), stakeholder demo, Phase 7 data collection (7a/7d), Phase 8B (Square Terminal/POS).
+**Current:** **SORTABLE HEADERS ROLLOUT (v0.9.27-alpha)** — 8/12 tables complete: SALTing, Benevolence, Grievances, Students, Members, Staff, Referral Books, Registrations. **NEXT:** Rollout sortable headers to remaining tables (Dues, Dispatch, Audit Log, Queue), stakeholder demo, Phase 7 data collection (7a/7d), Phase 8B (Square Terminal/POS).
 
 ---
 
