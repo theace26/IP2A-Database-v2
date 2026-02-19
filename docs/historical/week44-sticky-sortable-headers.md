@@ -5,6 +5,15 @@
 **Prerequisites:** Git status clean, on a feature branch, app runs locally
 **Source:** Hub Handoff Document (February 10, 2026)
 
+> **⚠️ POST-IMPLEMENTATION CORRECTION (2026-02-18 — Bug #039):**
+> The original implementation had two overflow blockers that defeated `position: sticky`:
+> 1. `overflow-hidden` on card wrapper divs
+> 2. `overflow-x-auto` on table wrapper divs (per CSS spec, forces `overflow-y: auto`, trapping sticky)
+>
+> Both were removed in commit `4608606` (2026-02-18). The live pattern is documented in
+> `docs/table-sortable-rollout.md`. Do NOT add `overflow-x-auto` or `overflow-hidden`
+> to any ancestor of a `table-pin-rows` table. See `docs/BUGS_LOG.md` Bug #039 for full details.
+
 ---
 
 ## Context

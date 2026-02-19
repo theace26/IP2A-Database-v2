@@ -36,9 +36,9 @@ Each table rollout requires:
 ### Critical Rules
 
 - The `_table_body.html` partial must contain ONLY `<tr>` elements — no `<table>`, `<thead>`, `{% extends %}`, or layout markup
-- Do NOT use `overflow-hidden` on any ancestor of the table — breaks `position: sticky`
-- `overflow-x-auto` on the table wrapper div is fine for horizontal scroll
-- Use `table-pin-rows` on `<table>` (NOT per-cell `sticky` on `<th>`) to avoid column collapse in `overflow-x-auto` containers
+- **NEVER** use `overflow-hidden` on any card or ancestor wrapping a sticky table — traps `position: sticky` within the clipping boundary
+- **NEVER** use `overflow-x-auto` on the div directly wrapping a `table-pin-rows` table — per CSS spec, setting `overflow-x` to non-`visible` forces `overflow-y: auto`, creating a vertical scroll context that traps sticky within the table wrapper (not the viewport). The table wrapper must be a plain `<div>` with no overflow classes. See Bug #039.
+- Use `table-pin-rows` on `<table>` (NOT per-cell `sticky` on `<th>`) — sticky is handled at the row level automatically via DaisyUI + `custom.css`
 - Non-sortable columns (like "Actions") need `text-white` in their `<th>` class to match sortable headers
 - Always include an empty-state `<tr>` in the `{% else %}` branch of the for loop in `_table_body.html`
 
@@ -112,7 +112,8 @@ async def your_list_page(
 ```html
 {% from 'components/_sortable_th.html' import sortable_header %}
 
-<div class="overflow-x-auto">
+{# IMPORTANT: No overflow classes on this div — overflow-x-auto traps position:sticky (Bug #039) #}
+<div>
     <table class="table table-zebra table-pin-rows">
         <thead>
             <tr>
